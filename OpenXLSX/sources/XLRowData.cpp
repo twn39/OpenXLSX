@@ -139,18 +139,19 @@ namespace OpenXLSX
         // ====== is higher than the computed column number, then insert the node.
         // BUG BUGFIX 2024-04-26: check was for m_cellNode->empty(), allowing an invalid test for the attribute r, discovered
         //       because the modified XLCellReference throws an exception on invalid parameter
-        else if (cellNode.empty() || XLCellReference(cellNode.attribute("r").value()).column() > cellNumber) {
+        // Performance optimization: use lightweight column extraction instead of XLCellReference
+        else if (cellNode.empty() || extractColumnFromCellRef(cellNode.attribute("r").value()) > cellNumber) {
             cellNode = m_dataRange->m_rowNode->insert_child_after("c", *m_currentCell.m_cellNode);
-            setDefaultCellAttributes(cellNode, XLCellReference(
-            /**/                                   static_cast<uint32_t>(m_dataRange->m_rowNode->attribute("r").as_ullong()), cellNumber
-            /**/                               ).address(),
-            /**/                               *m_dataRange->m_rowNode, cellNumber);
+            // Performance optimization: use lightweight makeCellAddress instead of XLCellReference
+            char cellAddrBuf[16];
+            makeCellAddress(static_cast<uint32_t>(m_dataRange->m_rowNode->attribute("r").as_ullong()), cellNumber, cellAddrBuf);
+            setDefaultCellAttributes(cellNode, cellAddrBuf, *m_dataRange->m_rowNode, cellNumber);
             m_currentCell = XLCell(cellNode, m_dataRange->m_sharedStrings.get());
         }
 
         // ===== Otherwise, the cell node and the column number match.
         else {
-            assert(XLCellReference(cellNode.attribute("r").value()).column() == cellNumber);
+            assert(extractColumnFromCellRef(cellNode.attribute("r").value()) == cellNumber);
             m_currentCell = XLCell(cellNode, m_dataRange->m_sharedStrings.get());
         }
 
@@ -382,11 +383,17 @@ namespace OpenXLSX
         deleteCellValues(static_cast<uint16_t>(values.size()));    // 2024-04-30: whitespace support
 
         // ===== prepend new cell nodes to current row node
+        // Performance optimization: cache row number and use lightweight address generation
         XMLNode curNode{};
         uint16_t colNo = values.size();
+        const uint32_t rowNum = m_row->rowNumber();
+        char addrBuffer[16];  // Buffer for cell address (e.g., "XFD1048576")
+        
         for (auto value = values.rbegin(); value != values.rend(); ++value) {    // NOLINT
             curNode = m_rowNode->prepend_child("c");
-            setDefaultCellAttributes(curNode, XLCellReference(static_cast<uint32_t>(m_row->rowNumber()), colNo).address(), *m_rowNode, colNo);
+            // Use lightweight address generation instead of XLCellReference object
+            makeCellAddress(rowNum, colNo, addrBuffer);
+            setDefaultCellAttributes(curNode, addrBuffer, *m_rowNode, colNo);
             XLCell(curNode, m_row->m_sharedStrings.get()).value() = *value;
             --colNo;
         }
@@ -451,8 +458,9 @@ namespace OpenXLSX
     std::vector<XLCellValue> XLRowDataProxy::getValues() const    // 2024-04-30: whitespace support
     {
         // ===== Determine the number of cells in the current row. Create a std::vector of the same size.
+        // Performance optimization: use lightweight column extraction instead of XLCellReference
         const XMLNode  lastElementChild = m_rowNode->last_child_of_type(pugi::node_element);
-        const uint16_t numCells = (lastElementChild.empty() ? 0 : XLCellReference(lastElementChild.attribute("r").value()).column());
+        const uint16_t numCells = (lastElementChild.empty() ? 0 : extractColumnFromCellRef(lastElementChild.attribute("r").value()));
         std::vector<XLCellValue> result(static_cast<uint64_t>(numCells));
 
         // ===== If there are one or more cells in the current row, iterate through them and add the value to the container.
@@ -460,7 +468,8 @@ namespace OpenXLSX
             XMLNode node = lastElementChild;    // avoid unneeded call to first_child_of_type by iterating backwards, vector is random
                                                 // access so it doesn't matter
             while (not node.empty()) {
-                result[XLCellReference(node.attribute("r").value()).column() - 1] = XLCell(node, m_row->m_sharedStrings.get()).value();
+                // Performance optimization: use lightweight column extraction
+                result[extractColumnFromCellRef(node.attribute("r").value()) - 1] = XLCell(node, m_row->m_sharedStrings.get()).value();
                 node                                                              = node.previous_sibling_of_type(pugi::node_element);
             }
         }
@@ -489,7 +498,8 @@ namespace OpenXLSX
         std::vector<XMLNode> toBeDeleted;
         XMLNode              cellNode = m_rowNode->first_child_of_type(pugi::node_element);
         while (not cellNode.empty()) {
-            if (XLCellReference(cellNode.attribute("r").value()).column() <= count) {
+            // Performance optimization: use lightweight column extraction
+            if (extractColumnFromCellRef(cellNode.attribute("r").value()) <= count) {
                 toBeDeleted.emplace_back(cellNode);
                 XMLNode nextNode = cellNode.next_sibling();    // get next "regular" sibling (any type) before advancing cellNode
                 cellNode         = cellNode.next_sibling_of_type(pugi::node_element);
@@ -526,7 +536,10 @@ namespace OpenXLSX
         //     curNode = m_rowNode->insert_child_before("c", first_child);
 
         XMLNode curNode = m_rowNode->prepend_child("c");    // this will correctly insert a new cell directly at the beginning of the row
-        setDefaultCellAttributes(curNode, XLCellReference(static_cast<uint32_t>(m_row->rowNumber()), col).address(), *m_rowNode, col);
+        // Performance optimization: use lightweight address generation
+        char addrBuffer[16];
+        makeCellAddress(m_row->rowNumber(), col, addrBuffer);
+        setDefaultCellAttributes(curNode, addrBuffer, *m_rowNode, col);
         XLCell(curNode, m_row->m_sharedStrings.get()).value() = value;
     }
 

@@ -245,7 +245,8 @@ namespace OpenXLSX
     {
         const auto node = m_rowNode->last_child_of_type(pugi::node_element);
         if (node.empty()) return 0;
-        return XLCellReference(node.attribute("r").value()).column();
+        // Performance optimization: use lightweight column extraction instead of XLCellReference object creation
+        return extractColumnFromCellRef(node.attribute("r").value());
     }
 
     /**
@@ -271,7 +272,8 @@ namespace OpenXLSX
     {
         const XMLNode node = m_rowNode->last_child_of_type(pugi::node_element);
         if (node.empty()) return XLRowDataRange();    // empty range
-        return XLRowDataRange(*m_rowNode, 1, XLCellReference(node.attribute("r").value()).column(), m_sharedStrings.get());
+        // Performance optimization: use lightweight column extraction instead of XLCellReference object creation
+        return XLRowDataRange(*m_rowNode, 1, extractColumnFromCellRef(node.attribute("r").value()), m_sharedStrings.get());
     }
 
     /**
@@ -301,15 +303,21 @@ namespace OpenXLSX
         XMLNode cellNode = m_rowNode->last_child_of_type(pugi::node_element);
 
         // ===== If there are no cells in the current row, or the requested cell is beyond the last cell in the row...
-        if (cellNode.empty() || (XLCellReference(cellNode.attribute("r").value()).column() < columnNumber))
+        // Performance optimization: use lightweight column extraction instead of XLCellReference object creation
+        uint16_t lastColNo = cellNode.empty() ? 0 : extractColumnFromCellRef(cellNode.attribute("r").value());
+        if (cellNode.empty() || (lastColNo < columnNumber))
             return XLCell{}; // fail
 
         // ===== If the requested node is closest to the end, start from the end and search backwards...
-        if (XLCellReference(cellNode.attribute("r").value()).column() - columnNumber < columnNumber) {
-            while (not cellNode.empty() && (XLCellReference(cellNode.attribute("r").value()).column() > columnNumber))
+        if (lastColNo - columnNumber < columnNumber) {
+            uint16_t colNo = lastColNo;
+            while (not cellNode.empty() && (colNo > columnNumber)) {
                 cellNode = cellNode.previous_sibling_of_type(pugi::node_element);
+                if (not cellNode.empty())
+                    colNo = extractColumnFromCellRef(cellNode.attribute("r").value());
+            }
             // ===== If the backwards search failed to locate the requested cell
-            if (cellNode.empty() || (XLCellReference(cellNode.attribute("r").value()).column() < columnNumber))
+            if (cellNode.empty() || (colNo < columnNumber))
                 return XLCell{}; // fail
         }
         // ===== Otherwise, start from the beginning
@@ -318,10 +326,13 @@ namespace OpenXLSX
             cellNode = m_rowNode->first_child_of_type(pugi::node_element);
 
             // ===== It has been verified above that the requested columnNumber is <= the column number of the last node_element, therefore this loop will halt:
-            while (XLCellReference(cellNode.attribute("r").value()).column() < columnNumber)
+            uint16_t colNo = extractColumnFromCellRef(cellNode.attribute("r").value());
+            while (colNo < columnNumber) {
                 cellNode = cellNode.next_sibling_of_type(pugi::node_element);
+                colNo = extractColumnFromCellRef(cellNode.attribute("r").value());
+            }
             // ===== If the forwards search failed to locate the requested cell
-            if (XLCellReference(cellNode.attribute("r").value()).column() > columnNumber)
+            if (colNo > columnNumber)
                 return XLCell{}; // fail
         }
         return XLCell(cellNode, m_sharedStrings.get());

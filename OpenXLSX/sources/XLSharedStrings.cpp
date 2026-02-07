@@ -63,9 +63,12 @@ using namespace OpenXLSX;
  * @details Constructs a new XLSharedStrings object. Only one (common) object is allowed per XLDocument instance.
  * A filepath to the underlying XML file must be provided.
  */
-XLSharedStrings::XLSharedStrings(XLXmlData* xmlData, std::deque<std::string>* stringCache)
+XLSharedStrings::XLSharedStrings(XLXmlData* xmlData,
+                                 std::deque<std::string>* stringCache,
+                                 std::unordered_map<std::string, int32_t>* stringIndex)
     : XLXmlFile(xmlData),
-      m_stringCache(stringCache)
+      m_stringCache(stringCache),
+      m_stringIndex(stringIndex)
 {
     XMLDocument & doc = xmlDocument();
     if (doc.document_element().empty())    // handle a bad (no document element) xl/sharedStrings.xml
@@ -80,6 +83,16 @@ XLSharedStrings::XLSharedStrings(XLXmlData* xmlData, std::deque<std::string>* st
                 "</sst>",
                 pugi_parse_settings
         );
+    
+    // Build the hash index from the string cache for O(1) lookup
+    if (m_stringIndex && m_stringCache) {
+        m_stringIndex->clear();
+        m_stringIndex->reserve(m_stringCache->size());
+        int32_t idx = 0;
+        for (const auto& str : *m_stringCache) {
+            m_stringIndex->emplace(str, idx++);
+        }
+    }
 }
 
 /**
@@ -89,18 +102,32 @@ XLSharedStrings::~XLSharedStrings() = default;
 
 /**
  * @details Look up a string index by the string content. If the string does not exist, the returned index is -1.
+ * Optimized to use O(1) hash lookup when available.
  */
 int32_t XLSharedStrings::getStringIndex(const std::string& str) const
 {
+    // Use O(1) hash lookup if available
+    if (m_stringIndex) {
+        auto it = m_stringIndex->find(str);
+        return it != m_stringIndex->end() ? it->second : -1;
+    }
+    
+    // Fallback to linear search (legacy behavior)
     const auto iter = std::find_if(m_stringCache->begin(), m_stringCache->end(), [&](const std::string& s) { return str == s; });
-
     return iter == m_stringCache->end() ? -1 : static_cast<int32_t>(std::distance(m_stringCache->begin(), iter));
 }
 
 /**
- * @details
+ * @details Check if a string exists in the shared strings table. O(1) with hash index.
  */
-bool XLSharedStrings::stringExists(const std::string& str) const { return getStringIndex(str) >= 0; }
+bool XLSharedStrings::stringExists(const std::string& str) const
+{
+    // Use O(1) hash lookup if available
+    if (m_stringIndex) {
+        return m_stringIndex->find(str) != m_stringIndex->end();
+    }
+    return getStringIndex(str) >= 0;
+}
 
 /**
  * @details
@@ -120,7 +147,6 @@ const char* XLSharedStrings::getString(int32_t index) const
  */
 int32_t XLSharedStrings::appendString(const std::string& str) const
 {
-    // size_t stringCacheSize = std::distance(m_stringCache->begin(), m_stringCache->end()); // any reason why .size() would not work?
     size_t stringCacheSize = m_stringCache->size();    // 2024-05-31: analogous with already added range check in getString
     if (stringCacheSize >= XLMaxSharedStrings)    {    // 2024-05-31: added range check
         using namespace std::literals::string_literals;
@@ -131,8 +157,31 @@ int32_t XLSharedStrings::appendString(const std::string& str) const
         textNode.append_attribute("xml:space").set_value("preserve");    // pull request #161
     textNode.text().set(str.c_str());
     m_stringCache->emplace_back(textNode.text().get());    // index of this element = previous stringCacheSize
+    
+    // Update the hash index for O(1) lookup
+    if (m_stringIndex) {
+        m_stringIndex->emplace(str, static_cast<int32_t>(stringCacheSize));
+    }
 
     return static_cast<int32_t>(stringCacheSize);
+}
+
+/**
+ * @details Get or create a string index in O(1) time. This is the optimized path for setting cell values.
+ * It avoids the separate stringExists() + getStringIndex()/appendString() pattern.
+ */
+int32_t XLSharedStrings::getOrCreateStringIndex(const std::string& str) const
+{
+    // Fast path: O(1) lookup using hash index
+    if (m_stringIndex) {
+        auto it = m_stringIndex->find(str);
+        if (it != m_stringIndex->end()) {
+            return it->second;  // String already exists
+        }
+    }
+    
+    // String doesn't exist, append it
+    return appendString(str);
 }
 
 /**

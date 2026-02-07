@@ -56,6 +56,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include <algorithm> // std::find_if
 #include <list>
 #include <string>
+#include <unordered_map> // O(1) shared string lookup
 
 // ===== OpenXLSX Includes ===== //
 #include "IZipArchive.hpp"
@@ -440,6 +441,7 @@ namespace OpenXLSX
 
         mutable std::list<XLXmlData>    m_data {};              /**<  */
         mutable std::deque<std::string> m_sharedStringCache {}; /**<  */
+        mutable std::unordered_map<std::string, int32_t> m_sharedStringIndex {}; /**< O(1) string -> index lookup */
         mutable XLSharedStrings         m_sharedStrings {};     /**<  */
 
         XLRelationships m_docRelationships {}; /**< A pointer to the document relationships object*/

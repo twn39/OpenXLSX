@@ -57,6 +57,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include <limits>     // std::numeric_limits
 #include <ostream>    // std::basic_ostream
 #include <string>
+#include <unordered_map> // O(1) string lookup
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
@@ -95,8 +96,11 @@ namespace OpenXLSX
          * @brief
          * @param xmlData
          * @param stringCache
+         * @param stringIndex O(1) lookup hash map: string -> index
          */
-        explicit XLSharedStrings(XLXmlData* xmlData, std::deque<std::string>* stringCache);
+        explicit XLSharedStrings(XLXmlData* xmlData,
+                                 std::deque<std::string>* stringCache,
+                                 std::unordered_map<std::string, int32_t>* stringIndex);
 
         /**
          * @brief Destructor
@@ -164,6 +168,14 @@ namespace OpenXLSX
         int32_t appendString(const std::string& str) const;
 
         /**
+         * @brief Get or create a string index in O(1) time.
+         * @param str The string to look up or add.
+         * @return The index of the string (existing or newly added).
+         * @note This is the optimized method for setting cell string values.
+         */
+        int32_t getOrCreateStringIndex(const std::string& str) const;
+
+        /**
          * @brief Clear the string at the given index.
          * @param index The index to clear.
          * @note There is no 'deleteString' member function, as deleting a shared string node will invalidate the
@@ -194,6 +206,7 @@ namespace OpenXLSX
 
     private:
         std::deque<std::string>* m_stringCache {}; /** < Each string must have an unchanging memory address; hence the use of std::deque */
+        std::unordered_map<std::string, int32_t>* m_stringIndex {}; /** < O(1) string -> index lookup */
     };
 }    // namespace OpenXLSX
 

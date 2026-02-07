@@ -619,7 +619,7 @@ void XLDocument::open(const std::string& fileName)
     // ===== 2024-09-02: ensure that all worksheets are contained in app.xml <TitlesOfParts> and reflected in <HeadingPairs> value for Worksheets
     m_appProperties.alignWorksheets(m_workbook.sheetNames());
 
-    m_sharedStrings  = XLSharedStrings(getXmlData("xl/sharedStrings.xml"), &m_sharedStringCache);
+    m_sharedStrings  = XLSharedStrings(getXmlData("xl/sharedStrings.xml"), &m_sharedStringCache, &m_sharedStringIndex);
     m_styles         = XLStyles(getXmlData("xl/styles.xml"), m_suppressWarnings); // 2024-10-14: forward supress warnings setting to XLStyles
 }
 
@@ -713,6 +713,7 @@ void XLDocument::close()
 
     m_data.clear();
     m_sharedStringCache.clear();             // 2024-12-18 BUGFIX: clear shared strings cache - addresses issue #283
+    m_sharedStringIndex.clear();             // Clear hash index as well
     m_sharedStrings    = XLSharedStrings();  //
 
     m_docRelationships = XLRelationships();

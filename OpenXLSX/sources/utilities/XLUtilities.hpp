@@ -25,6 +25,97 @@ namespace OpenXLSX
     constexpr const bool XLKeepAttributes   = false;  //
 
     /**
+     * @brief Lightweight function to extract column number from a cell reference string.
+     * This is a performance-optimized alternative to creating XLCellReference objects.
+     * @param cellRef The cell reference string (e.g., "A1", "BC42", "XFD1048576")
+     * @return The column number (1-based), or 0 if the string is empty or invalid
+     * @note This function only parses the column part (letters) and ignores the row part.
+     *       It assumes the input is a valid cell reference with uppercase letters.
+     */
+    inline uint16_t extractColumnFromCellRef(const char* cellRef) noexcept
+    {
+        if (cellRef == nullptr || *cellRef == '\0') return 0;
+        
+        uint32_t colNo = 0;
+        const char* p = cellRef;
+        
+        // Parse uppercase letters only (A-Z)
+        while (*p >= 'A' && *p <= 'Z') {
+            colNo = colNo * 26 + (*p - 'A' + 1);
+            ++p;
+        }
+        
+        // Return 0 if no letters were found, or if column exceeds MAX_COLS
+        return (colNo > 0 && colNo <= MAX_COLS) ? static_cast<uint16_t>(colNo) : 0;
+    }
+
+    /**
+     * @brief Convert column number to column letter string (A, B, ..., Z, AA, AB, ..., XFD)
+     * Performance optimization: avoids creating full XLCellReference object.
+     * @param colNo Column number (1-indexed)
+     * @param buffer Output buffer (must be at least 4 bytes for "XFD" + null)
+     * @return Pointer to the buffer
+     */
+    inline char* columnToLetters(uint16_t colNo, char* buffer) noexcept
+    {
+        char temp[4];
+        int idx = 0;
+        
+        while (colNo > 0) {
+            --colNo;  // Convert to 0-indexed for modulo
+            temp[idx++] = static_cast<char>('A' + (colNo % 26));
+            colNo /= 26;
+        }
+        
+        // Reverse the result into buffer
+        int j = 0;
+        while (idx > 0) {
+            buffer[j++] = temp[--idx];
+        }
+        buffer[j] = '\0';
+        
+        return buffer;
+    }
+
+    /**
+     * @brief Generate cell address string directly without creating XLCellReference object.
+     * Performance optimization: for use in hot loops where address generation is frequent.
+     * @param row Row number (1-indexed)
+     * @param col Column number (1-indexed)
+     * @param buffer Output buffer (must be at least 16 bytes)
+     * @return Pointer to the buffer
+     */
+    inline char* makeCellAddress(uint32_t row, uint16_t col, char* buffer) noexcept
+    {
+        // Generate column letters
+        char* p = buffer;
+        char colLetters[4];
+        columnToLetters(col, colLetters);
+        
+        // Copy column letters
+        for (const char* c = colLetters; *c; ++c) {
+            *p++ = *c;
+        }
+        
+        // Convert row number to string
+        char rowStr[12];
+        int idx = 0;
+        uint32_t r = row;
+        do {
+            rowStr[idx++] = static_cast<char>('0' + (r % 10));
+            r /= 10;
+        } while (r > 0);
+        
+        // Append row digits in reverse order
+        while (idx > 0) {
+            *p++ = rowStr[--idx];
+        }
+        *p = '\0';
+        
+        return buffer;
+    }
+
+    /**
      * @brief Get rid of compiler warnings about unused variables (-Wunused-variable) or unused parameters (-Wunusued-parameter)
      * @param (unnamed) the variable / parameter which is intentionally unused (e.g. for function stubs)
      */
@@ -252,6 +343,29 @@ namespace OpenXLSX
     }
 
     /**
+     * @brief Overload accepting const char* for cell reference - avoids std::string allocation
+     * Performance optimization: for use in hot loops where address generation is frequent.
+     */
+    inline void setDefaultCellAttributes(XMLNode cellNode, const char* cellRef, XMLNode rowNode, uint16_t colNo,
+    /**/                                 std::vector<XLStyleIndex> const & colStyles = {})
+    {
+        cellNode.append_attribute("r").set_value(cellRef);
+        XMLAttribute rowStyle = rowNode.attribute("s");
+        XLStyleIndex cellStyle;
+        if (rowStyle.empty()) {
+            if (colStyles.size() > 0)
+                cellStyle = (colNo > colStyles.size() ? XLDefaultCellFormat : colStyles[ colNo - 1 ]);
+            else
+                cellStyle = getColumnStyle(rowNode, colNo);
+        }
+        else
+            cellStyle = rowStyle.as_uint(XLDefaultCellFormat);
+
+        if (cellStyle != XLDefaultCellFormat)
+            cellNode.append_attribute("s").set_value(cellStyle);
+    }
+
+    /**
      * @brief Retrieve the xml node representing the cell at the given row and column. If the node doesn't
      * exist, it will be created.
      * @param rowNode The row node under which to find the cell.
@@ -272,25 +386,37 @@ namespace OpenXLSX
 
         XMLNode cellNode = rowNode.last_child_of_type(pugi::node_element);
         if (!rowNumber) rowNumber = rowNode.attribute("r").as_uint(); // if not provided, determine from rowNode
-        auto cellRef  = XLCellReference(rowNumber, columnNumber);
+        
+        // Performance optimization: use lightweight column extraction instead of creating XLCellReference objects
+        // This avoids repeated string parsing and object creation overhead in hot loops
+        uint16_t lastCellCol = cellNode.empty() ? 0 : extractColumnFromCellRef(cellNode.attribute("r").value());
 
         // ===== If there are no cells in the current row, or the requested cell is beyond the last cell in the row...
-        if (cellNode.empty() || (XLCellReference(cellNode.attribute("r").value()).column() < columnNumber)) {
+        if (cellNode.empty() || (lastCellCol < columnNumber)) {
             // ===== append a new node to the end.
             cellNode = rowNode.append_child("c");
-            setDefaultCellAttributes(cellNode, cellRef.address(), rowNode, columnNumber, colStyles);
+            // Performance optimization: use lightweight makeCellAddress instead of XLCellReference
+            char cellAddrBuf[16];
+            makeCellAddress(rowNumber, columnNumber, cellAddrBuf);
+            setDefaultCellAttributes(cellNode, cellAddrBuf, rowNode, columnNumber, colStyles);
         }
         // ===== If the requested node is closest to the end, start from the end and search backwards...
-        else if (XLCellReference(cellNode.attribute("r").value()).column() - columnNumber < columnNumber) {
-            while (not cellNode.empty() && (XLCellReference(cellNode.attribute("r").value()).column() > columnNumber))
+        else if (lastCellCol - columnNumber < columnNumber) {
+            uint16_t currentCol = lastCellCol;
+            while (not cellNode.empty() && (currentCol > columnNumber)) {
                 cellNode = cellNode.previous_sibling_of_type(pugi::node_element);
+                currentCol = cellNode.empty() ? 0 : extractColumnFromCellRef(cellNode.attribute("r").value());
+            }
             // ===== If the backwards search failed to locate the requested cell
-            if (cellNode.empty() || (XLCellReference(cellNode.attribute("r").value()).column() < columnNumber)) {
+            if (cellNode.empty() || (currentCol < columnNumber)) {
                 if (cellNode.empty()) // If between row begin and higher column number, only non-element nodes exist
                     cellNode = rowNode.prepend_child("c"); // insert a new cell node at row begin. When saving, this will keep whitespace formatting towards next cell node
                 else
                     cellNode = rowNode.insert_child_after("c", cellNode);
-                setDefaultCellAttributes(cellNode, cellRef.address(), rowNode, columnNumber, colStyles);
+                // Performance optimization: use lightweight makeCellAddress instead of XLCellReference
+                char cellAddrBuf[16];
+                makeCellAddress(rowNumber, columnNumber, cellAddrBuf);
+                setDefaultCellAttributes(cellNode, cellAddrBuf, rowNode, columnNumber, colStyles);
             }
         }
         // ===== Otherwise, start from the beginning
@@ -299,12 +425,18 @@ namespace OpenXLSX
             cellNode = rowNode.first_child_of_type(pugi::node_element);
 
             // ===== It has been verified above that the requested columnNumber is <= the column number of the last node_element, therefore this loop will halt:
-            while (XLCellReference(cellNode.attribute("r").value()).column() < columnNumber)
+            uint16_t currentCol = extractColumnFromCellRef(cellNode.attribute("r").value());
+            while (currentCol < columnNumber) {
                 cellNode = cellNode.next_sibling_of_type(pugi::node_element);
+                currentCol = extractColumnFromCellRef(cellNode.attribute("r").value());
+            }
             // ===== If the forwards search failed to locate the requested cell
-            if (XLCellReference(cellNode.attribute("r").value()).column() > columnNumber) {
+            if (currentCol > columnNumber) {
                 cellNode = rowNode.insert_child_before("c", cellNode);
-                setDefaultCellAttributes(cellNode, cellRef.address(), rowNode, columnNumber, colStyles);
+                // Performance optimization: use lightweight makeCellAddress instead of XLCellReference
+                char cellAddrBuf[16];
+                makeCellAddress(rowNumber, columnNumber, cellAddrBuf);
+                setDefaultCellAttributes(cellNode, cellAddrBuf, rowNode, columnNumber, colStyles);
             }
         }
         return cellNode;

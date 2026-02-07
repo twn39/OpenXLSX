@@ -418,9 +418,8 @@ void XLCellValueProxy::setString(const char* stringValue) // NOLINT
     m_cellNode->attribute("t").set_value("s");
 
     // ===== Get or create the index in the XLSharedStrings object.
-    const auto index = (m_cell->m_sharedStrings.get().stringExists(stringValue)
-    /**/                                                    ?          m_cell->m_sharedStrings.get().getStringIndex(stringValue)
-    /**/                                                             : m_cell->m_sharedStrings.get().appendString(stringValue));
+    // OPTIMIZED: Use getOrCreateStringIndex() for O(1) lookup instead of separate stringExists() + getStringIndex()/appendString()
+    const auto index = m_cell->m_sharedStrings.get().getOrCreateStringIndex(stringValue);
 
     // ===== Set the text of the value node.
     m_cellNode->child("v").text().set(index);
