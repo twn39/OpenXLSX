@@ -102,6 +102,12 @@
 !/Scripts/xml-format-all.sh
 !/Scripts/xml-format.sh
 
+# include third_party folder
+!/third_party
+/third_party/*
+!/third_party/zippy
+!/third_party/zippy/*
+
 # include Tests folder
 !/Tests
 # exclude everything *in* Tests folder
