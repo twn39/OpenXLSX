@@ -183,13 +183,18 @@ XLCell::operator bool() const { return m_cellNode && (not m_cellNode->empty() );
 /**
  * @details This function returns a const reference to the cellReference property.
  */
-XLCellReference XLCell::cellReference() const { return XLCellReference { m_cellNode->attribute("r").value() }; }
+XLCellReference XLCell::cellReference() const
+{
+    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    return XLCellReference { m_cellNode->attribute("r").value() };
+}
 
 /**
  * @details This function returns a const reference to the cell reference by the offset from the current one.
  */
 XLCell XLCell::offset(uint16_t rowOffset, uint16_t colOffset) const
 {
+    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
     const XLCellReference offsetRef(cellReference().row() + rowOffset, cellReference().column() + colOffset);
     const auto            rownode  = getRowNode(m_cellNode->parent().parent(), offsetRef.row());
     const auto            cellnode = getCellNode(rownode, offsetRef.column());
@@ -201,18 +206,27 @@ XLCell XLCell::offset(uint16_t rowOffset, uint16_t colOffset) const
  */
 bool XLCell::hasFormula() const
 {
+    if (!m_cellNode) return false;
     return (not m_cellNode->child("f").empty());    // evaluate child XMLNode as boolean
 }
 
 /**
  * @details
  */
-XLFormulaProxy& XLCell::formula() { return m_formulaProxy; }
+XLFormulaProxy& XLCell::formula()
+{
+    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    return m_formulaProxy;
+}
 
 /**
 * @details get the value of the s attribute of the cell node
 */
-size_t XLCell::cellFormat() const { return m_cellNode->attribute("s").as_uint(0); }
+size_t XLCell::cellFormat() const
+{
+    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    return m_cellNode->attribute("s").as_uint(0);
+}
 
 /**
 * @details set the s attribute of the cell node, pointing to an xl/styles.xml cellXfs index
@@ -220,6 +234,7 @@ size_t XLCell::cellFormat() const { return m_cellNode->attribute("s").as_uint(0)
 */
 bool XLCell::setCellFormat(size_t cellFormatIndex)
 {
+    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
     XMLAttribute attr = m_cellNode->attribute("s");
     if (attr.empty() && not m_cellNode->empty())
         attr = m_cellNode->append_attribute("s");
@@ -230,7 +245,11 @@ bool XLCell::setCellFormat(size_t cellFormatIndex)
 /**
  * @details
  */
-void XLCell::print(std::basic_ostream<char>& ostr) const { m_cellNode->print(ostr); }
+void XLCell::print(std::basic_ostream<char>& ostr) const
+{
+    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    m_cellNode->print(ostr);
+}
 
 /**
  * @details
@@ -240,7 +259,17 @@ XLCellAssignable::XLCellAssignable (XLCell const & other) : XLCell(other) {}
 /**
  * @details
  */
+XLCellAssignable::XLCellAssignable (XLCellAssignable const & other) : XLCell(other) {}
+
+/**
+ * @details
+ */
 XLCellAssignable::XLCellAssignable (XLCell && other) : XLCell(std::move(other)) {}
+
+/**
+ * @details
+ */
+XLCellAssignable::XLCellAssignable (XLCellAssignable && other) noexcept : XLCell(std::move(other)) {}
 
 /**
  * @details
@@ -281,13 +310,18 @@ XLCellAssignable& XLCellAssignable::operator=(XLCellAssignable&& other) noexcept
 /**
  * @details
  */
-const XLFormulaProxy& XLCell::formula() const { return m_formulaProxy; }
+const XLFormulaProxy& XLCell::formula() const
+{
+    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    return m_formulaProxy;
+}
 
 /**
  * @details clear cell contents except for those identified by keep
  */
 void  XLCell::clear(uint32_t keep)
 {
+    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
     // ===== Clear attributes
     XMLAttribute attr = m_cellNode->first_attribute();
     while (not attr.empty()) {
@@ -323,14 +357,22 @@ void  XLCell::clear(uint32_t keep)
  * @pre
  * @post
  */
-XLCellValueProxy& XLCell::value() { return m_valueProxy; }
+XLCellValueProxy& XLCell::value()
+{
+    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    return m_valueProxy;
+}
 
 /**
  * @details
  * @pre
  * @post
  */
-const XLCellValueProxy& XLCell::value() const { return m_valueProxy; }
+const XLCellValueProxy& XLCell::value() const
+{
+    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    return m_valueProxy;
+}
 
 /**
  * @details

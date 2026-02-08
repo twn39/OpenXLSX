@@ -78,14 +78,11 @@ namespace
  */
 XLCellReference::XLCellReference(const std::string& cellAddress)
 {
-    if (not cellAddress.empty()) setAddress(cellAddress);
-    if (cellAddress.empty() || not addressIsValid(m_row, m_column)) {    // 2024-04-25: throw exception on empty string
-        throw XLCellAddressError("Cell reference is invalid");
-        // ===== 2024-05-27: below code is obsolete due to exception on invalid cellAddress
-        // m_row         = 1;
-        // m_column      = 1;
-        // m_cellAddress = "A1";
+    if (not cellAddress.empty()) {
+        setAddress(cellAddress);
+        if (not addressIsValid(m_row, m_column)) throw XLCellAddressError("Cell reference is invalid");
     }
+    // else: use default values initialized in header (m_row = 1, m_column = 1, m_cellAddress = "A1")
 }
 
 /**

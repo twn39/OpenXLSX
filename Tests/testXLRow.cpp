@@ -477,7 +477,7 @@ TEST_CASE("XLRowDataRange Tests", "[XLRowDataRange]")
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto row = wks.row(1);
-        auto range = row.cells();
+        auto range = row.cells(1);
         for (auto& cell : range) cell.value() = 1;
 
         auto sum = 0;
