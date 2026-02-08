@@ -3,7 +3,7 @@
 #include <string>
 
 #include <OpenXLSX.hpp>
-#include <external/pugixml/pugixml.hpp>
+#include <pugixml.hpp>
 
 bool nowide_status()
 {

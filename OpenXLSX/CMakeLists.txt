@@ -36,26 +36,23 @@ set(OPENXLSX_LIBRARY_TYPE "STATIC" CACHE STRING "Set the library type to SHARED 
 
 #=======================================================================================================================
 # EXTERNAL LIBRARIES
-#   Define external libraries used by OpenXLSX. The libraries (Zippy, PugiXML, and NoWide) are header-only, so
+#   Define external libraries used by OpenXLSX. The libraries (Zippy and NoWide) are header-only, so
 #   INTERFACE libraries should be defined.
 #=======================================================================================================================
 
 if (OPENXLSX_ENABLE_NOWIDE)
     add_library(NoWide INTERFACE IMPORTED)
-    target_include_directories(NoWide SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/nowide/>)
+    target_link_libraries(NoWide INTERFACE nowide::nowide)
 endif()
 
 add_library(Zippy INTERFACE IMPORTED)
-target_include_directories(Zippy SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/zippy/>)
+target_include_directories(Zippy SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/zippy/>)
 if (OPENXLSX_ENABLE_NOWIDE)
     target_compile_definitions(Zippy INTERFACE ENABLE_NOWIDE)
 endif ()
 
-add_library(PugiXML INTERFACE IMPORTED)
-target_include_directories(PugiXML SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/pugixml/>)
-
 if (${OPENXLSX_COMPACT_MODE})
-    target_compile_definitions(PugiXML INTERFACE PUGIXML_COMPACT)
+    target_compile_definitions(pugixml PUBLIC PUGIXML_COMPACT)
 endif ()
 
 #=======================================================================================================================
@@ -141,9 +138,10 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/headers>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)     # For export header
     target_link_libraries(OpenXLSX
+            PUBLIC
+            $<BUILD_INTERFACE:pugixml>
             PRIVATE
-            $<BUILD_INTERFACE:Zippy>
-            $<BUILD_INTERFACE:PugiXML>)
+            $<BUILD_INTERFACE:Zippy>)
 
     if (OPENXLSX_ENABLE_NOWIDE)
         target_link_libraries(OpenXLSX
@@ -169,9 +167,10 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/headers>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)     # For export header
     target_link_libraries(OpenXLSX
+            PUBLIC
+            $<BUILD_INTERFACE:pugixml>
             PRIVATE
-            $<BUILD_INTERFACE:Zippy>
-            $<BUILD_INTERFACE:PugiXML>)
+            $<BUILD_INTERFACE:Zippy>)
 
     if (OPENXLSX_ENABLE_NOWIDE)
         target_link_libraries(OpenXLSX

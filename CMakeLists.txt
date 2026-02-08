@@ -32,6 +32,16 @@ option(OPENXLSX_BUILD_BENCHMARKS "Build and run library benchmarks" OFF)
 option(OPENXLSX_ENABLE_LIBZIP "Enable using libzip" OFF)
 
 #=======================================================================================================================
+# External Libraries
+#=======================================================================================================================
+set(PUGIXML_XPATH OFF CACHE BOOL "" FORCE)
+add_subdirectory(third_party/pugixml EXCLUDE_FROM_ALL)
+
+set(NOWIDE_INSTALL OFF CACHE BOOL "" FORCE)
+set(NOWIDE_TESTING OFF CACHE BOOL "" FORCE)
+add_subdirectory(third_party/nowide EXCLUDE_FROM_ALL)
+
+#=======================================================================================================================
 # Add project configurations (#ifdef / #ifndef testable)
 #=======================================================================================================================
 if(WIN32)
