@@ -101,7 +101,7 @@ namespace {
 * @details
 */
 XLComment::XLComment(const XMLNode& node)
- : m_commentNode(std::make_unique<XMLNode>(node))
+ : m_commentNode(node)
  {}
 
 /**
@@ -109,26 +109,26 @@ XLComment::XLComment(const XMLNode& node)
  * @note Function body moved to cpp module as it uses "not" keyword for readability, which MSVC sabotages with non-CPP compatibility.
  * @note For the library it is reasonable to expect users to compile it with MSCV /permissive- flag, but for the user's own projects the header files shall "just work"
  */
-bool XLComment::valid() const { return m_commentNode != nullptr &&(not m_commentNode->empty()); }
+bool XLComment::valid() const { return not m_commentNode.empty(); }
 
 /**
  * @brief Getter functions
  */
-std::string XLComment::ref() const { return m_commentNode->attribute("ref").value(); }
-std::string XLComment::text() const { return getCommentString(*m_commentNode); }
-uint16_t XLComment::authorId() const { return static_cast<uint16_t>(m_commentNode->attribute("authorId").as_uint()); }
+std::string XLComment::ref() const { return m_commentNode.attribute("ref").value(); }
+std::string XLComment::text() const { return getCommentString(m_commentNode); }
+uint16_t XLComment::authorId() const { return static_cast<uint16_t>(m_commentNode.attribute("authorId").as_uint()); }
 
 /**
  * @brief Setter functions
  */
 bool XLComment::setText(std::string newText)
 {
-    m_commentNode->remove_children(); // clear previous text
-    XMLNode tNode = m_commentNode->prepend_child("text").prepend_child("t");   // insert <text><t/></text> nodes
+    m_commentNode.remove_children(); // clear previous text
+    XMLNode tNode = m_commentNode.prepend_child("text").prepend_child("t");   // insert <text><t/></text> nodes
     tNode.append_attribute("xml:space").set_value("preserve");                // set <t> node attribute xml:space
     return tNode.prepend_child(pugi::node_pcdata).set_value(newText.c_str()); // finally, insert <t> node_pcdata value
 }
-bool XLComment::setAuthorId(uint16_t newAuthorId) { return appendAndSetAttribute(*m_commentNode, "authorId", std::to_string(newAuthorId)).empty() == false; }
+bool XLComment::setAuthorId(uint16_t newAuthorId) { return appendAndSetAttribute(m_commentNode, "authorId", std::to_string(newAuthorId)).empty() == false; }
 
 
 // ========== XLComments Member Functions

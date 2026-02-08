@@ -170,7 +170,7 @@ namespace OpenXLSX
         // std::string summary() const;
 
     private:                                         // ---------- Private Member Variables ---------- //
-        std::unique_ptr<XMLNode> m_clientDataNode;   /**< An XMLNode object with the x:ClientData item */
+        mutable XMLNode m_clientDataNode;   /**< An XMLNode object with the x:ClientData item */
         inline static const std::vector< std::string_view > m_nodeOrder = {
             "x:MoveWithCells",
             "x:SizeWithCells",
@@ -255,7 +255,7 @@ namespace OpenXLSX
 
     private:
         mutable std::string m_style; // mutable so getter functions can update it from m_styleAttribute if the latter is not empty
-        std::unique_ptr<XMLAttribute> m_styleAttribute;
+        mutable XMLAttribute m_styleAttribute;
         inline static const std::vector< std::string_view > m_nodeOrder = {
             "position",
             "margin-left",
@@ -345,7 +345,7 @@ namespace OpenXLSX
         bool setStyle(XLShapeStyle const& newStyle);
 
     private:                                         // ---------- Private Member Variables ---------- //
-        std::unique_ptr<XMLNode> m_shapeNode;        /**< An XMLNode object with the v:shape item */
+        mutable XMLNode m_shapeNode;        /**< An XMLNode object with the v:shape item */
         inline static const std::vector< std::string_view > m_nodeOrder = {
             "v:shadow",
             "v:fill",

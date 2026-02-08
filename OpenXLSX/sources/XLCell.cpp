@@ -157,11 +157,11 @@ void XLCell::copyFrom(XLCell const& other)
 
         // ===== Delete all XML attributes that are not the cell reference ("r")
         // ===== 2024-07-26 BUGFIX: for-loop was invalidating loop variable with remove_attribute(attr) before advancing to next element
-        XMLAttribute attr = m_cellNode->first_attribute();
-        while (not attr.empty()) {
-            XMLAttribute nextAttr = attr.next_attribute();                         // get a handle on next attribute before potentially removing attr
-            if (strcmp(attr.name(), "r") != 0) m_cellNode->remove_attribute(attr); // remove all but the cell reference
-            attr = nextAttr;                                                       // advance to previously stored next attribute
+        XMLAttribute currentAttr = m_cellNode->first_attribute();
+        while (not currentAttr.empty()) {
+            XMLAttribute nextAttr = currentAttr.next_attribute();                         // get a handle on next attribute before potentially removing attr
+            if (strcmp(currentAttr.name(), "r") != 0) m_cellNode->remove_attribute(currentAttr); // remove all but the cell reference
+            currentAttr = nextAttr;                                                       // advance to previously stored next attribute
         }
         // ===== Copy all XML attributes that are not the cell reference ("r")
         for (auto attr = other.m_cellNode->first_attribute(); not attr.empty(); attr = attr.next_attribute())

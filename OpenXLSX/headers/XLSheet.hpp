@@ -536,7 +536,7 @@ namespace OpenXLSX
         std::string summary() const;
 
     private:                                    // ---------- Private Member Variables ---------- //
-        std::unique_ptr<XMLNode> m_cfRuleNode;  /**< An XMLNode object with the conditional formatting item */
+        mutable XMLNode m_cfRuleNode;  /**< An XMLNode object with the conditional formatting item */
         inline static const std::vector< std::string_view > m_nodeOrder = {      // cfRule XML node required child sequence
             "formula", // TODO: maxOccurs = 3!
             "colorScale",
@@ -656,7 +656,7 @@ namespace OpenXLSX
         std::string summary() const;
 
     private:                                                   // ---------- Private Member Variables ---------- //
-        std::unique_ptr<XMLNode> m_conditionalFormattingNode;  /**< An XMLNode object with the conditional formatting item */
+        mutable XMLNode m_conditionalFormattingNode;  /**< An XMLNode object with the conditional formatting item */
         // TODO: pass in m_nodeOrder from XLConditionalFormat
         inline static const std::vector< std::string_view > m_nodeOrder = {      // conditionalFormatting XML node required child sequence
             "cfRule",
@@ -757,7 +757,7 @@ namespace OpenXLSX
         std::string summary() const;
 
     private:                                                   // ---------- Private Member Variables ---------- //
-        std::unique_ptr<XMLNode> m_conditionalFormattingNode;  /**< An XMLNode object with the conditional formatting item */
+        mutable XMLNode m_conditionalFormattingNode;  /**< An XMLNode object with the conditional formatting item */
         inline static const std::vector< std::string_view > m_nodeOrder = {   // conditionalFormatting XML node required child sequence
             "cfRule",
             "extLst"
@@ -793,7 +793,7 @@ namespace OpenXLSX
          * @brief Move Constructor.
          * @param other Object to be moved.
          */
-        XLConditionalFormats(XLConditionalFormats&& other);
+        XLConditionalFormats(XLConditionalFormats&& other) noexcept;
 
         /**
          * @brief
@@ -854,8 +854,8 @@ namespace OpenXLSX
         std::string summary() const;
 
     private:                                    // ---------- Private Member Variables ---------- //
-        std::unique_ptr<XMLNode> m_sheetNode;   /**< An XMLNode object with the sheet item */
-        const std::vector< std::string_view >& m_nodeOrder = XLWorksheetNodeOrder;  // worksheet XML root node required child sequence
+        mutable XMLNode m_sheetNode;   /**< An XMLNode object with the sheet item */
+        inline static const std::vector< std::string_view >& m_nodeOrder = XLWorksheetNodeOrder;  // worksheet XML root node required child sequence
     };
 
     /**
@@ -1315,7 +1315,7 @@ namespace OpenXLSX
         XLVmlDrawing    m_vmlDrawing{};       /**< class handling the worksheet VML drawing object */
         XLComments      m_comments{};         /**< class handling the worksheet comments */
         XLTables        m_tables{};           /**< class handling the worksheet table settings */
-        const std::vector< std::string_view >& m_nodeOrder = XLWorksheetNodeOrder;  // worksheet XML root node required child sequence
+        inline static const std::vector< std::string_view >& m_nodeOrder = XLWorksheetNodeOrder;  // worksheet XML root node required child sequence
     };
 
     /**

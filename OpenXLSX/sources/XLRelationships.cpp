@@ -99,7 +99,7 @@ namespace OpenXLSX { // anonymous namespace: do not export these symbols
             std::random_device rd;
             rdSeed = rd();
         }
-        Rand32.seed(rdSeed);
+        Rand32.seed(static_cast<std::mt19937::result_type>(rdSeed));
         RandomizerInitialized = true;
     }
 } // namespace OpenXLSX
@@ -235,7 +235,7 @@ namespace { //    re-open anonymous namespace
         while (not relationship.empty()) {
             uint64_t id;
             try {
-                id = std::stoi(std::string(relationship.attribute("Id").value()).substr(3));
+                id = static_cast<uint64_t>(std::stoi(std::string(relationship.attribute("Id").value()).substr(3)));
             }
             catch (std::invalid_argument const & e) {    // expected stoi exception
                 throw XLInputError("GetNewRelsID could not convert attribute Id to uint32_t ("s + e.what() + ")"s);

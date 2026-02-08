@@ -131,7 +131,7 @@ namespace OpenXLSX
         {
             if (NO_XML_NS) return;
                 const char *name = xml_node::name();
-            int pos = 0;
+            size_t pos = 0;
             while (name[pos] && name[pos] != ':') ++pos; // find name delimiter
             if (name[pos] == ':') name_begin = pos + 1;  // if delimiter was found: update name_begin to point behind that position
         }
@@ -262,7 +262,7 @@ namespace OpenXLSX
         XMLNode previous_sibling_of_type(const pugi::char_t* name_, pugi::xml_node_type type_ = pugi::node_element) const;
 
     private:
-        int  name_begin; // nameBegin holds the position in xml_node::name() where the actual node name begins - 0 for non-namespaced nodes
+        size_t name_begin; // nameBegin holds the position in xml_node::name() where the actual node name begins - 0 for non-namespaced nodes
                          // for nodes with a namespace: the position following namespace + delimiter colon, e.g. "x:c" -> nameBegin = 2
     };
 

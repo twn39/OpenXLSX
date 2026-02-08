@@ -266,7 +266,7 @@ uint16_t XLWorkbook::createInternalSheetID()    // 2024-04-30: whitespace suppor
         if (thisSheetId > maxSheetIdFound) maxSheetIdFound = thisSheetId;
         sheet = sheet.next_sibling_of_type(pugi::node_element);
     }
-    return maxSheetIdFound + 1;
+    return static_cast<uint16_t>(maxSheetIdFound + 1);
 }
 
 /**
@@ -369,14 +369,14 @@ void XLWorkbook::setSheetVisibility(const std::string& sheetRID, const std::stri
     // Finally, if the current sheet is the active one, set the "activeTab" attribute to the first visible sheet in the workbook
     if (hideSheet && activeTabIndex == index) {    // BUGFIX 2024-04-30: previously, the active tab was re-set even if the current sheet was
                                                    // being set to "visible" (when already being visible)
-        XMLNode item = xmlDocument().document_element().child("sheets").first_child_of_type(pugi::node_element);
-        while (not item.empty()) {
-            if (isVisible(item))
+        XMLNode sheetItem = xmlDocument().document_element().child("sheets").first_child_of_type(pugi::node_element);
+        while (not sheetItem.empty()) {
+            if (isVisible(sheetItem))
             {    // BUGFIX 2024-05-01: old check was testing state != "hidden" || != "veryHidden", which was always true
-                activeTabAttribute.set_value(indexOfSheet(item.attribute("name").value()) - 1);
+                activeTabAttribute.set_value(indexOfSheet(sheetItem.attribute("name").value()) - 1);
                 break;
             }
-            item = item.next_sibling_of_type(pugi::node_element);
+            sheetItem = sheetItem.next_sibling_of_type(pugi::node_element);
         }
     }
 }
@@ -719,7 +719,7 @@ bool XLWorkbook::setSheetActive(const std::string& sheetRID)    // 2024-04-30: w
     // 0-based index
 
     // ===== If an active sheet was found, but sheetRID is not the same sheet: attempt to unselect the old active sheet.
-    if ((activeTabIndex != -1) && (index != activeTabIndex)) sheet(activeTabIndex + 1).setSelected(false);    // see NOTE above
+    if ((activeTabIndex != -1) && (index != activeTabIndex)) sheet(static_cast<uint16_t>(activeTabIndex + 1)).setSelected(false);    // see NOTE above
 
     // ===== Set the activeTab property for the workbook.xml sheets node
     if (workbookView.attribute("activeTab").empty()) workbookView.append_attribute("activeTab");

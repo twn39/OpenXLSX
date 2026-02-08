@@ -297,7 +297,7 @@ void XLCellIterator::updateCurrentCell(bool createIfMissing)
             XMLNode rowNode = m_hintNode.parent().next_sibling_of_type(pugi::node_element);
             uint32_t rowNo = 0;
             while (not rowNode.empty()) {
-                rowNo = rowNode.attribute("r").as_ullong();
+                rowNo = static_cast<uint32_t>(rowNode.attribute("r").as_ullong());
                 if (rowNo >= m_currentRow) break; // if desired row was reached / passed, break before incrementing rowNode
                 rowNode = rowNode.next_sibling_of_type(pugi::node_element);
             }
@@ -440,8 +440,8 @@ uint64_t XLCellIterator::distance(const XLCellIterator& last)
     uint16_t lastCol = (last.m_endReached ? last.m_bottomRight.column() + 1 : last.m_currentColumn);
 
     uint16_t rowWidth = m_bottomRight.column() - m_topLeft.column() + 1;    // amount of cells in a row of the iterator range
-    int64_t distance =  ((int64_t)(lastRow) - row) * rowWidth    //   row distance * rowWidth
-                       + (int64_t)(lastCol) - col;               // + column distance (may be negative)
+    int64_t distance =  (static_cast<int64_t>(lastRow) - row) * rowWidth    //   row distance * rowWidth
+                       + static_cast<int64_t>(lastCol) - col;               // + column distance (may be negative)
     if (distance < 0)
         throw XLInputError("XLCellIterator::distance is negative");
 

@@ -158,8 +158,8 @@ void XLCellRange::fetchColumnStyles()
     uint16_t vecPos = 0;
     XMLNode col = cols.first_child_of_type(pugi::node_element);
     while (not col.empty()) {
-        uint16_t minCol = col.attribute("min").as_int(0);
-        uint16_t maxCol = col.attribute("max").as_int(0);
+        uint16_t minCol = static_cast<uint16_t>(col.attribute("min").as_int(0));
+        uint16_t maxCol = static_cast<uint16_t>(col.attribute("max").as_int(0));
         if (minCol > maxCol || !minCol || !maxCol) {
             using namespace std::literals::string_literals;
             throw XLInputError(

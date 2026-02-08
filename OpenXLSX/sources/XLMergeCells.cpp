@@ -251,7 +251,7 @@ const char* XLMergeCells::merge(XLMergeIndex index) const
         using namespace std::literals::string_literals;
         throw XLInputError("XLMergeCells::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
     }
-    return m_referenceCache[index].c_str();
+    return m_referenceCache[static_cast<size_t>(index)].c_str();
 }
 
 /**

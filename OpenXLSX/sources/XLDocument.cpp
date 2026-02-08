@@ -517,8 +517,8 @@ void XLDocument::open(const std::string& fileName)
         if (item.path().substr(1) == workbookRelsFilename) continue;    // always ignore workbookRelsFilename - would have thrown
 
         // ===== Test if item is not in a known and handled subfolder (e.g. /customXml/*)
-        if (size_t pos = item.path().substr(1).find_first_of('/'); pos != std::string::npos) {
-            std::string subdirectory = item.path().substr(1, pos);
+        if (size_t subdirectoryPos = item.path().substr(1).find_first_of('/'); subdirectoryPos != std::string::npos) {
+            std::string subdirectory = item.path().substr(1, subdirectoryPos);
             if (subdirectory != "xl" && subdirectory != "docProps") continue; // ignore items in unhandled subfolders
         }
 
@@ -1460,13 +1460,13 @@ void XLDocument::setSavingDeclaration(XLXmlSavingDeclaration const& savingDeclar
  */
 void XLDocument::cleanupSharedStrings()
 {
-    int32_t oldStringCount = m_sharedStringCache.size();
+    size_t oldStringCount = m_sharedStringCache.size();
     std::vector< int32_t > indexMap(oldStringCount, -1);      // indexMap[ oldIndex ] :== newIndex, -1 = not yet assigned
     int32_t newStringCount = 1; // reserve index 0 for empty string, count here +1 for each unique shared string index that is in use in the worksheet
 
     unsigned int worksheetCount = m_workbook.worksheetCount();
     for (unsigned int wIndex = 1; wIndex <= worksheetCount; ++wIndex) {
-        XLWorksheet wks = m_workbook.worksheet(wIndex);
+        XLWorksheet wks = m_workbook.worksheet(static_cast<uint16_t>(wIndex));
         XLCellRange cellRange = wks.range();
         for (XLCellIterator cellIt = cellRange.begin(); cellIt != cellRange.end(); ++cellIt) {
             if (!cellIt.cellExists()) continue; // prevent cell creation by access for non-existing cells
@@ -1476,14 +1476,15 @@ void XLDocument::cleanupSharedStrings()
             if (cell.value().type() == XLValueType::String) {
                 XLCellValueProxy val = cell.value();
                 int32_t si = val.stringIndex();
-                if (indexMap[si] == -1) {    // shared string was not yet flagged as "in use"
-                    if (m_sharedStringCache[si].length() > 0)  // if shared string is not empty
-                        indexMap[si] = newStringCount++;          // add this shared string to the end of the new cache being rewritten and increment the counter
+                if (si < 0) continue; // not a shared string index
+                if (indexMap[static_cast<size_t>(si)] == -1) {    // shared string was not yet flagged as "in use"
+                    if (m_sharedStringCache[static_cast<size_t>(si)].length() > 0)  // if shared string is not empty
+                        indexMap[static_cast<size_t>(si)] = newStringCount++;          // add this shared string to the end of the new cache being rewritten and increment the counter
                     else                                       // else
-                        indexMap[si] = 0;                         // assign the hardcoded index 0 reserved for the empty string in newStringCache
+                        indexMap[static_cast<size_t>(si)] = 0;                         // assign the hardcoded index 0 reserved for the empty string in newStringCache
                 }
-                if (indexMap[si] != si)   // if the index changed
-                    val.setStringIndex(indexMap[si]);    // then update it for the cell
+                if (indexMap[static_cast<size_t>(si)] != si)   // if the index changed
+                    val.setStringIndex(indexMap[static_cast<size_t>(si)]);    // then update it for the cell
             }
         }
     }
@@ -1492,13 +1493,13 @@ void XLDocument::cleanupSharedStrings()
     //        and indexMap now contains the mapping to applied for reindexing.
 
     // ===== Create a new shared strings cache.
-    std::vector<std::string> newStringCache(newStringCount);   // store the re-indexed strings here
+    std::vector<std::string> newStringCache(static_cast<size_t>(newStringCount));   // store the re-indexed strings here
     // NOTE: newStringCache is vector because m_sharedStringCache may eventually be changed from std::deque to something else (std::map) for performance
 
     newStringCache[0] = "";                                    // store empty string in first position
-    for (int32_t oldIdx = 0; oldIdx < oldStringCount; ++oldIdx) { // "steal" all std::strings that are still in use from existing string cache
+    for (size_t oldIdx = 0; oldIdx < oldStringCount; ++oldIdx) { // "steal" all std::strings that are still in use from existing string cache
         if (int32_t newIdx = indexMap[oldIdx]; newIdx > 0)           // if string is still in use
-            newStringCache[newIdx] = std::move(m_sharedStringCache[oldIdx]); // NOTE: std::move invalidates the shared string cache -> not thread safe
+            newStringCache[static_cast<size_t>(newIdx)] = std::move(m_sharedStringCache[oldIdx]); // NOTE: std::move invalidates the shared string cache -> not thread safe
     }
     m_sharedStringCache.clear(); // TBD: is this safe with strings that were std::move assigned to newStringCache?
     // refill m_sharedStringCache cache from newStringCache
@@ -1568,8 +1569,8 @@ namespace OpenXLSX
     char hexDigit(unsigned int value)
     {
         if (value > 0xf) return 0;
-        if (value < 0xa) return value + '0';    // return value as number digit
-        return (value - 0xa) + 'a';             // return value as letter digit
+        if (value < 0xa) return static_cast<char>(value + '0');    // return value as number digit
+        return static_cast<char>((value - 0xa) + 'a');             // return value as letter digit
     }
 
     /**
@@ -1585,7 +1586,7 @@ namespace OpenXLSX
         for (size_t pos = 0; pos < size * 2; ++pos) {
             int valueByte = dataBytePtr[pos / 2];
             int valueHalfByte = (valueByte & (pos & 1 ? 0x0f : 0xf0)) >> (pos & 1 ? 0 : 4);
-            strAssemble[pos] = hexDigit(valueHalfByte); // convert each half-byte into a hex digit
+            strAssemble[pos] = hexDigit(static_cast<unsigned int>(valueHalfByte)); // convert each half-byte into a hex digit
         }
         return strAssemble;
     }
@@ -1599,7 +1600,7 @@ namespace OpenXLSX
         uint16_t cchPassword = static_cast<uint16_t>(password.length());
 
         for (uint16_t pos = 0; pos < cchPassword; ++pos) {
-            uint32_t byteHash = password[pos] << ((pos + 1) % 15);
+            uint32_t byteHash = static_cast<uint32_t>(password[pos]) << ((pos + 1) % 15);
             byteHash = (byteHash >> 15) | (byteHash & 0x7fff);
             wPasswordHash ^= static_cast<uint16_t>(byteHash);
         }
@@ -1629,7 +1630,6 @@ namespace OpenXLSX
      * @throw XLInternalError upon invalid path - e.g. containing "//" or trying to escape via ".." beyond the context of path
      */
     constexpr const bool DISASSEMBLE_PATH_ELIMINATE_DOTS = true;  // helper constants for code readability
-    constexpr const bool DISASSEMBLE_PATH_KEEP_DOTS      = false; //
     std::vector<std::string> disassemblePath(std::string const& path, bool eliminateDots = DISASSEMBLE_PATH_ELIMINATE_DOTS)
     {
         std::vector< std::string > result;

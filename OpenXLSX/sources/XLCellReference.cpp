@@ -330,7 +330,7 @@ uint16_t XLCellReference::columnAsNumber(const std::string& column)
     for (const auto letter : column) {
         if (letter >= 'A' && letter <= 'Z') {    // allow only uppercase letters
             ++letterCount;
-            colNo = colNo * 26 + (letter - 'A' + 1);
+            colNo = colNo * 26 + static_cast<uint32_t>(letter - 'A' + 1);
         }
         else
             break;
@@ -338,7 +338,7 @@ uint16_t XLCellReference::columnAsNumber(const std::string& column)
 
     // ===== If the full string was decoded and colNo is within allowed range [1;MAX_COLS]
     if(letterCount == column.length() && colNo > 0 && colNo <= MAX_COLS)
-        return colNo;
+        return static_cast<uint16_t>(colNo);
     throw XLInputError("XLCellReference::columnAsNumber - column \"" + column + "\" is invalid");
 
     /* 2024-06-19 OBSOLETE CODE:
@@ -366,7 +366,7 @@ XLCoordinates XLCellReference::coordinatesFromAddress(const std::string& address
     for (const auto letter : address) {
         if (letter >= 'A' && letter <= 'Z') {    // allow only uppercase letters
             ++letterCount;
-            colNo = colNo * 26 + (letter - 'A' + 1);
+            colNo = colNo * 26 + static_cast<uint32_t>(letter - 'A' + 1);
         }
         else
             break;
@@ -377,7 +377,7 @@ XLCoordinates XLCellReference::coordinatesFromAddress(const std::string& address
         size_t pos = letterCount;
         uint64_t rowNo = 0;
         for (; pos < address.length() && std::isdigit(address[pos]); ++pos) // check digits
-            rowNo = rowNo * 10 + (address[pos] - '0');
+            rowNo = rowNo * 10 + static_cast<uint64_t>(address[pos] - '0');
         if (pos == address.length() && rowNo <= MAX_ROWS)    // full address was < 4 letters + only digits
             return std::make_pair(rowNo, colNo);
     }

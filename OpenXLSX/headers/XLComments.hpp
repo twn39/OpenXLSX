@@ -138,7 +138,7 @@ namespace OpenXLSX
         // std::string summary() const;
 
     private:                                         // ---------- Private Member Variables ---------- //
-        std::unique_ptr<XMLNode> m_commentNode;      /**< An XMLNode object with the comment item */
+        mutable XMLNode m_commentNode;      /**< An XMLNode object with the comment item */
      };
 
     /**

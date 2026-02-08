@@ -41,7 +41,7 @@ namespace OpenXLSX
         
         // Parse uppercase letters only (A-Z)
         while (*p >= 'A' && *p <= 'Z') {
-            colNo = colNo * 26 + (*p - 'A' + 1);
+            colNo = colNo * 26 + static_cast<uint32_t>(*p - 'A' + 1);
             ++p;
         }
         
@@ -455,8 +455,8 @@ namespace OpenXLSX
     constexpr const int SORT_INDEX_NOT_FOUND = -1;
     inline int findStringInVector( std::string const & nodeName, std::vector< std::string_view > const & nodeOrder )
     {
-        for (int i = 0; static_cast< size_t >( i ) < nodeOrder.size(); ++i)
-            if (nodeName == nodeOrder[ i ]) return i;
+        for (size_t i = 0; i < nodeOrder.size(); ++i)
+            if (nodeName == nodeOrder[ i ]) return static_cast<int>(i);
         return SORT_INDEX_NOT_FOUND;
     }
 

@@ -421,7 +421,7 @@ namespace     // anonymous namespace for module local functions
             throw XLException("formatDoubleAsString: return value of std::to_string(double val) contains no decimal separator - this should never happen");
 
         // ===== Return the string representation of val with the decimal separator and decimalPlaces digits following
-        return result.substr(0, decimalPos + 1 + decimalPlaces);
+        return result.substr(0, decimalPos + 1 + static_cast<size_t>(decimalPlaces));
     }
 
     /**
@@ -1745,7 +1745,7 @@ XLAlignmentStyle XLAlignment::vertical() const { return XLAlignmentStyleFromStri
 /**
  * @details Returns the text rotation
  */
-uint16_t XLAlignment::textRotation() const { return m_alignmentNode->attribute("textRotation").as_uint(); }
+uint16_t XLAlignment::textRotation() const { return static_cast<uint16_t>(m_alignmentNode->attribute("textRotation").as_uint()); }
 
 /**
  * @details check if text wrapping is enabled

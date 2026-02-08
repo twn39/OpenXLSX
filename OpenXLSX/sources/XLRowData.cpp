@@ -385,7 +385,7 @@ namespace OpenXLSX
         // ===== prepend new cell nodes to current row node
         // Performance optimization: cache row number and use lightweight address generation
         XMLNode curNode{};
-        uint16_t colNo = values.size();
+        uint16_t colNo = static_cast<uint16_t>(values.size());
         const uint32_t rowNum = m_row->rowNumber();
         char addrBuffer[16];  // Buffer for cell address (e.g., "XFD1048576")
         
