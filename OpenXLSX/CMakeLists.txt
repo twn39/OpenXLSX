@@ -46,7 +46,7 @@ if (OPENXLSX_ENABLE_NOWIDE)
 endif()
 
 add_library(Zippy INTERFACE IMPORTED)
-target_include_directories(Zippy SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/zippy/>)
+target_include_directories(Zippy SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../third_party/zippy/>)
 if (OPENXLSX_ENABLE_NOWIDE)
     target_compile_definitions(Zippy INTERFACE ENABLE_NOWIDE)
 endif ()
