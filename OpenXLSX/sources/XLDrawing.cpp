@@ -246,10 +246,8 @@ XLShapeStyle::XLShapeStyle()
     setPosition("absolute");
     setMarginLeft(100);
     setMarginTop(0);
-    setWidth(80);
-    setHeight(50);
-    setMsoWrapStyle("none");
-    setVTextAnchor("middle");
+    setWidth(200);  // Increased from 120
+    setHeight(150); // Increased from 80
     hide();
 }
 

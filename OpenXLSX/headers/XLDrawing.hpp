@@ -263,6 +263,7 @@ namespace OpenXLSX
             "width",
             "height",
             "mso-wrap-style",
+            "mso-fit-shape-to-text", // Added for auto-size support
             "v-text-anchor",
             "visibility"
         };
@@ -271,6 +272,7 @@ namespace OpenXLSX
 
     class OPENXLSX_EXPORT XLShape {
         friend class XLVmlDrawing;    // for access to m_shapeNode in XLVmlDrawing::addShape
+        friend class XLComments;      // added for access to m_shapeNode in XLComments::set
     public:    // ---------- Public Member Functions ---------- //
         /**
          * @brief
