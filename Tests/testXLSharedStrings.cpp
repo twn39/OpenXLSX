@@ -6,7 +6,7 @@ using namespace OpenXLSX;
 TEST_CASE("XLSharedStrings Tests", "[XLSharedStrings]") {
     SECTION("Basic String Operations") {
         XLDocument doc;
-        doc.create("./testXLSharedStrings.xlsx");
+        doc.create("./testXLSharedStrings.xlsx", XLForceOverwrite);
         
         // Shared strings are managed via the document but can be accessed
         auto& ss = doc.sharedStrings();
@@ -37,7 +37,7 @@ TEST_CASE("XLSharedStrings Tests", "[XLSharedStrings]") {
 
     SECTION("Large number of strings") {
         XLDocument doc;
-        doc.create("./testXLSharedStringsLarge.xlsx");
+        doc.create("./testXLSharedStringsLarge.xlsx", XLForceOverwrite);
         auto& ss = doc.sharedStrings();
         int32_t initialCount = ss.stringCount();
 

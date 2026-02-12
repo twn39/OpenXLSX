@@ -6,7 +6,7 @@ using namespace OpenXLSX;
 TEST_CASE("XLMergeCells Tests", "[XLMergeCells]") {
     SECTION("Basic Merge and Unmerge") {
         XLDocument doc;
-        doc.create("./testXLMergeCells.xlsx");
+        doc.create("./testXLMergeCells.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.mergeCells("A1:B2");
@@ -23,7 +23,7 @@ TEST_CASE("XLMergeCells Tests", "[XLMergeCells]") {
 
     SECTION("Multiple Merges") {
         XLDocument doc;
-        doc.create("./testXLMultipleMerges.xlsx");
+        doc.create("./testXLMultipleMerges.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.mergeCells("A1:A2");
@@ -38,7 +38,7 @@ TEST_CASE("XLMergeCells Tests", "[XLMergeCells]") {
 
     SECTION("Find Merge by Cell") {
         XLDocument doc;
-        doc.create("./testXLMergeByCell.xlsx");
+        doc.create("./testXLMergeByCell.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.mergeCells("B2:C3");
@@ -54,7 +54,7 @@ TEST_CASE("XLMergeCells Tests", "[XLMergeCells]") {
 
     SECTION("Overlap Detection") {
         XLDocument doc;
-        doc.create("./testXLMergeOverlap.xlsx");
+        doc.create("./testXLMergeOverlap.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.mergeCells("B2:D4");
@@ -72,7 +72,7 @@ TEST_CASE("XLMergeCells Tests", "[XLMergeCells]") {
 
     SECTION("Empty Hidden Cells") {
         XLDocument doc;
-        doc.create("./testXLEmptyHiddenCells.xlsx");
+        doc.create("./testXLEmptyHiddenCells.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.cell("A1").value() = 1;

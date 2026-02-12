@@ -6,7 +6,7 @@ using namespace OpenXLSX;
 TEST_CASE("XLColumn Tests", "[XLColumn]") {
     SECTION("Basic Column Operations") {
         XLDocument doc;
-        doc.create("./testXLColumn.xlsx");
+        doc.create("./testXLColumn.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto col1 = wks.column(1);
@@ -29,7 +29,7 @@ TEST_CASE("XLColumn Tests", "[XLColumn]") {
 
     SECTION("Column Access by Name") {
         XLDocument doc;
-        doc.create("./testXLColumnByName.xlsx");
+        doc.create("./testXLColumnByName.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto colB = wks.column("B");
@@ -41,7 +41,7 @@ TEST_CASE("XLColumn Tests", "[XLColumn]") {
 
     SECTION("Automatic Column Node Creation") {
         XLDocument doc;
-        doc.create("./testXLColumnCreation.xlsx");
+        doc.create("./testXLColumnCreation.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         // Column 10 doesn't exist yet

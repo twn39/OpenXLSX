@@ -6,7 +6,7 @@ using namespace OpenXLSX;
 TEST_CASE("XLStyles Tests", "[XLStyles]") {
     SECTION("Number Formats") {
         XLDocument doc;
-        doc.create("./testXLStylesNumFmt.xlsx");
+        doc.create("./testXLStylesNumFmt.xlsx", XLForceOverwrite);
         auto styles = doc.styles();
 
         auto numFmts = styles.numberFormats();
@@ -26,7 +26,7 @@ TEST_CASE("XLStyles Tests", "[XLStyles]") {
 
     SECTION("Fonts") {
         XLDocument doc;
-        doc.create("./testXLStylesFonts.xlsx");
+        doc.create("./testXLStylesFonts.xlsx", XLForceOverwrite);
         auto styles = doc.styles();
         auto fonts = styles.fonts();
         
@@ -51,7 +51,7 @@ TEST_CASE("XLStyles Tests", "[XLStyles]") {
 
     SECTION("Fills") {
         XLDocument doc;
-        doc.create("./testXLStylesFills.xlsx");
+        doc.create("./testXLStylesFills.xlsx", XLForceOverwrite);
         auto styles = doc.styles();
         auto fills = styles.fills();
         
@@ -69,7 +69,7 @@ TEST_CASE("XLStyles Tests", "[XLStyles]") {
 
     SECTION("Borders") {
         XLDocument doc;
-        doc.create("./testXLStylesBorders.xlsx");
+        doc.create("./testXLStylesBorders.xlsx", XLForceOverwrite);
         auto styles = doc.styles();
         auto borders = styles.borders();
         
@@ -89,7 +89,7 @@ TEST_CASE("XLStyles Tests", "[XLStyles]") {
 
     SECTION("Cell Formats (Xf)") {
         XLDocument doc;
-        doc.create("./testXLStylesXf.xlsx");
+        doc.create("./testXLStylesXf.xlsx", XLForceOverwrite);
         auto styles = doc.styles();
         
         auto cellFormats = styles.cellFormats();

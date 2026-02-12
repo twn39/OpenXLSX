@@ -6,7 +6,7 @@ using namespace OpenXLSX;
 TEST_CASE("XLProperties Tests", "[XLProperties]") {
     SECTION("Core Properties") {
         XLDocument doc;
-        doc.create("./testXLProperties.xlsx");
+        doc.create("./testXLProperties.xlsx", XLForceOverwrite);
         
         doc.setProperty(XLProperty::Title, "Test Title");
         doc.setProperty(XLProperty::Creator, "Test Creator");
@@ -26,7 +26,7 @@ TEST_CASE("XLProperties Tests", "[XLProperties]") {
 
     SECTION("App Properties") {
         XLDocument doc;
-        doc.create("./testXLAppProperties.xlsx");
+        doc.create("./testXLAppProperties.xlsx", XLForceOverwrite);
         
         // App properties are usually set via the doc object as well, 
         // though some are managed internally (like sheet names).
@@ -46,7 +46,7 @@ TEST_CASE("XLProperties Tests", "[XLProperties]") {
 TEST_CASE("XLWorkbook Tests", "[XLWorkbook]") {
     SECTION("Sheet Management") {
         XLDocument doc;
-        doc.create("./testXLWorkbook.xlsx");
+        doc.create("./testXLWorkbook.xlsx", XLForceOverwrite);
         auto wb = doc.workbook();
 
         // Initial state
@@ -84,7 +84,7 @@ TEST_CASE("XLWorkbook Tests", "[XLWorkbook]") {
 
     SECTION("Sheet Names and Types") {
         XLDocument doc;
-        doc.create("./testXLWorkbookNames.xlsx");
+        doc.create("./testXLWorkbookNames.xlsx", XLForceOverwrite);
         auto wb = doc.workbook();
 
         wb.addWorksheet("Data");

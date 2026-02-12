@@ -6,7 +6,7 @@ using namespace OpenXLSX;
 TEST_CASE("XLWorksheet Extended Tests", "[XLSheet]") {
     SECTION("Sheet Protection") {
         XLDocument doc;
-        doc.create("./testXLSheetProtection.xlsx");
+        doc.create("./testXLSheetProtection.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         REQUIRE(wks.sheetProtected() == false);
@@ -40,7 +40,7 @@ TEST_CASE("XLWorksheet Extended Tests", "[XLSheet]") {
 
     SECTION("Tab Properties") {
         XLDocument doc;
-        doc.create("./testXLTabProperties.xlsx");
+        doc.create("./testXLTabProperties.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.setColor(XLColor(255, 0, 0));
@@ -58,7 +58,7 @@ TEST_CASE("XLWorksheet Extended Tests", "[XLSheet]") {
 
     SECTION("Row/Column Formatting") {
         XLDocument doc;
-        doc.create("./testXLRowColFormat.xlsx");
+        doc.create("./testXLRowColFormat.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         // Set row format
