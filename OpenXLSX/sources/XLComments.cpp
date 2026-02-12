@@ -492,9 +492,9 @@ bool XLComments::set(std::string const& cellRef, std::string const& commentText,
 
         {
             constexpr const uint16_t leftColOffset = 1;
-            constexpr const uint16_t widthCols = 2;
+            constexpr const uint16_t widthCols = 4; // Increased from 2
             constexpr const uint16_t topRowOffset = 1;
-            constexpr const uint16_t heightRows = 2;
+            constexpr const uint16_t heightRows = 6; // Increased from 2
 
             uint16_t anchorLeftCol, anchorRightCol;
             if( OpenXLSX::MAX_COLS - destCol > leftColOffset + widthCols ) {
@@ -538,11 +538,35 @@ bool XLComments::set(std::string const& cellRef, std::string const& commentText,
                 + std::to_string(anchorBottomOffsetInCell)
             );
         }
-        clientData.setAutoFill(false);
+        clientData.setAutoFill(true);
         clientData.setTextVAlign(XLShapeTextVAlign::Top);
         clientData.setTextHAlign(XLShapeTextHAlign::Left);
         clientData.setRow(destRow - 1);    // row and column are zero-indexed in XLShapeClientData
         clientData.setColumn(destCol - 1); // ..
+
+        // Force a v:textbox child if missing, and set its style for auto-fit
+        XMLNode shapeNode = cShape.m_shapeNode; // Hack: accessing private member for efficiency or use shapeNode helper
+        XMLNode textbox = shapeNode.child("v:textbox");
+        if (textbox.empty()) {
+            textbox = shapeNode.prepend_child("v:textbox");
+            shapeNode.insert_child_before(pugi::node_pcdata, textbox).set_value("\n\t\t");
+        }
+        appendAndSetAttribute(textbox, "style", "mso-direction-alt:auto;mso-fit-shape-to-text:t");
+        if (textbox.child("div").empty()) {
+            XMLNode div = textbox.append_child("div");
+            appendAndSetAttribute(div, "style", "text-align:left");
+        }
+
+        // Standard Excel styling for comments
+        if (shapeNode.attribute("o:insetmode").empty())
+            shapeNode.append_attribute("o:insetmode").set_value("auto");
+
+        // Removed shadow as requested
+
+        if (shapeNode.child("v:path").empty()) {
+            XMLNode path = shapeNode.append_child("v:path");
+            path.append_attribute("o:connecttype").set_value("rect");
+        }
 
 	// 	<v:shadow on="t" obscured="t" color="black"/>
 	// 	<v:fill o:detectmouseclick="t" type="solid" color2="#00003f"/>
