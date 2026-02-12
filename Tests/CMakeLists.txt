@@ -28,12 +28,16 @@ target_sources(OpenXLSXTests
         testXLComments.cpp
         testXLDateTime.cpp
         testXLFormula.cpp
+        testXLIntegration.cpp
         testXLMergeCells.cpp
         testXLRow.cpp
         testXLSheet.cpp
         testXLSheetExtended.cpp
         testXLSharedStrings.cpp
         testXLStyles.cpp
+        testXLStylesIntegration.cpp
+        testXLDrawingTables.cpp
+        testXLTables.cpp
         testXLWorkbookProperties.cpp
         )
 
