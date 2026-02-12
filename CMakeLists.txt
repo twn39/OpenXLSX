@@ -30,6 +30,14 @@ option(OPENXLSX_BUILD_SAMPLES "Build sample programs" ON)
 option(OPENXLSX_BUILD_TESTS "Build and run library tests" ON)
 option(OPENXLSX_BUILD_BENCHMARKS "Build and run library benchmarks" OFF)
 option(OPENXLSX_ENABLE_LIBZIP "Enable using libzip" OFF)
+option(OPENXLSX_ENABLE_COVERAGE "Enable code coverage reporting" OFF)
+
+if(OPENXLSX_ENABLE_COVERAGE)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        add_compile_options(--coverage)
+        add_link_options(--coverage)
+    endif()
+endif()
 
 #=======================================================================================================================
 # External Libraries

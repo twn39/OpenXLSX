@@ -24,10 +24,17 @@ target_sources(OpenXLSXTests
         testXLCellValue.cpp
         testXLCellValueProxy.cpp
         testXLColor.cpp
+        testXLColumn.cpp
+        testXLComments.cpp
         testXLDateTime.cpp
         testXLFormula.cpp
+        testXLMergeCells.cpp
         testXLRow.cpp
         testXLSheet.cpp
+        testXLSheetExtended.cpp
+        testXLSharedStrings.cpp
+        testXLStyles.cpp
+        testXLWorkbookProperties.cpp
         )
 
 target_link_libraries(OpenXLSXTests
