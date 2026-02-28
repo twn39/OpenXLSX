@@ -1,5 +1,7 @@
 # OpenXLSX
 
+[![OpenXLSX CI](https://github.com/twn39/OpenXLSX/actions/workflows/ci.yml/badge.svg)](https://github.com/twn39/OpenXLSX/actions/workflows/ci.yml)
+
 OpenXLSX is a high-performance C++ library for reading, writing, creating, and modifying Microsoft Excel® files in the `.xlsx` format. It is designed to be fast, cross-platform, and has minimal external dependencies.
 
 ## 🚀 Key Features
@@ -48,7 +50,7 @@ The recommended way to use OpenXLSX is via CMake's `FetchContent`:
 include(FetchContent)
 FetchContent_Declare(
   OpenXLSX
-  GIT_REPOSITORY https://github.com/troldal/OpenXLSX.git
+  GIT_REPOSITORY https://github.com/twn39/OpenXLSX.git
   GIT_TAG        master # Or a specific tag
 )
 FetchContent_MakeAvailable(OpenXLSX)

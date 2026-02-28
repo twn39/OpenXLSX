@@ -15,7 +15,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
             MM
            _MM_
 
-  Copyright (c) 2022, Kenneth Troldal Balslev
+  Copyright (c) 2026, Curry Tang
 
   All rights reserved.
 
