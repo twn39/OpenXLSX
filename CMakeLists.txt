@@ -37,7 +37,7 @@ set(BUILD_TESTING_OLD ${BUILD_TESTING})
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 
 # Set up zlib-ng
-FetchContent_Declare(zlib_ng GIT_REPOSITORY https://github.com/zlib-ng/zlib-ng.git GIT_TAG 2.2.4)
+FetchContent_Declare(zlib_ng GIT_REPOSITORY https://github.com/zlib-ng/zlib-ng.git GIT_TAG 2.3.3)
 set(ZLIB_COMPAT ON CACHE BOOL "Enable zlib compatibility mode")
 set(ZLIB_ENABLE_SIMD ON CACHE BOOL "Enable SIMD optimizations")
 set(ZLIBNG_ENABLE_TESTS OFF CACHE BOOL "Disable zlib-ng tests")
@@ -51,8 +51,8 @@ if(NOT zlib_ng_POPULATED)
 endif()
 
 # Set up minizip-ng
-FetchContent_Declare(minizip_ng GIT_REPOSITORY https://github.com/zlib-ng/minizip-ng.git GIT_TAG 4.0.8)
-set(MZ_COMPAT ON CACHE BOOL "Enable zlib compatibility mode")
+FetchContent_Declare(minizip_ng GIT_REPOSITORY https://github.com/zlib-ng/minizip-ng.git GIT_TAG 4.1.0)
+set(MZ_COMPAT OFF CACHE BOOL "Disable legacy zlib compatibility layer")
 set(MZ_ZLIB ON CACHE BOOL "Enable ZLIB support")
 set(MZ_BZIP2 OFF CACHE BOOL "Disable BZIP2 support")
 set(MZ_LZMA OFF CACHE BOOL "Disable LZMA support")
