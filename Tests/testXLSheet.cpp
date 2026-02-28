@@ -12,7 +12,7 @@ TEST_CASE("XLSheet Tests", "[XLSheet]")
     SECTION("XLSheet Visibility")
     {
         XLDocument doc;
-        doc.create("./testXLSheet1.xlsx");
+        doc.create("./testXLSheet1.xlsx", XLForceOverwrite);
 
         auto wks1 = doc.workbook().sheet(1);
         wks1.setName("VeryHidden");
@@ -45,7 +45,7 @@ TEST_CASE("XLSheet Tests", "[XLSheet]")
     SECTION("XLSheet Tab Color")
     {
         XLDocument doc;
-        doc.create("./testXLSheet2.xlsx");
+        doc.create("./testXLSheet2.xlsx", XLForceOverwrite);
 
         auto wks1 = doc.workbook().sheet(1);
         wks1.setName("Sheet1");

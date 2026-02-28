@@ -13,7 +13,7 @@ TEST_CASE("XLCellValueProxy Tests", "[XLCellValue]")
     SECTION("XLCellValueProxy conversion to XLCellValue (XLCellValue constructor)")
     {
         XLDocument doc;
-        doc.create("./testXLCellValueProxy.xlsx");
+        doc.create("./testXLCellValueProxy.xlsx", XLForceOverwrite);
         XLWorksheet wks = doc.workbook().sheet(1);
 
         {
@@ -65,7 +65,7 @@ TEST_CASE("XLCellValueProxy Tests", "[XLCellValue]")
     {
         XLCellValue value;
         XLDocument  doc;
-        doc.create("./testXLCellValueProxy.xlsx");
+        doc.create("./testXLCellValueProxy.xlsx", XLForceOverwrite);
         XLWorksheet wks = doc.workbook().sheet(1);
 
         wks.cell("A1").value() = "Hello OpenXLSX!";
@@ -145,7 +145,7 @@ TEST_CASE("XLCellValueProxy Tests", "[XLCellValue]")
     {
         XLCellValue value;
         XLDocument  doc;
-        doc.create("./testXLCellValueProxy.xlsx");
+        doc.create("./testXLCellValueProxy.xlsx", XLForceOverwrite);
         XLWorksheet wks = doc.workbook().sheet(1);
 
         wks.cell("A1").value() = "Hello OpenXLSX!";
@@ -207,7 +207,7 @@ TEST_CASE("XLCellValueProxy Tests", "[XLCellValue]")
     {
         XLCellValue value;
         XLDocument  doc;
-        doc.create("./testXLCellValueProxy.xlsx");
+        doc.create("./testXLCellValueProxy.xlsx", XLForceOverwrite);
         XLWorksheet wks = doc.workbook().sheet(1);
 
         wks.cell("A2").value().set("Hello OpenXLSX!");

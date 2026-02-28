@@ -8,7 +8,7 @@ TEST_CASE("XLComments Tests", "[XLComments]")
     SECTION("Basic Comment Operations")
     {
         XLDocument doc;
-        doc.create("./testXLComments.xlsx");
+        doc.create("./testXLComments.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         REQUIRE(wks.hasComments() == false);
@@ -34,7 +34,7 @@ TEST_CASE("XLComments Tests", "[XLComments]")
     SECTION("Multiple Authors and Comments")
     {
         XLDocument doc;
-        doc.create("./testXLCommentsMultiple.xlsx");
+        doc.create("./testXLCommentsMultiple.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto&    comments = wks.comments();
@@ -57,7 +57,7 @@ TEST_CASE("XLComments Tests", "[XLComments]")
     SECTION("Comment Shape Properties")
     {
         XLDocument doc;
-        doc.create("./testXLCommentsShapes.xlsx");
+        doc.create("./testXLCommentsShapes.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.comments().set("D4", "Shape test");

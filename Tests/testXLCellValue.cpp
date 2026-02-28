@@ -184,7 +184,7 @@ TEST_CASE("XLCellValue Tests", "[XLCellValue]")
     {
         XLCellValue value;
         XLDocument  doc;
-        doc.create("./testXLCellValue.xlsx");
+        doc.create("./testXLCellValue.xlsx", XLForceOverwrite);
         XLWorksheet wks = doc.workbook().sheet(1);
 
         wks.cell("A1").value() = "Hello OpenXLSX!";

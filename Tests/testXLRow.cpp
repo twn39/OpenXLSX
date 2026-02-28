@@ -16,7 +16,7 @@ TEST_CASE("XLRow Tests", "[XLRow]")
     SECTION("XLRow")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto row_3 = wks.row(3);
@@ -72,7 +72,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (vector<int>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::vector<int>{1, 2, 3, 4, 5};
@@ -99,7 +99,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (vector<double>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::vector<double>{1.1, 2.2, 3.3, 4.4, 5.5};
@@ -126,7 +126,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (vector<bool>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::vector<bool>{true, false, true, false, true};
@@ -155,7 +155,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (vector<std::string>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::vector<std::string>{"This", "is", "a", "test."};
@@ -182,7 +182,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (vector<XLCellValue>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::vector<XLCellValue>{1, 2, 3, 4, 5};
@@ -209,7 +209,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (list<int>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::list<int>{1, 2, 3, 4, 5};
@@ -236,7 +236,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (list<bool>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::list<bool>{true, false, true, false, true};
@@ -265,7 +265,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (list<double>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::list<double>{1.1, 2.2, 3.3, 4.4, 5.5};
@@ -292,7 +292,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (list<std::string>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::list<std::string>{"This", "is", "a", "test."};
@@ -319,7 +319,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (list<XLCellValue>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::list<XLCellValue>{1, 2, 3, 4, 5};
@@ -346,7 +346,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (deque<int>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::deque<int>{1, 2, 3, 4, 5};
@@ -373,7 +373,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (deque<bool>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::deque<bool>{true, false, true, false, true};
@@ -402,7 +402,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (deque<double>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::deque<double>{1.1, 2.2, 3.3, 4.4, 5.5};
@@ -429,7 +429,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (deque<std::string>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::deque<std::string>{"This", "is", "a", "test."};
@@ -456,7 +456,7 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
     SECTION("XLRowData (deque<XLCellValue>)")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto val1     = std::deque<XLCellValue>{1, 2, 3, 4, 5};
@@ -486,7 +486,7 @@ TEST_CASE("XLRowDataRange Tests", "[XLRowDataRange]")
     SECTION("XLRowDataRange")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto row   = wks.row(1);
@@ -549,7 +549,7 @@ TEST_CASE("XLRowDataRange Tests", "[XLRowDataRange]")
     SECTION("XLRowDataIterator")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto row   = wks.row(1);
@@ -585,7 +585,7 @@ TEST_CASE("XLRowIterator Tests", "[XLRowDataRange]")
     SECTION("XLRowIterator")
     {
         XLDocument doc;
-        doc.create("./testXLRow.xlsx");
+        doc.create("./testXLRow.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto range  = wks.rows(1, 3);

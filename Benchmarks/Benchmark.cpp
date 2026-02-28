@@ -1,249 +1,133 @@
-//
-// Created by Kenneth Balslev on 19/06/2020.
-//
-
-#pragma warning(push)
-#pragma warning(disable : 4244)
-
 #include <OpenXLSX.hpp>
-#include <benchmark/benchmark.h>
-#include <cstdint>
-#include <numeric>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/benchmark/catch_benchmark.hpp>
 #include <deque>
-#include <list>
+#include <fstream>
+#include <numeric>
+#include <vector>
 
 using namespace OpenXLSX;
 
-constexpr uint64_t rowCount = 1048576;
+// Using a slightly smaller row count for regular benchmarking to avoid excessive runtimes, 
+// but enough to show performance characteristics.
+constexpr uint64_t rowCount = 100000; 
 constexpr uint8_t  colCount = 8;
 
-/**
- * @brief
- * @param state
- */
-static void BM_WriteStrings(benchmark::State& state)    // NOLINT
+TEST_CASE("OpenXLSX Benchmarks", "[.benchmark]")
 {
-    XLDocument doc;
-    doc.create("./benchmark_strings.xlsx");
-    auto wks = doc.workbook().worksheet("Sheet1");
+    SECTION("Write Operations")
+    {
+        BENCHMARK("Write Strings")
+        {
+            XLDocument doc;
+            doc.create("./benchmark_strings.xlsx", XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            std::deque<XLCellValue> values(colCount, "OpenXLSX");
 
-    std::deque<XLCellValue> values(colCount, "OpenXLSX");
+            for (auto& row : wks.rows(rowCount)) row.values() = values;
 
-    for (auto _ : state)    // NOLINT
-        for (auto& row : wks.rows(rowCount)) row.values() = values;
+            doc.save();
+            doc.close();
+            return rowCount * colCount;
+        };
 
-    state.SetItemsProcessed(rowCount * colCount);
-    state.counters["items"] = state.items_processed();
+        BENCHMARK("Write Integers")
+        {
+            XLDocument doc;
+            doc.create("./benchmark_integers.xlsx", XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            std::vector<XLCellValue> values(colCount, 42);
 
-    doc.save();
-    doc.close();
-}
+            for (auto& row : wks.rows(rowCount)) row.values() = values;
 
-BENCHMARK(BM_WriteStrings)->Unit(benchmark::kMillisecond);    // NOLINT
+            doc.save();
+            doc.close();
+            return rowCount * colCount;
+        };
 
-/**
- * @brief
- * @param state
- */
-static void BM_WriteIntegers(benchmark::State& state)    // NOLINT
-{
-    XLDocument doc;
-    doc.create("./benchmark_integers.xlsx");
-    auto wks    = doc.workbook().worksheet("Sheet1");
+        BENCHMARK("Write Floats")
+        {
+            XLDocument doc;
+            doc.create("./benchmark_floats.xlsx", XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            std::vector<XLCellValue> values(colCount, 3.14);
 
-    std::vector<XLCellValue> values(colCount, 42);
+            for (auto& row : wks.rows(rowCount)) row.values() = values;
 
-    for (auto _ : state)    // NOLINT
-        for (auto& row : wks.rows(rowCount)) row.values() = values;
+            doc.save();
+            doc.close();
+            return rowCount * colCount;
+        };
 
-    state.SetItemsProcessed(rowCount * colCount);
-    state.counters["items"] = state.items_processed();
+        BENCHMARK("Write Bools")
+        {
+            XLDocument doc;
+            doc.create("./benchmark_bools.xlsx", XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            std::vector<XLCellValue> values(colCount, true);
 
-    doc.save();
-    doc.close();
-}
+            for (auto& row : wks.rows(rowCount)) row.values() = values;
 
-BENCHMARK(BM_WriteIntegers)->Unit(benchmark::kMillisecond);    // NOLINT
-
-/**
- * @brief
- * @param state
- */
-static void BM_WriteFloats(benchmark::State& state)    // NOLINT
-{
-    XLDocument doc;
-    doc.create("./benchmark_floats.xlsx");
-    auto wks    = doc.workbook().worksheet("Sheet1");
-
-    std::vector<XLCellValue> values(colCount, 3.14);
-
-    for (auto _ : state)    // NOLINT
-        for (auto& row : wks.rows(rowCount)) row.values() = values;
-
-    state.SetItemsProcessed(rowCount * colCount);
-    state.counters["items"] = state.items_processed();
-
-    doc.save();
-    doc.close();
-}
-
-BENCHMARK(BM_WriteFloats)->Unit(benchmark::kMillisecond);    // NOLINT
-
-/**
- * @brief
- * @param state
- */
-static void BM_WriteBools(benchmark::State& state)    // NOLINT
-{
-    XLDocument doc;
-    doc.create("./benchmark_bools.xlsx");
-    auto wks    = doc.workbook().worksheet("Sheet1");
-
-    std::vector<XLCellValue> values(colCount, true);
-
-    for (auto _ : state)    // NOLINT
-        for (auto& row : wks.rows(rowCount)) row.values() = values;
-
-    state.SetItemsProcessed(rowCount * colCount);
-    state.counters["items"] = state.items_processed();
-
-    doc.save();
-    doc.close();
-}
-
-BENCHMARK(BM_WriteBools)->Unit(benchmark::kMillisecond);    // NOLINT
-
-/**
- * @brief
- * @param state
- */
-static void BM_ReadStrings(benchmark::State& state)    // NOLINT
-{
-    XLDocument doc;
-    doc.open("./benchmark_strings.xlsx");
-    auto     wks    = doc.workbook().worksheet("Sheet1");
-    uint64_t result = 0;
-    std::vector<std::string> values;
-
-    for (auto _ : state) {    // NOLINT
-        for (auto& row : wks.rows()) {
-            values = std::vector<std::string>(row.values());
-            result += std::count_if(values.begin(), values.end(), [](const std::string& v) {
-//                return v.type() != XLValueType::Empty;
-                return !v.empty();
-            });
-        }
-        benchmark::DoNotOptimize(result);
-        benchmark::ClobberMemory();
+            doc.save();
+            doc.close();
+            return rowCount * colCount;
+        };
     }
 
-    state.SetItemsProcessed(rowCount * colCount);
-    state.counters["items"] = state.items_processed();
-
-    doc.close();
-}
-
-BENCHMARK(BM_ReadStrings)->Unit(benchmark::kMillisecond);    // NOLINT
-
-/**
- * @brief
- * @param state
- */
-static void BM_ReadIntegers(benchmark::State& state)    // NOLINT
-{
-    XLDocument doc;
-    doc.open("./benchmark_integers.xlsx");
-    auto     wks    = doc.workbook().worksheet("Sheet1");
-    uint64_t result = 0;
-    std::vector<XLCellValue> values;
-
-    for (auto _ : state) {    // NOLINT
-        for (auto& row : wks.rows()) {
-            values = row.values();
-            result += std::accumulate(values.begin(),
-                                      values.end(),
-                                      0,
-                                      [](uint64_t a, XLCellValue& b) { return a + b.get<uint64_t>(); });
-
+    SECTION("Read Operations")
+    {
+        // Prerequisites for read benchmarks (ensure files exist)
+        {
+            XLDocument doc;
+            if (!std::ifstream("./benchmark_strings.xlsx")) {
+                doc.create("./benchmark_strings.xlsx", XLForceOverwrite);
+                auto wks = doc.workbook().worksheet("Sheet1");
+                std::deque<XLCellValue> values(colCount, "OpenXLSX");
+                for (auto& row : wks.rows(rowCount)) row.values() = values;
+                doc.save();
+            }
+            if (!std::ifstream("./benchmark_integers.xlsx")) {
+                doc.create("./benchmark_integers.xlsx", XLForceOverwrite);
+                auto wks = doc.workbook().worksheet("Sheet1");
+                std::vector<XLCellValue> values(colCount, 42);
+                for (auto& row : wks.rows(rowCount)) row.values() = values;
+                doc.save();
+            }
         }
 
-        benchmark::DoNotOptimize(result);
-        benchmark::ClobberMemory();
+        BENCHMARK("Read Strings")
+        {
+            XLDocument doc;
+            doc.open("./benchmark_strings.xlsx");
+            auto     wks    = doc.workbook().worksheet("Sheet1");
+            uint64_t result = 0;
+
+            for (auto& row : wks.rows()) {
+                std::vector<std::string> values = std::vector<std::string>(row.values());
+                result += std::count_if(values.begin(), values.end(), [](const std::string& v) {
+                    return !v.empty();
+                });
+            }
+            doc.close();
+            return result;
+        };
+
+        BENCHMARK("Read Integers")
+        {
+            XLDocument doc;
+            doc.open("./benchmark_integers.xlsx");
+            auto     wks    = doc.workbook().worksheet("Sheet1");
+            uint64_t result = 0;
+
+            for (auto& row : wks.rows()) {
+                std::vector<XLCellValue> values = row.values();
+                result += std::accumulate(values.begin(),
+                                          values.end(),
+                                          0ULL,
+                                          [](uint64_t a, const XLCellValue& b) { return a + b.get<uint64_t>(); });
+            }
+            doc.close();
+            return result;
+        };
     }
-
-    state.SetItemsProcessed(rowCount * colCount);
-    state.counters["items"] = state.items_processed();
-
-    doc.close();
 }
-
-BENCHMARK(BM_ReadIntegers)->Unit(benchmark::kMillisecond);    // NOLINT
-
-/**
- * @brief
- * @param state
- */
-static void BM_ReadFloats(benchmark::State& state)    // NOLINT
-{
-    XLDocument doc;
-    doc.open("./benchmark_floats.xlsx");
-    auto        wks    = doc.workbook().worksheet("Sheet1");
-    long double result = 0;
-    std::vector<XLCellValue> values;
-
-    for (auto _ : state) {    // NOLINT
-        for (auto& row : wks.rows()) {
-            values = row.values();
-            result += std::accumulate(values.begin(),
-                                      values.end(),
-                                      0,
-                                      [](uint64_t a, XLCellValue& b) { return a + b.get<double>(); });
-
-        }
-
-        benchmark::DoNotOptimize(result);
-        benchmark::ClobberMemory();
-    }
-
-    state.SetItemsProcessed(rowCount * colCount);
-    state.counters["items"] = state.items_processed();
-
-    doc.close();
-}
-
-BENCHMARK(BM_ReadFloats)->Unit(benchmark::kMillisecond);    // NOLINT
-
-/**
- * @brief
- * @param state
- */
-static void BM_ReadBools(benchmark::State& state)    // NOLINT
-{
-    XLDocument doc;
-    doc.open("./benchmark_bools.xlsx");
-    auto     wks    = doc.workbook().worksheet("Sheet1");
-    uint64_t result = 0;
-    std::vector<XLCellValue> values;
-
-    for (auto _ : state) {    // NOLINT
-        for (auto& row : wks.rows()) {
-            values = row.values();
-            result += std::accumulate(values.begin(),
-                                      values.end(),
-                                      0,
-                                      [](uint64_t a, XLCellValue& b) { return a + b.get<bool>(); });
-        }
-
-        benchmark::DoNotOptimize(result);
-        benchmark::ClobberMemory();
-    }
-
-    state.SetItemsProcessed(rowCount * colCount);
-    state.counters["items"] = state.items_processed();
-
-    doc.close();
-}
-
-BENCHMARK(BM_ReadBools)->Unit(benchmark::kMillisecond);    // NOLINT
-
-#pragma warning(pop)

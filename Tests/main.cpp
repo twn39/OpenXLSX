@@ -15,7 +15,7 @@ void PrepareDocument(std::string name)
 {
     XLDocument doc;
     std::remove(name.c_str());
-    doc.create(name);
+    doc.create(name, XLForceOverwrite);
     doc.save();
     doc.close();
 }

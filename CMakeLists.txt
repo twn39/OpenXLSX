@@ -15,16 +15,29 @@ option(OPENXLSX_ENABLE_LTO "Enable Link-Time Optimization (LTO/IPO) if supported
 
 set(OPENXLSX_LIBRARY_TYPE "STATIC" CACHE STRING "Library type (STATIC or SHARED)")
 
-# External Libraries via FetchContent
+#=======================================================================================================================
+# External Libraries
+#=======================================================================================================================
 include(FetchContent)
+
+# Set up fast_float
 FetchContent_Declare(fast_float GIT_REPOSITORY https://github.com/fastfloat/fast_float.git GIT_TAG v8.2.3)
 FetchContent_MakeAvailable(fast_float)
+
+# Set up fmt
 FetchContent_Declare(fmt GIT_REPOSITORY https://github.com/fmtlib/fmt.git GIT_TAG 12.1.0)
 FetchContent_MakeAvailable(fmt)
+
+# Set up Catch2 (if tests or benchmarks are enabled)
+if(OPENXLSX_BUILD_TESTS OR OPENXLSX_BUILD_BENCHMARKS)
+    FetchContent_Declare(Catch2 GIT_REPOSITORY https://github.com/catchorg/Catch2.git GIT_TAG v3.13.0)
+    FetchContent_MakeAvailable(Catch2)
+endif()
 
 # Third-party subdirectories
 set(PUGIXML_XPATH OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/pugixml EXCLUDE_FROM_ALL)
+
 set(NOWIDE_INSTALL OFF CACHE BOOL "" FORCE)
 set(NOWIDE_TESTING OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/nowide EXCLUDE_FROM_ALL)
@@ -97,9 +110,6 @@ endif()
 # TESTS (Merged configuration)
 #=======================================================================================================================
 if(OPENXLSX_BUILD_TESTS)
-    FetchContent_Declare(Catch2 GIT_REPOSITORY https://github.com/catchorg/Catch2.git GIT_TAG v3.13.0)
-    FetchContent_MakeAvailable(Catch2)
-
     file(GLOB TEST_SOURCES Tests/testXL*.cpp Tests/main.cpp)
     add_executable(OpenXLSXTests ${TEST_SOURCES})
     target_link_libraries(OpenXLSXTests PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
@@ -115,10 +125,11 @@ if(OPENXLSX_BUILD_TESTS)
 endif()
 
 #=======================================================================================================================
-# BENCHMARKS (Subdirectory configuration)
+# BENCHMARKS (Merged configuration using Catch2)
 #=======================================================================================================================
 if(OPENXLSX_BUILD_BENCHMARKS)
-    add_subdirectory(Benchmarks)
+    add_executable(OpenXLSXBenchmark Benchmarks/Benchmark.cpp)
+    target_link_libraries(OpenXLSXBenchmark PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
 endif()
 
 #=======================================================================================================================

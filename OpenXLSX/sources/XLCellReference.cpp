@@ -260,8 +260,8 @@ std::string XLCellReference::rowAsString(uint32_t row)
 #else
     std::string result;
     while (row != 0) {
-        int rem = row % 10;
-        result += (rem > 9) ? (rem - 10) + 'a' : rem + '0';
+        uint32_t rem = row % 10;
+        result += static_cast<char>((rem > 9) ? (rem - 10) + 'a' : rem + '0');
         row = row / 10;
     }
 
@@ -281,7 +281,7 @@ uint32_t XLCellReference::rowAsNumber(const std::string& row)
     std::from_chars(row.data(), row.data() + row.size(), value);    // NOLINT
     return value;
 #else
-    return stoul(row);
+    return static_cast<uint32_t>(stoul(row));
 #endif
 }
 

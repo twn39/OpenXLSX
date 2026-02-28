@@ -11,7 +11,7 @@ using namespace OpenXLSX;
 TEST_CASE("XLCellRange Tests", "[XLCellRange]")
 {
     XLDocument doc;
-    doc.create("./testXLCellRange.xlsx");
+    doc.create("./testXLCellRange.xlsx", XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     SECTION("Constructor")

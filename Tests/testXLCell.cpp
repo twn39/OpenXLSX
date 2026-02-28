@@ -31,7 +31,7 @@ TEST_CASE("XLCell Tests", "[XLCell]")
     SECTION("Create from worksheet")
     {
         XLDocument doc;
-        doc.create("./testXLCell.xlsx");
+        doc.create("./testXLCell.xlsx", XLForceOverwrite);
         XLWorksheet wks  = doc.workbook().sheet(1);
         auto        cell = wks.cell("A1");
         cell.value()     = 42;
@@ -45,7 +45,7 @@ TEST_CASE("XLCell Tests", "[XLCell]")
     SECTION("Copy constructor")
     {
         XLDocument doc;
-        doc.create("./testXLCell.xlsx");
+        doc.create("./testXLCell.xlsx", XLForceOverwrite);
         XLWorksheet wks  = doc.workbook().sheet(1);
         auto        cell = wks.cell("A1");
         cell.value()     = 42;
@@ -61,7 +61,7 @@ TEST_CASE("XLCell Tests", "[XLCell]")
     SECTION("Move constructor")
     {
         XLDocument doc;
-        doc.create("./testXLCell.xlsx");
+        doc.create("./testXLCell.xlsx", XLForceOverwrite);
         XLWorksheet wks  = doc.workbook().sheet(1);
         auto        cell = wks.cell("A1");
         cell.value()     = 42;
@@ -77,7 +77,7 @@ TEST_CASE("XLCell Tests", "[XLCell]")
     SECTION("Copy assignment operator")
     {
         XLDocument doc;
-        doc.create("./testXLCell.xlsx");
+        doc.create("./testXLCell.xlsx", XLForceOverwrite);
         XLWorksheet wks  = doc.workbook().sheet(1);
         auto        cell = wks.cell("A1");
         cell.value()     = 42;
@@ -94,7 +94,7 @@ TEST_CASE("XLCell Tests", "[XLCell]")
     SECTION("Move assignment operator")
     {
         XLDocument doc;
-        doc.create("./testXLCell.xlsx");
+        doc.create("./testXLCell.xlsx", XLForceOverwrite);
         XLWorksheet wks  = doc.workbook().sheet(1);
         auto        cell = wks.cell("A1");
         cell.value()     = 42;
@@ -111,7 +111,7 @@ TEST_CASE("XLCell Tests", "[XLCell]")
     SECTION("Setters and Getters")
     {
         XLDocument doc;
-        doc.create("./testXLCell.xlsx");
+        doc.create("./testXLCell.xlsx", XLForceOverwrite);
         XLWorksheet wks  = doc.workbook().sheet(1);
         auto        cell = wks.cell("A1");
         cell.formula().set("=1+1");
@@ -130,7 +130,7 @@ TEST_CASE("XLCell Tests", "[XLCell]")
     SECTION("Relational operators")
     {
         auto doc = XLDocument();
-        doc.create("./testXLCell.xlsx");
+        doc.create("./testXLCell.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto cell1 = wks.cell("B2");
@@ -146,7 +146,7 @@ TEST_CASE("XLCell Tests", "[XLCell]")
     SECTION("Offset function")
     {
         auto doc = XLDocument();
-        doc.create("./testXLCell.xlsx");
+        doc.create("./testXLCell.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto cell1    = wks.cell("B2");

@@ -109,7 +109,7 @@ TEST_CASE("XLFormula Tests", "[XLFormula]")
     SECTION("FormulaProxy")
     {
         XLDocument doc;
-        doc.create("./testXLFormula.xlsx");
+        doc.create("./testXLFormula.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.cell("A1").formula() = "=1+1";

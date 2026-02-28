@@ -6,12 +6,14 @@ OpenXLSX is a high-performance C++ library for reading, writing, creating, and m
 
 - **Modern C++**: Built with C++17, ensuring type safety and modern abstractions.
 - **High Performance**: Optimized for speed, capable of processing millions of cells per second.
-- **Comprehensive Image Support**: (NEW) Insert and read images (PNG/JPEG) with automatic dimension detection and aspect ratio preservation.
+- **LTO Support**: Optional Link-Time Optimization (LTO/IPO) for maximum execution performance.
+- **Comprehensive Image Support**: Insert and read images (PNG/JPEG) with automatic dimension detection and aspect ratio preservation.
 - **Rich Formatting**: Support for styles, fonts, fills, borders, and conditional formatting.
 - **Worksheet Management**: Create, clone, rename, and delete worksheets with validation.
-- **Data Integrity**: Enforces OOXML standards, including strict XML declarations and metadata handling for seamless Excel compatibility.
+- **Data Integrity**: Enforces OOXML standards, including strict XML declarations and metadata handling.
 - **Advanced Iterators**: Efficient cell and row iterators that minimize XML overhead.
-- **Modern Testing**: Integrated with the latest **Catch2 v3.13.0** for robust verification.
+- **Modern Testing**: Integrated with **Catch2 v3.13.0** for robust verification.
+- **Simplified Build**: A unified single-root CMake configuration for easy integration.
 
 ## 🛠 Quick Start
 
@@ -23,18 +25,12 @@ using namespace OpenXLSX;
 
 int main() {
     XLDocument doc;
-    doc.create("Example.xlsx");
+    doc.create("Example.xlsx", XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     // Writing data
     wks.cell("A1").value() = "Hello, OpenXLSX!";
     wks.cell("B1").value() = 42;
-
-    // (NEW) Inserting an image at B2 with 50% scaling
-    // auto& drawing = wks.drawing();
-    // std::string imagePath = doc.addImage("my_image.png", raw_binary_data);
-    // auto rel = drawing.relationships().addRelationship(XLRelationshipType::Image, "../media/my_image.png");
-    // drawing.addScaledImage(rel.id(), "my_image.png", "Description", raw_binary_data, 1, 1, 0.5);
 
     doc.save();
     return 0;
@@ -43,47 +39,48 @@ int main() {
 
 ## 📦 Installation & Build
 
-OpenXLSX uses CMake (3.15+) as its primary build system.
+OpenXLSX uses a simplified CMake (3.15+) build system.
 
 ### Integration (FetchContent)
-The easiest way to use OpenXLSX is via CMake's `FetchContent`:
+The recommended way to use OpenXLSX is via CMake's `FetchContent`:
 
 ```cmake
 include(FetchContent)
 FetchContent_Declare(
   OpenXLSX
   GIT_REPOSITORY https://github.com/troldal/OpenXLSX.git
-  GIT_TAG        master # Or a specific commit
+  GIT_TAG        master # Or a specific tag
 )
 FetchContent_MakeAvailable(OpenXLSX)
 target_link_libraries(my_project PRIVATE OpenXLSX::OpenXLSX)
 ```
 
 ### Manual Build
+To build the library and tests locally:
 ```bash
 mkdir build && cd build
-cmake ..
-cmake --build . --config Release
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build . -j8
 ```
 
 ## 🧪 Testing
-The library features a comprehensive test suite powered by **Catch2 v3.13.0**.
-To run the tests:
+The library features a comprehensive test suite. To run the tests after building:
 ```bash
-./build/output/OpenXLSXTests
+# From the build directory
+./OpenXLSXTests
 ```
 
 ## ⚠️ Development Conventions
 
 ### Unicode / UTF-8
-**All string input and output must be in UTF-8 encoding.** OpenXLSX does not perform internal encoding conversion. Ensure your source files are saved in UTF-8 to avoid issues with hardcoded literals.
+**All string input and output must be in UTF-8 encoding.** OpenXLSX does not perform internal encoding conversion. Ensure your source files are saved in UTF-8.
 
 ### Indexing
 - **Sheet Indexing**: 1-based (consistent with Excel).
 - **Row/Column Indexing**: Generally 1-based where it follows Excel conventions.
 
-### Performance & Memory
-OpenXLSX uses a DOM-based XML parser (PugiXML) for speed. For extremely large spreadsheets, memory consumption can be significant. A "compact mode" is available via CMake (`ENABLE_COMPACT_MODE`) to reduce memory footprint at the cost of some performance.
+### Performance & Optimizations
+The build system includes platform-specific optimizations for `Release` builds (e.g., `/O2` on MSVC, `-O3` on GCC/Clang) and supports **LTO (Link-Time Optimization)** which can be toggled via `OPENXLSX_ENABLE_LTO`.
 
 ## 🤝 Credits
 - [PugiXML](https://pugixml.org/) - Fast XML parsing.
@@ -94,14 +91,13 @@ OpenXLSX uses a DOM-based XML parser (PugiXML) for speed. For extremely large sp
 ---
 
 <details>
-<summary><b>Click to view Detailed Change Log</b></summary>
+<summary><b>Detailed Change Log (Feb 2026)</b></summary>
 
-### 2026-02-28: Major Update
-- **Image Support**: Implemented `XLDrawing` and `XLDrawingItem` for modern Spreadsheet Drawing ML.
-- **Dimension Detection**: Added automatic PNG/JPEG dimension parsing in `XLUtilities.hpp`.
-- **Scaling API**: Added `addScaledImage` to maintain original aspect ratios during insertion.
-- **Catch2 v3**: Upgraded test suite to version 3.13.0 using modern CMake integration.
-- **Excel Compatibility**: Fixed metadata persistence bugs in `[Content_Types].xml` and `.rels` files.
-- **Refactoring**: Standardized `XLXmlFile` data access and reorganized utility headers.
+### 2026-02-28: Major Refactor & Feature Update
+- **Unified Build System**: Consolidated all sub-module CMake configurations into a single root `CMakeLists.txt`.
+- **Optimization Suite**: Added LTO support and platform-specific Release optimizations (`/O2`, `-O3`, dead-code stripping).
+- **Image Support**: Implemented `XLDrawing` and aspect-ratio aware image insertion.
+- **Cleanup**: Removed deprecated `Examples`, legacy `Makefile.GNU`, and redundant config files.
+- **Enhanced Testing**: Merged test suite into main build flow with automatic test data handling.
 
 </details>
