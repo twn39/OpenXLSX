@@ -37,40 +37,37 @@ set(BUILD_TESTING_OLD ${BUILD_TESTING})
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 
 # Set up zlib-ng
+set(ZLIB_COMPAT ON CACHE BOOL "" FORCE)
+set(ZLIB_ENABLE_SIMD ON CACHE BOOL "" FORCE)
+set(ZLIBNG_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
+set(ZLIB_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(zlib_ng GIT_REPOSITORY https://github.com/zlib-ng/zlib-ng.git GIT_TAG 2.3.3)
-set(ZLIB_COMPAT ON CACHE BOOL "Enable zlib compatibility mode")
-set(ZLIB_ENABLE_SIMD ON CACHE BOOL "Enable SIMD optimizations")
-set(ZLIBNG_ENABLE_TESTS OFF CACHE BOOL "Disable zlib-ng tests")
-set(ZLIB_ENABLE_TESTS OFF CACHE BOOL "Disable zlib compat tests")
-set(WITH_GTEST OFF CACHE BOOL "Disable zlib-ng gtest")
-
-FetchContent_GetProperties(zlib_ng)
-if(NOT zlib_ng_POPULATED)
-    FetchContent_Populate(zlib_ng)
-    add_subdirectory(${zlib_ng_SOURCE_DIR} ${zlib_ng_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
+FetchContent_MakeAvailable(zlib_ng)
 
 # Set up minizip-ng
-FetchContent_Declare(minizip_ng GIT_REPOSITORY https://github.com/zlib-ng/minizip-ng.git GIT_TAG 4.1.0)
-set(MZ_COMPAT OFF CACHE BOOL "Disable legacy zlib compatibility layer")
-set(MZ_ZLIB ON CACHE BOOL "Enable ZLIB support")
-set(MZ_BZIP2 OFF CACHE BOOL "Disable BZIP2 support")
-set(MZ_LZMA OFF CACHE BOOL "Disable LZMA support")
-set(MZ_PKCRYPT OFF CACHE BOOL "Disable PKWARE encryption")
-set(MZ_WZAES OFF CACHE BOOL "Disable WinZAES encryption")
-set(MZ_LIBCOMP OFF CACHE BOOL "Disable Apple Compression Framework")
-set(MZ_ZSTD OFF CACHE BOOL "Disable ZSTD support")
-set(MZ_OPENSSL OFF CACHE BOOL "Disable OpenSSL support")
-set(MZ_ICONV OFF CACHE BOOL "Disable ICONV support")
-set(MZ_FETCH_LIBS OFF CACHE BOOL "Disable fetching third-party libs")
-set(MZ_BUILD_TESTS OFF CACHE BOOL "Disable minizip-ng tests")
-set(MZ_BUILD_UNIT_TESTS OFF CACHE BOOL "Disable minizip-ng unit tests")
+set(MZ_COMPAT ON CACHE BOOL "" FORCE)
+set(MZ_ZLIB ON CACHE BOOL "" FORCE)
+set(MZ_BZIP2 OFF CACHE BOOL "" FORCE)
+set(MZ_LZMA OFF CACHE BOOL "" FORCE)
+set(MZ_PKCRYPT OFF CACHE BOOL "" FORCE)
+set(MZ_WZAES OFF CACHE BOOL "" FORCE)
+set(MZ_LIBCOMP OFF CACHE BOOL "" FORCE)
+set(MZ_ZSTD OFF CACHE BOOL "" FORCE)
+set(MZ_OPENSSL OFF CACHE BOOL "" FORCE)
+set(MZ_ICONV OFF CACHE BOOL "" FORCE)
+set(MZ_FETCH_LIBS OFF CACHE BOOL "" FORCE)
+set(MZ_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(MZ_BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
 
-FetchContent_GetProperties(minizip_ng)
-if(NOT minizip_ng_POPULATED)
-    FetchContent_Populate(minizip_ng)
-    add_subdirectory(${minizip_ng_SOURCE_DIR} ${minizip_ng_BINARY_DIR} EXCLUDE_FROM_ALL)
+if(WIN32)
+    # Ensure minizip-ng finds our zlib-ng when MZ_COMPAT is ON
+    # zconf.h is often generated in the binary directory
+    set(ZLIB_INCLUDE_DIR ${zlib_ng_SOURCE_DIR} ${zlib_ng_BINARY_DIR} CACHE PATH "" FORCE)
+    set(ZLIB_LIBRARY zlib CACHE FILEPATH "" FORCE)
 endif()
+
+FetchContent_Declare(minizip_ng GIT_REPOSITORY https://github.com/zlib-ng/minizip-ng.git GIT_TAG 4.1.0)
+FetchContent_MakeAvailable(minizip_ng)
 
 # Restore testing flag
 set(BUILD_TESTING ${BUILD_TESTING_OLD} CACHE BOOL "" FORCE)
@@ -112,12 +109,13 @@ target_include_directories(OpenXLSX
         $<BUILD_INTERFACE:${minizip_ng_SOURCE_DIR}>
 )
 
-# On Windows, minizip might be named minizip_static or minizip
-if(TARGET minizip)
-    set(MINIZIP_TARGET minizip)
-elseif(TARGET minizip_static)
+# On some platforms, minizip-ng exports minizip_static instead of minizip
+if(TARGET minizip_static)
     set(MINIZIP_TARGET minizip_static)
+elseif(TARGET minizip)
+    set(MINIZIP_TARGET minizip)
 else()
+    # If no target found, use the standard name but ensure it's treated as a target
     set(MINIZIP_TARGET minizip)
 endif()
 
