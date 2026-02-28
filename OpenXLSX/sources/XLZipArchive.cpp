@@ -44,12 +44,20 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
  */
 
 // ===== External Includes ===== //
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
+
 #include <mz.h>
 #include <mz_strm.h>
 #include <mz_zip.h>
 #include <mz_zip_rw.h>
 #include <unordered_map>
 #include <vector>
+#include <cstring>
 #include <gsl/gsl>
 
 // ===== OpenXLSX Includes ===== //

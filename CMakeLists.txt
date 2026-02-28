@@ -32,12 +32,23 @@ FetchContent_MakeAvailable(fmt)
 FetchContent_Declare(GSL GIT_REPOSITORY https://github.com/microsoft/GSL.git GIT_TAG v4.2.1)
 FetchContent_MakeAvailable(GSL)
 
+# Disable testing for third-party dependencies
+set(BUILD_TESTING_OLD ${BUILD_TESTING})
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+
 # Set up zlib-ng
 FetchContent_Declare(zlib_ng GIT_REPOSITORY https://github.com/zlib-ng/zlib-ng.git GIT_TAG 2.2.4)
 set(ZLIB_COMPAT ON CACHE BOOL "Enable zlib compatibility mode")
 set(ZLIB_ENABLE_SIMD ON CACHE BOOL "Enable SIMD optimizations")
 set(ZLIBNG_ENABLE_TESTS OFF CACHE BOOL "Disable zlib-ng tests")
-FetchContent_MakeAvailable(zlib_ng)
+set(ZLIB_ENABLE_TESTS OFF CACHE BOOL "Disable zlib compat tests")
+set(WITH_GTEST OFF CACHE BOOL "Disable zlib-ng gtest")
+
+FetchContent_GetProperties(zlib_ng)
+if(NOT zlib_ng_POPULATED)
+    FetchContent_Populate(zlib_ng)
+    add_subdirectory(${zlib_ng_SOURCE_DIR} ${zlib_ng_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
 
 # Set up minizip-ng
 FetchContent_Declare(minizip_ng GIT_REPOSITORY https://github.com/zlib-ng/minizip-ng.git GIT_TAG 4.0.8)
@@ -54,7 +65,15 @@ set(MZ_ICONV OFF CACHE BOOL "Disable ICONV support")
 set(MZ_FETCH_LIBS OFF CACHE BOOL "Disable fetching third-party libs")
 set(MZ_BUILD_TESTS OFF CACHE BOOL "Disable minizip-ng tests")
 set(MZ_BUILD_UNIT_TESTS OFF CACHE BOOL "Disable minizip-ng unit tests")
-FetchContent_MakeAvailable(minizip_ng)
+
+FetchContent_GetProperties(minizip_ng)
+if(NOT minizip_ng_POPULATED)
+    FetchContent_Populate(minizip_ng)
+    add_subdirectory(${minizip_ng_SOURCE_DIR} ${minizip_ng_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+# Restore testing flag
+set(BUILD_TESTING ${BUILD_TESTING_OLD} CACHE BOOL "" FORCE)
 
 # Set up Catch2 (if tests or benchmarks are enabled)
 if(OPENXLSX_BUILD_TESTS OR OPENXLSX_BUILD_BENCHMARKS)
@@ -103,6 +122,13 @@ else()
 endif()
 
 target_link_libraries(OpenXLSX PUBLIC pugixml Microsoft.GSL::GSL ${MINIZIP_TARGET})
+
+if(WIN32)
+    # minizip-ng on Windows needs these for random number generation and OS operations
+    target_link_libraries(OpenXLSX PRIVATE Bcrypt User32 Advapi32)
+    target_compile_definitions(OpenXLSX PUBLIC _CRT_SECURE_NO_WARNINGS)
+endif()
+
 target_compile_definitions(OpenXLSX PUBLIC FMT_HEADER_ONLY)
 
 if (OPENXLSX_ENABLE_NOWIDE)
