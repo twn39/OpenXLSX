@@ -85,7 +85,7 @@ XLSharedStrings::XLSharedStrings(XLXmlData*                                xmlDa
             pugi_parse_settings);
 
     // Build the hash index from the string cache for O(1) lookup
-    if (m_stringIndex && m_stringCache) {
+    if (m_stringIndex and m_stringCache) {
         m_stringIndex->clear();
         m_stringIndex->reserve(m_stringCache->size());
         int32_t idx = 0;
@@ -99,7 +99,7 @@ XLSharedStrings::XLSharedStrings(XLXmlData*                                xmlDa
 XLSharedStrings::~XLSharedStrings() = default;
 
 /**
- * @details Look up a string index by the string content. If the string does ! exist, the returned index is -1.
+ * @details Look up a string index by the string content. If the string does not exist, the returned index is -1.
  * Optimized to use O(1) hash lookup when available.
  */
 int32_t XLSharedStrings::getStringIndex(const std::string& str) const
@@ -130,7 +130,7 @@ bool XLSharedStrings::stringExists(const std::string& str) const
  */
 const char* XLSharedStrings::getString(int32_t index) const
 {
-    if (index < 0 || static_cast<size_t>(index) >= m_stringCache->size()) {    // 2024-04-30: added range check
+    if (index < 0 or static_cast<size_t>(index) >= m_stringCache->size()) {    // 2024-04-30: added range check
         using namespace std::literals::string_literals;
         throw XLInternalError("XLSharedStrings::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
     }
@@ -149,7 +149,7 @@ int32_t XLSharedStrings::appendString(const std::string& str) const
         throw XLInternalError("XLSharedStrings::"s + __func__ + ": exceeded max strings count "s + std::to_string(XLMaxSharedStrings));
     }
     auto textNode = xmlDocument().document_element().append_child("si").append_child("t");
-    if ((!str.empty()) && (str.front() == ' ' || str.back() == ' '))
+    if ((!str.empty()) and (str.front() == ' ' or str.back() == ' '))
         textNode.append_attribute("xml:space").set_value("preserve");    // pull request #161
     textNode.text().set(str.c_str());
     m_stringCache->emplace_back(textNode.text().get());    // index of this element = previous stringCacheSize
@@ -190,7 +190,7 @@ void XLSharedStrings::print(std::basic_ostream<char>& ostr) const { xmlDocument(
  */
 void XLSharedStrings::clearString(int32_t index) const    // 2024-04-30: whitespace support
 {
-    if (index < 0 || static_cast<size_t>(index) >= m_stringCache->size()) {    // 2024-04-30: added range check
+    if (index < 0 or static_cast<size_t>(index) >= m_stringCache->size()) {    // 2024-04-30: added range check
         using namespace std::literals::string_literals;
         throw XLInternalError("XLSharedStrings::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
     }
@@ -208,11 +208,11 @@ void XLSharedStrings::clearString(int32_t index) const    // 2024-04-30: whitesp
      */
     XMLNode sharedStringNode = xmlDocument().document_element().first_child_of_type(pugi::node_element);
     int32_t sharedStringPos  = 0;
-    while (sharedStringPos < index && ! sharedStringNode.empty()) {
+    while (sharedStringPos < index and not sharedStringNode.empty()) {
         sharedStringNode = sharedStringNode.next_sibling_of_type(pugi::node_element);
         ++sharedStringPos;
     }
-    if (! sharedStringNode.empty()) {        // index was found
+    if (not sharedStringNode.empty()) {        // index was found
         sharedStringNode.remove_children();    // clear all data and formatting
         sharedStringNode.append_child("t");    // append an empty text node
     }
@@ -227,7 +227,7 @@ int32_t XLSharedStrings::rewriteXmlFromCache()
     xmlDocument().document_element().remove_children();    // clear all existing XML
     for (std::string& s : *m_stringCache) {
         XMLNode textNode = xmlDocument().document_element().append_child("si").append_child("t");
-        if ((!s.empty()) && (s.front() == ' ' || s.back() == ' '))
+        if ((!s.empty()) and (s.front() == ' ' or s.back() == ' '))
             textNode.append_attribute("xml:space").set_value("preserve");    // preserve spaces at begin/end of string
         textNode.text().set(s.c_str());
         ++writtenStrings;

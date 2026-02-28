@@ -128,7 +128,7 @@ namespace    // anonymous namespace for module local functions
 
     XLUnderlineStyle XLUnderlineStyleFromString(std::string underline)
     {
-        if (underline == "" || underline == "none") return XLUnderlineNone;
+        if (underline == "" or underline == "none") return XLUnderlineNone;
         if (underline == "single") return XLUnderlineSingle;
         if (underline == "double") return XLUnderlineDouble;
         std::cerr << __func__ << ": invalid underline style " << underline << std::endl;
@@ -153,7 +153,7 @@ namespace    // anonymous namespace for module local functions
 
     XLFontSchemeStyle XLFontSchemeStyleFromString(std::string fontScheme)
     {
-        if (fontScheme == "" || fontScheme == "none") return XLFontSchemeNone;
+        if (fontScheme == "" or fontScheme == "none") return XLFontSchemeNone;
         if (fontScheme == "major") return XLFontSchemeMajor;
         if (fontScheme == "minor") return XLFontSchemeMinor;
         std::cerr << __func__ << ": invalid font scheme " << fontScheme << std::endl;
@@ -178,7 +178,7 @@ namespace    // anonymous namespace for module local functions
 
     XLVerticalAlignRunStyle XLVerticalAlignRunStyleFromString(std::string vertAlign)
     {
-        if (vertAlign == "" || vertAlign == "baseline") return XLBaseline;
+        if (vertAlign == "" or vertAlign == "baseline") return XLBaseline;
         if (vertAlign == "subscript") return XLSubscript;
         if (vertAlign == "superscript") return XLSuperscript;
         std::cerr << __func__ << ": invalid font vertical align run style " << vertAlign << std::endl;
@@ -247,7 +247,7 @@ namespace    // anonymous namespace for module local functions
 
     XLPatternType XLPatternTypeFromString(std::string patternType)
     {
-        if (patternType == "" || patternType == "none") return XLPatternNone;
+        if (patternType == "" or patternType == "none") return XLPatternNone;
         if (patternType == "solid") return XLPatternSolid;
         if (patternType == "mediumGray") return XLPatternMediumGray;
         if (patternType == "darkGray") return XLPatternDarkGray;
@@ -422,7 +422,7 @@ namespace    // anonymous namespace for module local functions
 
     XLAlignmentStyle XLAlignmentStyleFromString(std::string alignment)
     {
-        if (alignment == "" || alignment == "general") return XLAlignGeneral;
+        if (alignment == "" or alignment == "general") return XLAlignGeneral;
         if (alignment == "left") return XLAlignLeft;
         if (alignment == "right") return XLAlignRight;
         if (alignment == "center") return XLAlignCenter;
@@ -482,18 +482,18 @@ namespace    // anonymous namespace for module local functions
 
     void copyXMLNode(XMLNode& destination, XMLNode& source)
     {
-        if (! source.empty()) {
+        if (not source.empty()) {
             // ===== Copy all XML child nodes
-            for (XMLNode child = source.first_child(); ! child.empty(); child = child.next_sibling()) destination.append_copy(child);
+            for (XMLNode child = source.first_child(); not child.empty(); child = child.next_sibling()) destination.append_copy(child);
             // ===== Copy all XML attributes
-            for (XMLAttribute attr = source.first_attribute(); ! attr.empty(); attr = attr.next_attribute())
+            for (XMLAttribute attr = source.first_attribute(); not attr.empty(); attr = attr.next_attribute())
                 destination.append_copy(attr);
         }
     }
 
     void wrapNode(XMLNode parentNode, XMLNode& node, std::string const& prefix)
     {
-        if (! node.empty() && prefix.length() > 0) {
+        if (not node.empty() and prefix.length() > 0) {
             parentNode.insert_child_before(pugi::node_pcdata, node).set_value(prefix.c_str());    // insert prefix before node opening tag
             node.append_child(pugi::node_pcdata).set_value(prefix.c_str());    // insert prefix before node closing tag (within node)
         }
@@ -530,9 +530,9 @@ namespace    // anonymous namespace for module local functions
      */
     std::string checkAndFormatDoubleAsString(double val, double min, double max, double absTolerance, int decimalPlaces = 2)
     {
-        if (max <= min || absTolerance < 0.0)
+        if (max <= min or absTolerance < 0.0)
             throw XLException("checkAndFormatDoubleAsString: max must be greater than min and absTolerance must be >= 0.0");
-        if (val < min - absTolerance || val > max + absTolerance) return "";    // range check
+        if (val < min - absTolerance or val > max + absTolerance) return "";    // range check
         if (val < min)
             val = min;
         else if (val > max)
@@ -602,7 +602,7 @@ XLNumberFormats::XLNumberFormats(const XMLNode& numberFormats) : m_numberFormats
 {
     // initialize XLNumberFormat entries and m_numberFormats here
     XMLNode node = numberFormats.first_child_of_type(pugi::node_element);
-    while (! node.empty()) {
+    while (not node.empty()) {
         std::string nodeName = node.name();
         if (nodeName == "numFmt")
             m_numberFormats.push_back(XLNumberFormat(node));
@@ -665,7 +665,7 @@ XLNumberFormat XLNumberFormats::numberFormatById(uint32_t numberFormatId) const
     for (XLNumberFormat fmt : m_numberFormats)
         if (fmt.numberFormatId() == numberFormatId) return fmt;
     using namespace std::literals::string_literals;
-    throw XLException("XLNumberFormats::"s + __func__ + ": numberFormatId "s + std::to_string(numberFormatId) + " ! found"s);
+    throw XLException("XLNumberFormats::"s + __func__ + ": numberFormatId "s + std::to_string(numberFormatId) + " not found"s);
 }
 
 /**
@@ -866,7 +866,7 @@ XLFonts::XLFonts(const XMLNode& fonts) : m_fontsNode(std::make_unique<XMLNode>(f
 {
     // initialize XLFonts entries and m_fonts here
     XMLNode node = m_fontsNode->first_child_of_type(pugi::node_element);
-    while (! node.empty()) {
+    while (not node.empty()) {
         std::string nodeName = node.name();
         if (nodeName == "font")
             m_fonts.push_back(XLFont(node));
@@ -998,7 +998,7 @@ bool XLDataBarColor::setTint(double newTint)
         tintString = checkAndFormatDoubleAsString(newTint, -1.0, +1.0, 0.01);
         if (tintString.length() == 0) {
             using namespace std::literals::string_literals;
-            throw XLException("XLDataBarColor::setTint: color tint "s + std::to_string(newTint) + " is ! in range [-1.0;+1.0]"s);
+            throw XLException("XLDataBarColor::setTint: color tint "s + std::to_string(newTint) + " is not in range [-1.0;+1.0]"s);
         }
     }
     if (tintString.length() == 0) return m_colorNode->remove_attribute("tint");    // remove tint attribute for a value 0
@@ -1093,7 +1093,7 @@ XLGradientStops::XLGradientStops(const XMLNode& gradient) : m_gradientNode(std::
 {
     // initialize XLGradientStops entries and m_gradientStops here
     XMLNode node = m_gradientNode->first_child_of_type(pugi::node_element);
-    while (! node.empty()) {
+    while (not node.empty()) {
         std::string nodeName = node.name();
         if (nodeName == "stop")
             m_gradientStops.push_back(XLGradientStop(node));
@@ -1230,10 +1230,10 @@ bool XLFill::setFillType(XLFillType newFillType, bool force)
     // ===== If desired filltype is already set
     if (ft == newFillType) return true;    // nothing to do
 
-    // ===== If force == true or fillType is just ! set at all, delete existing child nodes, otherwise throw
-    if (!force && ft != XLFillTypeInvalid) {
+    // ===== If force == true or fillType is just not set at all, delete existing child nodes, otherwise throw
+    if (!force and ft != XLFillTypeInvalid) {
         using namespace std::literals::string_literals;
-        throw XLException("XLFill::setFillType: can ! change the fillType from "s + XLFillTypeToString(fillType()) + " to "s +
+        throw XLException("XLFill::setFillType: can not change the fillType from "s + XLFillTypeToString(fillType()) + " to "s +
                           XLFillTypeToString(newFillType) + " - invoke with force == true if override is desired"s);
     }
     // ===== At this point, m_fillNode needs to be emptied for a setting / force-change of the fill type
@@ -1250,7 +1250,7 @@ void XLFill::throwOnFillType(XLFillType typeToThrowOn, const char* functionName)
 {
     using namespace std::literals::string_literals;
     if (fillType() == typeToThrowOn)
-        throw XLException("XLFill::"s + functionName + " must ! be invoked for a "s + XLFillTypeToString(typeToThrowOn));
+        throw XLException("XLFill::"s + functionName + " must not be invoked for a "s + XLFillTypeToString(typeToThrowOn));
 }
 
 /**
@@ -1267,11 +1267,11 @@ XMLNode XLFill::getValidFillDescription(XLFillType fillTypeIfEmpty, const char* 
             throwOnThis = XLGradientFill;
             break;    //   "
         default:
-            throw XLException("XLFill::getValidFillDescription was ! invoked with XLPatternFill or XLGradientFill");
+            throw XLException("XLFill::getValidFillDescription was not invoked with XLPatternFill or XLGradientFill");
     }
     throwOnFillType(throwOnThis, functionName);
     XMLNode fillDescription = m_fillNode->first_child_of_type(pugi::node_element);    // fetch an existing fill description
-    if (fillDescription.empty() && setFillType(fillTypeIfEmpty))                      // if none exists, attempt to create a description
+    if (fillDescription.empty() and setFillType(fillTypeIfEmpty))                      // if none exists, attempt to create a description
         fillDescription = m_fillNode->first_child_of_type(pugi::node_element);        // fetch newly inserted description
     return fillDescription;
 }
@@ -1330,7 +1330,7 @@ bool XLFill::setDegree(double newDegree)
     std::string degreeString = checkAndFormatDoubleAsString(newDegree, 0.0, 360.0, 0.01);
     if (degreeString.length() == 0) {
         using namespace std::literals::string_literals;
-        throw XLException("XLFill::setDegree: gradientFill degree value "s + std::to_string(newDegree) + " is ! in range [0.0;360.0]"s);
+        throw XLException("XLFill::setDegree: gradientFill degree value "s + std::to_string(newDegree) + " is not in range [0.0;360.0]"s);
     }
     XMLNode fillDescription = getValidFillDescription(XLGradientFill, __func__);
     return appendAndSetAttribute(fillDescription, "degree", degreeString).empty() == false;
@@ -1414,7 +1414,7 @@ XLFills::XLFills(const XMLNode& fills) : m_fillsNode(std::make_unique<XMLNode>(f
 {
     // initialize XLFills entries and m_fills here
     XMLNode node = fills.first_child_of_type(pugi::node_element);
-    while (! node.empty()) {
+    while (not node.empty()) {
         std::string nodeName = node.name();
         if (nodeName == "fill")
             m_fills.push_back(XLFill(node));
@@ -1522,7 +1522,7 @@ XLLine& XLLine::operator=(const XLLine& other)
 }
 
 /**
- * @details Returns the line style (XLLineStyleNone if line is ! set)
+ * @details Returns the line style (XLLineStyleNone if line is not set)
  */
 XLLineStyle XLLine::style() const
 {
@@ -1560,9 +1560,9 @@ XLDataBarColor XLLine::color() const
 // double XLLine::colorTint() const
 // {
 //     XMLNode colorDetails = m_lineNode->child("color");
-//     if (! colorDetails.empty()) {
+//     if (not colorDetails.empty()) {
 //         XMLAttribute colorTint = colorDetails.attribute("tint");
-//         if (! colorTint.empty())
+//         if (not colorTint.empty())
 //             return colorTint.as_double();
 //     }
 //     return 0.0;
@@ -1639,13 +1639,13 @@ bool XLBorder::setDiagonalDown(bool set)
 bool XLBorder::setOutline(bool set) { return appendAndSetAttribute(*m_borderNode, "outline", (set ? "true" : "false")).empty() == false; }
 bool XLBorder::setLine(XLLineType lineType, XLLineStyle lineStyle, XLColor lineColor, double lineTint)
 {
-    XMLNode lineNode = appendAndGetNode(*m_borderNode, XLLineTypeToString(lineType), m_nodeOrder);    // generate line node if ! present
+    XMLNode lineNode = appendAndGetNode(*m_borderNode, XLLineTypeToString(lineType), m_nodeOrder);    // generate line node if not present
     // 2024-12-19: non-existing lines are added using an ordered insert to address issue #304
     bool success = (lineNode.empty() == false);
     if (success)
         success = (appendAndSetAttribute(lineNode, "style", XLLineStyleToString(lineStyle)).empty() == false);    // set style attribute
     XMLNode colorNode{};                                                                                          // empty node
-    if (success) colorNode = appendAndGetNode(lineNode, "color");    // generate color node if ! present
+    if (success) colorNode = appendAndGetNode(lineNode, "color");    // generate color node if not present
     XLDataBarColor colorObject{colorNode};
     success = (colorNode.empty() == false);
     if (success) success = colorObject.setRgb(lineColor);
@@ -1695,7 +1695,7 @@ XLBorders::XLBorders(const XMLNode& borders) : m_bordersNode(std::make_unique<XM
 {
     // initialize XLBorders entries and m_borders here
     XMLNode node = borders.first_child_of_type(pugi::node_element);
-    while (! node.empty()) {
+    while (not node.empty()) {
         std::string nodeName = node.name();
         if (nodeName == "border")
             m_borders.push_back(XLBorder(node));
@@ -1913,25 +1913,25 @@ XLCellFormat& XLCellFormat::operator=(const XLCellFormat& other)
 
 /**
  * @details determines the numberFormatId
- * @note returns XLInvalidUInt32 if attribute is ! defined / set / empty
+ * @note returns XLInvalidUInt32 if attribute is not defined / set / empty
  */
 uint32_t XLCellFormat::numberFormatId() const { return m_cellFormatNode->attribute("numFmtId").as_uint(XLInvalidUInt32); }
 
 /**
  * @details determines the fontIndex
- * @note returns XLInvalidStyleIndex if attribute is ! defined / set / empty
+ * @note returns XLInvalidStyleIndex if attribute is not defined / set / empty
  */
 XLStyleIndex XLCellFormat::fontIndex() const { return m_cellFormatNode->attribute("fontId").as_uint(XLInvalidStyleIndex); }
 
 /**
  * @details determines the fillIndex
- * @note returns XLInvalidStyleIndex if attribute is ! defined / set / empty
+ * @note returns XLInvalidStyleIndex if attribute is not defined / set / empty
  */
 XLStyleIndex XLCellFormat::fillIndex() const { return m_cellFormatNode->attribute("fillId").as_uint(XLInvalidStyleIndex); }
 
 /**
  * @details determines the borderIndex
- * @note returns XLInvalidStyleIndex if attribute is ! defined / set / empty
+ * @note returns XLInvalidStyleIndex if attribute is not defined / set / empty
  */
 XLStyleIndex XLCellFormat::borderIndex() const { return m_cellFormatNode->attribute("borderId").as_uint(XLInvalidStyleIndex); }
 
@@ -1941,7 +1941,7 @@ XLStyleIndex XLCellFormat::borderIndex() const { return m_cellFormatNode->attrib
 XLStyleIndex XLCellFormat::xfId() const
 {
     if (m_permitXfId) return m_cellFormatNode->attribute("xfId").as_uint(XLInvalidStyleIndex);
-    throw XLException("XLCellFormat::xfId ! permitted when m_permitXfId is false");
+    throw XLException("XLCellFormat::xfId not permitted when m_permitXfId is false");
 }
 
 /**
@@ -1972,7 +1972,7 @@ bool XLCellFormat::hidden() const { return m_cellFormatNode->child("protection")
 XLAlignment XLCellFormat::alignment(bool createIfMissing) const
 {
     XMLNode nodeAlignment = m_cellFormatNode->child("alignment");
-    if (nodeAlignment.empty() && createIfMissing)
+    if (nodeAlignment.empty() and createIfMissing)
         nodeAlignment =
             appendAndGetNode(*m_cellFormatNode, "alignment", m_nodeOrder);    // 2024-12-19: ordered insert to address issue #305
     return XLAlignment(nodeAlignment);
@@ -1992,7 +1992,7 @@ bool XLCellFormat::setBorderIndex(XLStyleIndex newBorderIndex)
 bool XLCellFormat::setXfId(XLStyleIndex newXfId)
 {
     if (m_permitXfId) return appendAndSetAttribute(*m_cellFormatNode, "xfId", std::to_string(newXfId)).empty() == false;
-    throw XLException("XLCellFormat::setXfId ! permitted when m_permitXfId is false");
+    throw XLException("XLCellFormat::setXfId not permitted when m_permitXfId is false");
 }
 bool XLCellFormat::setApplyNumberFormat(bool set)
 { return appendAndSetAttribute(*m_cellFormatNode, "applyNumberFormat", (set ? "true" : "false")).empty() == false; }
@@ -2072,7 +2072,7 @@ XLCellFormats::XLCellFormats(const XMLNode& cellStyleFormats, bool permitXfId)
 {
     // initialize XLCellFormats entries and m_cellFormats here
     XMLNode node = cellStyleFormats.first_child_of_type(pugi::node_element);
-    while (! node.empty()) {
+    while (not node.empty()) {
         std::string nodeName = node.name();
         if (nodeName == "xf")
             m_cellFormats.push_back(XLCellFormat(node, m_permitXfId));
@@ -2268,7 +2268,7 @@ XLCellStyles::XLCellStyles(const XMLNode& cellStyles) : m_cellStylesNode(std::ma
 {
     // initialize XLCellStyles entries and m_cellStyles here
     XMLNode node = cellStyles.first_child_of_type(pugi::node_element);
-    while (! node.empty()) {
+    while (not node.empty()) {
         std::string nodeName = node.name();
         if (nodeName == "cellStyle")
             m_cellStyles.push_back(XLCellStyle(node));
@@ -2460,7 +2460,7 @@ XLDiffCellFormats::XLDiffCellFormats(const XMLNode& diffCellFormats) : m_diffCel
 {
     // initialize XLCellStyles entries and m_cellStyles here
     XMLNode node = m_diffCellFormatsNode->first_child_of_type(pugi::node_element);
-    while (! node.empty()) {
+    while (not node.empty()) {
         std::string nodeName = node.name();
         if (nodeName == "dxf")
             m_diffCellFormats.push_back(XLDiffCellFormat(node));
@@ -2572,7 +2572,7 @@ XLStyles::XLStyles(XLXmlData* xmlData, bool suppressWarnings, std::string styles
                         pugi_parse_settings);
 
     XMLNode node = doc.document_element().first_child_of_type(pugi::node_element);
-    while (! node.empty()) {
+    while (not node.empty()) {
         XLStylesEntryType e = XLStylesEntryTypeFromString(node.name());
         // std::cout << "node.name() is " << node.name() << ", resulting XLStylesEntryType is " << std::to_string(e) << std::endl;
         switch (e) {
@@ -2645,8 +2645,8 @@ XLStyles::XLStyles(XLXmlData* xmlData, bool suppressWarnings, std::string styles
     if (m_cellFormats->count() == 0) {    // if the cell formats array is empty
         // ===== Create a default empty cell format with ID 0 (== XLDefaultCellFormat) because when XLDefaultCellFormat
         //        is assigned to an XLRow, the intention is interpreted as "set the cell back to default formatting",
-        //        which does ! trigger setting the attribute customFormat="true".
-        //       To avoid confusing the user when the first style created does ! work for rows, and setting a cell's
+        //        which does not trigger setting the attribute customFormat="true".
+        //       To avoid confusing the user when the first style created does not work for rows, and setting a cell's
         //        format back to XLDefaultCellFormat would cause an actual formatting (if assigned format ID 0), this
         //        initial entry with no properties is created and henceforth ignored
         m_cellFormats->create();

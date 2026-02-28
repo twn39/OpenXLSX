@@ -79,13 +79,13 @@ float XLColumn::width() const { return columnNode().attribute("width").as_float(
  */
 void XLColumn::setWidth(float width)    // NOLINT
 {
-    // Set the 'Width' attribute for the Cell. If it does ! exist, create it.
+    // Set the 'Width' attribute for the Cell. If it does not exist, create it.
     auto widthAtt = columnNode().attribute("width");
     if (widthAtt.empty()) widthAtt = columnNode().append_attribute("width");
 
     widthAtt.set_value(width);
 
-    // Set the 'customWidth' attribute for the Cell. If it does ! exist, create it.
+    // Set the 'customWidth' attribute for the Cell. If it does not exist, create it.
     auto customAtt = columnNode().attribute("customWidth");
     if (customAtt.empty()) customAtt = columnNode().append_attribute("customWidth");
 
@@ -117,13 +117,13 @@ void XLColumn::setHidden(bool state)    // NOLINT
 XMLNode& XLColumn::columnNode() const { return *m_columnNode; }
 
 /**
- * @details Determine the value of the style attribute - if attribute does ! exist, return default value
+ * @details Determine the value of the style attribute - if attribute does not exist, return default value
  */
 XLStyleIndex XLColumn::format() const { return columnNode().attribute("style").as_uint(XLDefaultCellFormat); }
 
 /**
  * @brief Set the column style as a reference to the array index of xl/styles.xml:<styleSheet>:<cellXfs>
- *        If the style attribute does ! exist, create it
+ *        If the style attribute does not exist, create it
  */
 bool XLColumn::setFormat(XLStyleIndex cellFormatIndex)
 {

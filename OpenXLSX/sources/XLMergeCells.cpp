@@ -71,11 +71,11 @@ XLMergeCells::XLMergeCells(const XMLNode& rootNode, std::vector<std::string_view
       m_nodeOrder(nodeOrder),
       m_mergeCellsNode()    // std::unique_ptr initializes to nullptr
 {
-    if (m_rootNode->empty()) throw XLInternalError("XLMergeCells constructor: can ! construct with an empty XML root node");
+    if (m_rootNode->empty()) throw XLInternalError("XLMergeCells constructor: can not construct with an empty XML root node");
 
     m_mergeCellsNode  = std::make_unique<XMLNode>(m_rootNode->child("mergeCells"));
     XMLNode mergeNode = m_mergeCellsNode->first_child_of_type(pugi::node_element);
-    while (! mergeNode.empty()) {
+    while (not mergeNode.empty()) {
         bool invalidNode = true;
 
         // ===== For valid mergeCell nodes, add the reference to the reference cache
@@ -91,11 +91,11 @@ XLMergeCells::XLMergeCells(const XMLNode& rootNode, std::vector<std::string_view
         XMLNode nextNode = mergeNode.next_sibling_of_type(pugi::node_element);
 
         // ===== In case of an invalid XML element: print an error and remove it from the XML, including whitespaces to the next sibling
-        if (invalidNode) {    // if mergeNode is ! named mergeCell or does ! have a valid ref attribute: remove it from the XML
-            std::cerr << "XLMergeCells constructor: invalid child element, either name is ! mergeCell or reference is invalid:"
+        if (invalidNode) {    // if mergeNode is not named mergeCell or does not have a valid ref attribute: remove it from the XML
+            std::cerr << "XLMergeCells constructor: invalid child element, either name is not mergeCell or reference is invalid:"
                       << std::endl;
             mergeNode.print(std::cerr);
-            if (! nextNode.empty()) {
+            if (not nextNode.empty()) {
                 // delete whitespaces between mergeNode and nextNode
                 while (mergeNode.next_sibling() != nextNode) m_mergeCellsNode->remove_child(mergeNode.next_sibling());
             }
@@ -170,10 +170,10 @@ XLMergeCells& XLMergeCells::operator=(XLMergeCells&& other)
 /**
  * @details
  */
-bool XLMergeCells::valid() const { return (m_rootNode != nullptr && ! m_rootNode->empty()); }
+bool XLMergeCells::valid() const { return (m_rootNode != nullptr and not m_rootNode->empty()); }
 
 namespace
-{    // anonymous namespace: do ! export any symbols from here
+{    // anonymous namespace: do not export any symbols from here
     /**
      * @brief Test if (range) reference overlaps with the cell window defined by topRow, firstCol, bottomRow, lastCol
      * @return true in case of overlap, false if no overlap
@@ -183,8 +183,8 @@ namespace
         using namespace std::literals::string_literals;
 
         size_t pos = reference.find_first_of(':');       // find split mark between top left and bottom right cell
-        if (pos < 2 || pos + 2 >= reference.length())    // range reference must have at least 2 characters before and after the colon
-            throw XLInputError("XLMergeCells::"s + __func__ + ": ! a valid range reference: \""s + reference + "\""s);
+        if (pos < 2 or pos + 2 >= reference.length())    // range reference must have at least 2 characters before and after the colon
+            throw XLInputError("XLMergeCells::"s + __func__ + ": not a valid range reference: \""s + reference + "\""s);
         XLCellReference refTL(reference.substr(0, pos));     // get top left cell reference
         XLCellReference refBR(reference.substr(pos + 1));    // get bottom right cell reference
 
@@ -192,8 +192,8 @@ namespace
         uint16_t refFirstCol  = refTL.column();
         uint32_t refBottomRow = refBR.row();
         uint16_t refLastCol   = refBR.column();
-        if (refBottomRow < refTopRow || refLastCol < refFirstCol || (refBottomRow == refTopRow && refLastCol == refFirstCol))
-            throw XLInputError("XLMergeCells::"s + __func__ + ": ! a valid range reference: \""s + reference + "\""s);
+        if (refBottomRow < refTopRow or refLastCol < refFirstCol or (refBottomRow == refTopRow and refLastCol == refFirstCol))
+            throw XLInputError("XLMergeCells::"s + __func__ + ": not a valid range reference: \""s + reference + "\""s);
 
         // std::cout << __func__ << ":" << " reference is " << reference
         //    << " refTopRow is " << refTopRow << " refBottomRow is " << refBottomRow << " refFirstCol is " << refFirstCol << " refLastCol
@@ -202,15 +202,15 @@ namespace
         //    << std::endl;
 
         // overlap
-        if (refTopRow <= bottomRow && refBottomRow >= topRow        // vertical overlap
-            && refFirstCol <= lastCol && refLastCol >= firstCol)    // horizontal overlap
+        if (refTopRow <= bottomRow and refBottomRow >= topRow        // vertical overlap
+            and refFirstCol <= lastCol and refLastCol >= firstCol)    // horizontal overlap
             return true;
         return false;    // otherwise: no overlap
     }
 }    // anonymous namespace
 
 /**
- * @details Look up a merge index by the reference. If the reference does ! exist, the returned index is XLMergeNotFound (-1).
+ * @details Look up a merge index by the reference. If the reference does not exist, the returned index is XLMergeNotFound (-1).
  */
 XLMergeIndex XLMergeCells::findMerge(const std::string& reference) const
 {
@@ -252,7 +252,7 @@ size_t XLMergeCells::count() const { return m_referenceCache.size(); }
  */
 const char* XLMergeCells::merge(XLMergeIndex index) const
 {
-    if (index < 0 || static_cast<uint32_t>(index) >= m_referenceCache.size()) {
+    if (index < 0 or static_cast<uint32_t>(index) >= m_referenceCache.size()) {
         using namespace std::literals::string_literals;
         throw XLInputError("XLMergeCells::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
     }
@@ -262,7 +262,7 @@ const char* XLMergeCells::merge(XLMergeIndex index) const
 /**
  * @details Append a mergeCell by creating a new node in the XML file and adding the string to it. The index to the
  * appended merge is returned
- * Before appending a mergeCell entry with reference, check that reference does ! overlap with any existing references
+ * Before appending a mergeCell entry with reference, check that reference does not overlap with any existing references
  */
 XLMergeIndex XLMergeCells::appendMerge(const std::string& reference)
 {
@@ -273,8 +273,8 @@ XLMergeIndex XLMergeCells::appendMerge(const std::string& reference)
         throw XLInputError("XLMergeCells::"s + __func__ + ": exceeded max merge cells count "s + std::to_string(XLMaxMergeCells));
 
     size_t pos = reference.find_first_of(':');       // find split mark between top left and bottom right cell
-    if (pos < 2 || pos + 2 >= reference.length())    // range reference must have at least 2 characters before and after the colon
-        throw XLInputError("XLMergeCells::"s + __func__ + ": ! a valid range reference: \""s + reference + "\""s);
+    if (pos < 2 or pos + 2 >= reference.length())    // range reference must have at least 2 characters before and after the colon
+        throw XLInputError("XLMergeCells::"s + __func__ + ": not a valid range reference: \""s + reference + "\""s);
     XLCellReference refTL(reference.substr(0, pos));     // get top left cell reference
     XLCellReference refBR(reference.substr(pos + 1));    // get bottom right cell reference
 
@@ -282,8 +282,8 @@ XLMergeIndex XLMergeCells::appendMerge(const std::string& reference)
     uint16_t refFirstCol  = refTL.column();
     uint32_t refBottomRow = refBR.row();
     uint16_t refLastCol   = refBR.column();
-    if (refBottomRow < refTopRow || refLastCol < refFirstCol || (refBottomRow == refTopRow && refLastCol == refFirstCol))
-        throw XLInputError("XLMergeCells::"s + __func__ + ": ! a valid range reference: \""s + reference + "\""s);
+    if (refBottomRow < refTopRow or refLastCol < refFirstCol or (refBottomRow == refTopRow and refLastCol == refFirstCol))
+        throw XLInputError("XLMergeCells::"s + __func__ + ": not a valid range reference: \""s + reference + "\""s);
 
     for (std::string ref : m_referenceCache) {
         if (XLReferenceOverlaps(ref, refTopRow, refFirstCol, refBottomRow, refLastCol))
@@ -324,12 +324,12 @@ void XLMergeCells::deleteMerge(XLMergeIndex index)
 {
     using namespace std::literals::string_literals;
 
-    if (index < 0 || static_cast<uint32_t>(index) >= m_referenceCache.size())
+    if (index < 0 or static_cast<uint32_t>(index) >= m_referenceCache.size())
         throw XLInputError("XLMergeCells::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
 
     XLMergeIndex curIndex = 0;
     XMLNode      node     = m_mergeCellsNode->first_child_of_type(pugi::node_element);
-    while (curIndex < index && ! node.empty()) {
+    while (curIndex < index and not node.empty()) {
         node = node.next_sibling_of_type(pugi::node_element);
         ++curIndex;
     }

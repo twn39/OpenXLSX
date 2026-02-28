@@ -71,7 +71,7 @@ bool XLZipArchive::isValid() const { return m_archive != nullptr; }
 /**
  * @details
  */
-bool XLZipArchive::isOpen() const { return m_archive && m_archive->IsOpen(); }
+bool XLZipArchive::isOpen() const { return m_archive and m_archive->IsOpen(); }
 
 /**
  * @details

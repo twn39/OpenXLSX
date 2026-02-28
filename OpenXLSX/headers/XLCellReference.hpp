@@ -262,7 +262,7 @@ namespace OpenXLSX
      * @return true if equal; otherwise false.
      */
     inline bool operator==(const XLCellReference& lhs, const XLCellReference& rhs)
-    { return lhs.row() == rhs.row() && lhs.column() == rhs.column(); }
+    { return lhs.row() == rhs.row() and lhs.column() == rhs.column(); }
 
     /**
      * @brief Helper function to check for in-equality between two XLCellReferences
@@ -279,7 +279,7 @@ namespace OpenXLSX
      * @return true if lhs < rhs; otherwise false.
      */
     inline bool operator<(const XLCellReference& lhs, const XLCellReference& rhs)
-    { return lhs.row() < rhs.row() || (lhs.row() <= rhs.row() && lhs.column() < rhs.column()); }
+    { return lhs.row() < rhs.row() or (lhs.row() <= rhs.row() and lhs.column() < rhs.column()); }
 
     /**
      * @brief Helper function to check if one XLCellReference is larger than another.

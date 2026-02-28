@@ -19,7 +19,7 @@ namespace
     bool isLeapYear(int year)
     {
         if (year == 1900) return true;    // historical Excel Date error inherited from older spreadsheet apps
-        if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)) return true;
+        if (year % 400 == 0 or (year % 4 == 0 and year % 100 != 0)) return true;
         return false;
     }
 
@@ -99,8 +99,8 @@ namespace OpenXLSX
         // ===== Check validity of tm struct.
         // ===== Only year, month and day of the month are checked. Other variables are ignored.
         if (timepoint.tm_year < 0) throw XLDateTimeError("Invalid year. Must be >= 0.");
-        if (timepoint.tm_mon < 0 || timepoint.tm_mon > 11) throw XLDateTimeError("Invalid month. Must be >= 0 or <= 11.");
-        if (timepoint.tm_mday <= 0 || timepoint.tm_mday > daysInMonth(timepoint.tm_mon + 1, timepoint.tm_year + 1900))
+        if (timepoint.tm_mon < 0 or timepoint.tm_mon > 11) throw XLDateTimeError("Invalid month. Must be >= 0 or <= 11.");
+        if (timepoint.tm_mday <= 0 or timepoint.tm_mday > daysInMonth(timepoint.tm_mon + 1, timepoint.tm_year + 1900))
             throw XLDateTimeError("Invalid day. Must be >= 1 or <= total days in the month.");
 
         // ===== Count the number of days for full years past 1900

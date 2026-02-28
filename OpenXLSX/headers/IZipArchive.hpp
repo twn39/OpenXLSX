@@ -78,7 +78,7 @@ namespace OpenXLSX
          * @brief Constructor, taking the target object as an argument.
          * @tparam T The type of the target object (will be auto deducted)
          * @param x The target object
-         * @note This method is deliberately ! marked 'explicit', because as a templated constructor, it should be able
+         * @note This method is deliberately not marked 'explicit', because as a templated constructor, it should be able
          * to take any type as an argument. However, only objects that satisfy the required interface can be used.
          */
         template<typename T>

@@ -187,7 +187,7 @@ namespace OpenXLSX
         /**
          * @brief Create a new .xlsx file with the given name.
          * @param fileName The path of the new .xlsx file.
-         * @param forceOverwrite If ! true (XLForceOverwrite) and fileName exists, create will throw an exception
+         * @param forceOverwrite If not true (XLForceOverwrite) and fileName exists, create will throw an exception
          * @throw XLException (OpenXLSX failed checks)
          * @throw ZipRuntimeError (zippy failed archive / file access)
          */
@@ -216,7 +216,7 @@ namespace OpenXLSX
         /**
          * @brief Save the document with a new name. If a file exists with that name, it will be overwritten.
          * @param fileName The path of the file
-         * @param forceOverwrite If ! true (XLForceOverwrite) and fileName exists, saveAs will throw an exception
+         * @param forceOverwrite If not true (XLForceOverwrite) and fileName exists, saveAs will throw an exception
          * @throw XLException (OpenXLSX failed checks)
          * @throw ZipRuntimeError (zippy failed archive / file access)
          */
@@ -330,21 +330,21 @@ namespace OpenXLSX
         bool hasSheetTables(uint16_t sheetXmlNo) const;
 
         /**
-         * @brief fetch the worksheet relationships for sheetXmlNo, create the file if it does ! exist
+         * @brief fetch the worksheet relationships for sheetXmlNo, create the file if it does not exist
          * @param sheetXmlNo fetch for this sheet #
          * @return an XLRelationships object initialized with the sheet relationships
          */
         XLRelationships sheetRelationships(uint16_t sheetXmlNo);
 
         /**
-         * @brief fetch the worksheet drawing for sheetXmlNo, create the file if it does ! exist
+         * @brief fetch the worksheet drawing for sheetXmlNo, create the file if it does not exist
          * @param sheetXmlNo fetch for this sheet #
          * @return an XLDrawing object initialized with the sheet drawing
          */
         XLDrawing sheetDrawing(uint16_t sheetXmlNo);
 
         /**
-         * @brief fetch the worksheet VML drawing for sheetXmlNo, create the file if it does ! exist
+         * @brief fetch the worksheet VML drawing for sheetXmlNo, create the file if it does not exist
          * @param sheetXmlNo fetch for this sheet #
          * @return an XLVmlDrawing object initialized with the sheet drawing
          */
@@ -366,21 +366,21 @@ namespace OpenXLSX
         std::string getImage(const std::string& path) const;
 
         /**
-         * @brief fetch the worksheet comments for sheetXmlNo, create the file if it does ! exist
+         * @brief fetch the worksheet comments for sheetXmlNo, create the file if it does not exist
          * @param sheetXmlNo fetch for this sheet #
          * @return an XLComments object initialized with the sheet comments
          */
         XLComments sheetComments(uint16_t sheetXmlNo);
 
         /**
-         * @brief fetch the worksheet tables for sheetXmlNo, create the file if it does ! exist
+         * @brief fetch the worksheet tables for sheetXmlNo, create the file if it does not exist
          * @param sheetXmlNo fetch for this sheet #
          * @return an XLTables object initialized with the sheet tables
          */
         XLTables sheetTables(uint16_t sheetXmlNo);
 
         /**
-         * @brief fetch the drawing relationships for a drawing file, create the file if it does ! exist
+         * @brief fetch the drawing relationships for a drawing file, create the file if it does not exist
          * @param drawingPath The path to the drawing file (e.g. "xl/drawings/drawing1.xml")
          * @return an XLRelationships object initialized with the drawing relationships
          */
@@ -449,9 +449,9 @@ namespace OpenXLSX
         std::string extractXmlFromArchive(const std::string& path);
 
         /**
-         * @brief fetch the XLXmlData object as stored in m_data, throw XLInternalError if path is ! found
+         * @brief fetch the XLXmlData object as stored in m_data, throw XLInternalError if path is not found
          * @param path The relative path of the file.
-         * @param doNotThrow if true, will return a nullptr if path is ! found
+         * @param doNotThrow if true, will return a nullptr if path is not found
          * @return a pointer to the XLXmlData object stored in m_data (or nullptr, see doNotThrow)
          */
         XLXmlData* getXmlData(const std::string& path, bool doNotThrow = false);
@@ -507,7 +507,7 @@ namespace OpenXLSX
      * @param data A pointer to the data bytes to format
      * @param size The amount of data bytes to format
      * @return A string with the base-16 representation of the data bytes
-     * @note 2024-08-18 BUGFIX: replaced char array with std::string, as ISO C++ standard does ! permit variable size arrays
+     * @note 2024-08-18 BUGFIX: replaced char array with std::string, as ISO C++ standard does not permit variable size arrays
      */
     OPENXLSX_EXPORT std::string BinaryAsHexString(const void* data, const size_t size);
 

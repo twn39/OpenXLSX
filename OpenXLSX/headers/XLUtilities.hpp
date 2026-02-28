@@ -34,19 +34,19 @@ namespace OpenXLSX
      */
     inline uint16_t extractColumnFromCellRef(const char* cellRef) noexcept
     {
-        if (cellRef == nullptr || *cellRef == '\0') return 0;
+        if (cellRef == nullptr or *cellRef == '\0') return 0;
 
         uint32_t    colNo = 0;
         const char* p     = cellRef;
 
         // Parse uppercase letters only (A-Z)
-        while (*p >= 'A' && *p <= 'Z') {
+        while (*p >= 'A' and *p <= 'Z') {
             colNo = colNo * 26 + static_cast<uint32_t>(*p - 'A' + 1);
             ++p;
         }
 
         // Return 0 if no letters were found, or if column exceeds MAX_COLS
-        return (colNo > 0 && colNo <= MAX_COLS) ? static_cast<uint16_t>(colNo) : 0;
+        return (colNo > 0 and colNo <= MAX_COLS) ? static_cast<uint16_t>(colNo) : 0;
     }
 
     /**
@@ -307,7 +307,7 @@ namespace OpenXLSX
      */
     inline XMLNode getRowNode(XMLNode sheetDataNode, uint32_t rowNumber)
     {
-        if (rowNumber < 1 || rowNumber > OpenXLSX::MAX_ROWS) {    // 2024-05-28: added range check
+        if (rowNumber < 1 or rowNumber > OpenXLSX::MAX_ROWS) {    // 2024-05-28: added range check
             using namespace std::literals::string_literals;
             throw XLCellAddressError("rowNumber "s + std::to_string(rowNumber) + " is outside valid range [1;"s +
                                      std::to_string(OpenXLSX::MAX_ROWS) + "]"s);
@@ -317,7 +317,7 @@ namespace OpenXLSX
         XMLNode result = sheetDataNode.last_child_of_type(pugi::node_element);
 
         // ===== If there are now rows in the worksheet, or the requested row is beyond the current max row, append a new row to the end.
-        if (result.empty() || (rowNumber > result.attribute("r").as_ullong())) {
+        if (result.empty() or (rowNumber > result.attribute("r").as_ullong())) {
             result                       = sheetDataNode.append_child("row");
             result.append_attribute("r") = rowNumber;
             //            result.append_attribute("x14ac:dyDescent") = "0.2";
@@ -326,10 +326,10 @@ namespace OpenXLSX
 
         // ===== If the requested node is closest to the end, start from the end and search backwards.
         else if (result.attribute("r").as_ullong() - rowNumber < rowNumber) {
-            while (! result.empty() && (result.attribute("r").as_ullong() > rowNumber))
+            while (not result.empty() and (result.attribute("r").as_ullong() > rowNumber))
                 result = result.previous_sibling_of_type(pugi::node_element);
             // ===== If the backwards search failed to locate the requested row
-            if (result.empty() || (result.attribute("r").as_ullong() != rowNumber)) {
+            if (result.empty() or (result.attribute("r").as_ullong() != rowNumber)) {
                 if (result.empty())
                     result = sheetDataNode.prepend_child("row");    // insert a new row node at datasheet begin. When saving, this will keep
                                                                     // whitespace formatting towards next row node
@@ -343,7 +343,7 @@ namespace OpenXLSX
 
         // ===== Otherwise, start from the beginning
         else {
-            // ===== At this point, it is guaranteed that there is at least one node_element in the row that is ! empty.
+            // ===== At this point, it is guaranteed that there is at least one node_element in the row that is not empty.
             result = sheetDataNode.first_child_of_type(pugi::node_element);
 
             // ===== It has been verified above that the requested rowNumber is <= the row number of the last node_element, therefore this
@@ -371,10 +371,10 @@ namespace OpenXLSX
     inline XLStyleIndex getColumnStyle(XMLNode rowNode, uint16_t colNo)
     {
         XMLNode cols = rowNode.parent().parent().child("cols");
-        if (! cols.empty()) {
+        if (not cols.empty()) {
             XMLNode col = cols.first_child_of_type(pugi::node_element);
-            while (! col.empty()) {
-                if (col.attribute("min").as_int(MAX_COLS + 1) <= colNo && col.attribute("max").as_int(0) >= colNo)    // found
+            while (not col.empty()) {
+                if (col.attribute("min").as_int(MAX_COLS + 1) <= colNo and col.attribute("max").as_int(0) >= colNo)    // found
                     return col.attribute("style").as_uint(XLDefaultCellFormat);
                 col = col.next_sibling_of_type(pugi::node_element);
             }
@@ -411,7 +411,7 @@ namespace OpenXLSX
         else                                                      // else: an explicit row style is set
             cellStyle = rowStyle.as_uint(XLDefaultCellFormat);    // use the row style
 
-        if (cellStyle != XLDefaultCellFormat)    // if cellStyle was determined as ! the default style (no point in setting that)
+        if (cellStyle != XLDefaultCellFormat)    // if cellStyle was determined as not the default style (no point in setting that)
             cellNode.append_attribute("s").set_value(cellStyle);
     }
 
@@ -455,7 +455,7 @@ namespace OpenXLSX
                                uint32_t                              rowNumber = 0,
                                /**/ std::vector<XLStyleIndex> const& colStyles = {})
     {
-        if (columnNumber < 1 || columnNumber > OpenXLSX::MAX_COLS) {    // 2024-08-05: added range check
+        if (columnNumber < 1 or columnNumber > OpenXLSX::MAX_COLS) {    // 2024-08-05: added range check
             using namespace std::literals::string_literals;
             throw XLException("XLWorksheet::column: columnNumber "s + std::to_string(columnNumber) + " is outside allowed range [1;"s +
                               std::to_string(MAX_COLS) + "]"s);
@@ -463,14 +463,14 @@ namespace OpenXLSX
         if (rowNode.empty()) return XMLNode{};    // 2024-05-28: return an empty node in case of empty rowNode
 
         XMLNode cellNode = rowNode.last_child_of_type(pugi::node_element);
-        if (!rowNumber) rowNumber = rowNode.attribute("r").as_uint();    // if ! provided, determine from rowNode
+        if (!rowNumber) rowNumber = rowNode.attribute("r").as_uint();    // if not provided, determine from rowNode
 
         // Performance optimization: use lightweight column extraction instead of creating XLCellReference objects
         // This avoids repeated string parsing and object creation overhead in hot loops
         uint16_t lastCellCol = cellNode.empty() ? 0 : extractColumnFromCellRef(cellNode.attribute("r").value());
 
         // ===== If there are no cells in the current row, or the requested cell is beyond the last cell in the row...
-        if (cellNode.empty() || (lastCellCol < columnNumber)) {
+        if (cellNode.empty() or (lastCellCol < columnNumber)) {
             // ===== append a new node to the end.
             cellNode = rowNode.append_child("c");
             // Performance optimization: use lightweight makeCellAddress instead of XLCellReference
@@ -481,12 +481,12 @@ namespace OpenXLSX
         // ===== If the requested node is closest to the end, start from the end and search backwards...
         else if (lastCellCol - columnNumber < columnNumber) {
             uint16_t currentCol = lastCellCol;
-            while (! cellNode.empty() && (currentCol > columnNumber)) {
+            while (not cellNode.empty() and (currentCol > columnNumber)) {
                 cellNode   = cellNode.previous_sibling_of_type(pugi::node_element);
                 currentCol = cellNode.empty() ? 0 : extractColumnFromCellRef(cellNode.attribute("r").value());
             }
             // ===== If the backwards search failed to locate the requested cell
-            if (cellNode.empty() || (currentCol < columnNumber)) {
+            if (cellNode.empty() or (currentCol < columnNumber)) {
                 if (cellNode.empty())                         // If between row begin and higher column number, only non-element nodes exist
                     cellNode = rowNode.prepend_child("c");    // insert a new cell node at row begin. When saving, this will keep whitespace
                                                               // formatting towards next cell node
@@ -500,7 +500,7 @@ namespace OpenXLSX
         }
         // ===== Otherwise, start from the beginning
         else {
-            // ===== At this point, it is guaranteed that there is at least one node_element in the row that is ! empty.
+            // ===== At this point, it is guaranteed that there is at least one node_element in the row that is not empty.
             cellNode = rowNode.first_child_of_type(pugi::node_element);
 
             // ===== It has been verified above that the requested columnNumber is <= the column number of the last node_element, therefore
@@ -527,8 +527,8 @@ namespace OpenXLSX
      * @param nodeName search this
      * @param nodeOrder in this
      * @return index of nodeName in nodeOrder
-     * @return -1 if nodeName is ! an element of nodeOrder
-     * @note this function uses a vector of std::string_view because std::string is ! constexpr-capable, and in
+     * @return -1 if nodeName is not an element of nodeOrder
+     * @note this function uses a vector of std::string_view because std::string is not constexpr-capable, and in
      *        a future c++20 build, a std::span could be used to have the node order in any OpenXLSX class be a constexpr
      */
     constexpr const int SORT_INDEX_NOT_FOUND = -1;
@@ -582,12 +582,12 @@ namespace OpenXLSX
 
         int nodeSortIndex = (nodeOrder.size() > 1 ? findStringInVector(nodeName, nodeOrder) : SORT_INDEX_NOT_FOUND);
         if (nodeSortIndex !=
-            SORT_INDEX_NOT_FOUND) {    // can't sort anything if nodeOrder contains less than 2 entries or does ! contain nodeName
+            SORT_INDEX_NOT_FOUND) {    // can't sort anything if nodeOrder contains less than 2 entries or does not contain nodeName
             // ===== Find first node to follow nodeName per nodeOrder
-            while (! nextNode.empty() && findStringInVector(nextNode.name(), nodeOrder) < nodeSortIndex)
+            while (not nextNode.empty() and findStringInVector(nextNode.name(), nodeOrder) < nodeSortIndex)
                 nextNode = nextNode.next_sibling_of_type(pugi::node_element);
             // ===== Evaluate search result
-            if (! nextNode.empty()) {             // found nodeName or a node before which nodeName should be inserted
+            if (not nextNode.empty()) {             // found nodeName or a node before which nodeName should be inserted
                 if (nextNode.name() == nodeName)    // if nodeName was found
                     node = nextNode;                // use existing node
                 else {                              // else: a node was found before which nodeName must be inserted
@@ -691,7 +691,7 @@ namespace OpenXLSX
     {
         if (parent.empty()) return false;    // can't do anything
         XMLNode tagNode = parent.child(tagName.c_str());
-        if (tagNode.empty()) return false;    // if tag does ! exist: return false
+        if (tagNode.empty()) return false;    // if tag does not exist: return false
         XMLAttribute valAttr = tagNode.attribute(attrName.c_str());
         if (valAttr.empty()) {                                   // if no attribute with attrName exists: default to true
             appendAndSetAttribute(tagNode, attrName, "true");    // explicitly create & set attribute
@@ -711,7 +711,7 @@ namespace OpenXLSX
         if (data.size() < 8) return {0, 0};
 
         // Check for PNG
-        if (reinterpret_cast<const uint8_t*>(data.data())[0] == 0x89 && data.substr(1, 3) == "PNG") {
+        if (reinterpret_cast<const uint8_t*>(data.data())[0] == 0x89 and data.substr(1, 3) == "PNG") {
             if (data.size() < 24) return {0, 0};
             // IHDR chunk starts at offset 12. Width at 16, height at 20 (4 bytes each, big-endian)
             const uint8_t* p = reinterpret_cast<const uint8_t*>(data.data());
@@ -723,7 +723,7 @@ namespace OpenXLSX
         }
 
         // Check for JPEG
-        if (reinterpret_cast<const uint8_t*>(data.data())[0] == 0xFF && reinterpret_cast<const uint8_t*>(data.data())[1] == 0xD8) {
+        if (reinterpret_cast<const uint8_t*>(data.data())[0] == 0xFF and reinterpret_cast<const uint8_t*>(data.data())[1] == 0xD8) {
             size_t offset = 2;
             while (offset + 4 < data.size()) {
                 const uint8_t* p = reinterpret_cast<const uint8_t*>(data.data()) + offset;
@@ -732,8 +732,8 @@ namespace OpenXLSX
                 uint32_t length = (static_cast<uint32_t>(p[2]) << 8) | static_cast<uint32_t>(p[3]);
 
                 // SOF0 (Start Of Frame 0) marker is 0xFFC0. Others are 0xFFC1-0xFFC3, 0xFFC5-0xFFC7, 0xFFC9-0xFFCB, 0xFFCD-0xFFCF
-                if ((marker >= 0xC0 && marker <= 0xC3) || (marker >= 0xC5 && marker <= 0xC7) || (marker >= 0xC9 && marker <= 0xCB) ||
-                    (marker >= 0xCD && marker <= 0xCF))
+                if ((marker >= 0xC0 and marker <= 0xC3) or (marker >= 0xC5 and marker <= 0xC7) or (marker >= 0xC9 and marker <= 0xCB) ||
+                    (marker >= 0xCD and marker <= 0xCF))
                 {
                     if (offset + 9 > data.size()) return {0, 0};
                     // Height is at offset 5, width at 7 (2 bytes each, big-endian)

@@ -282,7 +282,7 @@ namespace OpenXLSX
         /**
          * @brief Look up a relationship item by Target.
          * @param target The Target string of the relationship item to retrieve.
-         * @param throwIfNotFound Throw an XLException when target is ! found, default: true
+         * @param throwIfNotFound Throw an XLException when target is not found, default: true
          *                        when false, XLRelationshipItem::empty() can be tested on the return value
          * @return An XLRelationshipItem object.
          */

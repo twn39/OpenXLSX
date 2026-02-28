@@ -70,9 +70,9 @@ namespace OpenXLSX
 
     using XLStyleIndex = size_t;    // custom data type for XLStyleIndex
 
-    constexpr const uint32_t XLInvalidUInt16  = 0xffff;             // used to signal "value ! defined" for uint16_t return types
-    constexpr const uint32_t XLInvalidUInt32  = 0xffffffff;         // used to signal "value ! defined" for uint32_t return types
-    constexpr const uint32_t XLDeleteProperty = XLInvalidUInt32;    // when 0 or "" is ! the same as "property does ! exist", this value
+    constexpr const uint32_t XLInvalidUInt16  = 0xffff;             // used to signal "value not defined" for uint16_t return types
+    constexpr const uint32_t XLInvalidUInt32  = 0xffffffff;         // used to signal "value not defined" for uint32_t return types
+    constexpr const uint32_t XLDeleteProperty = XLInvalidUInt32;    // when 0 or "" is not the same as "property does not exist", this value
     //                                                            //  can be passed to setter functions to delete the property from XML
     //                                                            //  currently supported in: XLDataBarColor::setTheme
 
@@ -88,7 +88,7 @@ namespace OpenXLSX
 
     constexpr const XLStyleIndex XLDefaultCellFormat = 0;    // default cell format index in xl/styles.xml:<styleSheet>:<cellXfs>
 
-    // ===== As pugixml attributes are ! guaranteed to support value range of XLStyleIndex, use 32 bit unsigned int
+    // ===== As pugixml attributes are not guaranteed to support value range of XLStyleIndex, use 32 bit unsigned int
     constexpr const XLStyleIndex XLInvalidStyleIndex = XLInvalidUInt32;    // as a function return value, indicates no valid index
 
     constexpr const uint32_t XLDefaultFontSize       = 12;            //
@@ -98,7 +98,7 @@ namespace OpenXLSX
     constexpr const uint32_t XLDefaultFontFamily     = 0;             // TBD what this means / how it is used
     constexpr const uint32_t XLDefaultFontCharset    = 1;             // TBD what this means / how it is used
 
-    constexpr const char* XLDefaultLineStyle = "";    // empty string = line ! set
+    constexpr const char* XLDefaultLineStyle = "";    // empty string = line not set
 
     // forward declarations of all classes in this header
     class XLNumberFormat;
@@ -136,7 +136,7 @@ namespace OpenXLSX
     enum XLFillType : uint8_t {
         XLGradientFill    = 0,      // <gradientFill />
         XLPatternFill     = 1,      // <patternFill />
-        XLFillTypeInvalid = 255,    // any child of <fill> that is ! one of the above
+        XLFillTypeInvalid = 255,    // any child of <fill> that is not one of the above
     };
 
     enum XLGradientType : uint8_t { XLGradientLinear = 0, XLGradientPath = 1, XLGradientTypeInvalid = 255 };
@@ -161,7 +161,7 @@ namespace OpenXLSX
         XLPatternLightTrellis    = 16,    // "lightTrellis"
         XLPatternGray125         = 17,    // "gray125"
         XLPatternGray0625        = 18,    // "gray0625"
-        XLPatternTypeInvalid     = 255    // any patternType that is ! one of the above
+        XLPatternTypeInvalid     = 255    // any patternType that is not one of the above
     };
     constexpr const XLFillType    XLDefaultFillType       = XLPatternFill;    // node name for the pattern description is derived from this
     constexpr const XLPatternType XLDefaultPatternType    = XLPatternNone;    // attribute patternType default value: no fill
@@ -481,13 +481,13 @@ namespace OpenXLSX
 
         /**
          * @brief Get the font bold status
-         * @return true = bold, false = ! bold
+         * @return true = bold, false = not bold
          */
         bool bold() const;
 
         /**
          * @brief Get the font italic (cursive) status
-         * @return true = italic, false = ! italice
+         * @return true = italic, false = not italice
          */
         bool italic() const;
 
@@ -715,7 +715,7 @@ namespace OpenXLSX
 
         /**
          * @brief Get the line color tint
-         * @return A double value as stored in the "tint" attribute (should be between [-1.0;+1.0]), 0.0 if attribute does ! exist
+         * @return A double value as stored in the "tint" attribute (should be between [-1.0;+1.0]), 0.0 if attribute does not exist
          */
         double tint() const;
 
@@ -967,7 +967,7 @@ namespace OpenXLSX
         /**
          * @brief Create & set the base XML element describing the fill
          * @param newFillType that shall be set
-         * @param force erase an existing fillType() if ! equal newFillType
+         * @param force erase an existing fillType() if not equal newFillType
          * @return true for success, false for failure
          */
         bool setFillType(XLFillType newFillType, bool force = false);
@@ -1694,7 +1694,7 @@ namespace OpenXLSX
          * @brief Report whether quotePrefix is enabled
          * @return true for a setting enabled, or false if disabled
          * @note from documentation: A boolean value indicating whether the text string in a cell should be prefixed by a single quote mark
-         *       (e.g., 'text). In these cases, the quote is ! stored in the Shared Strings Part.
+         *       (e.g., 'text). In these cases, the quote is not stored in the Shared Strings Part.
          */
         bool quotePrefix() const;
 
@@ -1939,7 +1939,7 @@ namespace OpenXLSX
 
         /**
          * @brief Get the hidden flag of the cell style
-         * @return The hidden flag status (true: applications should ! show this style)
+         * @return The hidden flag status (true: applications should not show this style)
          */
         bool hidden() const;
 

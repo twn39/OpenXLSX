@@ -94,7 +94,7 @@ namespace OpenXLSX
         /**
          * @brief Constructor. Takes a pointer to an XLXmlData object (stored in the parent XLDocument object).
          * @param xmlData A pointer to the underlying XLXmlData object, which holds the XML data.
-         * @note Do ! create an XLWorkbook object directly. Access via XLDocument::workbook().
+         * @note Do not create an XLWorkbook object directly. Access via XLDocument::workbook().
          */
         explicit XLWorkbook(XLXmlData* xmlData);
 
@@ -122,7 +122,7 @@ namespace OpenXLSX
          * @brief Copy assignment operator.
          * @param other The XLWorkbook object to be assigned to the current.
          * @return A reference to *this
-         * @note The copy assignment operator has been explicitly deleted, as XLWorkbook objects should ! be copied.
+         * @note The copy assignment operator has been explicitly deleted, as XLWorkbook objects should not be copied.
          */
         XLWorkbook& operator=(const XLWorkbook& other) = default;
 
@@ -130,7 +130,7 @@ namespace OpenXLSX
          * @brief Move assignment operator.
          * @param other The XLWorkbook to be move assigned.
          * @return A reference to *this
-         * @note The move assignment operator has been explicitly deleted, as XLWorkbook objects should ! be moved.
+         * @note The move assignment operator has been explicitly deleted, as XLWorkbook objects should not be moved.
          */
         XLWorkbook& operator=(XLWorkbook&& other) = default;
 
@@ -382,14 +382,14 @@ namespace OpenXLSX
         bool setSheetActive(const std::string& sheetRID);
 
         /**
-         * @brief Check whether attribute string state matches a value that is considered ! visible
+         * @brief Check whether attribute string state matches a value that is considered not visible
          * @param state
-         * @return true if state does ! match a value that is considered ! visible (hidden, veryHidden), otherwise false
+         * @return true if state does not match a value that is considered not visible (hidden, veryHidden), otherwise false
          */
         bool isVisibleState(std::string const& state) const;
 
         /**
-         * @brief Check whether sheetNode is ! empty, and in case it has an attribute "state", that the state does ! reflect hidden-ness
+         * @brief Check whether sheetNode is not empty, and in case it has an attribute "state", that the state does not reflect hidden-ness
          * @param sheetNode
          * @return true if sheetNode can be considered visible (and could be activated)
          */

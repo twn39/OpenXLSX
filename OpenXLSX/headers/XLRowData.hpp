@@ -190,16 +190,16 @@ namespace OpenXLSX
 
         /**
          * @brief Templated assignment operator - assign value to all existing cells in the row
-         * @note CAUTION: non-existing cells will ! be assigned
+         * @note CAUTION: non-existing cells will not be assigned
          * @tparam T The type of the value argument.
          * @param value The value.
          * @return A reference to the assigned-to object.
          */
         template<typename T,
                  typename = std::enable_if_t<
-                     std::is_integral_v<T> || std::is_floating_point_v<T> || std::is_same_v<std::decay_t<T>, std::string> ||
-                     std::is_same_v<std::decay_t<T>, std::string_view> || std::is_same_v<std::decay_t<T>, const char*> ||
-                     std::is_same_v<std::decay_t<T>, char*> || std::is_same_v<T, XLDateTime>>>
+                     std::is_integral_v<T> or std::is_floating_point_v<T> or std::is_same_v<std::decay_t<T>, std::string> ||
+                     std::is_same_v<std::decay_t<T>, std::string_view> or std::is_same_v<std::decay_t<T>, const char*> ||
+                     std::is_same_v<std::decay_t<T>, char*> or std::is_same_v<T, XLDateTime>>>
         XLRowDataRange& operator=(T value)
         {
             // forward implementation to templated XLCellValue& XLCellValue::operator=(T value)
@@ -317,7 +317,7 @@ namespace OpenXLSX
         //             typename T,
         //             typename std::enable_if<
         //                 !std::is_same_v< T, XLRowDataProxy >
-        //                  && std::is_base_of_v< XMLNode, T >,
+        //                  and std::is_base_of_v< XMLNode, T >,
         //                 T
         //             >::type* = nullptr
         //         >
@@ -435,7 +435,7 @@ namespace OpenXLSX
          * std::list, but any container with the same interface should work.
          * @tparam Container The container (and value) type to be returned.
          * @return The row data in the required format.
-         * @throws bad_variant_access if Container::value type is ! XLCellValue and does ! match the type contained.
+         * @throws bad_variant_access if Container::value type is not XLCellValue and does not match the type contained.
          */
         template<typename Container,
                  typename =
@@ -452,7 +452,7 @@ namespace OpenXLSX
                 if constexpr (std::is_same_v<typename Container::value_type, XLCellValue>) *it++ = v;
 
                 // ===== If the value_type is something else, the underlying value has to be extracted from the XLCellValue object.
-                // ===== Note that if the type contained in the XLCellValue object does ! match the value_type, a bad_variant_access
+                // ===== Note that if the type contained in the XLCellValue object does not match the value_type, a bad_variant_access
                 // ===== exception will be thrown.
                 else
                     *it++ = v.get<typename Container::value_type>();

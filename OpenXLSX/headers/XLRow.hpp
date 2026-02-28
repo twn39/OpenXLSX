@@ -227,7 +227,7 @@ namespace OpenXLSX
         /**
          * @brief Find a cell at columNumber, or return an empty cell
          * @param columNumber The column at which to check for an existing cell
-         * @return An XLCell object (that bool-evaluates to false if cell was ! found)
+         * @return An XLCell object (that bool-evaluates to false if cell was not found)
          */
         XLCell findCell(uint16_t columNumber);
 

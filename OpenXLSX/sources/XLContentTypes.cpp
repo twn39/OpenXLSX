@@ -339,7 +339,7 @@ std::vector<XLContentItem> XLContentTypes::getContentItems()
 {
     std::vector<XLContentItem> result;
     XMLNode                    item = xmlDocument().document_element().first_child_of_type(pugi::node_element);
-    while (! item.empty()) {
+    while (not item.empty()) {
         if (strcmp(item.name(), "Override") == 0) result.emplace_back(item);
         item = item.next_sibling_of_type(pugi::node_element);
     }

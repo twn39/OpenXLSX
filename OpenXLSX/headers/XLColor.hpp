@@ -211,7 +211,7 @@ namespace OpenXLSX
      * @return
      */
     inline bool operator==(const XLColor& lhs, const XLColor& rhs)
-    { return lhs.alpha() == rhs.alpha() && lhs.red() == rhs.red() && lhs.green() == rhs.green() && lhs.blue() == rhs.blue(); }
+    { return lhs.alpha() == rhs.alpha() and lhs.red() == rhs.red() and lhs.green() == rhs.green() and lhs.blue() == rhs.blue(); }
 
     /**
      * @brief

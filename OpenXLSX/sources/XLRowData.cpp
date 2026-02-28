@@ -124,7 +124,7 @@ namespace OpenXLSX
      */
     XLRowDataIterator& XLRowDataIterator::operator++()
     {
-        if (! m_currentCell)    // 2025-07-14 BUGFIX issue #368: check that m_currentCell is valid
+        if (not m_currentCell)    // 2025-07-14 BUGFIX issue #368: check that m_currentCell is valid
             throw XLInputError("XLRowDataIterator: tried to increment beyond end operator");
 
         // ===== Compute the column number, and move the m_cellNode to the next sibling.
@@ -140,7 +140,7 @@ namespace OpenXLSX
         // BUG BUGFIX 2024-04-26: check was for m_cellNode->empty(), allowing an invalid test for the attribute r, discovered
         //       because the modified XLCellReference throws an exception on invalid parameter
         // Performance optimization: use lightweight column extraction instead of XLCellReference
-        else if (cellNode.empty() || extractColumnFromCellRef(cellNode.attribute("r").value()) > cellNumber) {
+        else if (cellNode.empty() or extractColumnFromCellRef(cellNode.attribute("r").value()) > cellNumber) {
             cellNode = m_dataRange->m_rowNode->insert_child_after("c", *m_currentCell.m_cellNode);
             // Performance optimization: use lightweight makeCellAddress instead of XLCellReference
             char cellAddrBuf[16];
@@ -191,10 +191,10 @@ namespace OpenXLSX
      */
     bool XLRowDataIterator::operator==(const XLRowDataIterator& rhs) const
     {
-        // 2024-05-28 BUGFIX: (!m_currentCell && rhs.m_currentCell) was ! evaluated, triggering a segmentation fault on dereferencing
+        // 2024-05-28 BUGFIX: (!m_currentCell and rhs.m_currentCell) was not evaluated, triggering a segmentation fault on dereferencing
         if (static_cast<bool>(m_currentCell) != static_cast<bool>(rhs.m_currentCell)) return false;
         // ===== If execution gets here, current cells are BOTH valid or BOTH invalid / empty
-        if (! m_currentCell) return true;    // checking one for being empty is enough to know both are empty
+        if (not m_currentCell) return true;    // checking one for being empty is enough to know both are empty
         return m_currentCell == rhs.m_currentCell;
     }
 
@@ -328,8 +328,8 @@ namespace OpenXLSX
     XLRowDataProxy::~XLRowDataProxy() = default;
 
     /**
-     * @details Copy constructor. This is ! a 'true' copy constructor, as it is the row values that will
-     * be copied, ! the XLRowDataProxy member variables (pointers to the XLRow and row node objects).
+     * @details Copy constructor. This is not a 'true' copy constructor, as it is the row values that will
+     * be copied, not the XLRowDataProxy member variables (pointers to the XLRow and row node objects).
      * @pre
      * @post
      */
@@ -467,7 +467,7 @@ namespace OpenXLSX
         if (numCells > 0) {
             XMLNode node = lastElementChild;    // avoid unneeded call to first_child_of_type by iterating backwards, vector is random
                                                 // access so it doesn't matter
-            while (! node.empty()) {
+            while (not node.empty()) {
                 // Performance optimization: use lightweight column extraction
                 result[extractColumnFromCellRef(node.attribute("r").value()) - 1] = XLCell(node, m_row->m_sharedStrings.get()).value();
                 node                                                              = node.previous_sibling_of_type(pugi::node_element);
@@ -480,7 +480,7 @@ namespace OpenXLSX
 
     /**
      * @details The function returns a reference to the XLSharedStrings object embedded in the m_row member.
-     * This is required because the XLRow class internals is ! visible in the header file.
+     * This is required because the XLRow class internals is not visible in the header file.
      * @pre
      * @post
      */
@@ -497,7 +497,7 @@ namespace OpenXLSX
         // ===== Mark cell nodes for deletion
         std::vector<XMLNode> toBeDeleted;
         XMLNode              cellNode = m_rowNode->first_child_of_type(pugi::node_element);
-        while (! cellNode.empty()) {
+        while (not cellNode.empty()) {
             // Performance optimization: use lightweight column extraction
             if (extractColumnFromCellRef(cellNode.attribute("r").value()) <= count) {
                 toBeDeleted.emplace_back(cellNode);

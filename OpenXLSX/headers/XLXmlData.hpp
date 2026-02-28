@@ -97,7 +97,7 @@ namespace OpenXLSX
                   XLContentType      xmlType = XLContentType::Unknown);
 
         /**
-         * @brief Default destructor. The XLXmlData does ! manage any dynamically allocated resources, so a default
+         * @brief Default destructor. The XLXmlData does not manage any dynamically allocated resources, so a default
          * destructor will suffice.
          */
         ~XLXmlData();

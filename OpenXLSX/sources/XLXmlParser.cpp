@@ -54,7 +54,7 @@ namespace OpenXLSX
 {
     bool NO_XML_NS = true;    // default: no XML namespaces
     /**
-     * @details this function is meaningless when PUGI_AUGMENTED is ! defined / used
+     * @details this function is meaningless when PUGI_AUGMENTED is not defined / used
      */
     bool enable_xml_namespaces()
     {
@@ -66,7 +66,7 @@ namespace OpenXLSX
 #endif
     }
     /**
-     * @details this function is meaningless when PUGI_AUGMENTED is ! defined / used
+     * @details this function is meaningless when PUGI_AUGMENTED is not defined / used
      */
     bool disable_xml_namespaces()
     {
@@ -83,9 +83,9 @@ namespace OpenXLSX
      */
     const pugi::char_t* XMLNode::name_without_namespace(const pugi::char_t* name_) const
     {
-        if (NO_XML_NS) return name_;    // if node namespaces are ! stripped: return immediately
+        if (NO_XML_NS) return name_;    // if node namespaces are not stripped: return immediately
         int pos = 0;
-        while (name_[pos] && name_[pos] != ':') ++pos;    // find namespace delimiter
+        while (name_[pos] and name_[pos] != ':') ++pos;    // find namespace delimiter
         if (!name_[pos]) return name_;                    // if no delimiter found: return unmodified name
         return name_ + pos + 1;                           // if delimiter was found: return the name minus the namespace
     }
@@ -97,7 +97,7 @@ namespace OpenXLSX
     const pugi::char_t* XMLNode::namespaced_name_char(const pugi::char_t* name_, bool force_ns) const
     {
         // ===== If node has no namespace: Early pass-through return
-        if (!name_begin || force_ns) return name_;
+        if (!name_begin or force_ns) return name_;
         if (name_begin + strlen(name_) > XLMaxNamespacedNameLen) {
             using namespace std::literals::string_literals;
             throw XLException("OpenXLSX_xml_node::"s + __func__ + ": strlen of "s + name_ + " exceeds XLMaxNamespacedNameLen "s +
@@ -121,7 +121,7 @@ namespace OpenXLSX
     std::shared_ptr<pugi::char_t> XMLNode::namespaced_name_shared_ptr(const pugi::char_t* name_, bool force_ns) const
     {
         // ===== If node has no namespace: Early pass-through return with noop-deleter
-        if (!name_begin || force_ns) return std::shared_ptr<pugi::char_t>(const_cast<pugi::char_t*>(name_), [](pugi::char_t*) {});
+        if (!name_begin or force_ns) return std::shared_ptr<pugi::char_t>(const_cast<pugi::char_t*>(name_), [](pugi::char_t*) {});
 
         // ===== If node has a namespace: allocate memory for concatenation and create a namespaced version of name_
         std::shared_ptr<pugi::char_t> namespaced_name_(new pugi::char_t[name_begin + strlen(name_) + 1],
@@ -140,7 +140,7 @@ namespace OpenXLSX
         if (_root) {
             XMLNode x = first_child();
             XMLNode l = last_child();
-            while (x != l && x.type() != type_) x = x.next_sibling();
+            while (x != l and x.type() != type_) x = x.next_sibling();
             if (x.type() == type_) return XMLNode(x);
         }
         return XMLNode();    // if no node matching type_ was found: return an empty node
@@ -155,7 +155,7 @@ namespace OpenXLSX
         if (_root) {
             XMLNode f = first_child();
             XMLNode x = last_child();
-            while (x != f && x.type() != type_) x = x.previous_sibling();
+            while (x != f and x.type() != type_) x = x.previous_sibling();
             if (x.type() == type_) return XMLNode(x);
         }
         return XMLNode();    // if no node matching type_ was found: return an empty node
@@ -209,7 +209,7 @@ namespace OpenXLSX
     XMLNode XMLNode::next_sibling_of_type(const pugi::char_t* name_, pugi::xml_node_type type_) const
     {
         for (pugi::xml_node n = pugi::xml_node::next_sibling(); n; n = n.next_sibling()) {
-            if (n.type() == type_ && std::strcmp(n.name(), name_) == 0) return XMLNode(n);
+            if (n.type() == type_ and std::strcmp(n.name(), name_) == 0) return XMLNode(n);
         }
         return XMLNode();    // if no node matching type_ was found: return an empty node
     }
@@ -221,7 +221,7 @@ namespace OpenXLSX
     XMLNode XMLNode::previous_sibling_of_type(const pugi::char_t* name_, pugi::xml_node_type type_) const
     {
         for (pugi::xml_node n = pugi::xml_node::previous_sibling(); n; n = n.previous_sibling()) {
-            if (n.type() == type_ && std::strcmp(n.name(), name_) == 0) return XMLNode(n);
+            if (n.type() == type_ and std::strcmp(n.name(), name_) == 0) return XMLNode(n);
         }
         return XMLNode();    // if no node matching type_ was found: return an empty node
     }

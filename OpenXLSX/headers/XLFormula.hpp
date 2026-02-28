@@ -75,8 +75,8 @@ namespace OpenXLSX
      * @brief The XLFormula class encapsulates the concept of an Excel formula. The class is essentially
      * a wrapper around a std::string.
      * @warning This class currently only supports simple formulas. Array formulas and shared formulas are
-     * ! supported. Unfortunately, many spreadsheets have shared formulas, so this class is probably
-     * best used for adding formulas, ! reading them from an existing spreadsheet.
+     * not supported. Unfortunately, many spreadsheets have shared formulas, so this class is probably
+     * best used for adding formulas, not reading them from an existing spreadsheet.
      * @todo Enable handling of shared and array formulas.
      */
     class OPENXLSX_EXPORT XLFormula
@@ -100,12 +100,12 @@ namespace OpenXLSX
          */
         template<
             typename T,
-            typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, std::string> || std::is_same_v<std::decay_t<T>, std::string_view> ||
-                                        std::is_same_v<std::decay_t<T>, const char*> || std::is_same_v<std::decay_t<T>, char*>>>
+            typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, std::string> or std::is_same_v<std::decay_t<T>, std::string_view> ||
+                                        std::is_same_v<std::decay_t<T>, const char*> or std::is_same_v<std::decay_t<T>, char*>>>
         explicit XLFormula(T formula)
         {
             // ===== If the argument is a const char *, use the argument directly; otherwise, assume it has a .c_str() function.
-            if constexpr (std::is_same_v<std::decay_t<T>, const char*> || std::is_same_v<std::decay_t<T>, char*>)
+            if constexpr (std::is_same_v<std::decay_t<T>, const char*> or std::is_same_v<std::decay_t<T>, char*>)
                 m_formulaString = formula;
             else if constexpr (std::is_same_v<std::decay_t<T>, std::string_view>)
                 m_formulaString = std::string(formula);
@@ -152,8 +152,8 @@ namespace OpenXLSX
          */
         template<
             typename T,
-            typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, std::string> || std::is_same_v<std::decay_t<T>, std::string_view> ||
-                                        std::is_same_v<std::decay_t<T>, const char*> || std::is_same_v<std::decay_t<T>, char*>>>
+            typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, std::string> or std::is_same_v<std::decay_t<T>, std::string_view> ||
+                                        std::is_same_v<std::decay_t<T>, const char*> or std::is_same_v<std::decay_t<T>, char*>>>
         XLFormula& operator=(T formula)
         {
             XLFormula temp(formula);
@@ -168,8 +168,8 @@ namespace OpenXLSX
          */
         template<
             typename T,
-            typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, std::string> || std::is_same_v<std::decay_t<T>, std::string_view> ||
-                                        std::is_same_v<std::decay_t<T>, const char*> || std::is_same_v<std::decay_t<T>, char*>>>
+            typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, std::string> or std::is_same_v<std::decay_t<T>, std::string_view> ||
+                                        std::is_same_v<std::decay_t<T>, const char*> or std::is_same_v<std::decay_t<T>, char*>>>
         void set(T formula)
         { *this = formula; }
 
@@ -224,9 +224,9 @@ namespace OpenXLSX
          * @return A reference to the copied-to object.
          */
         template<typename T,
-                 typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, XLFormula> || std::is_same_v<std::decay_t<T>, std::string> ||
+                 typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, XLFormula> or std::is_same_v<std::decay_t<T>, std::string> ||
                                              std::is_same_v<std::decay_t<T>, std::string_view> ||
-                                             std::is_same_v<std::decay_t<T>, const char*> || std::is_same_v<std::decay_t<T>, char*>>>
+                                             std::is_same_v<std::decay_t<T>, const char*> or std::is_same_v<std::decay_t<T>, char*>>>
         XLFormulaProxy& operator=(T formula)
         {
             if constexpr (std::is_same_v<std::decay_t<T>, XLFormula>)
@@ -248,8 +248,8 @@ namespace OpenXLSX
          */
         template<
             typename T,
-            typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, std::string> || std::is_same_v<std::decay_t<T>, std::string_view> ||
-                                        std::is_same_v<std::decay_t<T>, const char*> || std::is_same_v<std::decay_t<T>, char*>>>
+            typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, std::string> or std::is_same_v<std::decay_t<T>, std::string_view> ||
+                                        std::is_same_v<std::decay_t<T>, const char*> or std::is_same_v<std::decay_t<T>, char*>>>
         void set(T formula)
         { *this = formula; }
 

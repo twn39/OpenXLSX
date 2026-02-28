@@ -54,7 +54,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include <pugixml.hpp>
 
 namespace
-{    // anonymous namespace to define constants / functions that shall ! be exported from this module
+{    // anonymous namespace to define constants / functions that shall not be exported from this module
     constexpr const int XLMaxNamespacedNameLen = 100;
 }    // anonymous namespace
 
@@ -88,13 +88,13 @@ namespace OpenXLSX
     extern bool NO_XML_NS;    // defined in XLXmlParser.cpp - default: no XML namespaces
     /**
      * @brief Set NO_XML_NS to false
-     * @return true if PUGI_AUGMENTED is defined (success), false if PUGI_AUGMENTED is ! in use (function would be pointless)
+     * @return true if PUGI_AUGMENTED is defined (success), false if PUGI_AUGMENTED is not in use (function would be pointless)
      * @note CAUTION: this setting should be established before any other OpenXLSX function is used
      */
     bool enable_xml_namespaces();
     /**
      * @brief Set NO_XML_NS to true
-     * @return true if PUGI_AUGMENTED is defined (success), false if PUGI_AUGMENTED is ! in use (function would be pointless)
+     * @return true if PUGI_AUGMENTED is defined (success), false if PUGI_AUGMENTED is not in use (function would be pointless)
      * @note CAUTION: this setting should be established before any other OpenXLSX function is used
      */
     bool disable_xml_namespaces();
@@ -137,7 +137,7 @@ namespace OpenXLSX
             if (NO_XML_NS) return;
             const char* name = xml_node::name();
             size_t      pos  = 0;
-            while (name[pos] && name[pos] != ':') ++pos;    // find name delimiter
+            while (name[pos] and name[pos] != ':') ++pos;    // find name delimiter
             if (name[pos] == ':') name_begin = pos + 1;     // if delimiter was found: update name_begin to point behind that position
         }
 
