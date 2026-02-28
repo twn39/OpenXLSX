@@ -1,0 +1,58 @@
+name: OpenXLSX CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: ${{ matrix.os }} - ${{ matrix.compiler }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+            cc: gcc
+            cxx: g++
+          - os: ubuntu-latest
+            compiler: clang
+            cc: clang
+            cxx: clang++
+          - os: macos-latest
+            compiler: apple-clang
+            cc: clang
+            cxx: clang++
+          - os: windows-latest
+            compiler: msvc
+            cc: cl
+            cxx: cl
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: >
+          cmake -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DOPENXLSX_BUILD_TESTS=ON
+          -DOPENXLSX_BUILD_BENCHMARKS=OFF
+
+      - name: Build
+        run: cmake --build build --config Release -j 4
+
+      - name: Run Tests
+        working-directory: build
+        run: |
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            ./Release/OpenXLSXTests.exe
+          else
+            ./OpenXLSXTests
+          fi
+        shell: bash
