@@ -10,7 +10,6 @@ project(OpenXLSX.Benchmark)
 find_package(benchmark REQUIRED)
 
 set(BENCHMARK_ENABLE_TESTING OFF)
-#add_subdirectory(gbench)
 
 #=======================================================================================================================
 # Define Benchmark targets

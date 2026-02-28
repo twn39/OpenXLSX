@@ -1,98 +1,129 @@
-#=======================================================================================================================
-# Preamble
-#=======================================================================================================================
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 project(OpenXLSX VERSION 0.4.1 LANGUAGES CXX)
 
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-set(CMAKE_VISIBILITY_INLINES_HIDDEN YES)
-
-#=======================================================================================================================
-# Set C/C++ compiler version
-#=======================================================================================================================
+# Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(IGNORE_ME ${CMAKE_C_COMPILER}) # Suppress CMake warning message
 
-#=======================================================================================================================
-# Output Directories.
-#=======================================================================================================================
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output)
-
-#=======================================================================================================================
-# Add build options
-#=======================================================================================================================
-option(OPENXLSX_CREATE_DOCS "Build library documentation (requires Doxygen and Graphviz/Dot to be installed)" ON)
-option(OPENXLSX_BUILD_SAMPLES "Build sample programs" ON)
+# Build options
 option(OPENXLSX_BUILD_TESTS "Build and run library tests" ON)
-option(OPENXLSX_BUILD_BENCHMARKS "Build and run library benchmarks" OFF)
-option(OPENXLSX_ENABLE_LIBZIP "Enable using libzip" OFF)
-option(OPENXLSX_ENABLE_COVERAGE "Enable code coverage reporting" OFF)
+option(OPENXLSX_BUILD_BENCHMARKS "Build benchmark programs" OFF)
+option(OPENXLSX_CREATE_DOCS "Build library documentation" OFF)
+option(OPENXLSX_ENABLE_NOWIDE "Enable Nowide for UTF-8 support on Windows" ON)
+option(OPENXLSX_ENABLE_LTO "Enable Link-Time Optimization (LTO/IPO) if supported" ON)
 
-if(OPENXLSX_ENABLE_COVERAGE)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        add_compile_options(--coverage)
-        add_link_options(--coverage)
-    endif()
-endif()
+set(OPENXLSX_LIBRARY_TYPE "STATIC" CACHE STRING "Library type (STATIC or SHARED)")
 
-#=======================================================================================================================
-# External Libraries
-#=======================================================================================================================
+# External Libraries via FetchContent
 include(FetchContent)
-
-# Set up fast_float
-FetchContent_Declare(
-    fast_float
-    GIT_REPOSITORY https://github.com/fastfloat/fast_float.git
-    GIT_TAG        v8.2.3
-)
+FetchContent_Declare(fast_float GIT_REPOSITORY https://github.com/fastfloat/fast_float.git GIT_TAG v8.2.3)
 FetchContent_MakeAvailable(fast_float)
-
-# Set up fmt
-FetchContent_Declare(
-    fmt
-    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-    GIT_TAG        12.1.0
-)
+FetchContent_Declare(fmt GIT_REPOSITORY https://github.com/fmtlib/fmt.git GIT_TAG 12.1.0)
 FetchContent_MakeAvailable(fmt)
 
+# Third-party subdirectories
 set(PUGIXML_XPATH OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/pugixml EXCLUDE_FROM_ALL)
-
 set(NOWIDE_INSTALL OFF CACHE BOOL "" FORCE)
 set(NOWIDE_TESTING OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/nowide EXCLUDE_FROM_ALL)
 
-#=======================================================================================================================
-# Add project configurations (#ifdef / #ifndef testable)
-#=======================================================================================================================
 if(WIN32)
     set(OPENXLSX_ENABLE_NOWIDE ON)
 endif()
 
+# Sources
+file(GLOB OPENXLSX_SOURCES OpenXLSX/sources/*.cpp)
+
+# Library Target
+add_library(OpenXLSX ${OPENXLSX_LIBRARY_TYPE} ${OPENXLSX_SOURCES})
+add_library(OpenXLSX::OpenXLSX ALIAS OpenXLSX)
+
+target_include_directories(OpenXLSX
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/OpenXLSX>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/OpenXLSX/headers>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+    SYSTEM PUBLIC
+        $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/third_party/pugixml/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/third_party/zippy>
+)
+
+target_link_libraries(OpenXLSX PUBLIC pugixml)
+target_compile_definitions(OpenXLSX PUBLIC FMT_HEADER_ONLY)
+
+if (OPENXLSX_ENABLE_NOWIDE)
+    target_link_libraries(OpenXLSX PRIVATE nowide::nowide)
+    target_compile_definitions(OpenXLSX PRIVATE ENABLE_NOWIDE)
+endif ()
+
+if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
+    target_compile_definitions(OpenXLSX PUBLIC OPENXLSX_STATIC_DEFINE)
+endif ()
+
+# Enable Link-Time Optimization (LTO/IPO) if supported
+if(OPENXLSX_ENABLE_LTO)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT result OUTPUT output)
+    if(result)
+        set_property(TARGET OpenXLSX PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
+endif()
+
+# Export Header (Required by headers)
+include(GenerateExportHeader)
+generate_export_header(OpenXLSX
+    BASE_NAME openxlsx
+    EXPORT_FILE_NAME OpenXLSX-Exports.hpp
+    EXPORT_MACRO_NAME OPENXLSX_EXPORT
+)
+
+# Basic Compiler Flags & Release Optimizations
+if(MSVC)
+    target_compile_options(OpenXLSX PRIVATE /W4 $<$<CONFIG:Release>:/O2 /Ot /Gy /Zc:inline>)
+else()
+    target_compile_options(OpenXLSX PRIVATE -Wall -Wextra $<$<CONFIG:Release>:-O3 -ffunction-sections -fdata-sections>)
+    if(APPLE)
+        target_link_options(OpenXLSX PRIVATE $<$<CONFIG:Release>:-Wl,-dead_strip>)
+    else()
+        target_link_options(OpenXLSX PRIVATE $<$<CONFIG:Release>:-Wl,--gc-sections>)
+    endif()
+endif()
+
 #=======================================================================================================================
-# Add project subdirectories
+# TESTS (Merged configuration)
 #=======================================================================================================================
-add_subdirectory(OpenXLSX)
+if(OPENXLSX_BUILD_TESTS)
+    FetchContent_Declare(Catch2 GIT_REPOSITORY https://github.com/catchorg/Catch2.git GIT_TAG v3.13.0)
+    FetchContent_MakeAvailable(Catch2)
 
-if(${OPENXLSX_CREATE_DOCS})
-    add_subdirectory(Documentation)
+    file(GLOB TEST_SOURCES Tests/testXL*.cpp Tests/main.cpp)
+    add_executable(OpenXLSXTests ${TEST_SOURCES})
+    target_link_libraries(OpenXLSXTests PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
+
+    # Copy test data to build directory
+    add_custom_command(TARGET OpenXLSXTests POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:OpenXLSXTests>/Tests
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+            ${CMAKE_CURRENT_LIST_DIR}/Tests/test.png 
+            ${CMAKE_CURRENT_LIST_DIR}/Tests/test.jpg
+            $<TARGET_FILE_DIR:OpenXLSXTests>/Tests/
+    )
 endif()
 
-if(${OPENXLSX_BUILD_SAMPLES})
-    add_subdirectory(Examples)
-endif()
-
-if(${OPENXLSX_BUILD_TESTS})
-    add_subdirectory(Tests)
-endif()
-
-if(${OPENXLSX_BUILD_BENCHMARKS})
+#=======================================================================================================================
+# BENCHMARKS (Subdirectory configuration)
+#=======================================================================================================================
+if(OPENXLSX_BUILD_BENCHMARKS)
     add_subdirectory(Benchmarks)
 endif()
 
-
+#=======================================================================================================================
+# DOCUMENTATION (Subdirectory configuration)
+#=======================================================================================================================
+if(OPENXLSX_CREATE_DOCS)
+    add_subdirectory(Documentation)
+endif()
