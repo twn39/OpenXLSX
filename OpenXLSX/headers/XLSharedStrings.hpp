@@ -58,6 +58,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include <ostream>       // std::basic_ostream
 #include <string>
 #include <unordered_map>    // O(1) string lookup
+#include <gsl/gsl>
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
@@ -100,9 +101,9 @@ namespace OpenXLSX
          * @param stringCache
          * @param stringIndex O(1) lookup hash map: string -> index
          */
-        explicit XLSharedStrings(XLXmlData*                                xmlData,
-                                 std::deque<std::string>*                  stringCache,
-                                 std::unordered_map<std::string, int32_t>* stringIndex);
+        explicit XLSharedStrings(XLXmlData*                                               xmlData,
+                                 gsl::not_null<std::deque<std::string>*>                  stringCache,
+                                 gsl::not_null<std::unordered_map<std::string, int32_t>*> stringIndex);
 
         /**
          * @brief Destructor
@@ -207,8 +208,10 @@ namespace OpenXLSX
         int32_t rewriteXmlFromCache();
 
     private:
-        std::deque<std::string>* m_stringCache{}; /** < Each string must have an unchanging memory address; hence the use of std::deque */
-        std::unordered_map<std::string, int32_t>* m_stringIndex{}; /** < O(1) string -> index lookup */
+        static inline std::deque<std::string>                  s_emptyCache{};
+        static inline std::unordered_map<std::string, int32_t> s_emptyIndex{};
+        gsl::not_null<std::deque<std::string>*>                  m_stringCache{&s_emptyCache}; /** < Each string must have an unchanging memory address; hence the use of std::deque */
+        gsl::not_null<std::unordered_map<std::string, int32_t>*> m_stringIndex{&s_emptyIndex}; /** < O(1) string -> index lookup */
     };
 }    // namespace OpenXLSX
 

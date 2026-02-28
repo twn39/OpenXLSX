@@ -64,9 +64,9 @@ using namespace OpenXLSX;
  * @details Constructs a new XLSharedStrings object. Only one (common) object is allowed per XLDocument instance.
  * A filepath to the underlying XML file must be provided.
  */
-XLSharedStrings::XLSharedStrings(XLXmlData*                                xmlData,
-                                 std::deque<std::string>*                  stringCache,
-                                 std::unordered_map<std::string, int32_t>* stringIndex)
+XLSharedStrings::XLSharedStrings(XLXmlData*                                               xmlData,
+                                 gsl::not_null<std::deque<std::string>*>                  stringCache,
+                                 gsl::not_null<std::unordered_map<std::string, int32_t>*> stringIndex)
     : XLXmlFile(xmlData),
       m_stringCache(stringCache),
       m_stringIndex(stringIndex)
@@ -85,12 +85,10 @@ XLSharedStrings::XLSharedStrings(XLXmlData*                                xmlDa
             pugi_parse_settings);
 
     // Build the hash index from the string cache for O(1) lookup
-    if (m_stringIndex and m_stringCache) {
-        m_stringIndex->clear();
-        m_stringIndex->reserve(m_stringCache->size());
-        int32_t idx = 0;
-        for (const auto& str : *m_stringCache) { m_stringIndex->emplace(str, idx++); }
-    }
+    m_stringIndex->clear();
+    m_stringIndex->reserve(m_stringCache->size());
+    int32_t idx = 0;
+    for (const auto& str : *m_stringCache) { m_stringIndex->emplace(str, idx++); }
 }
 
 /**
@@ -104,37 +102,21 @@ XLSharedStrings::~XLSharedStrings() = default;
  */
 int32_t XLSharedStrings::getStringIndex(const std::string& str) const
 {
-    // Use O(1) hash lookup if available
-    if (m_stringIndex) {
-        auto it = m_stringIndex->find(str);
-        return it != m_stringIndex->end() ? it->second : -1;
-    }
-
-    // Fallback to linear search (legacy behavior)
-    const auto iter = std::find_if(m_stringCache->begin(), m_stringCache->end(), [&](const std::string& s) { return str == s; });
-    return iter == m_stringCache->end() ? -1 : static_cast<int32_t>(std::distance(m_stringCache->begin(), iter));
+    auto it = m_stringIndex->find(str);
+    return it != m_stringIndex->end() ? it->second : -1;
 }
 
 /**
  * @details Check if a string exists in the shared strings table. O(1) with hash index.
  */
-bool XLSharedStrings::stringExists(const std::string& str) const
-{
-    // Use O(1) hash lookup if available
-    if (m_stringIndex) { return m_stringIndex->find(str) != m_stringIndex->end(); }
-    return getStringIndex(str) >= 0;
-}
+bool XLSharedStrings::stringExists(const std::string& str) const { return m_stringIndex->find(str) != m_stringIndex->end(); }
 
 /**
  * @details
  */
 const char* XLSharedStrings::getString(int32_t index) const
 {
-    if (index < 0 or static_cast<size_t>(index) >= m_stringCache->size()) {    // 2024-04-30: added range check
-        using namespace std::literals::string_literals;
-        throw XLInternalError("XLSharedStrings::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
-    }
-    return (*m_stringCache)[static_cast<size_t>(index)].c_str();
+    return (*m_stringCache)[gsl::narrow<size_t>(index)].c_str();
 }
 
 /**
@@ -155,9 +137,9 @@ int32_t XLSharedStrings::appendString(const std::string& str) const
     m_stringCache->emplace_back(textNode.text().get());    // index of this element = previous stringCacheSize
 
     // Update the hash index for O(1) lookup
-    if (m_stringIndex) { m_stringIndex->emplace(str, static_cast<int32_t>(stringCacheSize)); }
+    m_stringIndex->emplace(str, gsl::narrow<int32_t>(stringCacheSize));
 
-    return static_cast<int32_t>(stringCacheSize);
+    return gsl::narrow<int32_t>(stringCacheSize);
 }
 
 /**
@@ -166,12 +148,9 @@ int32_t XLSharedStrings::appendString(const std::string& str) const
  */
 int32_t XLSharedStrings::getOrCreateStringIndex(const std::string& str) const
 {
-    // Fast path: O(1) lookup using hash index
-    if (m_stringIndex) {
-        auto it = m_stringIndex->find(str);
-        if (it != m_stringIndex->end()) {
-            return it->second;    // String already exists
-        }
+    auto it = m_stringIndex->find(str);
+    if (it != m_stringIndex->end()) {
+        return it->second;    // String already exists
     }
 
     // String doesn't exist, append it
@@ -190,16 +169,7 @@ void XLSharedStrings::print(std::basic_ostream<char>& ostr) const { xmlDocument(
  */
 void XLSharedStrings::clearString(int32_t index) const    // 2024-04-30: whitespace support
 {
-    if (index < 0 or static_cast<size_t>(index) >= m_stringCache->size()) {    // 2024-04-30: added range check
-        using namespace std::literals::string_literals;
-        throw XLInternalError("XLSharedStrings::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
-    }
-
-    (*m_stringCache)[static_cast<size_t>(index)] = "";
-    // auto iter            = xmlDocument().document_element().children().begin();
-    // std::advance(iter, index);
-    // iter->text().set(""); // 2024-04-30: BUGFIX: this was never going to work, <si> entries can be plenty that need to be cleared,
-    // including formatting
+    (*m_stringCache)[gsl::narrow<size_t>(index)] = "";
 
     /* 2024-04-30 CAUTION: performance critical - with whitespace support, the function can no longer know the exact iterator position of
      *   the shared string to be cleared - TBD what to do instead?
