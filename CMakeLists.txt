@@ -28,6 +28,10 @@ FetchContent_MakeAvailable(fast_float)
 FetchContent_Declare(fmt GIT_REPOSITORY https://github.com/fmtlib/fmt.git GIT_TAG 12.1.0)
 FetchContent_MakeAvailable(fmt)
 
+# Set up GSL
+FetchContent_Declare(GSL GIT_REPOSITORY https://github.com/microsoft/GSL.git GIT_TAG v4.2.1)
+FetchContent_MakeAvailable(GSL)
+
 # Set up Catch2 (if tests or benchmarks are enabled)
 if(OPENXLSX_BUILD_TESTS OR OPENXLSX_BUILD_BENCHMARKS)
     FetchContent_Declare(Catch2 GIT_REPOSITORY https://github.com/catchorg/Catch2.git GIT_TAG v3.13.0)
@@ -65,7 +69,7 @@ target_include_directories(OpenXLSX
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/third_party/zippy>
 )
 
-target_link_libraries(OpenXLSX PUBLIC pugixml)
+target_link_libraries(OpenXLSX PUBLIC pugixml Microsoft.GSL::GSL)
 target_compile_definitions(OpenXLSX PUBLIC FMT_HEADER_ONLY)
 
 if (OPENXLSX_ENABLE_NOWIDE)

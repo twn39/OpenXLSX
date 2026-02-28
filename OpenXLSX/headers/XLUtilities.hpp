@@ -10,6 +10,7 @@
 #include <string>         // 2024-04-25 needed for xml_node_type_string
 #include <string_view>    // std::string_view
 #include <vector>         // std::vector< std::string_view >
+#include <gsl/gsl>
 
 #include "XLCellReference.hpp"
 #include "XLCellValue.hpp"        // OpenXLSX::XLValueType
@@ -54,10 +55,10 @@ namespace OpenXLSX
      * Performance optimization: avoids creating full XLCellReference object.
      * @param colNo Column number (1-indexed)
      * @param buffer Output buffer (must be at least 4 bytes for "XFD" + null)
-     * @return Pointer to the buffer
      */
-    inline char* columnToLetters(uint16_t colNo, char* buffer) noexcept
+    inline void columnToLetters(uint16_t colNo, gsl::span<char> buffer) noexcept
     {
+        Expects(buffer.size() >= 4);
         char temp[4];
         int  idx = 0;
 
@@ -71,7 +72,17 @@ namespace OpenXLSX
         int j = 0;
         while (idx > 0) { buffer[j++] = temp[--idx]; }
         buffer[j] = '\0';
+    }
 
+    /**
+     * @brief Convert column number to column letter string (A, B, ..., Z, AA, AB, ..., XFD)
+     * @param colNo Column number (1-indexed)
+     * @param buffer Output buffer (must be at least 4 bytes)
+     * @return Pointer to the buffer
+     */
+    inline char* columnToLetters(uint16_t colNo, char* buffer) noexcept
+    {
+        columnToLetters(colNo, gsl::make_span(buffer, 4));
         return buffer;
     }
 
@@ -81,16 +92,17 @@ namespace OpenXLSX
      * @param row Row number (1-indexed)
      * @param col Column number (1-indexed)
      * @param buffer Output buffer (must be at least 16 bytes)
-     * @return Pointer to the buffer
      */
-    inline char* makeCellAddress(uint32_t row, uint16_t col, char* buffer) noexcept
+    inline void makeCellAddress(uint32_t row, uint16_t col, gsl::span<char> buffer) noexcept
     {
+        Expects(buffer.size() >= 16);
+
         // Generate column letters
-        char* p = buffer;
-        char  colLetters[4];
-        columnToLetters(col, colLetters);
+        char colLetters[4];
+        columnToLetters(col, gsl::make_span(colLetters, 4));
 
         // Copy column letters
+        char* p = buffer.data();
         for (const char* c = colLetters; *c; ++c) { *p++ = *c; }
 
         // Convert row number to string
@@ -106,7 +118,18 @@ namespace OpenXLSX
         // Append row digits in reverse order
         while (idx > 0) { *p++ = rowStr[--idx]; }
         *p = '\0';
+    }
 
+    /**
+     * @brief Generate cell address string directly without creating XLCellReference object.
+     * @param row Row number (1-indexed)
+     * @param col Column number (1-indexed)
+     * @param buffer Output buffer (must be at least 16 bytes)
+     * @return Pointer to the buffer
+     */
+    inline char* makeCellAddress(uint32_t row, uint16_t col, char* buffer) noexcept
+    {
+        makeCellAddress(row, col, gsl::make_span(buffer, 16));
         return buffer;
     }
 
@@ -708,25 +731,25 @@ namespace OpenXLSX
      */
     inline std::pair<uint32_t, uint32_t> getImageDimensions(const std::string& data)
     {
-        if (data.size() < 8) return {0, 0};
+        auto bytes = gsl::make_span(reinterpret_cast<const uint8_t*>(data.data()), data.size());
+        if (bytes.size() < 8) return {0, 0};
 
         // Check for PNG
-        if (reinterpret_cast<const uint8_t*>(data.data())[0] == 0x89 and data.substr(1, 3) == "PNG") {
-            if (data.size() < 24) return {0, 0};
+        if (bytes[0] == 0x89 and data.substr(1, 3) == "PNG") {
+            if (bytes.size() < 24) return {0, 0};
             // IHDR chunk starts at offset 12. Width at 16, height at 20 (4 bytes each, big-endian)
-            const uint8_t* p = reinterpret_cast<const uint8_t*>(data.data());
-            uint32_t w = (static_cast<uint32_t>(p[16]) << 24) | (static_cast<uint32_t>(p[17]) << 16) | (static_cast<uint32_t>(p[18]) << 8) |
-                         static_cast<uint32_t>(p[19]);
-            uint32_t h = (static_cast<uint32_t>(p[20]) << 24) | (static_cast<uint32_t>(p[21]) << 16) | (static_cast<uint32_t>(p[22]) << 8) |
-                         static_cast<uint32_t>(p[23]);
+            uint32_t w = (static_cast<uint32_t>(bytes[16]) << 24) | (static_cast<uint32_t>(bytes[17]) << 16) |
+                         (static_cast<uint32_t>(bytes[18]) << 8) | static_cast<uint32_t>(bytes[19]);
+            uint32_t h = (static_cast<uint32_t>(bytes[20]) << 24) | (static_cast<uint32_t>(bytes[21]) << 16) |
+                         (static_cast<uint32_t>(bytes[22]) << 8) | static_cast<uint32_t>(bytes[23]);
             return {w, h};
         }
 
         // Check for JPEG
-        if (reinterpret_cast<const uint8_t*>(data.data())[0] == 0xFF and reinterpret_cast<const uint8_t*>(data.data())[1] == 0xD8) {
+        if (bytes[0] == 0xFF and bytes[1] == 0xD8) {
             size_t offset = 2;
-            while (offset + 4 < data.size()) {
-                const uint8_t* p = reinterpret_cast<const uint8_t*>(data.data()) + offset;
+            while (offset + 4 < bytes.size()) {
+                auto     p      = bytes.subspan(offset);
                 if (p[0] != 0xFF) break;
                 uint8_t  marker = p[1];
                 uint32_t length = (static_cast<uint32_t>(p[2]) << 8) | static_cast<uint32_t>(p[3]);
@@ -735,7 +758,7 @@ namespace OpenXLSX
                 if ((marker >= 0xC0 and marker <= 0xC3) or (marker >= 0xC5 and marker <= 0xC7) or (marker >= 0xC9 and marker <= 0xCB) ||
                     (marker >= 0xCD and marker <= 0xCF))
                 {
-                    if (offset + 9 > data.size()) return {0, 0};
+                    if (p.size() < 9) return {0, 0};
                     // Height is at offset 5, width at 7 (2 bytes each, big-endian)
                     uint32_t h = (static_cast<uint32_t>(p[5]) << 8) | static_cast<uint32_t>(p[6]);
                     uint32_t w = (static_cast<uint32_t>(p[7]) << 8) | static_cast<uint32_t>(p[8]);

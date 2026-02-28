@@ -46,6 +46,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 // ===== External Includes ===== //
 #include <cstring>    // strlen, memcpy, strcpy
 #include <pugixml.hpp>
+#include <gsl/gsl>
 
 // // ===== OpenXLSX Includes ===== //
 #include "XLXmlParser.hpp"
@@ -98,18 +99,18 @@ namespace OpenXLSX
     {
         // ===== If node has no namespace: Early pass-through return
         if (!name_begin or force_ns) return name_;
-        if (name_begin + strlen(name_) > XLMaxNamespacedNameLen) {
-            using namespace std::literals::string_literals;
-            throw XLException("OpenXLSX_xml_node::"s + __func__ + ": strlen of "s + name_ + " exceeds XLMaxNamespacedNameLen "s +
-                              std::to_string(XLMaxNamespacedNameLen));
-        }
+        
+        const size_t nameLen = strlen(name_);
+        Expects(name_begin + nameLen <= XLMaxNamespacedNameLen);
 
         static pugi::char_t
             namespaced_name_[XLMaxNamespacedNameLen + 1];    // static memory allocation for concatenating node namespace and name_
+        auto dest = gsl::make_span(namespaced_name_);
 
         // ===== If node has a namespace: create a namespaced version of name_
-        memcpy(namespaced_name_, xml_node::name(), name_begin);    // copy the node namespace
-        strcpy(namespaced_name_ + name_begin, name_);              // concatenate the name_ including the terminating zero
+        gsl::copy(gsl::make_span(xml_node::name(), name_begin), dest.subspan(0, name_begin));    // copy the node namespace
+        gsl::copy(gsl::make_span(name_, nameLen + 1), dest.subspan(name_begin));                // concatenate name_ including null
+        
         return namespaced_name_;
     }
 
@@ -124,10 +125,16 @@ namespace OpenXLSX
         if (!name_begin or force_ns) return std::shared_ptr<pugi::char_t>(const_cast<pugi::char_t*>(name_), [](pugi::char_t*) {});
 
         // ===== If node has a namespace: allocate memory for concatenation and create a namespaced version of name_
-        std::shared_ptr<pugi::char_t> namespaced_name_(new pugi::char_t[name_begin + strlen(name_) + 1],
+        const size_t nameLen = strlen(name_);
+        const size_t totalLen = name_begin + nameLen + 1;
+        
+        std::shared_ptr<pugi::char_t> namespaced_name_(new pugi::char_t[totalLen],
                                                        std::default_delete<pugi::char_t[]>());
-        memcpy(namespaced_name_.get(), xml_node::name(), name_begin);    // copy the node namespace
-        strcpy(namespaced_name_.get() + name_begin, name_);              // concatenate the name_ with terminating zero
+        auto dest = gsl::make_span(namespaced_name_.get(), totalLen);
+        
+        gsl::copy(gsl::make_span(xml_node::name(), name_begin), dest.subspan(0, name_begin));    // copy the node namespace
+        gsl::copy(gsl::make_span(name_, nameLen + 1), dest.subspan(name_begin));                // concatenate name_ including null
+        
         return namespaced_name_;
     }
 
