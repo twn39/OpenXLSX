@@ -36,6 +36,7 @@ FetchContent_MakeAvailable(GSL)
 FetchContent_Declare(zlib_ng GIT_REPOSITORY https://github.com/zlib-ng/zlib-ng.git GIT_TAG 2.2.4)
 set(ZLIB_COMPAT ON CACHE BOOL "Enable zlib compatibility mode")
 set(ZLIB_ENABLE_SIMD ON CACHE BOOL "Enable SIMD optimizations")
+set(ZLIBNG_ENABLE_TESTS OFF CACHE BOOL "Disable zlib-ng tests")
 FetchContent_MakeAvailable(zlib_ng)
 
 # Set up minizip-ng
@@ -50,6 +51,9 @@ set(MZ_LIBCOMP OFF CACHE BOOL "Disable Apple Compression Framework")
 set(MZ_ZSTD OFF CACHE BOOL "Disable ZSTD support")
 set(MZ_OPENSSL OFF CACHE BOOL "Disable OpenSSL support")
 set(MZ_ICONV OFF CACHE BOOL "Disable ICONV support")
+set(MZ_FETCH_LIBS OFF CACHE BOOL "Disable fetching third-party libs")
+set(MZ_BUILD_TESTS OFF CACHE BOOL "Disable minizip-ng tests")
+set(MZ_BUILD_UNIT_TESTS OFF CACHE BOOL "Disable minizip-ng unit tests")
 FetchContent_MakeAvailable(minizip_ng)
 
 # Set up Catch2 (if tests or benchmarks are enabled)
@@ -86,9 +90,19 @@ target_include_directories(OpenXLSX
         $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/third_party/pugixml/src>
+        $<BUILD_INTERFACE:${minizip_ng_SOURCE_DIR}>
 )
 
-target_link_libraries(OpenXLSX PUBLIC pugixml Microsoft.GSL::GSL minizip)
+# On Windows, minizip might be named minizip_static or minizip
+if(TARGET minizip)
+    set(MINIZIP_TARGET minizip)
+elseif(TARGET minizip_static)
+    set(MINIZIP_TARGET minizip_static)
+else()
+    set(MINIZIP_TARGET minizip)
+endif()
+
+target_link_libraries(OpenXLSX PUBLIC pugixml Microsoft.GSL::GSL ${MINIZIP_TARGET})
 target_compile_definitions(OpenXLSX PUBLIC FMT_HEADER_ONLY)
 
 if (OPENXLSX_ENABLE_NOWIDE)
