@@ -4,6 +4,7 @@
 
 #include <OpenXLSX.hpp>
 #include <catch2/catch_all.hpp>
+#include <gsl/gsl>
 #include <deque>
 #include <fstream>
 #include <list>
@@ -32,10 +33,10 @@ TEST_CASE("XLRow Tests", "[XLRow]")
 
         XLRow copy3;
         copy3 = copy2;
-        copy3.setHeight(height * 3);
-        REQUIRE(copy3.height() == height * 3);
-        copy3.setHeight(height * 4);
-        REQUIRE(copy3.height() == height * 4);
+        copy3.setHeight(gsl::narrow_cast<float>(height * 3));
+        REQUIRE(copy3.height() == gsl::narrow_cast<float>(height * 3));
+        copy3.setHeight(gsl::narrow_cast<float>(height * 4));
+        REQUIRE(copy3.height() == gsl::narrow_cast<float>(height * 4));
 
         XLRow copy4;
         copy4 = std::move(copy3);
@@ -166,12 +167,12 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
 
         auto       val1sum      = 0;
         const auto val1results1 = static_cast<std::vector<std::string>>(row1c.values());
-        for (const auto v : val1results1) val1sum += v.size();
+        for (const auto v : val1results1) val1sum += gsl::narrow<int>(v.size());
         REQUIRE(val1sum == 12);
 
         val1sum                 = 0;
         const auto val1results2 = static_cast<std::vector<XLCellValue>>(row1c.values());
-        for (const auto v : val1results2) val1sum += v.get<std::string>().size();
+        for (const auto v : val1results2) val1sum += gsl::narrow<int>(v.get<std::string>().size());
         REQUIRE(val1sum == 12);
 
         row1.values().clear();
@@ -303,12 +304,12 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
 
         auto       val1sum      = 0;
         const auto val1results1 = static_cast<std::list<std::string>>(row1c.values());
-        for (const auto v : val1results1) val1sum += v.size();
+        for (const auto v : val1results1) val1sum += gsl::narrow<int>(v.size());
         REQUIRE(val1sum == 12);
 
         val1sum                 = 0;
         const auto val1results2 = static_cast<std::list<XLCellValue>>(row1c.values());
-        for (const auto v : val1results2) val1sum += v.get<std::string>().size();
+        for (const auto v : val1results2) val1sum += gsl::narrow<int>(v.get<std::string>().size());
         REQUIRE(val1sum == 12);
 
         row1.values().clear();
@@ -440,12 +441,12 @@ TEST_CASE("XLRowData Tests", "[XLRowData]")
 
         auto       val1sum      = 0;
         const auto val1results1 = static_cast<std::deque<std::string>>(row1c.values());
-        for (const auto v : val1results1) val1sum += v.size();
+        for (const auto v : val1results1) val1sum += gsl::narrow<int>(v.size());
         REQUIRE(val1sum == 12);
 
         val1sum                 = 0;
         const auto val1results2 = static_cast<std::deque<XLCellValue>>(row1c.values());
-        for (const auto v : val1results2) val1sum += v.get<std::string>().size();
+        for (const auto v : val1results2) val1sum += gsl::narrow<int>(v.get<std::string>().size());
         REQUIRE(val1sum == 12);
 
         row1.values().clear();

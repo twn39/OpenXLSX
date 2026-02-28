@@ -1,5 +1,6 @@
 #include <OpenXLSX.hpp>
 #include <catch2/catch_all.hpp>
+#include <gsl/gsl>
 #include <ctime>
 
 using namespace OpenXLSX;
@@ -120,7 +121,7 @@ TEST_CASE("Comprehensive Integration Tests", "[Integration]")
             xf.setApplyAlignment(true);
 
             wks.cell("E1").value() = "Aligned";
-            wks.cell("E1").setCellFormat(alignXf);
+            wks.cell("E1").setCellFormat(gsl::narrow<uint32_t>(alignXf));
 
             // Border
             size_t borderIdx = styles.borders().create();
@@ -128,10 +129,10 @@ TEST_CASE("Comprehensive Integration Tests", "[Integration]")
             border.setBottom(XLLineStyleThick, XLColor(0, 0, 255));
 
             size_t borderXf = styles.cellFormats().create();
-            styles.cellFormats()[borderXf].setBorderIndex(borderIdx);
+            styles.cellFormats()[borderXf].setBorderIndex(gsl::narrow<uint32_t>(borderIdx));
             styles.cellFormats()[borderXf].setApplyBorder(true);
 
-            wks.cell("F1").setCellFormat(borderXf);
+            wks.cell("F1").setCellFormat(gsl::narrow<uint32_t>(borderXf));
 
             doc.save();
             doc.close();

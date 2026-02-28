@@ -461,7 +461,7 @@ bool XLComments::set(std::string const& cellRef, std::string const& commentText,
             try {
                 cShape = shape(cellRef);    // for existing comments, try to access existing shape
             }
-            catch (XLException const& e) {
+            catch (XLException const&) {
                 newShapeNeeded = true;    // not found: create fresh
             }
         }
