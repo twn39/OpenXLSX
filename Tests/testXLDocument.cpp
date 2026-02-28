@@ -89,4 +89,44 @@ TEST_CASE("XLDocument Tests", "[XLDocument]")
         XLDocument doc2;
         REQUIRE_THROWS_AS(doc2.create(file, XLDoNotOverwrite), XLException);
     }
+
+    SECTION("UTF-8 file paths and names")
+    {
+        std::string utf8File = "./测试_test_中文.xlsx";
+        std::remove(utf8File.c_str());
+
+        {
+            XLDocument doc;
+            doc.create(utf8File, XLForceOverwrite);
+            doc.workbook().worksheet("Sheet1").cell("A1").value() = "UTF8 Path Test";
+            doc.save();
+            doc.close();
+        }
+
+        // Verify it can be opened
+        {
+            XLDocument doc;
+            doc.open(utf8File);
+            REQUIRE(doc.workbook().worksheet("Sheet1").cell("A1").value().get<std::string>() == "UTF8 Path Test");
+            doc.close();
+        }
+
+        // Test saveAs with UTF-8
+        {
+            std::string utf8File2 = "./测试_saveAs_中文.xlsx";
+            std::remove(utf8File2.c_str());
+            XLDocument doc;
+            doc.open(utf8File);
+            doc.saveAs(utf8File2, XLForceOverwrite);
+            doc.close();
+
+            XLDocument doc2;
+            doc2.open(utf8File2);
+            REQUIRE(doc2.isOpen());
+            doc2.close();
+            std::remove(utf8File2.c_str());
+        }
+
+        std::remove(utf8File.c_str());
+    }
 }
