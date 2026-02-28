@@ -40,13 +40,14 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         font.setFontSize(14);
         font.setBold(true);
         font.setItalic(true);
-        font.setFontColor(XLColor(255, 0, 0));
+        font.setFontColor(XLColor(255, 128, 64, 32)); // ARGB
         font.setUnderline(XLUnderlineDouble);
 
         REQUIRE(font.fontName() == "Courier New");
         REQUIRE(font.fontSize() == 14);
         REQUIRE(font.bold() == true);
         REQUIRE(font.italic() == true);
+        REQUIRE(font.fontColor().hex() == "ff804020");
         REQUIRE(font.underline() == XLUnderlineDouble);
 
         doc.close();
@@ -63,10 +64,12 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         auto   fill = fills[idx];
 
         fill.setPatternType(XLPatternSolid);
-        fill.setColor(XLColor(0, 255, 0));
-        fill.setBackgroundColor(XLColor(0, 0, 255));
+        fill.setColor(XLColor(255, 255, 0, 0)); // Red
+        fill.setBackgroundColor(XLColor(255, 255, 255, 255)); // White
 
         REQUIRE(fill.patternType() == XLPatternSolid);
+        REQUIRE(fill.color().hex() == "ffff0000");
+        REQUIRE(fill.backgroundColor().hex() == "ffffffff");
 
         doc.close();
     }
@@ -81,18 +84,21 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         size_t idx    = borders.create();
         auto   border = borders[idx];
 
-        border.setLeft(XLLineStyleThick, XLColor(0, 0, 0));
-        border.setRight(XLLineStyleDashed, XLColor(255, 0, 0));
-        border.setTop(XLLineStyleDouble, XLColor(0, 255, 0));
-        border.setBottom(XLLineStyleThin, XLColor(0, 0, 255));
+        border.setLeft(XLLineStyleThick, XLColor(255, 0, 255, 0));
+        border.setRight(XLLineStyleDashed, XLColor(255, 255, 0, 0));
+        border.setTop(XLLineStyleDouble, XLColor(255, 0, 0, 255));
+        border.setBottom(XLLineStyleThin, XLColor(255, 0, 0, 0));
 
         REQUIRE(border.left().style() == XLLineStyleThick);
+        REQUIRE(border.left().color().rgb().hex() == "ff00ff00");
         REQUIRE(border.right().style() == XLLineStyleDashed);
+        REQUIRE(border.top().style() == XLLineStyleDouble);
+        REQUIRE(border.bottom().style() == XLLineStyleThin);
 
         doc.close();
     }
 
-    SECTION("Cell Formats (Xf)")
+    SECTION("Cell Formats (Xf) & Alignment")
     {
         XLDocument doc;
         doc.create("./testXLStylesXf.xlsx", XLForceOverwrite);
@@ -109,10 +115,18 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         xf.setApplyFill(true);
         xf.setApplyBorder(true);
 
+        auto align = xf.alignment(true);
+        align.setHorizontal(XLAlignCenter);
+        align.setVertical(XLAlignCenter);
+        align.setTextRotation(90);
+        xf.setApplyAlignment(true);
+
         REQUIRE(xf.fontIndex() == 1);
         REQUIRE(xf.fillIndex() == 1);
         REQUIRE(xf.borderIndex() == 1);
         REQUIRE(xf.applyFont() == true);
+        REQUIRE(xf.alignment().horizontal() == XLAlignCenter);
+        REQUIRE(xf.alignment().textRotation() == 90);
 
         doc.close();
     }
