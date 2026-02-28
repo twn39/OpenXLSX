@@ -45,6 +45,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 // ===== External Includes ===== //
 #include <pugixml.hpp>
+#include <gsl/gsl>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLCellRange.hpp"
@@ -160,8 +161,8 @@ void XLCellRange::fetchColumnStyles()
     uint16_t vecPos = 0;
     XMLNode  col    = cols.first_child_of_type(pugi::node_element);
     while (not col.empty()) {
-        uint16_t minCol = static_cast<uint16_t>(col.attribute("min").as_int(0));
-        uint16_t maxCol = static_cast<uint16_t>(col.attribute("max").as_int(0));
+        uint16_t minCol = gsl::narrow<uint16_t>(col.attribute("min").as_int(0));
+        uint16_t maxCol = gsl::narrow<uint16_t>(col.attribute("max").as_int(0));
         if (minCol > maxCol or !minCol or !maxCol) {
             using namespace std::literals::string_literals;
             throw XLInputError("column attributes min (\""s + col.attribute("min").value() + "\") and max (\""s +
@@ -212,14 +213,14 @@ uint16_t XLCellRange::numColumns() const { return m_bottomRight.column() + 1 - m
  * @pre
  * @post
  */
-XLCellIterator XLCellRange::begin() const { return XLCellIterator(*this, XLIteratorLocation::Begin, &m_columnStyles); }
+XLCellIterator XLCellRange::begin() const { return XLCellIterator(*this, XLIteratorLocation::Begin, gsl::make_not_null(&m_columnStyles)); }
 
 /**
  * @details
  * @pre
  * @post
  */
-XLCellIterator XLCellRange::end() const { return XLCellIterator(*this, XLIteratorLocation::End, &m_columnStyles); }
+XLCellIterator XLCellRange::end() const { return XLCellIterator(*this, XLIteratorLocation::End, gsl::make_not_null(&m_columnStyles)); }
 
 /**
  * @details

@@ -145,7 +145,7 @@ namespace OpenXLSX
 /**
  * @details
  */
-XLCellIterator::XLCellIterator(const XLCellRange& cellRange, XLIteratorLocation loc, std::vector<XLStyleIndex> const* colStyles)
+XLCellIterator::XLCellIterator(const XLCellRange& cellRange, XLIteratorLocation loc, gsl::not_null<std::vector<XLStyleIndex> const*> colStyles)
     : m_dataNode(std::make_unique<XMLNode>(*cellRange.m_dataNode)),
       m_topLeft(cellRange.m_topLeft),
       m_bottomRight(cellRange.m_bottomRight),
@@ -165,7 +165,6 @@ XLCellIterator::XLCellIterator(const XLCellRange& cellRange, XLIteratorLocation 
         m_currentRow    = m_topLeft.row();
         m_currentColumn = m_topLeft.column();
     }
-    if (m_colStyles == nullptr) throw XLInternalError("XLCellIterator constructor parameter colStyles must not be nullptr");
     // std::cout << "XLCellIterator constructed with topLeft " << m_topLeft.address() << " and bottomRight " << m_bottomRight.address() <<
     // std::endl; std::cout << "XLCellIterator m_endReached is " << ( m_endReached ? "true" : "false" ) << std::endl;
 }
@@ -442,11 +441,10 @@ uint64_t XLCellIterator::distance(const XLCellIterator& last)
     uint16_t lastCol = (last.m_endReached ? last.m_bottomRight.column() + 1 : last.m_currentColumn);
 
     uint16_t rowWidth = m_bottomRight.column() - m_topLeft.column() + 1;    // amount of cells in a row of the iterator range
-    int64_t  distance = (static_cast<int64_t>(lastRow) - row) * rowWidth    //   row distance * rowWidth
+    int64_t  dist     = (static_cast<int64_t>(lastRow) - row) * rowWidth    //   row distance * rowWidth
                         + static_cast<int64_t>(lastCol) - col;              // + column distance (may be negative)
-    if (distance < 0) throw XLInputError("XLCellIterator::distance is negative");
 
-    return static_cast<uint64_t>(distance);    // after excluding negative result: cast back to positive value
+    return gsl::narrow<uint64_t>(dist);    // gsl::narrow throws if dist < 0 or too large for uint64_t
 }
 
 /**

@@ -53,6 +53,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #endif    // _MSC_VER
 
 #include <algorithm>
+#include <gsl/gsl>
 
 #include "OpenXLSX-Exports.hpp"
 #include "XLCell.hpp"
@@ -95,7 +96,7 @@ namespace OpenXLSX
          *                  This vector - if provided - will be used to get default cell styles for newly created cells, instead of
          * performing a potentially expensive lookup in <cols>
          */
-        explicit XLCellIterator(const XLCellRange& cellRange, XLIteratorLocation loc, std::vector<XLStyleIndex> const* colStyles);
+        explicit XLCellIterator(const XLCellRange& cellRange, XLIteratorLocation loc, gsl::not_null<std::vector<XLStyleIndex> const*> colStyles);
 
         /**
          * @brief
@@ -216,9 +217,9 @@ namespace OpenXLSX
         static constexpr const int       XLNoSuchCell = 1;    //   "
         static constexpr const int       XLLoaded     = 2;    //   "
         int                              m_currentCellStatus; /**< Status of m_currentCell: XLNotLoaded, XLNoSuchCell or XLLoaded */
-        uint32_t                         m_currentRow;
-        uint16_t                         m_currentColumn;
-        std::vector<XLStyleIndex> const* m_colStyles;
+        uint32_t                                        m_currentRow;
+        uint16_t                                        m_currentColumn;
+        gsl::not_null<std::vector<XLStyleIndex> const*> m_colStyles;
     };
 
     /**
