@@ -42,6 +42,24 @@ endif()
 #=======================================================================================================================
 # External Libraries
 #=======================================================================================================================
+include(FetchContent)
+
+# Set up fast_float
+FetchContent_Declare(
+    fast_float
+    GIT_REPOSITORY https://github.com/fastfloat/fast_float.git
+    GIT_TAG        v8.2.3
+)
+FetchContent_MakeAvailable(fast_float)
+
+# Set up fmt
+FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG        12.1.0
+)
+FetchContent_MakeAvailable(fmt)
+
 set(PUGIXML_XPATH OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/pugixml EXCLUDE_FROM_ALL)
 

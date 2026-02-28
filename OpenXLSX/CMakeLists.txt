@@ -136,7 +136,9 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
             PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/headers>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)     # For export header
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>     # For export header
+            $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
+            $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>)
     target_link_libraries(OpenXLSX
             PUBLIC
             $<BUILD_INTERFACE:pugixml>
@@ -149,7 +151,7 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
                 $<BUILD_INTERFACE:NoWide>)
     endif ()
 
-    target_compile_definitions(OpenXLSX PUBLIC OPENXLSX_STATIC_DEFINE)
+    target_compile_definitions(OpenXLSX PUBLIC OPENXLSX_STATIC_DEFINE FMT_HEADER_ONLY)
 
 endif ()
 
@@ -165,7 +167,9 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
             PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/headers>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)     # For export header
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>     # For export header
+            $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
+            $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>)
     target_link_libraries(OpenXLSX
             PUBLIC
             $<BUILD_INTERFACE:pugixml>
@@ -184,10 +188,12 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
         check_ipo_supported(RESULT result OUTPUT output)
         if (result)
             set_property(TARGET OpenXLSX PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+                endif ()
+            endif()
+        
+            target_compile_definitions(OpenXLSX PUBLIC FMT_HEADER_ONLY)
+        
         endif ()
-    endif()
-
-endif()
 
 
 if (OPENXLSX_ENABLE_NOWIDE)

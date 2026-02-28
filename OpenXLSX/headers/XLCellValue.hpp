@@ -55,6 +55,9 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 // ===== External Includes ===== //
 #include <cmath>
 #include <cstdint>
+#include <fast_float/fast_float.h>
+#include <fmt/base.h>
+#include <fmt/format.h>
 #include <iostream>
 #include <string>
 #include <variant>
@@ -92,13 +95,10 @@ namespace OpenXLSX
         {
             throw XLValueTypeError(
                 "string is not convertible to double.");    // disable if implicit conversion of string to double shall be allowed
-            size_t pos;
-            double dVal = stod(v, &pos);
-            while (v[pos] == ' ' || v[pos] == '\t') ++pos;    // skip over potential trailing whitespaces
-            // NOTE: std::string zero-termination is guaranteed, so the above loop will halt
-            if (pos != v.length())
-                throw XLValueTypeError("string is not convertible to double.");    // throw if the *full value* does not convert to double
-            return dVal;
+            double val;
+            auto [ptr, ec] = fast_float::from_chars(v.data(), v.data() + v.size(), val);
+            if (ec != std::errc()) throw XLValueTypeError("string is not convertible to double.");
+            return val;
         }
     };
 
@@ -106,8 +106,8 @@ namespace OpenXLSX
     struct VisitXLCellValueTypeToString
     {
         std::string packageName = "VisitXLCellValueTypeToString";
-        std::string operator()(int64_t v) const { return std::to_string(v); }
-        std::string operator()(double v) const { return std::to_string(v); }
+        std::string operator()(int64_t v) const { return fmt::format("{}", v); }
+        std::string operator()(double v) const { return fmt::format("{}", v); }
         std::string operator()(bool v) const { return v ? "true" : "false"; }
         // std::string operator()( struct timestamp v ) { return timestampString( v.seconds, v.microseconds, WITH_MS ); }
         std::string operator()(std::string v) const { return v; }

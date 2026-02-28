@@ -5,6 +5,13 @@
 // ===== External Includes ===== //
 #include <cassert>
 #include <cstring>
+#include <fast_float/fast_float.h>
+
+#ifndef FMT_HEADER_ONLY
+#define FMT_HEADER_ONLY
+#endif
+#include <fmt/base.h>
+#include <fmt/format.h>
 #include <pugixml.hpp>
 
 // ===== OpenXLSX Includes ===== //
@@ -374,8 +381,11 @@ void XLCellValueProxy::setFloat(double numberValue)
         // ===== The type ("t") attribute is not required for number values.
         m_cellNode->remove_attribute("t");
 
-        // ===== Set the text of the value node.
-        m_cellNode->child("v").text().set(numberValue);
+        // ===== Set the text of the value node using fmt for speed.
+        char   buffer[32];
+        auto   res = fmt::format_to(buffer, "{}", numberValue);
+        *res       = '\0';
+        m_cellNode->child("v").text().set(buffer);
 
         // ===== Disable space preservation (only relevant for strings).
         m_cellNode->child("v").remove_attribute(m_cellNode->child("v").attribute("xml:space"));
@@ -451,8 +461,13 @@ XLCellValue XLCellValueProxy::getValue() const
         case XLValueType::Empty:
             return XLCellValue().clear();
 
-        case XLValueType::Float:
-            return XLCellValue{m_cellNode->child("v").text().as_double()};
+        case XLValueType::Float: {
+            const char* rawStr = m_cellNode->child("v").text().get();
+            double      val;
+            auto [ptr, ec] = fast_float::from_chars(rawStr, rawStr + strlen(rawStr), val);
+            if (ec != std::errc()) return XLCellValue{m_cellNode->child("v").text().as_double()};    // Fallback if fast_float fails
+            return XLCellValue{val};
+        }
 
         case XLValueType::Integer:
             return XLCellValue{m_cellNode->child("v").text().as_llong()};
