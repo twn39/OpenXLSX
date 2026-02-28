@@ -33,6 +33,7 @@ target_sources(OpenXLSXTests
         testXLComments.cpp
         testXLDateTime.cpp
         testXLFormula.cpp
+        testXLHyperlink.cpp
         testXLImage.cpp
         testXLIntegration.cpp
         testXLMergeCells.cpp

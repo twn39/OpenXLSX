@@ -1,0 +1,62 @@
+#include <catch2/catch_all.hpp>
+#include <OpenXLSX.hpp>
+#include <pugixml.hpp>
+
+using namespace OpenXLSX;
+
+TEST_CASE("XLWorksheet Hyperlink Support", "[XLWorksheet]") {
+    SECTION("Add External Hyperlink") {
+        XLDocument doc;
+        doc.create("./testHyperlink.xlsx", XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
+
+        wks.cell("A1").value() = "Google";
+        wks.addHyperlink("A1", "https://www.google.com", "Click to visit Google");
+
+        doc.save();
+        doc.close();
+
+        // Verification
+        XLDocument doc2;
+        doc2.open("./testHyperlink.xlsx");
+        auto wks2 = doc2.workbook().worksheet("Sheet1");
+        
+        pugi::xml_document sheetDoc;
+        sheetDoc.load_string(wks2.xmlData().c_str());
+        auto hyperlinks = sheetDoc.child("worksheet").child("hyperlinks");
+        REQUIRE_FALSE(hyperlinks.empty());
+        
+        auto link = hyperlinks.child("hyperlink");
+        REQUIRE(std::string(link.attribute("ref").value()) == "A1");
+        REQUIRE_FALSE(link.attribute("r:id").empty());
+        REQUIRE(std::string(link.attribute("tooltip").value()) == "Click to visit Google");
+        
+        doc2.close();
+    }
+
+    SECTION("Add Internal Hyperlink") {
+        XLDocument doc;
+        doc.create("./testInternalLink.xlsx", XLForceOverwrite);
+        doc.workbook().addWorksheet("TargetSheet");
+        auto wks = doc.workbook().worksheet("Sheet1");
+
+        wks.cell("B2").value() = "Go to TargetSheet";
+        wks.addInternalHyperlink("B2", "TargetSheet!A1", "Jump to other sheet");
+
+        doc.save();
+        doc.close();
+
+        // Verification
+        XLDocument doc2;
+        doc2.open("./testInternalLink.xlsx");
+        auto wks2 = doc2.workbook().worksheet("Sheet1");
+        
+        pugi::xml_document sheetDoc;
+        sheetDoc.load_string(wks2.xmlData().c_str());
+        auto link = sheetDoc.child("worksheet").child("hyperlinks").child("hyperlink");
+        REQUIRE(std::string(link.attribute("ref").value()) == "B2");
+        REQUIRE(std::string(link.attribute("location").value()) == "TargetSheet!A1");
+        
+        doc2.close();
+    }
+}

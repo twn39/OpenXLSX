@@ -1838,6 +1838,41 @@ XLTables& XLWorksheet::tables()
     return m_tables;
 }
 
+void XLWorksheet::addHyperlink(const std::string& cellRef, const std::string& url, const std::string& tooltip)
+{
+    // 1. Ensure sheet relationships exist
+    std::ignore = relationships();
+
+    // 2. Add relationship for the external URL
+    const auto rel = m_relationships.addRelationship(XLRelationshipType::Hyperlink, url, true);
+
+    // 3. Find or create <hyperlinks> node
+    XMLNode docElement    = xmlDocument().document_element();
+    XMLNode hyperlinksNode = docElement.child("hyperlinks");
+    if (hyperlinksNode.empty()) { hyperlinksNode = appendAndGetNode(docElement, "hyperlinks", m_nodeOrder); }
+
+    // 4. Add <hyperlink> node
+    XMLNode hyperlinkNode = hyperlinksNode.append_child("hyperlink");
+    hyperlinkNode.append_attribute("ref").set_value(cellRef.c_str());
+    hyperlinkNode.append_attribute("r:id").set_value(rel.id().c_str());
+    if (!tooltip.empty()) { hyperlinkNode.append_attribute("tooltip").set_value(tooltip.c_str()); }
+}
+
+void XLWorksheet::addInternalHyperlink(const std::string& cellRef, const std::string& location, const std::string& tooltip)
+{
+    // 1. Find or create <hyperlinks> node
+    XMLNode docElement    = xmlDocument().document_element();
+    XMLNode hyperlinksNode = docElement.child("hyperlinks");
+    if (hyperlinksNode.empty()) { hyperlinksNode = appendAndGetNode(docElement, "hyperlinks", m_nodeOrder); }
+
+    // 2. Add <hyperlink> node
+    XMLNode hyperlinkNode = hyperlinksNode.append_child("hyperlink");
+    hyperlinkNode.append_attribute("ref").set_value(cellRef.c_str());
+    hyperlinkNode.append_attribute("location").set_value(location.c_str());
+    hyperlinkNode.append_attribute("display").set_value(location.c_str());
+    if (!tooltip.empty()) { hyperlinkNode.append_attribute("tooltip").set_value(tooltip.c_str()); }
+}
+
 /**
  * @details perform a pattern matching on getXmlPath for (regex) .*xl/worksheets/sheet([0-9]*)\.xml$ and extract the numeric part \1
  */

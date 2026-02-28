@@ -125,6 +125,7 @@ namespace OpenXLSX
         ControlProperties,
         Comments,
         Table,
+        Hyperlink,
         Unknown
     };
 }    //     namespace OpenXLSX
@@ -309,8 +310,9 @@ namespace OpenXLSX
          * @brief Add a new relationship item to the XLRelationships object.
          * @param type The type of the new relationship item.
          * @param target The target (or path) of the XML file for the relationship item.
+         * @param isExternal If true, TargetMode="External" will be added.
          */
-        XLRelationshipItem addRelationship(XLRelationshipType type, const std::string& target);
+        XLRelationshipItem addRelationship(XLRelationshipType type, const std::string& target, bool isExternal = false);
 
         /**
          * @brief Check if a XLRelationshipItem with the given Target string exists.

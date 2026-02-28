@@ -1253,6 +1253,22 @@ namespace OpenXLSX
          */
         XLTables& tables();
 
+        /**
+         * @brief Add a hyperlink to a cell.
+         * @param cellRef The cell reference (e.g. "A1").
+         * @param url The target URL.
+         * @param tooltip Optional tooltip text.
+         */
+        void addHyperlink(const std::string& cellRef, const std::string& url, const std::string& tooltip = "");
+
+        /**
+         * @brief Add an internal hyperlink (to a location within the workbook).
+         * @param cellRef The cell reference (e.g. "A1").
+         * @param location The target location (e.g. "Sheet2!A1").
+         * @param tooltip Optional tooltip text.
+         */
+        void addInternalHyperlink(const std::string& cellRef, const std::string& location, const std::string& tooltip = "");
+
     private:
         /**
          * @brief fetch the # number from the xml path xl/worksheets/sheet#.xml

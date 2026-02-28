@@ -243,6 +243,8 @@ namespace OpenXLSX_XLRelationships
                 return relationshipDomainOpenXml2006 + "/relationships/comments";
             case XLRelationshipType::Table:
                 return relationshipDomainOpenXml2006 + "/relationships/table";
+            case XLRelationshipType::Hyperlink:
+                return relationshipDomainOpenXml2006 + "/relationships/hyperlink";
             default:
                 throw XLInternalError("RelationshipType not recognized!");
         }
@@ -435,7 +437,7 @@ void XLRelationships::deleteRelationship(const XLRelationshipItem& item) { delet
  * based on the newly created node.
  * @note 2024-07-22: added more intelligent whitespace support
  */
-XLRelationshipItem XLRelationships::addRelationship(XLRelationshipType type, const std::string& target)
+XLRelationshipItem XLRelationships::addRelationship(XLRelationshipType type, const std::string& target, bool isExternal)
 {
     const std::string typeString = OpenXLSX_XLRelationships::GetStringFromType(type);
     // const std::string id         = "rId" + std::to_string(GetNewRelsID(xmlDocument().document_element()));
@@ -468,7 +470,7 @@ XLRelationshipItem XLRelationships::addRelationship(XLRelationshipType type, con
     node.append_attribute("Type").set_value(typeString.c_str());
     node.append_attribute("Target").set_value(target.c_str());
 
-    if (type == XLRelationshipType::ExternalLinkPath) { node.append_attribute("TargetMode").set_value("External"); }
+    if (isExternal || type == XLRelationshipType::ExternalLinkPath) { node.append_attribute("TargetMode").set_value("External"); }
 
     return XLRelationshipItem(node);
 }

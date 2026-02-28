@@ -227,6 +227,8 @@ namespace OpenXLSX
                 return "Comments";
             case XLContentType::Table:
                 return "Table";
+            case XLContentType::Hyperlink:
+                return "Hyperlink";
             case XLContentType::Unknown:
                 return "Unknown";
         }
@@ -292,6 +294,8 @@ namespace OpenXLSX
                 return "Comments";
             case XLRelationshipType::Table:
                 return "Table";
+            case XLRelationshipType::Hyperlink:
+                return "Hyperlink";
             case XLRelationshipType::Unknown:
                 return "Unknown";
         }
