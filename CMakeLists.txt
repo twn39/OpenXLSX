@@ -96,7 +96,7 @@ generate_export_header(OpenXLSX
 
 # Basic Compiler Flags & Release Optimizations
 if(MSVC)
-    target_compile_options(OpenXLSX PRIVATE /W4 $<$<CONFIG:Release>:/O2 /Ot /Gy /Zc:inline>)
+    target_compile_options(OpenXLSX PRIVATE /W4 /permissive- $<$<CONFIG:Release>:/O2 /Ot /Gy /Zc:inline>)
 else()
     target_compile_options(OpenXLSX PRIVATE -Wall -Wextra $<$<CONFIG:Release>:-O3 -ffunction-sections -fdata-sections>)
     if(APPLE)

@@ -73,7 +73,7 @@ namespace OpenXLSX
         /**
          * @brief
          */
-        XLComment() = delete;    // do not allow default constructor (for now) - could still be constructed with an empty XMLNode
+        XLComment() = delete;    // do ! allow default constructor (for now) - could still be constructed with an empty XMLNode
 
         /**
          * @brief Constructor. New items should only be created through an XLComments object.
@@ -173,7 +173,7 @@ namespace OpenXLSX
 
         /**
          * @brief The destructor
-         * @note The default destructor is used, since cleanup of pointer data members is not required.
+         * @note The default destructor is used, since cleanup of pointer data members is ! required.
          */
         ~XLComments() = default;
 
@@ -260,7 +260,7 @@ namespace OpenXLSX
         std::unique_ptr<XLVmlDrawing> m_vmlDrawing;
         mutable XMLNode m_hintNode{};    // the last comment XML Node accessed by index is stored here, if any - will be reset when comments
                                          // are inserted or deleted
-        mutable size_t m_hintIndex{0};    // this has the index at which m_hintNode was accessed, only valid if not m_hintNode.empty()
+        mutable size_t m_hintIndex{0};    // this has the index at which m_hintNode was accessed, only valid if ! m_hintNode.empty()
         inline static const std::vector<std::string_view> m_nodeOrder = {// comments XML node required child sequence
                                                                          "authors",
                                                                          "commentList"};

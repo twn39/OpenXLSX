@@ -326,7 +326,7 @@ namespace OpenXLSX
 
         // ===== If the requested node is closest to the end, start from the end and search backwards.
         else if (result.attribute("r").as_ullong() - rowNumber < rowNumber) {
-            while (not result.empty() && (result.attribute("r").as_ullong() > rowNumber))
+            while (! result.empty() && (result.attribute("r").as_ullong() > rowNumber))
                 result = result.previous_sibling_of_type(pugi::node_element);
             // ===== If the backwards search failed to locate the requested row
             if (result.empty() || (result.attribute("r").as_ullong() != rowNumber)) {
@@ -343,7 +343,7 @@ namespace OpenXLSX
 
         // ===== Otherwise, start from the beginning
         else {
-            // ===== At this point, it is guaranteed that there is at least one node_element in the row that is not empty.
+            // ===== At this point, it is guaranteed that there is at least one node_element in the row that is ! empty.
             result = sheetDataNode.first_child_of_type(pugi::node_element);
 
             // ===== It has been verified above that the requested rowNumber is <= the row number of the last node_element, therefore this
@@ -371,9 +371,9 @@ namespace OpenXLSX
     inline XLStyleIndex getColumnStyle(XMLNode rowNode, uint16_t colNo)
     {
         XMLNode cols = rowNode.parent().parent().child("cols");
-        if (not cols.empty()) {
+        if (! cols.empty()) {
             XMLNode col = cols.first_child_of_type(pugi::node_element);
-            while (not col.empty()) {
+            while (! col.empty()) {
                 if (col.attribute("min").as_int(MAX_COLS + 1) <= colNo && col.attribute("max").as_int(0) >= colNo)    // found
                     return col.attribute("style").as_uint(XLDefaultCellFormat);
                 col = col.next_sibling_of_type(pugi::node_element);
@@ -411,7 +411,7 @@ namespace OpenXLSX
         else                                                      // else: an explicit row style is set
             cellStyle = rowStyle.as_uint(XLDefaultCellFormat);    // use the row style
 
-        if (cellStyle != XLDefaultCellFormat)    // if cellStyle was determined as not the default style (no point in setting that)
+        if (cellStyle != XLDefaultCellFormat)    // if cellStyle was determined as ! the default style (no point in setting that)
             cellNode.append_attribute("s").set_value(cellStyle);
     }
 
@@ -463,7 +463,7 @@ namespace OpenXLSX
         if (rowNode.empty()) return XMLNode{};    // 2024-05-28: return an empty node in case of empty rowNode
 
         XMLNode cellNode = rowNode.last_child_of_type(pugi::node_element);
-        if (!rowNumber) rowNumber = rowNode.attribute("r").as_uint();    // if not provided, determine from rowNode
+        if (!rowNumber) rowNumber = rowNode.attribute("r").as_uint();    // if ! provided, determine from rowNode
 
         // Performance optimization: use lightweight column extraction instead of creating XLCellReference objects
         // This avoids repeated string parsing and object creation overhead in hot loops
@@ -481,7 +481,7 @@ namespace OpenXLSX
         // ===== If the requested node is closest to the end, start from the end and search backwards...
         else if (lastCellCol - columnNumber < columnNumber) {
             uint16_t currentCol = lastCellCol;
-            while (not cellNode.empty() && (currentCol > columnNumber)) {
+            while (! cellNode.empty() && (currentCol > columnNumber)) {
                 cellNode   = cellNode.previous_sibling_of_type(pugi::node_element);
                 currentCol = cellNode.empty() ? 0 : extractColumnFromCellRef(cellNode.attribute("r").value());
             }
@@ -500,7 +500,7 @@ namespace OpenXLSX
         }
         // ===== Otherwise, start from the beginning
         else {
-            // ===== At this point, it is guaranteed that there is at least one node_element in the row that is not empty.
+            // ===== At this point, it is guaranteed that there is at least one node_element in the row that is ! empty.
             cellNode = rowNode.first_child_of_type(pugi::node_element);
 
             // ===== It has been verified above that the requested columnNumber is <= the column number of the last node_element, therefore
@@ -527,8 +527,8 @@ namespace OpenXLSX
      * @param nodeName search this
      * @param nodeOrder in this
      * @return index of nodeName in nodeOrder
-     * @return -1 if nodeName is not an element of nodeOrder
-     * @note this function uses a vector of std::string_view because std::string is not constexpr-capable, and in
+     * @return -1 if nodeName is ! an element of nodeOrder
+     * @note this function uses a vector of std::string_view because std::string is ! constexpr-capable, and in
      *        a future c++20 build, a std::span could be used to have the node order in any OpenXLSX class be a constexpr
      */
     constexpr const int SORT_INDEX_NOT_FOUND = -1;
@@ -582,12 +582,12 @@ namespace OpenXLSX
 
         int nodeSortIndex = (nodeOrder.size() > 1 ? findStringInVector(nodeName, nodeOrder) : SORT_INDEX_NOT_FOUND);
         if (nodeSortIndex !=
-            SORT_INDEX_NOT_FOUND) {    // can't sort anything if nodeOrder contains less than 2 entries or does not contain nodeName
+            SORT_INDEX_NOT_FOUND) {    // can't sort anything if nodeOrder contains less than 2 entries or does ! contain nodeName
             // ===== Find first node to follow nodeName per nodeOrder
-            while (not nextNode.empty() && findStringInVector(nextNode.name(), nodeOrder) < nodeSortIndex)
+            while (! nextNode.empty() && findStringInVector(nextNode.name(), nodeOrder) < nodeSortIndex)
                 nextNode = nextNode.next_sibling_of_type(pugi::node_element);
             // ===== Evaluate search result
-            if (not nextNode.empty()) {             // found nodeName or a node before which nodeName should be inserted
+            if (! nextNode.empty()) {             // found nodeName or a node before which nodeName should be inserted
                 if (nextNode.name() == nodeName)    // if nodeName was found
                     node = nextNode;                // use existing node
                 else {                              // else: a node was found before which nodeName must be inserted
@@ -691,7 +691,7 @@ namespace OpenXLSX
     {
         if (parent.empty()) return false;    // can't do anything
         XMLNode tagNode = parent.child(tagName.c_str());
-        if (tagNode.empty()) return false;    // if tag does not exist: return false
+        if (tagNode.empty()) return false;    // if tag does ! exist: return false
         XMLAttribute valAttr = tagNode.attribute(attrName.c_str());
         if (valAttr.empty()) {                                   // if no attribute with attrName exists: default to true
             appendAndSetAttribute(tagNode, attrName, "true");    // explicitly create & set attribute

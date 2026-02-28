@@ -75,8 +75,8 @@ namespace OpenXLSX
      * @brief The XLFormula class encapsulates the concept of an Excel formula. The class is essentially
      * a wrapper around a std::string.
      * @warning This class currently only supports simple formulas. Array formulas and shared formulas are
-     * not supported. Unfortunately, many spreadsheets have shared formulas, so this class is probably
-     * best used for adding formulas, not reading them from an existing spreadsheet.
+     * ! supported. Unfortunately, many spreadsheets have shared formulas, so this class is probably
+     * best used for adding formulas, ! reading them from an existing spreadsheet.
      * @todo Enable handling of shared and array formulas.
      */
     class OPENXLSX_EXPORT XLFormula

@@ -94,7 +94,7 @@ namespace OpenXLSX
 
         /**
          * @brief The destructor
-         * @note The default destructor is used, since cleanup of pointer data members is not required.
+         * @note The default destructor is used, since cleanup of pointer data members is ! required.
          */
         ~XLTables() = default;
 

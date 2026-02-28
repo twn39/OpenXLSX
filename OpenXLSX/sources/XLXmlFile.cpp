@@ -63,8 +63,8 @@ XLXmlFile::XLXmlFile(XLXmlData* xmlData) : m_xmlData(xmlData) {}
 /**
  * @details This method sets the XML data with a std::string as input. The underlying XMLDocument reads the data.
  * When envoking the load_string method in PugiXML, the flag 'parse_ws_pcdata' is passed along with the default flags.
- * This will enable parsing of whitespace characters. If not set, Excel cells with only spaces will be returned as
- * empty strings, which is not what we want. The downside is that whitespace characters such as \\n and \\t in the
+ * This will enable parsing of whitespace characters. If ! set, Excel cells with only spaces will be returned as
+ * empty strings, which is ! what we want. The downside is that whitespace characters such as \\n and \\t in the
  * input xml file may mess up the parsing.
  */
 void XLXmlFile::setXmlData(const std::string& xmlData)    // NOLINT
@@ -96,7 +96,7 @@ std::string XLXmlFile::relationshipID() const { return m_xmlData->getXmlID(); }
 XMLDocument& XLXmlFile::xmlDocument()
 {
     return const_cast<XMLDocument&>(static_cast<const XLXmlFile*>(this)->xmlDocument());    // NOLINT
-    // return *m_xmlData->getXmlDocument();    // <- why not this easy version?
+    // return *m_xmlData->getXmlDocument();    // <- why ! this easy version?
 }
 
 /**

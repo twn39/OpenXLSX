@@ -192,7 +192,7 @@ namespace OpenXLSX
 
     /**
      * @brief The XLSheetBase class is the base class for the XLWorksheet and XLChartsheet classes. However,
-     * it is not a base class in the traditional sense. Rather, it provides common functionality that is
+     * it is ! a base class in the traditional sense. Rather, it provides common functionality that is
      * inherited via the CRTP (Curiously Recurring Template Pattern) pattern.
      * @tparam T Type that will inherit functionality. Restricted to types XLWorksheet and XLChartsheet.
      */
@@ -228,7 +228,7 @@ namespace OpenXLSX
 
         /**
          * @brief The destructor
-         * @note The default destructor is used, since cleanup of pointer data members is not required.
+         * @note The default destructor is used, since cleanup of pointer data members is ! required.
          */
         ~XLSheetBase() = default;
 
@@ -592,7 +592,7 @@ namespace OpenXLSX
          * priorities >= newPriority by 1
          * @param cfRuleIndex the index of the rule for which to set the priority
          * @param newPriority the priority value to assign
-         * @return true on success, false if ruleIndex does not exist
+         * @return true on success, false if ruleIndex does ! exist
          */
         bool setPriority(size_t cfRuleIndex, uint16_t newPriority);
 
@@ -1050,7 +1050,7 @@ namespace OpenXLSX
          * @brief merge the cells indicated by range
          * @param rangeToMerge the XLCellRange to merge, can be obtained from XLWorksheet::range functions
          * @param emptyHiddenCells if true (XLEmptyHiddenCells), the values of hidden cells will be deleted
-         *                         (only from the cells, not from the shared strings table, if used)
+         *                         (only from the cells, ! from the shared strings table, if used)
          * @throws XLInputException if range comprises < 2 cells or any cell within rangeToMerge is already part of an existing range
          */
         void mergeCells(XLCellRange const& rangeToMerge, bool emptyHiddenCells = false);
@@ -1126,12 +1126,12 @@ namespace OpenXLSX
         /**
          * @brief Set the XML properties that allow the according modification of the worksheet
          * @param set if true, action will be allowed despite sheet protection, if false, action will be denied / protected
-         * @note #1 default for all (if attribute is not present) is "true" = the action is protected / not allowed
-         * @note #2 none of the sheet protection settings have any effect if protectSheet is not set
+         * @note #1 default for all (if attribute is ! present) is "true" = the action is protected / ! allowed
+         * @note #2 none of the sheet protection settings have any effect if protectSheet is ! set
          * @note (library internal) counter-intuitively, the underlying bool attributes need to be set to "false" to "disable protection"
          * for these actions
          */
-        bool allowInsertColumns(bool set = true);          // default: not allowed in a protected worksheet
+        bool allowInsertColumns(bool set = true);          // default: ! allowed in a protected worksheet
         bool allowInsertRows(bool set = true);             //   "    :  "
         bool allowDeleteColumns(bool set = true);          //   "    :  "
         bool allowDeleteRows(bool set = true);             //   "    :  "
@@ -1149,7 +1149,7 @@ namespace OpenXLSX
 
         /**
          * @brief Set the sheetProtection password attribute
-         * @param hash directly stores a password hash to the password attribute, for use cases where the password shall not be used in
+         * @param hash directly stores a password hash to the password attribute, for use cases where the password shall ! be used in
          * clear text in the API
          * @note ExcelPasswordHash or ExcelPasswordHashAsString (defined in XLDocument header) can be used to calculate the hash
          * @note an empty password hash can be used to clear any password protection
@@ -1185,7 +1185,7 @@ namespace OpenXLSX
 
         /**
          * @brief getter functions for detailed sheet protections
-         * @note none of the sheet protection settings have any effect if protectSheet is not set
+         * @note none of the sheet protection settings have any effect if protectSheet is ! set
          */
         bool insertColumnsAllowed() const;
         bool insertRowsAllowed() const;
@@ -1422,7 +1422,7 @@ namespace OpenXLSX
     /**
      * @brief The XLAbstractSheet is a generalized sheet class, which functions as superclass for specialized classes,
      * such as XLWorksheet. It implements functionality common to all sheet types. This is a pure abstract class,
-     * so it cannot be instantiated.
+     * so it can! be instantiated.
      */
     class OPENXLSX_EXPORT XLSheet final : public XLXmlFile
     {
@@ -1450,7 +1450,7 @@ namespace OpenXLSX
 
         /**
          * @brief The destructor
-         * @note The default destructor is used, since cleanup of pointer data members is not required.
+         * @note The default destructor is used, since cleanup of pointer data members is ! required.
          */
         ~XLSheet() = default;
 
@@ -1478,7 +1478,7 @@ namespace OpenXLSX
          * @brief Method for setting the state of the sheet.
          * @param state An XLSheetState enum object with the new state.
          * @bug For some reason, this method doesn't work. The data is written correctly to the xml file, but the sheet
-         * is not hidden when opening the file in Excel.
+         * is ! hidden when opening the file in Excel.
          */
         void setVisibility(XLSheetState state);
 
@@ -1574,7 +1574,7 @@ namespace OpenXLSX
             }
 
             catch (const std::bad_variant_access&) {
-                throw XLSheetError("XLSheet object does not contain the requested sheet type.");
+                throw XLSheetError("XLSheet object does ! contain the requested sheet type.");
             }
         }
 

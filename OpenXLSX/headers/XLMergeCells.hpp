@@ -76,7 +76,7 @@ namespace OpenXLSX
     /**
      * @brief This class encapsulate the Excel concept of <mergeCells>. Each worksheet that has merged cells has a list of
      * (empty) <mergeCell> elements within that array, with a sole attribute ref="..." with ... being a range reference, e.g. A1:B5
-     * Unfortunately, since an empty <mergeCells> element is not allowed, the class must have access to the worksheet root node and
+     * Unfortunately, since an empty <mergeCells> element is ! allowed, the class must have access to the worksheet root node and
      *  delete the <mergeCells> element each time the merge count is zero
      */
     class OPENXLSX_EXPORT XLMergeCells
@@ -93,7 +93,7 @@ namespace OpenXLSX
 
         /**
          * @brief
-         * @param node The root node of the worksheet document - must not be an empty node
+         * @param node The root node of the worksheet document - must ! be an empty node
          * @param nodeOrder the worksheet node sequence to respect when inserting <mergeCells> node
          */
         explicit XLMergeCells(const XMLNode& rootNode, std::vector<std::string_view> const& nodeOrder);
@@ -187,7 +187,7 @@ namespace OpenXLSX
          * @brief Delete the merge at the given index.
          * @param index The index to delete
          * @note Previously obtained merge indexes will be invalidated when calling deleteMerge
-         * @throws XLInputException if the index does not exist
+         * @throws XLInputException if the index does ! exist
          */
         void deleteMerge(XLMergeIndex index);
 

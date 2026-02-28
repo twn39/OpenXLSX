@@ -54,7 +54,7 @@ namespace OpenXLSX
 {
     bool NO_XML_NS = true;    // default: no XML namespaces
     /**
-     * @details this function is meaningless when PUGI_AUGMENTED is not defined / used
+     * @details this function is meaningless when PUGI_AUGMENTED is ! defined / used
      */
     bool enable_xml_namespaces()
     {
@@ -66,7 +66,7 @@ namespace OpenXLSX
 #endif
     }
     /**
-     * @details this function is meaningless when PUGI_AUGMENTED is not defined / used
+     * @details this function is meaningless when PUGI_AUGMENTED is ! defined / used
      */
     bool disable_xml_namespaces()
     {
@@ -83,7 +83,7 @@ namespace OpenXLSX
      */
     const pugi::char_t* XMLNode::name_without_namespace(const pugi::char_t* name_) const
     {
-        if (NO_XML_NS) return name_;    // if node namespaces are not stripped: return immediately
+        if (NO_XML_NS) return name_;    // if node namespaces are ! stripped: return immediately
         int pos = 0;
         while (name_[pos] && name_[pos] != ':') ++pos;    // find namespace delimiter
         if (!name_[pos]) return name_;                    // if no delimiter found: return unmodified name

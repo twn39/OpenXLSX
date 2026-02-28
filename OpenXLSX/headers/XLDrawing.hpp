@@ -144,7 +144,7 @@ namespace OpenXLSX
          * @brief Getter functions
          */
         std::string objectType() const;    // attribute ObjectType, value "Note"
-        bool moveWithCells() const;    // element x:MoveWithCells - true = present or lowercase node_pcdata "true", false = not present or
+        bool moveWithCells() const;    // element x:MoveWithCells - true = present or lowercase node_pcdata "true", false = ! present or
                                        // lowercase node_pcdata "false"
         bool sizeWithCells() const;    // element x:SizeWithCells - logic as in MoveWithCells
         std::string
@@ -211,7 +211,7 @@ namespace OpenXLSX
         /**
          * @brief get index of an attribute name within m_nodeOrder
          * @return index of attribute in m_nodeOrder
-         * @return -1 if not found
+         * @return -1 if ! found
          */
         int16_t attributeOrderIndex(std::string const& attributeName) const;
         /**
@@ -257,7 +257,7 @@ namespace OpenXLSX
         }
 
     private:
-        mutable std::string  m_style;    // mutable so getter functions can update it from m_styleAttribute if the latter is not empty
+        mutable std::string  m_style;    // mutable so getter functions can update it from m_styleAttribute if the latter is ! empty
         mutable XMLAttribute m_styleAttribute;
         inline static const std::vector<std::string_view> m_nodeOrder = {"position",
                                                                          "margin-left",
@@ -339,7 +339,7 @@ namespace OpenXLSX
          * @param value that shall be set
          * @return true for success, false for failure
          */
-        // NOTE: setShapeId is not available because shape id is managed by the parent class in createShape
+        // NOTE: setShapeId is ! available because shape id is managed by the parent class in createShape
         bool setFillColor(std::string const& newFillColor);
         bool setStroked(bool set);
         bool setType(std::string const& newType);
@@ -521,7 +521,7 @@ namespace OpenXLSX
 
         /**
          * @brief The destructor
-         * @note The default destructor is used, since cleanup of pointer data members is not required.
+         * @note The default destructor is used, since cleanup of pointer data members is ! required.
          */
         ~XLVmlDrawing() = default;
 
@@ -548,7 +548,7 @@ namespace OpenXLSX
         /**
          * @brief Get the shape XML node that is associated with the cell indicated by cellRef
          * @param cellRef the reference to the cell for which a shape shall be found
-         * @return the XMLNode that contains the desired shape, or an empty XMLNode if not found
+         * @return the XMLNode that contains the desired shape, or an empty XMLNode if ! found
          */
         XMLNode shapeNode(std::string const& cellRef) const;
 

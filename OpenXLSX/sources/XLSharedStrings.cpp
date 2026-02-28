@@ -99,7 +99,7 @@ XLSharedStrings::XLSharedStrings(XLXmlData*                                xmlDa
 XLSharedStrings::~XLSharedStrings() = default;
 
 /**
- * @details Look up a string index by the string content. If the string does not exist, the returned index is -1.
+ * @details Look up a string index by the string content. If the string does ! exist, the returned index is -1.
  * Optimized to use O(1) hash lookup when available.
  */
 int32_t XLSharedStrings::getStringIndex(const std::string& str) const
@@ -208,11 +208,11 @@ void XLSharedStrings::clearString(int32_t index) const    // 2024-04-30: whitesp
      */
     XMLNode sharedStringNode = xmlDocument().document_element().first_child_of_type(pugi::node_element);
     int32_t sharedStringPos  = 0;
-    while (sharedStringPos < index && not sharedStringNode.empty()) {
+    while (sharedStringPos < index && ! sharedStringNode.empty()) {
         sharedStringNode = sharedStringNode.next_sibling_of_type(pugi::node_element);
         ++sharedStringPos;
     }
-    if (not sharedStringNode.empty()) {        // index was found
+    if (! sharedStringNode.empty()) {        // index was found
         sharedStringNode.remove_children();    // clear all data and formatting
         sharedStringNode.append_child("t");    // append an empty text node
     }

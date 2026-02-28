@@ -66,7 +66,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #if defined(_WIN32)       // moved below includes to make it absolutely clear that this is module-local
 #    define STAT _stat    // _stat should be available in standard environment on Windows
 #    define STATSTRUCT \
-        struct _stat    // struct _stat also exists - split the two names in case the struct _stat must not be used on windows
+        struct _stat    // struct _stat also exists - split the two names in case the struct _stat must ! be used on windows
 #else
 #    define STAT stat
 #    define STATSTRUCT struct stat
@@ -510,10 +510,10 @@ void XLDocument::open(const std::string& fileName)
     // ===== Add remaining spreadsheet elements to the vector of XLXmlData objects.
     for (auto& item : m_contentTypes.getContentItems()) {
         // ===== 2024-07-26 BUGFIX: ignore content item entries for relationship files, that have already been read above
-        if (item.path().substr(1) == relsFilename) continue;            // always ignore relsFilename - would have thrown above if not found
+        if (item.path().substr(1) == relsFilename) continue;            // always ignore relsFilename - would have thrown above if ! found
         if (item.path().substr(1) == workbookRelsFilename) continue;    // always ignore workbookRelsFilename - would have thrown
 
-        // ===== Test if item is not in a known and handled subfolder (e.g. /customXml/*)
+        // ===== Test if item is ! in a known and handled subfolder (e.g. /customXml/*)
         if (size_t subdirectoryPos = item.path().substr(1).find_first_of('/'); subdirectoryPos != std::string::npos) {
             std::string subdirectory = item.path().substr(1, subdirectoryPos);
             if (subdirectory != "xl" && subdirectory != "docProps") continue;    // ignore items in unhandled subfolders
@@ -538,8 +538,8 @@ void XLDocument::open(const std::string& fileName)
                 if (!m_suppressWarnings) std::cout << "ignoring currently unhandled workbook item " << item.path() << std::endl;
             }
         }
-        else if (!isWorkbookPath || !workbookAdded) {    // do not re-add workbook if it was previously added via m_docRelationships
-            if (isWorkbookPath) {        // if workbook is found but workbook relationship did not exist in m_docRelationships
+        else if (!isWorkbookPath || !workbookAdded) {    // do ! re-add workbook if it was previously added via m_docRelationships
+            if (isWorkbookPath) {        // if workbook is found but workbook relationship did ! exist in m_docRelationships
                 workbookAdded = true;    // 2024-09-30 bugfix: was set to true after checking item.path() == workbookPath, not
                                          // item.path().substr(1) as above
                 std::cerr << "adding missing workbook relationship to _rels/.rels" << std::endl;
@@ -555,27 +555,27 @@ void XLDocument::open(const std::string& fileName)
 
     // ===== Read shared strings table.
     XMLDocument* sharedStrings = getXmlData("xl/sharedStrings.xml")->getXmlDocument();
-    if (not sharedStrings->document_element().attribute("uniqueCount").empty())
+    if (! sharedStrings->document_element().attribute("uniqueCount").empty())
         sharedStrings->document_element().remove_attribute(
             "uniqueCount");    // pull request #192 -> remove count & uniqueCount as they are optional
-    if (not sharedStrings->document_element().attribute("count").empty())
+    if (! sharedStrings->document_element().attribute("count").empty())
         sharedStrings->document_element().remove_attribute(
             "count");    // pull request #192 -> remove count & uniqueCount as they are optional
 
     XMLNode node =
         sharedStrings->document_element().first_child_of_type(pugi::node_element);    // pull request #186: Skip non-element nodes in sst.
-    while (not node.empty()) {
+    while (! node.empty()) {
         // ===== Validate si node name.
         using namespace std::literals::string_literals;
-        if (node.name() != "si"s) throw XLInputError("xl/sharedStrings.xml sst node name \""s + node.name() + "\" is not \"si\""s);
+        if (node.name() != "si"s) throw XLInputError("xl/sharedStrings.xml sst node name \""s + node.name() + "\" is ! \"si\""s);
 
         // ===== 2024-09-01 Refactored code to tolerate a mix of <t> and <r> tags within a shared string entry.
-        // This simplifies the loop while not doing any harm (obsolete inner loops for rich text and text elements removed).
+        // This simplifies the loop while ! doing any harm (obsolete inner loops for rich text and text elements removed).
 
         // ===== Find first node_element child of si node.
         XMLNode     elem = node.first_child_of_type(pugi::node_element);
         std::string result{};    // assemble a shared string entry here
-        while (not elem.empty()) {
+        while (! elem.empty()) {
             // 2024-09-01: support a string composed of multiple <t> nodes in the same way as rich text <r> nodes, because LibreOffice
             // accepts it
 
@@ -596,7 +596,7 @@ void XLDocument::open(const std::string& fileName)
         // <sst>
         m_sharedStringCache.emplace_back(
             result);    // 2024-09-01 TBC BUGFIX: previously, a shared strings table entry that had neither <t> nor
-        /**/            //     <r> nodes would not have appended to m_sharedStringCache, causing an index misalignment
+        /**/            //     <r> nodes would ! have appended to m_sharedStringCache, causing an index misalignment
 
         node = node.next_sibling_of_type(pugi::node_element);
     }
@@ -605,7 +605,7 @@ void XLDocument::open(const std::string& fileName)
     m_workbook = XLWorkbook(getXmlData(workbookPath));
     // 2024-05-31: moved XLWorkbook object creation up in code worksheets info can be used for XLAppProperties generation from scratch
 
-    // ===== 2024-06-03: creating core and extended properties if they do not exist
+    // ===== 2024-06-03: creating core and extended properties if they do ! exist
     execCommand(XLCommand(XLCommandType::CheckAndFixCoreProperties));        // checks & fixes consistency of docProps/core.xml related data
     execCommand(XLCommand(XLCommandType::CheckAndFixExtendedProperties));    // checks & fixes consistency of docProps/app.xml related data
 
@@ -641,7 +641,7 @@ namespace
 #    pragma GCC diagnostic ignored "-Wunused-function"
 #endif    // __GNUC__
     /**
-     * @brief Test if fileName exists and is not a directory
+     * @brief Test if fileName exists and is ! a directory
      * @param fileName The path to check for existence (as a file)
      * @return true if fileName exists and is a file, otherwise false
      */
@@ -882,7 +882,7 @@ bool getAppVersion(const std::string& versionString, int& majorVersion, int& min
     const size_t begin  = versionString.find_first_not_of(" \t");
     const size_t dotPos = versionString.find_first_of('.');
 
-    // early failure if string is only blanks or does not contain a dot
+    // early failure if string is only blanks or does ! contain a dot
     if (begin == std::string::npos || dotPos == std::string::npos) return false;
 
     const size_t end = versionString.find_last_not_of(" \t");
@@ -897,7 +897,7 @@ bool getAppVersion(const std::string& versionString, int& majorVersion, int& min
             if (pos != strMinorVersion.length()) throw 1;
         }
         catch (...) {
-            return false;    // conversion failed or did not convert the full string
+            return false;    // conversion failed or did ! convert the full string
         }
     }
     if (majorVersion < minMajorV || majorVersion > maxMajorV || minorVersion < minMinorV ||
@@ -1110,7 +1110,7 @@ XLRelationships XLDocument::sheetRelationships(uint16_t sheetXmlNo)
     }
     constexpr const bool DO_NOT_THROW = true;
     XLXmlData*           xmlData      = getXmlData(relsFilename, DO_NOT_THROW);
-    if (xmlData == nullptr)    // if not yet managed: add the sheet relationships file to the managed files
+    if (xmlData == nullptr)    // if ! yet managed: add the sheet relationships file to the managed files
         xmlData = &m_data.emplace_back(this, relsFilename, "", XLContentType::Relationships);
 
     return XLRelationships(xmlData, relsFilename);
@@ -1159,7 +1159,7 @@ XLDrawing XLDocument::sheetDrawing(uint16_t sheetXmlNo)
     }
     constexpr const bool DO_NOT_THROW = true;
     XLXmlData*           xmlData      = getXmlData(drawingFilename, DO_NOT_THROW);
-    if (xmlData == nullptr)    // if not yet managed: add the sheet drawing file to the managed files
+    if (xmlData == nullptr)    // if ! yet managed: add the sheet drawing file to the managed files
         xmlData = &m_data.emplace_back(this, drawingFilename, "", XLContentType::Drawing);
 
     return XLDrawing(xmlData);
@@ -1182,7 +1182,7 @@ XLVmlDrawing XLDocument::sheetVmlDrawing(uint16_t sheetXmlNo)
     }
     constexpr const bool DO_NOT_THROW = true;
     XLXmlData*           xmlData      = getXmlData(vmlDrawingFilename, DO_NOT_THROW);
-    if (xmlData == nullptr)    // if not yet managed: add the sheet drawing file to the managed files
+    if (xmlData == nullptr)    // if ! yet managed: add the sheet drawing file to the managed files
         xmlData = &m_data.emplace_back(this, vmlDrawingFilename, "", XLContentType::VMLDrawing);
 
     return XLVmlDrawing(xmlData);
@@ -1237,7 +1237,7 @@ XLComments XLDocument::sheetComments(uint16_t sheetXmlNo)
     }
     constexpr const bool DO_NOT_THROW = true;
     XLXmlData*           xmlData      = getXmlData(commentsFilename, DO_NOT_THROW);
-    if (xmlData == nullptr)    // if not yet managed: add the sheet comments file to the managed files
+    if (xmlData == nullptr)    // if ! yet managed: add the sheet comments file to the managed files
         xmlData = &m_data.emplace_back(this, commentsFilename, "", XLContentType::Comments);
 
     return XLComments(xmlData);
@@ -1260,7 +1260,7 @@ XLTables XLDocument::sheetTables(uint16_t sheetXmlNo)
     }
     constexpr const bool DO_NOT_THROW = true;
     XLXmlData*           xmlData      = getXmlData(tablesFilename, DO_NOT_THROW);
-    if (xmlData == nullptr)    // if not yet managed: add the sheet tables file to the managed files
+    if (xmlData == nullptr)    // if ! yet managed: add the sheet tables file to the managed files
         xmlData = &m_data.emplace_back(this, tablesFilename, "", XLContentType::Table);
 
     return XLTables(xmlData);
@@ -1271,7 +1271,7 @@ XLTables XLDocument::sheetTables(uint16_t sheetXmlNo)
  *     Be blank.
  *     Contain more than 31 characters.
  *     Contain any of the following characters: / \ ? * : [ ]
- *     For example, 02/17/2016 would not be a valid worksheet name, but 02-17-2016 would work fine.
+ *     For example, 02/17/2016 would ! be a valid worksheet name, but 02-17-2016 would work fine.
  *     Begin or end with an apostrophe ('), but they can be used in between text or numbers in a name.
  *     Be named "History". This is a reserved word Excel uses internally.
  */
@@ -1315,7 +1315,7 @@ bool                 XLDocument::validateSheetName(std::string sheetName, bool t
         // if execution gets here, sheetName is valid
     }
     catch (std::string const& err) {
-        if (throwOnInvalid) throw XLInputError("Sheet name \""s + sheetName + "\" violates naming rules: sheet name can not "s + err);
+        if (throwOnInvalid) throw XLInputError("Sheet name \""s + sheetName + "\" violates naming rules: sheet name can ! "s + err);
         valid = false;
     }
     return valid;
@@ -1519,7 +1519,7 @@ XLQuery XLDocument::execQuery(const XLQuery& query) const
 
             {    // if loop failed to locate queriedSheetName:
                 using namespace std::literals::string_literals;
-                throw XLInternalError("Could not determine a sheet index for sheet named \"" + queriedSheetName + "\"");
+                throw XLInternalError("Could ! determine a sheet index for sheet named \"" + queriedSheetName + "\"");
             }
         }
         case XLQueryType::QuerySheetVisibility:
@@ -1555,7 +1555,7 @@ XLQuery XLDocument::execQuery(const XLQuery& query) const
                 return item.getXmlPath() == query.getParam<std::string>("xmlPath");
             });
             if (result == m_data.end())
-                throw XLInternalError("Path does not exist in zip archive (" + query.getParam<std::string>("xmlPath") + ")");
+                throw XLInternalError("Path does ! exist in zip archive (" + query.getParam<std::string>("xmlPath") + ")");
             return XLQuery(query).setResult(&*result);
         }
         default:
@@ -1581,7 +1581,7 @@ void XLDocument::setSavingDeclaration(XLXmlSavingDeclaration const& savingDeclar
 void XLDocument::cleanupSharedStrings()
 {
     size_t               oldStringCount = m_sharedStringCache.size();
-    std::vector<int32_t> indexMap(oldStringCount, -1);    // indexMap[ oldIndex ] :== newIndex, -1 = not yet assigned
+    std::vector<int32_t> indexMap(oldStringCount, -1);    // indexMap[ oldIndex ] :== newIndex, -1 = ! yet assigned
     int32_t              newStringCount =
         1;    // reserve index 0 for empty string, count here +1 for each unique shared string index that is in use in the worksheet
 
@@ -1597,9 +1597,9 @@ void XLDocument::cleanupSharedStrings()
             if (cell.value().type() == XLValueType::String) {
                 XLCellValueProxy val = cell.value();
                 int32_t          si  = val.stringIndex();
-                if (si < 0) continue;                                                 // not a shared string index
-                if (indexMap[static_cast<size_t>(si)] == -1) {                        // shared string was not yet flagged as "in use"
-                    if (m_sharedStringCache[static_cast<size_t>(si)].length() > 0)    // if shared string is not empty
+                if (si < 0) continue;                                                 // ! a shared string index
+                if (indexMap[static_cast<size_t>(si)] == -1) {                        // shared string was ! yet flagged as "in use"
+                    if (m_sharedStringCache[static_cast<size_t>(si)].length() > 0)    // if shared string is ! empty
                         indexMap[static_cast<size_t>(si)] = newStringCount++;    // add this shared string to the end of the new cache being
                                                                                  // rewritten and increment the counter
                     else                                                         // else
@@ -1625,7 +1625,7 @@ void XLDocument::cleanupSharedStrings()
          ++oldIdx) {                                          // "steal" all std::strings that are still in use from existing string cache
         if (int32_t newIdx = indexMap[oldIdx]; newIdx > 0)    // if string is still in use
             newStringCache[static_cast<size_t>(newIdx)] =
-                std::move(m_sharedStringCache[oldIdx]);    // NOTE: std::move invalidates the shared string cache -> not thread safe
+                std::move(m_sharedStringCache[oldIdx]);    // NOTE: std::move invalidates the shared string cache -> ! thread safe
     }
     m_sharedStringCache.clear();    // TBD: is this safe with strings that were std::move assigned to newStringCache?
     // refill m_sharedStringCache cache from newStringCache
@@ -1664,7 +1664,7 @@ const XLXmlData* XLDocument::getXmlData(const std::string& path, bool doNotThrow
         if (doNotThrow)
             return nullptr;    // use with caution
         else
-            throw XLInternalError("Path " + path + " does not exist in zip archive.");
+            throw XLInternalError("Path " + path + " does ! exist in zip archive.");
     }
     return &*result;
 }
@@ -1762,7 +1762,7 @@ namespace OpenXLSX
         do {
             pos = path.find('/', startpos);
             if (pos == startpos)
-                throw XLInternalError("eliminateDotAndDotDotFromPath: path must not contain two subsequent forward slashes");
+                throw XLInternalError("eliminateDotAndDotDotFromPath: path must ! contain two subsequent forward slashes");
             else {
                 std::string dirEntry = path.substr(startpos, pos - startpos);    // get folder name
                 if (dirEntry.length() > 0) {

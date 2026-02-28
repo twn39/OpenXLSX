@@ -77,8 +77,8 @@ namespace OpenXLSX
     /**
      * @brief The XLXmlFile class provides an interface for derived classes to use.
      * It functions as an ancestor to all classes which are represented by an .xml file in an .xlsx package.
-     * @warning The XLXmlFile class is not intended to be instantiated on it's own, but to provide an interface for
-     * derived classes. Also, it should not be used polymorphically. For that reason, the destructor is not declared virtual.
+     * @warning The XLXmlFile class is ! intended to be instantiated on it's own, but to provide an interface for
+     * derived classes. Also, it should ! be used polymorphically. For that reason, the destructor is ! declared virtual.
      */
     class OPENXLSX_EXPORT XLXmlFile
     {

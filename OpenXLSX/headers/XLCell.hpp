@@ -68,7 +68,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 namespace OpenXLSX
 {
     // ===== Flags that can be passed to XLCell::clear as parameter keep, flags can be combined with bitwise OR
-    //                                  // Do not clear the cell's:
+    //                                  // Do ! clear the cell's:
     constexpr const uint32_t XLKeepCellStyle   = 1;    // style (attribute s)
     constexpr const uint32_t XLKeepCellType    = 2;    // type (attribute t)
     constexpr const uint32_t XLKeepCellValue   = 4;    // value (child node v)
@@ -127,7 +127,7 @@ namespace OpenXLSX
          * @brief Copy assignment operator
          * @param other The XLCell object to be copy assigned
          * @return A reference to the new object
-         * @note Copies only the cell contents, not the pointer to parent worksheet etc.
+         * @note Copies only the cell contents, ! the pointer to parent worksheet etc.
          */
         virtual XLCell& operator=(const XLCell& other);
 
@@ -159,7 +159,7 @@ namespace OpenXLSX
 
         /**
          * @brief clear all cell content and attributes except for the cell reference (attribute r)
-         * @param keep do not clear cell properties whose flags are set in keep (XLKeepCellStyle, XLKeepCellType,
+         * @param keep do ! clear cell properties whose flags are set in keep (XLKeepCellStyle, XLKeepCellType,
          *              XLKeepCellValue, XLKeepCellFormula), flags can be combined with bitwise OR
          * @note due to the way OOXML separates comments from the cells, this function will *not* clear a cell comment - refer to
          * XLComments& XLSheet::comments() for that
@@ -192,7 +192,7 @@ namespace OpenXLSX
 
         /**
          * @brief test if cell has a formula (XML) node, even if it is an empty string
-         * @return true if XML has a formula node, empty or not - otherwise false
+         * @return true if XML has a formula node, empty or ! - otherwise false
          */
         bool hasFormula() const;
 
@@ -283,7 +283,7 @@ namespace OpenXLSX
          * @brief Copy assignment operator
          * @param other The XLCell object to be copy assigned
          * @return A reference to the new object
-         * @note Copies only the cell contents, not the pointer to parent worksheet etc.
+         * @note Copies only the cell contents, ! the pointer to parent worksheet etc.
          */
         XLCellAssignable& operator=(const XLCell& other) override;
         XLCellAssignable& operator=(const XLCellAssignable& other);
@@ -292,7 +292,7 @@ namespace OpenXLSX
          * @brief Move assignment operator -> overrides XLCell copy operator, becomes a copy operator
          * @param other The XLCell object to be copy assigned
          * @return A reference to the new object
-         * @note Copies only the cell contents, not the pointer to parent worksheet etc.
+         * @note Copies only the cell contents, ! the pointer to parent worksheet etc.
          */
         XLCellAssignable& operator=(XLCell&& other) noexcept override;
         XLCellAssignable& operator=(XLCellAssignable&& other) noexcept;

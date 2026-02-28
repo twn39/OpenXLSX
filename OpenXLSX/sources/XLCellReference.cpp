@@ -75,9 +75,9 @@ namespace
  */
 XLCellReference::XLCellReference(const std::string& cellAddress)
 {
-    if (not cellAddress.empty()) {
+    if (! cellAddress.empty()) {
         setAddress(cellAddress);
-        if (not addressIsValid(m_row, m_column)) throw XLCellAddressError("Cell reference is invalid");
+        if (! addressIsValid(m_row, m_column)) throw XLCellAddressError("Cell reference is invalid");
     }
     // else: use default values initialized in header (m_row = 1, m_column = 1, m_cellAddress = "A1")
 }

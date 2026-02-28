@@ -66,11 +66,11 @@ namespace
 
         using namespace std::literals::string_literals;
         XMLNode textElement = commentNode.child("text").first_child_of_type(pugi::node_element);
-        while (not textElement.empty()) {
+        while (! textElement.empty()) {
             if (textElement.name() == "t"s) { result += textElement.first_child().value(); }
             else if (textElement.name() == "r"s) {    // rich text
                 XMLNode richTextSubnode = textElement.first_child_of_type(pugi::node_element);
-                while (not richTextSubnode.empty()) {
+                while (! richTextSubnode.empty()) {
                     if (richTextSubnode.name() == "t"s) { result += richTextSubnode.first_child().value(); }
                     else if (richTextSubnode.name() == "rPr"s) {}    // ignore rich text formatting info
                     else {}                                          // ignore other nodes
@@ -104,7 +104,7 @@ XLComment::XLComment(const XMLNode& node) : m_commentNode(node) {}
  * @note For the library it is reasonable to expect users to compile it with MSCV /permissive- flag, but for the user's own projects the
  * header files shall "just work"
  */
-bool XLComment::valid() const { return not m_commentNode.empty(); }
+bool XLComment::valid() const { return ! m_commentNode.empty(); }
 
 /**
  * @brief Getter functions
@@ -228,11 +228,11 @@ XMLNode XLComments::authorNode(uint16_t index) const
 {
     XMLNode  auth = m_authors.first_child_of_type(pugi::node_element);
     uint16_t i    = 0;
-    while (not auth.empty() && i != index) {
+    while (! auth.empty() && i != index) {
         ++i;
         auth = auth.next_sibling_of_type(pugi::node_element);
     }
-    return auth;    // auth.empty() will be true if not found
+    return auth;    // auth.empty() will be true if ! found
 }
 
 /**
@@ -247,7 +247,7 @@ XMLNode XLComments::commentNode(size_t index) const
         m_hintIndex = 0;
     }
 
-    while (not m_hintNode.empty() && m_hintIndex < index) {
+    while (! m_hintNode.empty() && m_hintIndex < index) {
         ++m_hintIndex;
         m_hintNode = m_hintNode.next_sibling_of_type(pugi::node_element);
     }
@@ -271,7 +271,7 @@ uint16_t XLComments::authorCount() const
 {
     XMLNode  auth  = m_authors.first_child_of_type(pugi::node_element);
     uint16_t count = 0;
-    while (not auth.empty()) {
+    while (! auth.empty()) {
         ++count;
         auth = auth.next_sibling_of_type(pugi::node_element);
     }
@@ -316,7 +316,7 @@ uint16_t XLComments::addAuthor(const std::string& authorName)
 {
     XMLNode  auth  = m_authors.first_child_of_type(pugi::node_element);
     uint16_t index = 0;
-    while (not auth.next_sibling_of_type(pugi::node_element).empty()) {
+    while (! auth.next_sibling_of_type(pugi::node_element).empty()) {
         ++index;
         auth = auth.next_sibling_of_type(pugi::node_element);
     }
@@ -340,7 +340,7 @@ size_t XLComments::count() const
 {
     XMLNode comment = m_commentList.first_child_of_type(pugi::node_element);
     size_t  count   = 0;
-    while (not comment.empty()) {
+    while (! comment.empty()) {
         // if (comment.name() == "comment") // TBD: safe-guard against potential rogue node
         ++count;
         comment = comment.next_sibling_of_type(pugi::node_element);
@@ -407,7 +407,7 @@ bool XLComments::set(std::string const& cellRef, std::string const& commentText,
 
     using namespace std::literals::string_literals;
     XMLNode comment = m_commentList.first_child_of_type(pugi::node_element);
-    while (not comment.empty()) {
+    while (! comment.empty()) {
         if (comment.name() == "comment"s) {    // safeguard against rogue nodes
             XLCellReference ref(comment.attribute("ref").value());
             if (ref.row() > destRow || (ref.row() == destRow && ref.column() >= destCol))    // abort when node or a node behind it is found
@@ -462,7 +462,7 @@ bool XLComments::set(std::string const& cellRef, std::string const& commentText,
                 cShape = shape(cellRef);    // for existing comments, try to access existing shape
             }
             catch (XLException const& e) {
-                newShapeNeeded = true;    // not found: create fresh
+                newShapeNeeded = true;    // ! found: create fresh
             }
         }
         if (newShapeNeeded) cShape = m_vmlDrawing->createShape();
@@ -512,12 +512,12 @@ bool XLComments::set(std::string const& cellRef, std::string const& commentText,
                 std::cout << "XLComments::set WARNING: anchoring comment shapes beyond column "s
                                  /**/
                                  + XLCellReference::columnAsString(MAX_SHAPE_ANCHOR_COLUMN) +
-                                 " may not get displayed correctly (LO Calc, TBD in Excel)"s
+                                 " may ! get displayed correctly (LO Calc, TBD in Excel)"s
                           << std::endl;
             if (anchorBottomRow > MAX_SHAPE_ANCHOR_ROW)
                 std::cout << "XLComments::set WARNING: anchoring comment shapes beyond row "s
                                  /**/
-                                 + std::to_string(MAX_SHAPE_ANCHOR_ROW) + " may not get displayed correctly (LO Calc, TBD in Excel)"s
+                                 + std::to_string(MAX_SHAPE_ANCHOR_ROW) + " may ! get displayed correctly (LO Calc, TBD in Excel)"s
                           << std::endl;
 
             uint16_t anchorLeftOffsetInCell = 10, anchorRightOffsetInCell = 10;
@@ -569,7 +569,7 @@ bool XLComments::set(std::string const& cellRef, std::string const& commentText,
         // </v:shape>
     }
     else
-        throw XLException("XLComments::set: can not set (format) any comments when VML Drawing object is invalid");
+        throw XLException("XLComments::set: can ! set (format) any comments when VML Drawing object is invalid");
 
     return true;
 }
@@ -579,12 +579,12 @@ bool XLComments::set(std::string const& cellRef, std::string const& commentText,
  */
 XLShape XLComments::shape(std::string const& cellRef)
 {
-    if (!m_vmlDrawing->valid()) throw XLException("XLComments::shape: can not access any shapes when VML Drawing object is invalid");
+    if (!m_vmlDrawing->valid()) throw XLException("XLComments::shape: can ! access any shapes when VML Drawing object is invalid");
 
     XMLNode shape = m_vmlDrawing->shapeNode(cellRef);
     if (shape.empty()) {
         using namespace std::literals::string_literals;
-        throw XLException("XLComments::shape: not found for cell "s + cellRef + " - was XLComment::set invoked first?"s);
+        throw XLException("XLComments::shape: ! found for cell "s + cellRef + " - was XLComment::set invoked first?"s);
     }
     return XLShape(shape);
 }

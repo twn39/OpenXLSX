@@ -83,7 +83,7 @@ XLCellRange::XLCellRange(const XMLNode&         dataNode,
         throw XLInputError("XLCellRange constructor: topLeft ("s + topLeft.address() +
                            ")"s
                            /**/
-                           + " does not point to a lower or equal row and column than bottomRight ("s + bottomRight.address() + ")"s);
+                           + " does ! point to a lower or equal row and column than bottomRight ("s + bottomRight.address() + ")"s);
     }
 }
 
@@ -159,7 +159,7 @@ void XLCellRange::fetchColumnStyles()
 
     uint16_t vecPos = 0;
     XMLNode  col    = cols.first_child_of_type(pugi::node_element);
-    while (not col.empty()) {
+    while (! col.empty()) {
         uint16_t minCol = static_cast<uint16_t>(col.attribute("min").as_int(0));
         uint16_t maxCol = static_cast<uint16_t>(col.attribute("max").as_int(0));
         if (minCol > maxCol || !minCol || !maxCol) {
@@ -167,7 +167,7 @@ void XLCellRange::fetchColumnStyles()
             throw XLInputError("column attributes min (\""s + col.attribute("min").value() + "\") and max (\""s +
                                col.attribute("min").value() +
                                "\")"s
-                               " must be set and min must not be larger than max"s);
+                               " must be set and min must ! be larger than max"s);
         }
         if (maxCol > m_columnStyles.size()) m_columnStyles.resize(maxCol);                     // resize m_columnStyles if necessary
         for (; vecPos + 1 < minCol; ++vecPos) m_columnStyles[vecPos] = XLDefaultCellFormat;    // set all non-defined columns to default

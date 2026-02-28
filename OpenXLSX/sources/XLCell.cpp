@@ -67,7 +67,7 @@ XLCell::XLCell()
 /**
  * @details This constructor creates a XLCell object based on the cell XMLNode input parameter, and is
  * intended for use when the corresponding cell XMLNode already exist.
- * If a cell XMLNode does not exist (i.e., the cell is empty), use the relevant constructor to create an XLCell
+ * If a cell XMLNode does ! exist (i.e., the cell is empty), use the relevant constructor to create an XLCell
  * from a XLCellReference parameter.
  */
 XLCell::XLCell(const XMLNode& cellNode, const XLSharedStrings& sharedStrings)
@@ -153,19 +153,19 @@ void XLCell::copyFrom(XLCell const& other)
         m_cellNode->remove_children();
 
         // ===== Copy all XML child nodes
-        for (XMLNode child = other.m_cellNode->first_child(); not child.empty(); child = child.next_sibling())
+        for (XMLNode child = other.m_cellNode->first_child(); ! child.empty(); child = child.next_sibling())
             m_cellNode->append_copy(child);
 
-        // ===== Delete all XML attributes that are not the cell reference ("r")
+        // ===== Delete all XML attributes that are ! the cell reference ("r")
         // ===== 2024-07-26 BUGFIX: for-loop was invalidating loop variable with remove_attribute(attr) before advancing to next element
         XMLAttribute currentAttr = m_cellNode->first_attribute();
-        while (not currentAttr.empty()) {
+        while (! currentAttr.empty()) {
             XMLAttribute nextAttr = currentAttr.next_attribute();    // get a handle on next attribute before potentially removing attr
             if (strcmp(currentAttr.name(), "r") != 0) m_cellNode->remove_attribute(currentAttr);    // remove all but the cell reference
             currentAttr = nextAttr;    // advance to previously stored next attribute
         }
-        // ===== Copy all XML attributes that are not the cell reference ("r")
-        for (auto attr = other.m_cellNode->first_attribute(); not attr.empty(); attr = attr.next_attribute())
+        // ===== Copy all XML attributes that are ! the cell reference ("r")
+        for (auto attr = other.m_cellNode->first_attribute(); ! attr.empty(); attr = attr.next_attribute())
             if (strcmp(attr.name(), "r") != 0) m_cellNode->append_copy(attr);
     }
 }
@@ -179,14 +179,14 @@ bool XLCell::empty() const { return (!m_cellNode) || m_cellNode->empty(); }
  * @details
  * @todo 2024-08-10 TBD whether body can be replaced with !empty() (performance?)
  */
-XLCell::operator bool() const { return m_cellNode && (not m_cellNode->empty()); }    // ===== 2024-05-28: replaced explicit bool evaluation
+XLCell::operator bool() const { return m_cellNode && (! m_cellNode->empty()); }    // ===== 2024-05-28: replaced explicit bool evaluation
 
 /**
  * @details This function returns a const reference to the cellReference property.
  */
 XLCellReference XLCell::cellReference() const
 {
-    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    if (!m_cellNode) throw XLException("XLCell object has ! been initialized.");
     return XLCellReference{m_cellNode->attribute("r").value()};
 }
 
@@ -195,7 +195,7 @@ XLCellReference XLCell::cellReference() const
  */
 XLCell XLCell::offset(uint16_t rowOffset, uint16_t colOffset) const
 {
-    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    if (!m_cellNode) throw XLException("XLCell object has ! been initialized.");
     const XLCellReference offsetRef(cellReference().row() + rowOffset, cellReference().column() + colOffset);
     const auto            rownode  = getRowNode(m_cellNode->parent().parent(), offsetRef.row());
     const auto            cellnode = getCellNode(rownode, offsetRef.column());
@@ -208,7 +208,7 @@ XLCell XLCell::offset(uint16_t rowOffset, uint16_t colOffset) const
 bool XLCell::hasFormula() const
 {
     if (!m_cellNode) return false;
-    return (not m_cellNode->child("f").empty());    // evaluate child XMLNode as boolean
+    return (! m_cellNode->child("f").empty());    // evaluate child XMLNode as boolean
 }
 
 /**
@@ -216,7 +216,7 @@ bool XLCell::hasFormula() const
  */
 XLFormulaProxy& XLCell::formula()
 {
-    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    if (!m_cellNode) throw XLException("XLCell object has ! been initialized.");
     return m_formulaProxy;
 }
 
@@ -225,19 +225,19 @@ XLFormulaProxy& XLCell::formula()
  */
 size_t XLCell::cellFormat() const
 {
-    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    if (!m_cellNode) throw XLException("XLCell object has ! been initialized.");
     return m_cellNode->attribute("s").as_uint(0);
 }
 
 /**
  * @details set the s attribute of the cell node, pointing to an xl/styles.xml cellXfs index
- *          the attribute will be created if not existant, function will fail if attribute creation fails
+ *          the attribute will be created if ! existant, function will fail if attribute creation fails
  */
 bool XLCell::setCellFormat(size_t cellFormatIndex)
 {
-    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    if (!m_cellNode) throw XLException("XLCell object has ! been initialized.");
     XMLAttribute attr = m_cellNode->attribute("s");
-    if (attr.empty() && not m_cellNode->empty()) attr = m_cellNode->append_attribute("s");
+    if (attr.empty() && ! m_cellNode->empty()) attr = m_cellNode->append_attribute("s");
     attr.set_value(cellFormatIndex);    // silently fails on empty attribute, which is intended here
     return attr.empty() == false;
 }
@@ -247,7 +247,7 @@ bool XLCell::setCellFormat(size_t cellFormatIndex)
  */
 void XLCell::print(std::basic_ostream<char>& ostr) const
 {
-    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    if (!m_cellNode) throw XLException("XLCell object has ! been initialized.");
     m_cellNode->print(ostr);
 }
 
@@ -312,7 +312,7 @@ XLCellAssignable& XLCellAssignable::operator=(XLCellAssignable&& other) noexcept
  */
 const XLFormulaProxy& XLCell::formula() const
 {
-    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    if (!m_cellNode) throw XLException("XLCell object has ! been initialized.");
     return m_formulaProxy;
 }
 
@@ -321,10 +321,10 @@ const XLFormulaProxy& XLCell::formula() const
  */
 void XLCell::clear(uint32_t keep)
 {
-    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    if (!m_cellNode) throw XLException("XLCell object has ! been initialized.");
     // ===== Clear attributes
     XMLAttribute attr = m_cellNode->first_attribute();
-    while (not attr.empty()) {
+    while (! attr.empty()) {
         XMLAttribute nextAttr = attr.next_attribute();
         std::string  attrName = attr.name();
         if ((attrName == "r")                                   // if this is cell reference (must always remain untouched)
@@ -332,13 +332,13 @@ void XLCell::clear(uint32_t keep)
             || ((keep & XLKeepCellType) && attrName == "t"))    // or type shall be kept & this is type
             attr = XMLAttribute{};                              // empty attribute won't get deleted
         // ===== Remove all non-kept attributes
-        if (not attr.empty()) m_cellNode->remove_attribute(attr);
+        if (! attr.empty()) m_cellNode->remove_attribute(attr);
         attr = nextAttr;    // advance to previously determined next cell node attribute
     }
 
     // ===== Clear node children
     XMLNode node = m_cellNode->first_child();
-    while (not node.empty()) {
+    while (! node.empty()) {
         XMLNode nextNode = node.next_sibling();
         // ===== Only preserve non-whitespace nodes
         if (node.type() == pugi::node_element) {
@@ -348,7 +348,7 @@ void XLCell::clear(uint32_t keep)
                 node = XMLNode{};                                      // empty node won't get deleted
         }
         // ===== Remove all non-kept cell node children
-        if (not node.empty()) m_cellNode->remove_child(node);
+        if (! node.empty()) m_cellNode->remove_child(node);
         node = nextNode;    // advance to previously determined next cell node child
     }
 }
@@ -359,7 +359,7 @@ void XLCell::clear(uint32_t keep)
  */
 XLCellValueProxy& XLCell::value()
 {
-    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    if (!m_cellNode) throw XLException("XLCell object has ! been initialized.");
     return m_valueProxy;
 }
 
@@ -370,7 +370,7 @@ XLCellValueProxy& XLCell::value()
  */
 const XLCellValueProxy& XLCell::value() const
 {
-    if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
+    if (!m_cellNode) throw XLException("XLCell object has ! been initialized.");
     return m_valueProxy;
 }
 

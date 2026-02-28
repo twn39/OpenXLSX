@@ -85,7 +85,7 @@ XLSheet XLWorkbook::sheet(const std::string& sheetName)
 {
     // ===== First determine if the sheet exists.
     if (xmlDocument().document_element().child("sheets").find_child_by_attribute("name", sheetName.c_str()) == nullptr)
-        throw XLInputError("Sheet \"" + sheetName + "\" does not exist");
+        throw XLInputError("Sheet \"" + sheetName + "\" does ! exist");
 
     // ===== Find the sheet data corresponding to the sheet with the requested name
     const std::string xmlID =
@@ -115,7 +115,7 @@ XLSheet XLWorkbook::sheet(uint16_t index)    // 2024-04-30: whitespace support
 
     // ===== Find the n-th node_element that corresponds to index
     uint16_t curIndex = 0;
-    for (XMLNode node = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not node.empty();
+    for (XMLNode node = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); ! node.empty();
          node         = node.next_sibling_of_type(pugi::node_element))
     {
         if (++curIndex == index) return sheet(node.attribute("name").as_string());
@@ -179,7 +179,7 @@ void XLWorkbook::deleteNamedRanges()
  * @details
  */
 void XLWorkbook::deleteSheet(const std::string& sheetName)    // 2024-05-02: whitespace support
-                                                              // CAUTION: execCommand on underlying XML with whitespaces not verified
+                                                              // CAUTION: execCommand on underlying XML with whitespaces ! verified
 {
     // ===== Determine ID and type of sheet, as well as current worksheet count.
     std::string sheetID =
@@ -190,10 +190,10 @@ void XLWorkbook::deleteSheet(const std::string& sheetName)    // 2024-05-02: whi
     }
     XLQuery sheetTypeQuery(XLQueryType::QuerySheetType);
     sheetTypeQuery.setParam("sheetID", std::string(sheetID));    // BUGFIX 2024-05-02: was using relationshipID() instead of sheetID,
-                                                                 // leading to a bad sheetType & a failed check to not delete last worksheet
+                                                                 // leading to a bad sheetType & a failed check to ! delete last worksheet
     const auto sheetType = parentDoc().execQuery(sheetTypeQuery).result<XLContentType>();
 
-    // 2024-04-30: this should be whitespace-safe due to lambda expression checking for an attribute that non element nodes can not have
+    // 2024-04-30: this should be whitespace-safe due to lambda expression checking for an attribute that non element nodes can ! have
     const auto worksheetCount =
         std::count_if(sheetsNode(xmlDocument()).children().begin(), sheetsNode(xmlDocument()).children().end(), [&](const XMLNode& item) {
             if (item.type() != pugi::node_element) return false;    // 2024-05-02 this avoids the unnecessary query below
@@ -210,10 +210,10 @@ void XLWorkbook::deleteSheet(const std::string& sheetName)    // 2024-05-02: whi
     parentDoc().execCommand(
         XLCommand(XLCommandType::DeleteSheet).setParam("sheetID", std::string(sheetID)).setParam("sheetName", sheetName));
     XMLNode sheet = sheetsNode(xmlDocument()).find_child_by_attribute("name", sheetName.c_str());
-    if (not sheet.empty()) {
+    if (! sheet.empty()) {
         // ===== Delete all non element nodes (comments, whitespaces) following the sheet being deleted from workbook.xml <sheets> node
         XMLNode nonElementNode = sheet.next_sibling();
-        while (not nonElementNode.empty() && nonElementNode.type() != pugi::node_element) {
+        while (! nonElementNode.empty() && nonElementNode.type() != pugi::node_element) {
             sheetsNode(xmlDocument()).remove_child(nonElementNode);
             nonElementNode = nonElementNode.next_sibling();
         }
@@ -246,8 +246,8 @@ void XLWorkbook::addWorksheet(const std::string& sheetName)
 /**
  * @details
  * @todo If the original sheet's tabSelected attribute is set, ensure it is un-set in the clone.
- *       TBD: See comment in XLWorkbook::setSheetActive - should the tabSelected actually be un-set? It's not the same as the active tab,
- *        which does not need to be selected
+ *       TBD: See comment in XLWorkbook::setSheetActive - should the tabSelected actually be un-set? It's ! the same as the active tab,
+ *        which does ! need to be selected
  */
 void XLWorkbook::cloneSheet(const std::string& existingName, const std::string& newName)
 { parentDoc().execCommand(XLCommand(XLCommandType::CloneSheet).setParam("sheetID", sheetID(existingName)).setParam("cloneName", newName)); }
@@ -259,7 +259,7 @@ uint16_t XLWorkbook::createInternalSheetID()    // 2024-04-30: whitespace suppor
 {
     XMLNode  sheet           = xmlDocument().document_element().child("sheets").first_child_of_type(pugi::node_element);
     uint32_t maxSheetIdFound = 0;
-    while (not sheet.empty()) {
+    while (! sheet.empty()) {
         uint32_t thisSheetId = sheet.attribute("sheetId").as_uint();
         if (thisSheetId > maxSheetIdFound) maxSheetIdFound = thisSheetId;
         sheet = sheet.next_sibling_of_type(pugi::node_element);
@@ -323,14 +323,14 @@ void XLWorkbook::setSheetVisibility(const std::string& sheetRID, const std::stri
     int visibleSheets = 0;
     // for (const auto& item : xmlDocument().document_element().child("sheets").children()) {
     XMLNode item = xmlDocument().document_element().child("sheets").first_child_of_type(pugi::node_element);
-    while (not item.empty()) {
+    while (! item.empty()) {
         if (std::string(item.attribute("r:id").value()) != sheetRID) {
             if (isVisible(item)) ++visibleSheets;
         }
         item = item.next_sibling_of_type(pugi::node_element);
     }
 
-    bool hideSheet = not isVisibleState(state);    // 2024-04-30: save for later use on activating another sheet if needed
+    bool hideSheet = ! isVisibleState(state);    // 2024-04-30: save for later use on activating another sheet if needed
 
     // ===== If there are no other visible sheets, and the current sheet is to be made hidden, throw an exception.
     if (hideSheet && visibleSheets == 0) throw XLSheetError("At least one sheet must be visible.");
@@ -362,7 +362,7 @@ void XLWorkbook::setSheetVisibility(const std::string& sheetRID, const std::stri
     if (hideSheet && activeTabIndex == index) {    // BUGFIX 2024-04-30: previously, the active tab was re-set even if the current sheet was
                                                    // being set to "visible" (when already being visible)
         XMLNode sheetItem = xmlDocument().document_element().child("sheets").first_child_of_type(pugi::node_element);
-        while (not sheetItem.empty()) {
+        while (! sheetItem.empty()) {
             if (isVisible(
                     sheetItem)) {    // BUGFIX 2024-05-01: old check was testing state != "hidden" || != "veryHidden", which was always true
                 activeTabAttribute.set_value(indexOfSheet(sheetItem.attribute("name").value()) - 1);
@@ -395,7 +395,7 @@ void XLWorkbook::setSheetIndex(const std::string& sheetName, unsigned int index)
     XMLNode      curSheet     = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element);
     int          thingsToFind = (activeSheetIndex > 0) ? 3 : 2;    // if there is no active tab configured, no need to search for its name
 
-    while (not curSheet.empty() && thingsToFind > 0) {    // permit early loop exit when all sheets are located
+    while (! curSheet.empty() && thingsToFind > 0) {    // permit early loop exit when all sheets are located
         if (sheetToMove.empty() && (curSheet.attribute("name").value() == sheetName)) {
             sheetToMoveIndex = sheetIndex;
             sheetToMove      = curSheet;
@@ -413,7 +413,7 @@ void XLWorkbook::setSheetIndex(const std::string& sheetName, unsigned int index)
         curSheet = curSheet.next_sibling_of_type(pugi::node_element);
     }
 
-    // ===== If a sheet with sheetName was not found
+    // ===== If a sheet with sheetName was ! found
     if (sheetToMove.empty()) throw XLInputError(std::string(__func__) + std::string(": no worksheet exists with name ") + sheetName);
 
     // ==== name was matched
@@ -433,7 +433,7 @@ void XLWorkbook::setSheetIndex(const std::string& sheetName, unsigned int index)
 
     // ===== Updated defined names with worksheet scopes. TBD what this does
     XMLNode definedName = xmlDocument().document_element().child("definedNames").first_child_of_type(pugi::node_element);
-    while (not definedName.empty()) {
+    while (! definedName.empty()) {
         // TBD: is the current definedName actually associated with the sheet that was moved?
         definedName.attribute("localSheetId").set_value(sheetToMoveIndex - 1);
         definedName = definedName.next_sibling_of_type(pugi::node_element);
@@ -441,7 +441,7 @@ void XLWorkbook::setSheetIndex(const std::string& sheetName, unsigned int index)
 
     // ===== Update the activeTab attribute.
     if ((activeSheetIndex < std::min(index, sheetToMoveIndex)) ||
-        (activeSheetIndex > std::max(index, sheetToMoveIndex)))    // if active sheet was not within the set of sheets affected by the move
+        (activeSheetIndex > std::max(index, sheetToMoveIndex)))    // if active sheet was ! within the set of sheets affected by the move
         return;                                                    // nothing to do
 
     if (activeSheet_rId.length() > 0) setSheetActive(activeSheet_rId);
@@ -454,15 +454,15 @@ unsigned int XLWorkbook::indexOfSheet(const std::string& sheetName) const    // 
 {
     // ===== Iterate through sheet nodes. When a match is found, return the index;
     unsigned int index = 1;
-    for (XMLNode sheet = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not sheet.empty();
+    for (XMLNode sheet = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); ! sheet.empty();
          sheet         = sheet.next_sibling_of_type(pugi::node_element))
     {
         if (sheetName == sheet.attribute("name").value()) return index;
         index++;
     }
 
-    // ===== If a match is not found, throw an exception.
-    throw XLInputError("Sheet does not exist");
+    // ===== If a match is ! found, throw an exception.
+    throw XLInputError("Sheet does ! exist");
 }
 
 /**
@@ -482,7 +482,7 @@ XLSheetType XLWorkbook::typeOfSheet(const std::string& sheetName) const
 XLSheetType XLWorkbook::typeOfSheet(unsigned int index) const    // 2024-05-01: whitespace support
 {
     unsigned int thisIndex = 1;
-    for (XMLNode sheet = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not sheet.empty();
+    for (XMLNode sheet = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); ! sheet.empty();
          sheet         = sheet.next_sibling_of_type(pugi::node_element))
     {
         if (thisIndex == index) return typeOfSheet(sheet.attribute("name").as_string());
@@ -499,7 +499,7 @@ XLSheetType XLWorkbook::typeOfSheet(unsigned int index) const    // 2024-05-01: 
 unsigned int XLWorkbook::sheetCount() const    // 2024-04-30: whitespace support
 {
     unsigned int count = 0;
-    for (XMLNode node = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not node.empty();
+    for (XMLNode node = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); ! node.empty();
          node         = node.next_sibling_of_type(pugi::node_element))
         ++count;
     return count;
@@ -522,7 +522,7 @@ std::vector<std::string> XLWorkbook::sheetNames() const    // 2024-05-01: whites
 {
     std::vector<std::string> results;
 
-    for (XMLNode item = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not item.empty();
+    for (XMLNode item = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); ! item.empty();
          item         = item.next_sibling_of_type(pugi::node_element))
         results.emplace_back(item.attribute("name").value());
 
@@ -536,7 +536,7 @@ std::vector<std::string> XLWorkbook::worksheetNames() const    // 2024-05-01: wh
 {
     std::vector<std::string> results;
 
-    for (XMLNode item = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not item.empty();
+    for (XMLNode item = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); ! item.empty();
          item         = item.next_sibling_of_type(pugi::node_element))
     {
         XLQuery query(XLQueryType::QuerySheetType);
@@ -555,7 +555,7 @@ std::vector<std::string> XLWorkbook::chartsheetNames() const    // 2024-05-01: w
 {
     std::vector<std::string> results;
 
-    for (XMLNode item = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not item.empty();
+    for (XMLNode item = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); ! item.empty();
          item         = item.next_sibling_of_type(pugi::node_element))
     {
         XLQuery query(XLQueryType::QuerySheetType);
@@ -620,7 +620,7 @@ void XLWorkbook::updateSheetReferences(
 
     // ===== Iterate through all defined names // TODO 2024-05-01: verify definedNames logic
     XMLNode definedName = xmlDocument().document_element().child("definedNames").first_child_of_type(pugi::node_element);
-    for (; not definedName.empty(); definedName = definedName.next_sibling_of_type(pugi::node_element)) {
+    for (; ! definedName.empty(); definedName = definedName.next_sibling_of_type(pugi::node_element)) {
         formula = definedName.text().get();
 
         // ===== Skip if formula contains a '[' and ']' (means that the defined refers to external workbook)
@@ -663,14 +663,14 @@ bool XLWorkbook::sheetIsActive(const std::string& sheetRID) const    // 2024-04-
 {
     const XMLNode      workbookView       = xmlDocument().document_element().child("bookViews").first_child_of_type(pugi::node_element);
     const XMLAttribute activeTabAttribute = workbookView.attribute("activeTab");
-    const int32_t activeTabIndex = (not activeTabAttribute.empty() ? activeTabAttribute.as_int()
+    const int32_t activeTabIndex = (! activeTabAttribute.empty() ? activeTabAttribute.as_int()
                                                                    : -1);    // 2024-05-29 BUGFIX: activeTabAttribute was being read as_uint
     if (activeTabIndex == -1) return false;    // 2024-05-29 early exit: no need to try and match sheetRID if there *is* no active tab
 
     int32_t index = 0;    // 2024-06-04 BUGFIX: index should support -1 as 2024-05-29 change below sets it to -1 for preventing a match with
                           // activeTabIndex
     XMLNode item = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element);
-    while (not item.empty()) {
+    while (! item.empty()) {
         if (std::string(item.attribute("r:id").value()) == sheetRID) break;
         ++index;
         item = item.next_sibling_of_type(pugi::node_element);
@@ -683,7 +683,7 @@ bool XLWorkbook::sheetIsActive(const std::string& sheetRID) const    // 2024-04-
 /**
  * @details
  * @done: no exception if setSheetActive fails, instead return false
- * @done: fail by returning false if sheetRID is either not found or belongs to a sheet that is not visible
+ * @done: fail by returning false if sheetRID is either ! found or belongs to a sheet that is ! visible
  * @note: this makes some bug fixes from 2024-05-29 obsolete
  * @note: changed behavior: attempting to setSheetActive on a non-existing or non-visible sheet will no longer unselect the active sheet
  */
@@ -692,34 +692,34 @@ bool XLWorkbook::setSheetActive(const std::string& sheetRID)    // 2024-04-30: w
     XMLNode            workbookView       = xmlDocument().document_element().child("bookViews").first_child_of_type(pugi::node_element);
     const XMLAttribute activeTabAttribute = workbookView.attribute("activeTab");
     int32_t            activeTabIndex     = -1;    // negative == no active tab identified
-    if (not activeTabAttribute.empty()) activeTabIndex = activeTabAttribute.as_int();
+    if (! activeTabAttribute.empty()) activeTabIndex = activeTabAttribute.as_int();
 
     int32_t index = 0;    // index should have the same data type as activeTabIndex for comparisons
     XMLNode item  = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element);
-    while (not item.empty() && (std::string(item.attribute("r:id").value()) != sheetRID)) {
+    while (! item.empty() && (std::string(item.attribute("r:id").value()) != sheetRID)) {
         ++index;
         item = item.next_sibling_of_type(pugi::node_element);
     }
-    // ===== 2024-06-19: Fail without action if sheet is not found or sheet is not visible
+    // ===== 2024-06-19: Fail without action if sheet is ! found or sheet is ! visible
     if (item.empty() || !isVisible(item)) return false;
 
     // NOTE: XLSheet XLWorkbook::sheet(uint16_t index) is using a 1-based index, while the workbookView attribute activeTab is using a
     // 0-based index
 
-    // ===== If an active sheet was found, but sheetRID is not the same sheet: attempt to unselect the old active sheet.
+    // ===== If an active sheet was found, but sheetRID is ! the same sheet: attempt to unselect the old active sheet.
     if ((activeTabIndex != -1) && (index != activeTabIndex))
         sheet(static_cast<uint16_t>(activeTabIndex + 1)).setSelected(false);    // see NOTE above
 
     // ===== Set the activeTab property for the workbook.xml sheets node
     if (workbookView.attribute("activeTab").empty()) workbookView.append_attribute("activeTab");
     workbookView.attribute("activeTab").set_value(index);
-    // sheet(index + 1).setSelected(true);  // it appears that an active sheet does not have to be selected
+    // sheet(index + 1).setSelected(true);  // it appears that an active sheet does ! have to be selected
     return true;    // success
 }
 
 /**
- * @details evaluate a sheet node state attribute where "hidden" or "veryHidden" means not visible
- * @note 2024-05-01 BUGFIX: veryHidden was not checked (in setSheetActive)
+ * @details evaluate a sheet node state attribute where "hidden" or "veryHidden" means ! visible
+ * @note 2024-05-01 BUGFIX: veryHidden was ! checked (in setSheetActive)
  */
 bool XLWorkbook::isVisibleState(std::string const& state) const { return (state != "hidden" && state != "veryHidden"); }
 
