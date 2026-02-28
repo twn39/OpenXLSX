@@ -723,6 +723,7 @@ void XLDocument::close()
     m_coreProperties   = XLProperties();
     m_styles           = XLStyles();
     m_workbook         = XLWorkbook();
+    m_sharedFormulas.clear();
     // m_archive          = IZipArchive(); // keep IZipArchive class intact throughout close/open
 }
 

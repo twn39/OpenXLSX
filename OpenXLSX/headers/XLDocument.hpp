@@ -55,6 +55,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 // ===== External Includes ===== //
 #include <algorithm>    // std::find_if
 #include <list>
+#include <map>
 #include <string>
 #include <unordered_map>    // O(1) shared string lookup
 
@@ -483,10 +484,18 @@ namespace OpenXLSX
         XLXmlSavingDeclaration
             m_xmlSavingDeclaration; /**< The xml saving declaration that will be passed to pugixml before generating the XML output data*/
 
+        struct SharedFormula {
+            std::string formula;
+            uint32_t    baseRow;
+            uint16_t    baseCol;
+        };
+
         mutable std::list<XLXmlData>                     m_data{};              /**<  */
         mutable std::deque<std::string>                  m_sharedStringCache{}; /**<  */
         mutable std::unordered_map<std::string, int32_t> m_sharedStringIndex{}; /**< O(1) string -> index lookup */
         mutable XLSharedStrings                          m_sharedStrings{};     /**<  */
+        mutable std::map<const XMLDocument*, std::unordered_map<uint32_t, SharedFormula>>
+            m_sharedFormulas{}; /**< Cache for shared formulas, scoped by worksheet document */
 
         XLRelationships m_docRelationships{}; /**< A pointer to the document relationships object*/
         XLRelationships m_wbkRelationships{}; /**< A pointer to the document relationships object*/

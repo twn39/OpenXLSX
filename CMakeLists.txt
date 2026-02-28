@@ -122,10 +122,12 @@ if(OPENXLSX_BUILD_TESTS)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             ${CMAKE_CURRENT_LIST_DIR}/Tests/test.png 
             ${CMAKE_CURRENT_LIST_DIR}/Tests/test.jpg
+            ${CMAKE_CURRENT_LIST_DIR}/Tests/shared_formula_test.xlsx
             $<TARGET_FILE_DIR:OpenXLSXTests>/Tests/
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             ${CMAKE_CURRENT_LIST_DIR}/Tests/test.png 
             ${CMAKE_CURRENT_LIST_DIR}/Tests/test.jpg
+            ${CMAKE_CURRENT_LIST_DIR}/Tests/shared_formula_test.xlsx
             ${CMAKE_BINARY_DIR}/Tests/
     )
 endif()

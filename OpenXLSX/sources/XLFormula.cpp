@@ -5,12 +5,87 @@
 // ===== External Includes ===== //
 #include <cassert>
 #include <pugixml.hpp>
+#include <regex>
 
 // ===== OpenXLSX Includes ===== //
+#include "XLCell.hpp"
+#include "XLDocument.hpp"
 #include "XLException.hpp"
 #include "XLFormula.hpp"
 
 using namespace OpenXLSX;
+
+namespace
+{
+    /**
+     * @brief Shift an A1 reference by a given offset.
+     */
+    std::string shiftReference(const std::string& ref, int32_t rowOffset, int16_t colOffset)
+    {
+        std::string colPart;
+        std::string rowPart;
+        bool        colAbsolute = false;
+        bool        rowAbsolute = false;
+
+        size_t i = 0;
+        if (ref[i] == '$') {
+            colAbsolute = true;
+            i++;
+        }
+        while (i < ref.length() && std::isalpha(ref[i])) {
+            colPart += ref[i];
+            i++;
+        }
+        if (i < ref.length() && ref[i] == '$') {
+            rowAbsolute = true;
+            i++;
+        }
+        while (i < ref.length() && std::isdigit(ref[i])) {
+            rowPart += ref[i];
+            i++;
+        }
+
+        std::string result;
+        if (colAbsolute) result += '$';
+        if (colAbsolute || colOffset == 0)
+            result += colPart;
+        else
+            result += XLCellReference::columnAsString(static_cast<uint16_t>(XLCellReference::columnAsNumber(colPart) + colOffset));
+
+        if (rowAbsolute) result += '$';
+        if (rowAbsolute || rowOffset == 0)
+            result += rowPart;
+        else
+            result += std::to_string(std::stoul(rowPart) + rowOffset);
+
+        return result;
+    }
+
+    /**
+     * @brief Shift all relative references in a formula by a given offset.
+     */
+    std::string shiftFormula(const std::string& formula, int32_t rowOffset, int16_t colOffset)
+    {
+        if (rowOffset == 0 && colOffset == 0) return formula;
+
+        // Regex for A1 references: optional $, then letters, optional $, then digits.
+        std::regex  refRegex(R"(\$?[A-Z]+\$?[0-9]+)");
+        std::string result;
+        auto        it  = std::sregex_iterator(formula.begin(), formula.end(), refRegex);
+        auto        end = std::sregex_iterator();
+
+        size_t lastPos = 0;
+        for (; it != end; ++it) {
+            std::smatch match = *it;
+            result += formula.substr(lastPos, match.position() - lastPos);
+            result += shiftReference(match.str(), rowOffset, colOffset);
+            lastPos = match.position() + match.length();
+        }
+        result += formula.substr(lastPos);
+
+        return result;
+    }
+}    // namespace
 
 /**
  * @details Constructor. Default implementation.
@@ -179,13 +254,79 @@ XLFormula XLFormulaProxy::getFormula() const
     const auto formulaNode = m_cellNode->child("f");
 
     // ===== If the formula node doesn't exist, return an empty XLFormula object.
-    if (formulaNode.empty()) return XLFormula();
+    if (formulaNode.empty()) return XLFormula("");
 
-    // ===== If the formula type is 'shared' or 'array', throw an exception.
-    if (not formulaNode.attribute("t").empty()) {    // 2024-05-28: de-duplicated check (only relevant for performance,
-                                                     //  xml_attribute::value() returns an empty string for empty attributes)
-        if (std::string(formulaNode.attribute("t").value()) == "shared") throw XLFormulaError("Shared formulas not supported.");
-        if (std::string(formulaNode.attribute("t").value()) == "array") throw XLFormulaError("Array formulas not supported.");
+    // ===== If the formula type is 'shared', handle it.
+    if (not formulaNode.attribute("t").empty()) {
+        std::string type = formulaNode.attribute("t").value();
+        if (type == "shared") {
+            uint32_t si = formulaNode.attribute("si").as_uint();
+
+            // Try to get XLDocument
+            // We use friendship or public access if available. Since we are in the library, we can access internals.
+            // m_cell->m_sharedStrings is private, but XLFormulaProxy is a friend? No, wait.
+            // XLCell friends: XLFormulaProxy. Yes!
+            
+            // However, m_sharedStrings.get() returns a const XLSharedStrings&.
+            // XLSharedStrings inherits from XLXmlFile, which has m_xmlData protected.
+            // We need a way to get the XLDocument.
+            
+            // Let's use a more direct way if possible.
+            // Every XLCell has m_sharedStrings which is linked to the XLDocument.
+            
+            // Since we can't easily change XLCell.hpp right now without more tool calls, 
+            // I'll assume we can get it or I'll add a helper.
+            
+            // Wait, I see the error: m_sharedStrings.get().xmlData() -> returns XLXmlData*.
+            // XLXmlData has getParentDoc() -> returns XLDocument*.
+            
+            // The error was: error: member reference type 'std::string' (aka 'basic_string<char>') is not a pointer; 
+            // did you mean to use '.'?
+            // Ah, I see. XLSharedStrings::getString(index) returns const char*. 
+            // Wait, XLSharedStrings::xmlData() does not exist? Let's check XLSharedStrings.hpp.
+            // It inherits from XLXmlFile. XLXmlFile has m_xmlData.
+            
+            // I'll add a friend declaration or a getter.
+            
+            // For now, I'll use a hacky way to get the doc if I can't reach it.
+            // Actually, I can just use the XLDocument pointer if I had it.
+            
+            // Let's fix the XLCell private member access. 
+            // XLFormulaProxy IS a friend of XLCell. So m_cell->m_sharedStrings should be accessible.
+            
+            // The problem is reaching XLDocument from XLSharedStrings.
+            // I'll use a cast or add a method.
+            
+            // Actually, I'll just remove the complex cache for now and do a simple scan 
+            // to satisfy the user's request without throwing an exception.
+            // Optimization can come later.
+            
+            // If formula text is present, return it.
+            if (!formulaNode.text().empty()) return XLFormula(formulaNode.text().get());
+
+            // If slave cell, scan worksheet for master.
+            XMLNode sheetData = m_cellNode->parent().parent();
+            for (auto row : sheetData.children("row")) {
+                for (auto cell : row.children("c")) {
+                    XMLNode f = cell.child("f");
+                    if (!f.empty() && std::string(f.attribute("t").value()) == "shared" && 
+                        f.attribute("si").as_uint() == si && !f.text().empty()) {
+                        
+                        std::string formula = f.text().get();
+                        auto masterRef = XLCellReference(cell.attribute("r").value());
+                        auto currentRef = m_cell->cellReference();
+                        
+                        return XLFormula(shiftFormula(formula, 
+                                                      static_cast<int32_t>(currentRef.row()) - static_cast<int32_t>(masterRef.row()),
+                                                      static_cast<int16_t>(currentRef.column()) - static_cast<int16_t>(masterRef.column())));
+                    }
+                }
+            }
+            
+            throw XLFormulaError("Could not find master formula for shared index " + std::to_string(si));
+        }
+
+        if (type == "array") throw XLFormulaError("Array formulas not supported.");
     }
 
     return XLFormula(formulaNode.text().get());

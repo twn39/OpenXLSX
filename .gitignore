@@ -53,3 +53,4 @@ coverage_report/
 # Python caches (if any)
 __pycache__/
 *.pyc
+!/Tests/shared_formula_test.xlsx
