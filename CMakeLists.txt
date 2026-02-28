@@ -97,6 +97,7 @@ generate_export_header(OpenXLSX
 # Basic Compiler Flags & Release Optimizations
 if(MSVC)
     target_compile_options(OpenXLSX PUBLIC /W4 /permissive- /utf-8 $<$<CONFIG:Release>:/O2 /Ot /Gy /Zc:inline>)
+    target_compile_definitions(OpenXLSX PUBLIC _CRT_SECURE_NO_WARNINGS)
 else()
     target_compile_options(OpenXLSX PRIVATE -Wall -Wextra $<$<CONFIG:Release>:-O3 -ffunction-sections -fdata-sections>)
     if(APPLE)
@@ -117,10 +118,15 @@ if(OPENXLSX_BUILD_TESTS)
     # Copy test data to build directory
     add_custom_command(TARGET OpenXLSXTests POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:OpenXLSXTests>/Tests
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Tests
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             ${CMAKE_CURRENT_LIST_DIR}/Tests/test.png 
             ${CMAKE_CURRENT_LIST_DIR}/Tests/test.jpg
             $<TARGET_FILE_DIR:OpenXLSXTests>/Tests/
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+            ${CMAKE_CURRENT_LIST_DIR}/Tests/test.png 
+            ${CMAKE_CURRENT_LIST_DIR}/Tests/test.jpg
+            ${CMAKE_BINARY_DIR}/Tests/
     )
 endif()
 

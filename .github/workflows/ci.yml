@@ -51,11 +51,10 @@ jobs:
         run: cmake --build build --config Release -j 4
 
       - name: Run Tests
-        working-directory: build
         run: |
           if [ "${{ runner.os }}" == "Windows" ]; then
-            ./Release/OpenXLSXTests.exe
+            cd build/Release && ./OpenXLSXTests.exe
           else
-            ./OpenXLSXTests
+            cd build && ./OpenXLSXTests
           fi
         shell: bash
