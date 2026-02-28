@@ -47,17 +47,17 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLSHAREDSTRINGS_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 #include <deque>
-#include <functional> // std::reference_wrapper
-#include <limits>     // std::numeric_limits
-#include <ostream>    // std::basic_ostream
+#include <functional>    // std::reference_wrapper
+#include <limits>        // std::numeric_limits
+#include <ostream>       // std::basic_ostream
 #include <string>
-#include <unordered_map> // O(1) string lookup
+#include <unordered_map>    // O(1) string lookup
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
@@ -65,12 +65,14 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 namespace OpenXLSX
 {
-    constexpr size_t XLMaxSharedStrings = (std::numeric_limits< int32_t >::max)();    // pull request #261: wrapped max in parentheses to prevent expansion of windows.h "max" macro
+    constexpr size_t XLMaxSharedStrings = (std::numeric_limits<int32_t>::max)();    // pull request #261: wrapped max in parentheses to
+                                                                                    // prevent expansion of windows.h "max" macro
 
-    class XLSharedStrings; // forward declaration
-    typedef std::reference_wrapper< const XLSharedStrings > XLSharedStringsRef;
+    class XLSharedStrings;    // forward declaration
+    typedef std::reference_wrapper<const XLSharedStrings> XLSharedStringsRef;
 
-    extern const XLSharedStrings XLSharedStringsDefaulted; // to be used for default initialization of all references of type XLSharedStrings
+    extern const XLSharedStrings
+        XLSharedStringsDefaulted;    // to be used for default initialization of all references of type XLSharedStrings
 
     /**
      * @brief This class encapsulate the Excel concept of Shared Strings. In Excel, instead of havig individual strings
@@ -80,7 +82,7 @@ namespace OpenXLSX
     class OPENXLSX_EXPORT XLSharedStrings : public XLXmlFile
     {
         //---------- Friend Declarations ----------//
-        friend class XLDocument; // for access to protected function rewriteXmlFromCache
+        friend class XLDocument;    // for access to protected function rewriteXmlFromCache
 
         //----------------------------------------------------------------------------------------------------------------------
         //           Public Member Functions
@@ -98,8 +100,8 @@ namespace OpenXLSX
          * @param stringCache
          * @param stringIndex O(1) lookup hash map: string -> index
          */
-        explicit XLSharedStrings(XLXmlData* xmlData,
-                                 std::deque<std::string>* stringCache,
+        explicit XLSharedStrings(XLXmlData*                                xmlData,
+                                 std::deque<std::string>*                  stringCache,
                                  std::unordered_map<std::string, int32_t>* stringIndex);
 
         /**
@@ -205,13 +207,13 @@ namespace OpenXLSX
         int32_t rewriteXmlFromCache();
 
     private:
-        std::deque<std::string>* m_stringCache {}; /** < Each string must have an unchanging memory address; hence the use of std::deque */
-        std::unordered_map<std::string, int32_t>* m_stringIndex {}; /** < O(1) string -> index lookup */
+        std::deque<std::string>* m_stringCache{}; /** < Each string must have an unchanging memory address; hence the use of std::deque */
+        std::unordered_map<std::string, int32_t>* m_stringIndex{}; /** < O(1) string -> index lookup */
     };
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLSHAREDSTRINGS_HPP

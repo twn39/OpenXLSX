@@ -3,15 +3,15 @@
 //
 
 #include <OpenXLSX.hpp>
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <fstream>
 
 using namespace OpenXLSX;
 
 TEST_CASE("XLColor", "[XLColor]")
 {
-    SECTION("Constructors") {
-
+    SECTION("Constructors")
+    {
         XLColor color;
         REQUIRE(color.alpha() == 255);
         REQUIRE(color.red() == 0);
@@ -70,6 +70,5 @@ TEST_CASE("XLColor", "[XLColor]")
 
         REQUIRE_THROWS(XLColor("ffff"));
         REQUIRE_THROWS(XLColor("ffffffffff"));
-
     }
 }

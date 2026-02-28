@@ -1,5 +1,6 @@
+#include "XLUtilities.hpp"
 #include <OpenXLSX.hpp>
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <fstream>
 #include <pugixml.hpp>
 #include <vector>

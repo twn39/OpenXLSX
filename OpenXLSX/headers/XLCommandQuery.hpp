@@ -47,14 +47,14 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLCOMMANDQUERY_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 // ===== External Includes ===== //
 #include <any>
-#include <cstdint> // uint8_t
+#include <cstdint>    // uint8_t
 #include <map>
 #include <string>
 
@@ -114,9 +114,7 @@ namespace OpenXLSX
          */
         template<typename T>
         T getParam(const std::string& param) const
-        {
-            return std::any_cast<T>(m_params.at(param));
-        }
+        { return std::any_cast<T>(m_params.at(param)); }
 
         /**
          * @brief
@@ -179,9 +177,7 @@ namespace OpenXLSX
          */
         template<typename T>
         T getParam(const std::string& param) const
-        {
-            return std::any_cast<T>(m_params.at(param));
-        }
+        { return std::any_cast<T>(m_params.at(param)); }
 
         /**
          * @brief
@@ -203,9 +199,7 @@ namespace OpenXLSX
          */
         template<typename T>
         T result() const
-        {
-            return std::any_cast<T>(m_result);
-        }
+        { return std::any_cast<T>(m_result); }
 
         /**
          * @brief
@@ -222,7 +216,7 @@ namespace OpenXLSX
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLCOMMANDQUERY_HPP

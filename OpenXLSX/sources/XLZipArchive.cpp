@@ -64,20 +64,14 @@ XLZipArchive::~XLZipArchive() = default;
 /**
  * @details
  */
-XLZipArchive::operator bool() const
-{
-    return isValid();
-}
+XLZipArchive::operator bool() const { return isValid(); }
 
 bool XLZipArchive::isValid() const { return m_archive != nullptr; }
 
 /**
  * @details
  */
-bool XLZipArchive::isOpen() const
-{
-    return m_archive && m_archive->IsOpen();
-}
+bool XLZipArchive::isOpen() const { return m_archive && m_archive->IsOpen(); }
 
 /**
  * @details
@@ -88,7 +82,7 @@ void XLZipArchive::open(const std::string& fileName)
     try {
         m_archive->Open(fileName);
     }
-    catch( ... ) {    // catch all exceptions
+    catch (...) {             // catch all exceptions
         m_archive.reset();    // make m_archive invalid again
         throw;                // re-throw
     }
@@ -106,37 +100,27 @@ void XLZipArchive::close()
 /**
  * @details
  */
-void XLZipArchive::save(const std::string& path) // NOLINT
-{
-    m_archive->Save(path);
-}
+void XLZipArchive::save(const std::string& path)    // NOLINT
+{ m_archive->Save(path); }
 
 /**
  * @details
  */
-void XLZipArchive::addEntry(const std::string& name, const std::string& data) // NOLINT
-{
-    m_archive->AddEntry(name, data);
-}
+void XLZipArchive::addEntry(const std::string& name, const std::string& data)    // NOLINT
+{ m_archive->AddEntry(name, data); }
 
 /**
  * @details
  */
-void XLZipArchive::deleteEntry(const std::string& entryName) // NOLINT
-{
-    m_archive->DeleteEntry(entryName);
-}
+void XLZipArchive::deleteEntry(const std::string& entryName)    // NOLINT
+{ m_archive->DeleteEntry(entryName); }
 
 /**
  * @details
  */
-std::string XLZipArchive::getEntry(const std::string& name) const {
-    return m_archive->GetEntry(name).GetDataAsString();
-}
+std::string XLZipArchive::getEntry(const std::string& name) const { return m_archive->GetEntry(name).GetDataAsString(); }
 
 /**
  * @details
  */
-bool XLZipArchive::hasEntry(const std::string& entryName) const {
-    return m_archive->HasEntry(entryName);
-}
+bool XLZipArchive::hasEntry(const std::string& entryName) const { return m_archive->HasEntry(entryName); }

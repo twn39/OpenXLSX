@@ -56,7 +56,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include "XLDocument.hpp"
 #include "XLMergeCells.hpp"
 #include "XLSheet.hpp"
-#include "utilities/XLUtilities.hpp"
+#include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
 

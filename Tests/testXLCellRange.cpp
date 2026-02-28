@@ -3,7 +3,7 @@
 //
 
 #include <OpenXLSX.hpp>
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <fstream>
 
 using namespace OpenXLSX;
@@ -58,7 +58,7 @@ TEST_CASE("XLCellRange Tests", "[XLCellRange]")
         for (auto cl : rng) cl.value() = "Value";
         doc.save();
 
-        XLCellRange rng2 {std::move(rng)};
+        XLCellRange rng2{std::move(rng)};
         for (auto cl : rng2) cl.value() = "Value3";
         doc.save();
 
@@ -80,7 +80,7 @@ TEST_CASE("XLCellRange Tests", "[XLCellRange]")
         doc.save();
 
         XLCellRange rng2 = wks.range();
-        rng2 = rng;
+        rng2             = rng;
         for (auto cl : rng2) cl.value() = "Value4";
         doc.save();
 
@@ -102,7 +102,7 @@ TEST_CASE("XLCellRange Tests", "[XLCellRange]")
         doc.save();
 
         XLCellRange rng2 = wks.range();
-        rng2 = std::move(rng);
+        rng2             = std::move(rng);
         for (auto cl : rng2) cl.value() = "Value5";
         doc.save();
 
@@ -120,8 +120,7 @@ TEST_CASE("XLCellRange Tests", "[XLCellRange]")
     SECTION("Functions")
     {
         auto rng = wks.range(XLCellReference("B2"), XLCellReference("D4"));
-        for(auto iter = rng.begin(); iter != rng.end(); iter++)
-            iter->value() = "Value";
+        for (auto iter = rng.begin(); iter != rng.end(); iter++) iter->value() = "Value";
 
         doc.save();
 
@@ -144,8 +143,7 @@ TEST_CASE("XLCellRange Tests", "[XLCellRange]")
     SECTION("XLCellIterator")
     {
         auto rng = wks.range(XLCellReference("B2"), XLCellReference("D4"));
-        for(auto iter = rng.begin(); iter != rng.end(); iter++)
-            iter->value() = "Value";
+        for (auto iter = rng.begin(); iter != rng.end(); iter++) iter->value() = "Value";
 
         auto begin = rng.begin();
         REQUIRE(begin->cellReference().address() == "B2");
@@ -153,15 +151,15 @@ TEST_CASE("XLCellRange Tests", "[XLCellRange]")
         auto iter2 = ++begin;
         REQUIRE(iter2->cellReference().address() == "C2");
 
-        XLCellIterator iter3 = std::move(++begin) ;
+        XLCellIterator iter3 = std::move(++begin);
         REQUIRE(iter3->cellReference().address() == "D2");
 
         auto iter4 = rng.begin();
-        iter4 = ++iter3;
+        iter4      = ++iter3;
         REQUIRE(iter4->cellReference().address() == "B3");
 
         auto iter5 = rng.begin();
-        iter5 = std::move(++iter3);
+        iter5      = std::move(++iter3);
         REQUIRE(iter5->cellReference().address() == "C3");
 
         auto it1 = rng.begin();
@@ -174,7 +172,5 @@ TEST_CASE("XLCellRange Tests", "[XLCellRange]")
         REQUIRE_FALSE(it1 == it3);
 
         REQUIRE(std::distance(it1, it3) == 9);
-
     }
-
 }

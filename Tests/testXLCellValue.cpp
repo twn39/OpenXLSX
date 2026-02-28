@@ -3,7 +3,7 @@
 //
 
 #include <OpenXLSX.hpp>
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <fstream>
 
 using namespace OpenXLSX;
@@ -183,12 +183,12 @@ TEST_CASE("XLCellValue Tests", "[XLCellValue]")
     SECTION("XLCellValueProxy Assignment")
     {
         XLCellValue value;
-        XLDocument doc;
+        XLDocument  doc;
         doc.create("./testXLCellValue.xlsx");
         XLWorksheet wks = doc.workbook().sheet(1);
 
         wks.cell("A1").value() = "Hello OpenXLSX!";
-        value = wks.cell("A1").value();
+        value                  = wks.cell("A1").value();
         REQUIRE(value.type() == XLValueType::String);
         REQUIRE(value.typeAsString() == "string");
         REQUIRE(value.get<std::string>() == "Hello OpenXLSX!");
@@ -197,7 +197,7 @@ TEST_CASE("XLCellValue Tests", "[XLCellValue]")
         REQUIRE_THROWS(value.get<bool>());
 
         wks.cell("A1").value() = 3.14159;
-        value = wks.cell("A1").value();
+        value                  = wks.cell("A1").value();
         REQUIRE(value.type() == XLValueType::Float);
         REQUIRE(value.typeAsString() == "float");
         REQUIRE_THROWS(value.get<std::string>());
@@ -206,7 +206,7 @@ TEST_CASE("XLCellValue Tests", "[XLCellValue]")
         REQUIRE_THROWS(value.get<bool>());
 
         wks.cell("A1").value() = 42;
-        value = wks.cell("A1").value();
+        value                  = wks.cell("A1").value();
         REQUIRE(value.type() == XLValueType::Integer);
         REQUIRE(value.typeAsString() == "integer");
         REQUIRE_THROWS(value.get<std::string>());
@@ -215,7 +215,7 @@ TEST_CASE("XLCellValue Tests", "[XLCellValue]")
         REQUIRE_THROWS(value.get<bool>());
 
         wks.cell("A1").value() = true;
-        value = wks.cell("A1").value();
+        value                  = wks.cell("A1").value();
         REQUIRE(value.type() == XLValueType::Boolean);
         REQUIRE(value.typeAsString() == "boolean");
         REQUIRE_THROWS(value.get<std::string>());
@@ -246,11 +246,11 @@ TEST_CASE("XLCellValue Tests", "[XLCellValue]")
         REQUIRE(value.typeAsString() == "error");
         REQUIRE(value.get<std::string>() == "#NUM!");
         REQUIRE_THROWS(value.get<int>());
-//        REQUIRE_THROWS(value.get<double>());
+        //        REQUIRE_THROWS(value.get<double>());
         REQUIRE_THROWS(value.get<bool>());
     }
 
-        SECTION("Set Inf Float")
+    SECTION("Set Inf Float")
     {
         XLCellValue value;
         value.set(std::numeric_limits<double>::infinity());
@@ -259,7 +259,7 @@ TEST_CASE("XLCellValue Tests", "[XLCellValue]")
         REQUIRE(value.typeAsString() == "error");
         REQUIRE(value.get<std::string>() == "#NUM!");
         REQUIRE_THROWS(value.get<int>());
-//        REQUIRE_THROWS(value.get<double>());
+        //        REQUIRE_THROWS(value.get<double>());
         REQUIRE_THROWS(value.get<bool>());
     }
 
@@ -326,7 +326,7 @@ TEST_CASE("XLCellValue Tests", "[XLCellValue]")
         REQUIRE(value.typeAsString() == "error");
         REQUIRE(value.get<std::string>() == "#N/A");
         REQUIRE_THROWS(value.get<int>());
-//        REQUIRE_THROWS(value.get<double>());
+        //        REQUIRE_THROWS(value.get<double>());
         REQUIRE_THROWS(value.get<bool>());
     }
 
@@ -334,33 +334,32 @@ TEST_CASE("XLCellValue Tests", "[XLCellValue]")
     {
         XLCellValue value;
 
-        value ="Hello OpenXLSX!";
+        value        = "Hello OpenXLSX!";
         auto result1 = value.get<std::string>();
         REQUIRE(result1 == "Hello OpenXLSX!");
         REQUIRE_THROWS(static_cast<int>(value));
         REQUIRE_THROWS(static_cast<double>(value));
         REQUIRE_THROWS(static_cast<bool>(value));
 
-        value = 42;
+        value        = 42;
         auto result2 = static_cast<int>(value);
         REQUIRE(result2 == 42);
         REQUIRE_THROWS(value.get<std::string>());
         REQUIRE(static_cast<double>(value) == 42.0);
         REQUIRE_THROWS(static_cast<bool>(value));
 
-        value = 3.14159;
+        value        = 3.14159;
         auto result3 = static_cast<double>(value);
         REQUIRE(result3 == 3.14159);
         REQUIRE_THROWS(static_cast<int>(value));
         REQUIRE_THROWS(value.get<std::string>());
         REQUIRE_THROWS(static_cast<bool>(value));
 
-        value = true;
+        value        = true;
         auto result4 = static_cast<bool>(value);
         REQUIRE(result4 == true);
         REQUIRE_THROWS(static_cast<int>(value));
         REQUIRE(static_cast<double>(value) == 1.0);
         REQUIRE_THROWS(value.get<std::string>());
-
     }
 }

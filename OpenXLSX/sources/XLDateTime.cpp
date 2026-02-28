@@ -18,7 +18,7 @@ namespace
      */
     bool isLeapYear(int year)
     {
-        if (year == 1900) return true; // historical Excel Date error inherited from older spreadsheet apps
+        if (year == 1900) return true;    // historical Excel Date error inherited from older spreadsheet apps
         if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)) return true;
         return false;
     }
@@ -86,7 +86,9 @@ namespace OpenXLSX
      */
     XLDateTime::XLDateTime(double serial) : m_serial(serial)
     {
-        if (serial < 1.0) throw XLDateTimeError("Excel date/time serial number is invalid (must be >= 1.0.)"); // don't permit dates before 1900-01-01T00:00:00.000
+        if (serial < 1.0)
+            throw XLDateTimeError(
+                "Excel date/time serial number is invalid (must be >= 1.0.)");    // don't permit dates before 1900-01-01T00:00:00.000
     }
 
     /**
@@ -102,14 +104,10 @@ namespace OpenXLSX
             throw XLDateTimeError("Invalid day. Must be >= 1 or <= total days in the month.");
 
         // ===== Count the number of days for full years past 1900
-        for (int i = 0; i < timepoint.tm_year; ++i) {
-            m_serial += (isLeapYear(1900 + i) ? 366 : 365);
-        }
+        for (int i = 0; i < timepoint.tm_year; ++i) { m_serial += (isLeapYear(1900 + i) ? 366 : 365); }
 
         // ===== Count the number of days for full months of the last year
-        for (int i = 0; i < timepoint.tm_mon; ++i) {
-            m_serial += daysInMonth(i + 1, timepoint.tm_year + 1900);
-        }
+        for (int i = 0; i < timepoint.tm_mon; ++i) { m_serial += daysInMonth(i + 1, timepoint.tm_year + 1900); }
 
         // ===== Add the number of days of the month, minus one.
         // ===== (The reason for the 'minus one' is that unlike the other fields in the struct,
@@ -129,7 +127,7 @@ namespace OpenXLSX
     {
         // There are 86400 seconds in a day
         // There are 25569 days between 1/1/1970 and 30/12/1899 (the epoch used by Excel)
-        m_serial = ( static_cast<double>(unixtime) / 86400 ) + 25569;
+        m_serial = (static_cast<double>(unixtime) / 86400) + 25569;
     }
 
     /**
@@ -193,7 +191,7 @@ namespace OpenXLSX
     std::tm XLDateTime::tm() const
     {
         // ===== Create and initialize the resulting object.
-        std::tm result {};
+        std::tm result{};
         result.tm_year  = 0;
         result.tm_mon   = 0;
         result.tm_mday  = 0;
@@ -206,9 +204,9 @@ namespace OpenXLSX
         double serial   = m_serial;
 
         // ===== Count the number of whole years since 1900.
-        while (serial > 1) {  // 2025-01-10: safeguard against infinite loop (preemptive)
+        while (serial > 1) {    // 2025-01-10: safeguard against infinite loop (preemptive)
             const int days = (isLeapYear(result.tm_year + 1900) ? 366 : 365);
-            if (days + 1 > serial) break; // 2025-01-10: BUGFIX: break on days + 1 > serial (was days >= serial) to account for fractions
+            if (days + 1 > serial) break;    // 2025-01-10: BUGFIX: break on days + 1 > serial (was days >= serial) to account for fractions
             serial -= days;
             ++result.tm_year;
         }
@@ -218,9 +216,9 @@ namespace OpenXLSX
         result.tm_wday = dayOfWeek(m_serial);
 
         // ===== Count the number of whole months in the year.
-        while (result.tm_mon < 11) {   // 2025-01-10 BUGFIX: break on December to prevent infinite loop after adjusted bugfix below
+        while (result.tm_mon < 11) {    // 2025-01-10 BUGFIX: break on December to prevent infinite loop after adjusted bugfix below
             int days = daysInMonth(result.tm_mon + 1, 1900 + result.tm_year);
-            if (days + 1 > serial) break; // 2025-01-10: BUGFIX: break on days + 1 > serial (was days >= serial) to account for fractions
+            if (days + 1 > serial) break;    // 2025-01-10: BUGFIX: break on days + 1 > serial (was days >= serial) to account for fractions
             serial -= days;
             ++result.tm_mon;
         }
@@ -240,7 +238,8 @@ namespace OpenXLSX
         // ===== Calculate the number of seconds.
         result.tm_sec = static_cast<int>(lround(serial * 24 * 60 * 60));
 
-        // ===== BEGIN: pass rounded overflow back up the date components. BUGFIX 2025-01-10: added this overflow handling to address issue #138
+        // ===== BEGIN: pass rounded overflow back up the date components. BUGFIX 2025-01-10: added this overflow handling to address issue
+        // #138
         if (result.tm_sec >= 60) {
             result.tm_sec -= 60;
             ++result.tm_min;
@@ -261,7 +260,7 @@ namespace OpenXLSX
                     }
                 }
             }
-        } // END: pass rounded overflow back up the date components
+        }    // END: pass rounded overflow back up the date components
 
         return result;
     }

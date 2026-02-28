@@ -3,14 +3,14 @@
 //
 
 #include <OpenXLSX.hpp>
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
 
 using namespace OpenXLSX;
 
 TEST_CASE("XLSheet Tests", "[XLSheet]")
 {
-    SECTION("XLSheet Visibility") {
-
+    SECTION("XLSheet Visibility")
+    {
         XLDocument doc;
         doc.create("./testXLSheet1.xlsx");
 
@@ -25,7 +25,6 @@ TEST_CASE("XLSheet Tests", "[XLSheet]")
         doc.workbook().addWorksheet("Visible");
         auto wks3 = doc.workbook().sheet("Visible");
         REQUIRE(wks3.name() == "Visible");
-
 
         REQUIRE(wks1.visibility() == XLSheetState::Visible);
         REQUIRE(wks2.visibility() == XLSheetState::Visible);
@@ -43,8 +42,8 @@ TEST_CASE("XLSheet Tests", "[XLSheet]")
         doc.save();
     }
 
-    SECTION("XLSheet Tab Color") {
-
+    SECTION("XLSheet Tab Color")
+    {
         XLDocument doc;
         doc.create("./testXLSheet2.xlsx");
 

@@ -66,7 +66,7 @@ namespace OpenXLSX
      */
     class OPENXLSX_EXPORT XLTables : public XLXmlFile
     {
-        friend class XLWorksheet;   // for access to XLXmlFile::getXmlPath
+        friend class XLWorksheet;    // for access to XLXmlFile::getXmlPath
     public:
         /**
          * @brief Constructor
@@ -116,7 +116,7 @@ namespace OpenXLSX
         //  * @brief getters
         //  */
         // std::string get(std::string cellRef) const;
-        // 
+        //
         // /**
         //  * @brief setters
         //  */

@@ -60,7 +60,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include "XLDocument.hpp"
 #include "XLSheet.hpp"
 #include "XLStyles.hpp"
-#include "utilities/XLUtilities.hpp"
+#include "XLUtilities.hpp"
 
 // don't use "stat" directly because windows has compatibility-breaking defines
 #if defined(_WIN32)       // moved below includes to make it absolutely clear that this is module-local

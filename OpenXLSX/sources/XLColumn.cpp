@@ -48,7 +48,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 // ===== OpenXLSX Includes ===== //
 #include "XLColumn.hpp"
-#include "XLStyles.hpp"          // XLDefaultCellFormat
+#include "XLStyles.hpp"    // XLDefaultCellFormat
 
 using namespace OpenXLSX;
 

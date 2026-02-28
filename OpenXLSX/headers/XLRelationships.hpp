@@ -47,13 +47,13 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLRELATIONSHIPS_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 // ===== External Includes ===== //
-#include <random>       // std::mt19937
+#include <random>    // std::mt19937
 #include <string>
 #include <vector>
 
@@ -92,7 +92,6 @@ namespace OpenXLSX
      */
     void InitRandom(bool pseudoRandom = false);
 
-
     class XLRelationships;
 
     class XLRelationshipItem;
@@ -128,18 +127,20 @@ namespace OpenXLSX
         Table,
         Unknown
     };
-} //     namespace OpenXLSX
+}    //     namespace OpenXLSX
 
-namespace OpenXLSX_XLRelationships { // special namespace to avoid naming conflict with another GetStringFromType function
+namespace OpenXLSX_XLRelationships
+{    // special namespace to avoid naming conflict with another GetStringFromType function
     using namespace OpenXLSX;
     /**
      * @brief helper function, used only within module and from XLProperties.cpp / XLAppProperties::createFromTemplate
      * @param type the XLRelationshipType for which to return the correct XML string
      */
     std::string GetStringFromType(XLRelationshipType type);
-} //    namespace OpenXLSX_XLRelationships
+}    //    namespace OpenXLSX_XLRelationships
 
-namespace OpenXLSX {
+namespace OpenXLSX
+{
     /**
      * @brief An encapsulation of a relationship item, i.e. an XML file in the document, its type and an ID number.
      */
@@ -332,17 +333,16 @@ namespace OpenXLSX {
 
         // ---------- Protected Member Functions ---------- //
     protected:
-
         //----------------------------------------------------------------------------------------------------------------------
         //           Private Member Variables
         //----------------------------------------------------------------------------------------------------------------------
     private:
-        std::string m_path; // the path - within the XLSX file - to the relationships file on which this object is instantiated
+        std::string m_path;    // the path - within the XLSX file - to the relationships file on which this object is instantiated
     };
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLRELATIONSHIPS_HPP

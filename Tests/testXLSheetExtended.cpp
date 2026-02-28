@@ -1,16 +1,18 @@
-#include <catch.hpp>
 #include <OpenXLSX.hpp>
+#include <catch2/catch_all.hpp>
 
 using namespace OpenXLSX;
 
-TEST_CASE("XLWorksheet Extended Tests", "[XLSheet]") {
-    SECTION("Sheet Protection") {
+TEST_CASE("XLWorksheet Extended Tests", "[XLSheet]")
+{
+    SECTION("Sheet Protection")
+    {
         XLDocument doc;
         doc.create("./testXLSheetProtection.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         REQUIRE(wks.sheetProtected() == false);
-        
+
         wks.protectSheet(true);
         REQUIRE(wks.sheetProtected() == true);
 
@@ -28,7 +30,7 @@ TEST_CASE("XLWorksheet Extended Tests", "[XLSheet]") {
 
         wks.setPassword("password123");
         REQUIRE(wks.passwordIsSet() == true);
-        
+
         wks.clearPassword();
         REQUIRE(wks.passwordIsSet() == false);
 
@@ -38,14 +40,15 @@ TEST_CASE("XLWorksheet Extended Tests", "[XLSheet]") {
         doc.close();
     }
 
-    SECTION("Tab Properties") {
+    SECTION("Tab Properties")
+    {
         XLDocument doc;
         doc.create("./testXLTabProperties.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.setColor(XLColor(255, 0, 0));
         // Note: getColor_impl depends on how hex is stored and retrieved
-        // REQUIRE(wks.color().hex() == "FFFF0000"); 
+        // REQUIRE(wks.color().hex() == "FFFF0000");
 
         wks.setSelected(true);
         REQUIRE(wks.isSelected() == true);
@@ -56,7 +59,8 @@ TEST_CASE("XLWorksheet Extended Tests", "[XLSheet]") {
         doc.close();
     }
 
-    SECTION("Row/Column Formatting") {
+    SECTION("Row/Column Formatting")
+    {
         XLDocument doc;
         doc.create("./testXLRowColFormat.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");

@@ -1,18 +1,20 @@
-#include <catch.hpp>
 #include <OpenXLSX.hpp>
+#include <catch2/catch_all.hpp>
 #include <sstream>
 
 using namespace OpenXLSX;
 
-TEST_CASE("XLTables Basic Tests", "[XLTables]") {
+TEST_CASE("XLTables Basic Tests", "[XLTables]")
+{
     const std::string filename = "TestTables.xlsx";
 
-    SECTION("Table Creation and Validation") {
+    SECTION("Table Creation and Validation")
+    {
         {
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
-            
+
             // Trigger table creation
             REQUIRE_FALSE(wks.hasTables());
             auto& tables = wks.tables();

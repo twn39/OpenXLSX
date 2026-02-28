@@ -3,7 +3,7 @@
 //
 
 #include <OpenXLSX.hpp>
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <fstream>
 
 using namespace OpenXLSX;
@@ -23,7 +23,7 @@ TEST_CASE("XLFormula Tests", "[XLFormula]")
         REQUIRE(formula1.get() == "BLAH1");
 
         std::string s = "BLAH2";
-        XLFormula formula2(s);
+        XLFormula   formula2(s);
         REQUIRE(formula2.get() == "BLAH2");
     }
 
@@ -34,7 +34,6 @@ TEST_CASE("XLFormula Tests", "[XLFormula]")
 
         XLFormula formula2 = formula1;
         REQUIRE(formula2.get() == "BLAH1");
-
     }
 
     SECTION("Move Constructor")
@@ -44,7 +43,6 @@ TEST_CASE("XLFormula Tests", "[XLFormula]")
 
         XLFormula formula2 = std::move(formula1);
         REQUIRE(formula2.get() == "BLAH1");
-
     }
 
     SECTION("Copy assignment")
@@ -65,7 +63,6 @@ TEST_CASE("XLFormula Tests", "[XLFormula]")
         XLFormula formula2;
         formula2 = std::move(formula1);
         REQUIRE(formula2.get() == "BLAH1");
-
     }
 
     SECTION("Clear")
@@ -126,6 +123,5 @@ TEST_CASE("XLFormula Tests", "[XLFormula]")
         wks.cell("A1").formula().clear();
         REQUIRE_FALSE(wks.cell("A1").hasFormula());
         REQUIRE(wks.cell("B2").formula() == XLFormula("=1+1"));
-
     }
 }

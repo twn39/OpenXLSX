@@ -51,9 +51,9 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include "XLCellIterator.hpp"
 #include "XLCellReference.hpp"
 #include "XLRow.hpp"
-#include "XLStyles.hpp"          // XLDefaultCellFormat
+#include "XLStyles.hpp"    // XLDefaultCellFormat
 
-#include "utilities/XLUtilities.hpp"
+#include "XLUtilities.hpp"
 
 // ========== XLRow  ======================================================== //
 namespace OpenXLSX
@@ -63,11 +63,7 @@ namespace OpenXLSX
      * @pre
      * @post
      */
-    XLRow::XLRow()
-        : m_rowNode(nullptr),
-          m_sharedStrings(XLSharedStringsDefaulted),
-          m_rowDataProxy(this, m_rowNode.get())
-    {}
+    XLRow::XLRow() : m_rowNode(nullptr), m_sharedStrings(XLSharedStringsDefaulted), m_rowDataProxy(this, m_rowNode.get()) {}
 
     /**
      * @details Constructs a new XLRow object from information in the underlying XML file. A pointer to the corresponding
@@ -149,7 +145,7 @@ namespace OpenXLSX
     /**
      * @details
      */
-    XLRow::operator bool() const { return m_rowNode && (not m_rowNode->empty() ); }
+    XLRow::operator bool() const { return m_rowNode && (not m_rowNode->empty()); }
 
     /**
      * @details Returns the m_height member by getValue.
@@ -232,7 +228,8 @@ namespace OpenXLSX
      * @pre
      * @post
      * @note 2024-08-18: changed return type of rowNumber to uint32_t
-     *       CAUTION: there is no validity check on the underlying XML (nor was there ever one in case a value was inconsistent with OpenXLSX::MAX_ROWS)
+     *       CAUTION: there is no validity check on the underlying XML (nor was there ever one in case a value was inconsistent with
+     * OpenXLSX::MAX_ROWS)
      */
     uint32_t XLRow::rowNumber() const { return static_cast<uint32_t>(m_rowNode->attribute("r").as_ullong()); }
 
@@ -289,9 +286,7 @@ namespace OpenXLSX
      * @post
      */
     XLRowDataRange XLRow::cells(uint16_t firstCell, uint16_t lastCell) const
-    {
-        return XLRowDataRange(*m_rowNode, firstCell, lastCell, m_sharedStrings.get());
-    }
+    { return XLRowDataRange(*m_rowNode, firstCell, lastCell, m_sharedStrings.get()); }
 
     /**
      * @details Find & return a cell in indicated column
@@ -305,35 +300,32 @@ namespace OpenXLSX
         // ===== If there are no cells in the current row, or the requested cell is beyond the last cell in the row...
         // Performance optimization: use lightweight column extraction instead of XLCellReference object creation
         uint16_t lastColNo = cellNode.empty() ? 0 : extractColumnFromCellRef(cellNode.attribute("r").value());
-        if (cellNode.empty() || (lastColNo < columnNumber))
-            return XLCell{}; // fail
+        if (cellNode.empty() || (lastColNo < columnNumber)) return XLCell{};    // fail
 
         // ===== If the requested node is closest to the end, start from the end and search backwards...
         if (lastColNo - columnNumber < columnNumber) {
             uint16_t colNo = lastColNo;
             while (not cellNode.empty() && (colNo > columnNumber)) {
                 cellNode = cellNode.previous_sibling_of_type(pugi::node_element);
-                if (not cellNode.empty())
-                    colNo = extractColumnFromCellRef(cellNode.attribute("r").value());
+                if (not cellNode.empty()) colNo = extractColumnFromCellRef(cellNode.attribute("r").value());
             }
             // ===== If the backwards search failed to locate the requested cell
-            if (cellNode.empty() || (colNo < columnNumber))
-                return XLCell{}; // fail
+            if (cellNode.empty() || (colNo < columnNumber)) return XLCell{};    // fail
         }
         // ===== Otherwise, start from the beginning
         else {
             // ===== At this point, it is guaranteed that there is at least one node_element in the row that is not empty.
             cellNode = m_rowNode->first_child_of_type(pugi::node_element);
 
-            // ===== It has been verified above that the requested columnNumber is <= the column number of the last node_element, therefore this loop will halt:
+            // ===== It has been verified above that the requested columnNumber is <= the column number of the last node_element, therefore
+            // this loop will halt:
             uint16_t colNo = extractColumnFromCellRef(cellNode.attribute("r").value());
             while (colNo < columnNumber) {
                 cellNode = cellNode.next_sibling_of_type(pugi::node_element);
-                colNo = extractColumnFromCellRef(cellNode.attribute("r").value());
+                colNo    = extractColumnFromCellRef(cellNode.attribute("r").value());
             }
             // ===== If the forwards search failed to locate the requested cell
-            if (colNo > columnNumber)
-                return XLCell{}; // fail
+            if (colNo > columnNumber) return XLCell{};    // fail
         }
         return XLCell(cellNode, m_sharedStrings.get());
     }
@@ -353,12 +345,13 @@ namespace OpenXLSX
         if (cellFormatIndex != XLDefaultCellFormat) {
             if (customFormatAtt.empty()) {
                 customFormatAtt = m_rowNode->append_attribute("customFormat");
-                if (customFormatAtt.empty()) return false; // fail if missing customFormat attribute could not be created
+                if (customFormatAtt.empty()) return false;    // fail if missing customFormat attribute could not be created
             }
             customFormatAtt.set_value("true");
         }
-        else { // cellFormatIndex is XLDefaultCellFormat
-            if (not customFormatAtt.empty()) m_rowNode->remove_attribute(customFormatAtt); // an existing customFormat attribute should be deleted
+        else {    // cellFormatIndex is XLDefaultCellFormat
+            if (not customFormatAtt.empty())
+                m_rowNode->remove_attribute(customFormatAtt);    // an existing customFormat attribute should be deleted
         }
 
         XMLAttribute styleAtt = m_rowNode->attribute("s");
@@ -370,7 +363,6 @@ namespace OpenXLSX
 
         return true;
     }
-
 
     // ---------- Private Member Functions ---------- //
 
@@ -484,32 +476,33 @@ namespace OpenXLSX
 
         // ===== Row needs to be updated
 
-        if (m_hintRow.empty()) {  // no hint has been established: fetch first row node the "tedious" way
-            if (createIfMissing)     // getRowNode creates missing rows
+        if (m_hintRow.empty()) {    // no hint has been established: fetch first row node the "tedious" way
+            if (createIfMissing)    // getRowNode creates missing rows
                 m_currentRow = XLRow(getRowNode(*m_dataNode, m_currentRowNumber), m_sharedStrings.get());
-            else                    // findRowNode returns an empty row for missing rows
+            else    // findRowNode returns an empty row for missing rows
                 m_currentRow = XLRow(findRowNode(*m_dataNode, m_currentRowNumber), m_sharedStrings.get());
         }
         else {
             // ===== Find or create, and fetch an XLRow at m_currentRowNumber
             if (m_currentRowNumber > m_hintRowNumber) {
                 // ===== Start from m_hintRow and search forwards...
-                XMLNode rowNode = m_hintRow.next_sibling_of_type(pugi::node_element);
-                uint32_t rowNo = 0;
+                XMLNode  rowNode = m_hintRow.next_sibling_of_type(pugi::node_element);
+                uint32_t rowNo   = 0;
                 while (not rowNode.empty()) {
                     rowNo = static_cast<uint32_t>(rowNode.attribute("r").as_ullong());
-                    if (rowNo >= m_currentRowNumber) break; // if desired row was reached / passed, break before incrementing rowNode
+                    if (rowNo >= m_currentRowNumber) break;    // if desired row was reached / passed, break before incrementing rowNode
                     rowNode = rowNode.next_sibling_of_type(pugi::node_element);
                 }
-                if (rowNo != m_currentRowNumber) rowNode = XMLNode{}; // if a higher row number was found, set empty node (means: "missing")
+                if (rowNo != m_currentRowNumber)
+                    rowNode = XMLNode{};    // if a higher row number was found, set empty node (means: "missing")
 
                 // ===== Create missing row node if createIfMissing == true
                 if (createIfMissing && rowNode.empty()) {
                     rowNode = m_dataNode->insert_child_after("row", m_hintRow);
                     rowNode.append_attribute("r").set_value(m_currentRowNumber);
                 }
-                if (rowNode.empty())    // if row could not be found / created
-                    m_currentRow = XLRow{}; // make sure m_currentRow is set to an empty cell
+                if (rowNode.empty())           // if row could not be found / created
+                    m_currentRow = XLRow{};    // make sure m_currentRow is set to an empty cell
                 else
                     m_currentRow = XLRow(rowNode, m_sharedStrings.get());
             }
@@ -517,13 +510,13 @@ namespace OpenXLSX
                 throw XLInternalError("XLRowIterator::updateCurrentRow: an internal error occured (m_currentRowNumber <= m_hintRowNumber)");
         }
 
-        if (m_currentRow.empty())   // if row is confirmed missing
-            m_currentRowStatus = XLNoSuchRow;   // mark this status for further calls to updateCurrentRow()
+        if (m_currentRow.empty())                // if row is confirmed missing
+            m_currentRowStatus = XLNoSuchRow;    // mark this status for further calls to updateCurrentRow()
         else {
             // ===== If the current row exists, update the hints
-            m_hintRow          = *m_currentRow.m_rowNode;   // don't store a full XLRow, just the XMLNode, for better performance
+            m_hintRow          = *m_currentRow.m_rowNode;    // don't store a full XLRow, just the XMLNode, for better performance
             m_hintRowNumber    = m_currentRowNumber;
-            m_currentRowStatus = XLLoaded;                  // mark row status for further calls to updateCurrentRow()
+            m_currentRowStatus = XLLoaded;    // mark row status for further calls to updateCurrentRow()
         }
     }
 
@@ -534,15 +527,14 @@ namespace OpenXLSX
      */
     XLRowIterator& XLRowIterator::operator++()    // 2024-04-29: patched for whitespace
     {
-        if (m_endReached)
-            throw XLInputError("XLRowIterator: tried to increment beyond end operator");
+        if (m_endReached) throw XLInputError("XLRowIterator: tried to increment beyond end operator");
 
-        if(m_currentRowNumber < m_lastRow)
+        if (m_currentRowNumber < m_lastRow)
             ++m_currentRowNumber;
         else
             m_endReached = true;
 
-        m_currentRowStatus = XLNotLoaded; // trigger a new attempt to locate / create the row via updateRowCell
+        m_currentRowStatus = XLNotLoaded;    // trigger a new attempt to locate / create the row via updateRowCell
 
         return *this;
     }
@@ -590,8 +582,8 @@ namespace OpenXLSX
     {
         if (m_endReached && rhs.m_endReached) return true;    // If both iterators are end iterators
 
-        if (m_currentRowNumber != rhs.m_currentRowNumber)     // If iterators point to a different row
-            return false;                                         // that means no match
+        if (m_currentRowNumber != rhs.m_currentRowNumber)    // If iterators point to a different row
+            return false;                                    // that means no match
 
         // CAUTION: for performance reasons, disabled all checks whether this and rhs are iterators on the same worksheet & row range
         return true;

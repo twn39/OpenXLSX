@@ -53,7 +53,8 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 #include "XLException.hpp"
 
-namespace OpenXLSX {
+namespace OpenXLSX
+{
     const XLSharedStrings XLSharedStringsDefaulted{};
 }    // namespace OpenXLSX
 
@@ -63,35 +64,32 @@ using namespace OpenXLSX;
  * @details Constructs a new XLSharedStrings object. Only one (common) object is allowed per XLDocument instance.
  * A filepath to the underlying XML file must be provided.
  */
-XLSharedStrings::XLSharedStrings(XLXmlData* xmlData,
-                                 std::deque<std::string>* stringCache,
+XLSharedStrings::XLSharedStrings(XLXmlData*                                xmlData,
+                                 std::deque<std::string>*                  stringCache,
                                  std::unordered_map<std::string, int32_t>* stringIndex)
     : XLXmlFile(xmlData),
       m_stringCache(stringCache),
       m_stringIndex(stringIndex)
 {
-    XMLDocument & doc = xmlDocument();
+    XMLDocument& doc = xmlDocument();
     if (doc.document_element().empty())    // handle a bad (no document element) xl/sharedStrings.xml
         doc.load_string(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">\n"    // pull request #192 -> remove count &
-                                                                                                 // uniqueCount as they are optional
-                // 2024-09-03: removed empty string entry on creation, as it appears to just waste a string index that will never be used
-                // "  <si>\n"
-                // "    <t/>\n"
-                // "  </si>\n"
-                "</sst>",
-                pugi_parse_settings
-        );
-    
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">\n"    // pull request #192 -> remove count &
+                                                                                             // uniqueCount as they are optional
+            // 2024-09-03: removed empty string entry on creation, as it appears to just waste a string index that will never be used
+            // "  <si>\n"
+            // "    <t/>\n"
+            // "  </si>\n"
+            "</sst>",
+            pugi_parse_settings);
+
     // Build the hash index from the string cache for O(1) lookup
     if (m_stringIndex && m_stringCache) {
         m_stringIndex->clear();
         m_stringIndex->reserve(m_stringCache->size());
         int32_t idx = 0;
-        for (const auto& str : *m_stringCache) {
-            m_stringIndex->emplace(str, idx++);
-        }
+        for (const auto& str : *m_stringCache) { m_stringIndex->emplace(str, idx++); }
     }
 }
 
@@ -111,7 +109,7 @@ int32_t XLSharedStrings::getStringIndex(const std::string& str) const
         auto it = m_stringIndex->find(str);
         return it != m_stringIndex->end() ? it->second : -1;
     }
-    
+
     // Fallback to linear search (legacy behavior)
     const auto iter = std::find_if(m_stringCache->begin(), m_stringCache->end(), [&](const std::string& s) { return str == s; });
     return iter == m_stringCache->end() ? -1 : static_cast<int32_t>(std::distance(m_stringCache->begin(), iter));
@@ -123,9 +121,7 @@ int32_t XLSharedStrings::getStringIndex(const std::string& str) const
 bool XLSharedStrings::stringExists(const std::string& str) const
 {
     // Use O(1) hash lookup if available
-    if (m_stringIndex) {
-        return m_stringIndex->find(str) != m_stringIndex->end();
-    }
+    if (m_stringIndex) { return m_stringIndex->find(str) != m_stringIndex->end(); }
     return getStringIndex(str) >= 0;
 }
 
@@ -134,7 +130,7 @@ bool XLSharedStrings::stringExists(const std::string& str) const
  */
 const char* XLSharedStrings::getString(int32_t index) const
 {
-    if (index < 0 || static_cast<size_t>(index) >= m_stringCache->size()) { // 2024-04-30: added range check
+    if (index < 0 || static_cast<size_t>(index) >= m_stringCache->size()) {    // 2024-04-30: added range check
         using namespace std::literals::string_literals;
         throw XLInternalError("XLSharedStrings::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
     }
@@ -148,7 +144,7 @@ const char* XLSharedStrings::getString(int32_t index) const
 int32_t XLSharedStrings::appendString(const std::string& str) const
 {
     size_t stringCacheSize = m_stringCache->size();    // 2024-05-31: analogous with already added range check in getString
-    if (stringCacheSize >= XLMaxSharedStrings)    {    // 2024-05-31: added range check
+    if (stringCacheSize >= XLMaxSharedStrings) {       // 2024-05-31: added range check
         using namespace std::literals::string_literals;
         throw XLInternalError("XLSharedStrings::"s + __func__ + ": exceeded max strings count "s + std::to_string(XLMaxSharedStrings));
     }
@@ -157,11 +153,9 @@ int32_t XLSharedStrings::appendString(const std::string& str) const
         textNode.append_attribute("xml:space").set_value("preserve");    // pull request #161
     textNode.text().set(str.c_str());
     m_stringCache->emplace_back(textNode.text().get());    // index of this element = previous stringCacheSize
-    
+
     // Update the hash index for O(1) lookup
-    if (m_stringIndex) {
-        m_stringIndex->emplace(str, static_cast<int32_t>(stringCacheSize));
-    }
+    if (m_stringIndex) { m_stringIndex->emplace(str, static_cast<int32_t>(stringCacheSize)); }
 
     return static_cast<int32_t>(stringCacheSize);
 }
@@ -176,10 +170,10 @@ int32_t XLSharedStrings::getOrCreateStringIndex(const std::string& str) const
     if (m_stringIndex) {
         auto it = m_stringIndex->find(str);
         if (it != m_stringIndex->end()) {
-            return it->second;  // String already exists
+            return it->second;    // String already exists
         }
     }
-    
+
     // String doesn't exist, append it
     return appendString(str);
 }
@@ -194,9 +188,9 @@ void XLSharedStrings::print(std::basic_ostream<char>& ostr) const { xmlDocument(
  * is used, it will be erased.
  * @note: 2024-05-31 DONE: index now int32_t everywhere, 2 billion shared strings should be plenty
  */
-void XLSharedStrings::clearString(int32_t index) const   // 2024-04-30: whitespace support
+void XLSharedStrings::clearString(int32_t index) const    // 2024-04-30: whitespace support
 {
-    if (index < 0 || static_cast<size_t>(index) >= m_stringCache->size()) { // 2024-04-30: added range check
+    if (index < 0 || static_cast<size_t>(index) >= m_stringCache->size()) {    // 2024-04-30: added range check
         using namespace std::literals::string_literals;
         throw XLInternalError("XLSharedStrings::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
     }
@@ -212,13 +206,13 @@ void XLSharedStrings::clearString(int32_t index) const   // 2024-04-30: whitespa
      * Potential solution: store the XML child position with each entry in m_stringCache in a std::deque<struct entry>
      *   with struct entry { std::string s; uint64_t xmlChildIndex; };
      */
-    XMLNode  sharedStringNode = xmlDocument().document_element().first_child_of_type(pugi::node_element);
+    XMLNode sharedStringNode = xmlDocument().document_element().first_child_of_type(pugi::node_element);
     int32_t sharedStringPos  = 0;
     while (sharedStringPos < index && not sharedStringNode.empty()) {
         sharedStringNode = sharedStringNode.next_sibling_of_type(pugi::node_element);
         ++sharedStringPos;
     }
-    if (not sharedStringNode.empty()) {    // index was found
+    if (not sharedStringNode.empty()) {        // index was found
         sharedStringNode.remove_children();    // clear all data and formatting
         sharedStringNode.append_child("t");    // append an empty text node
     }
@@ -230,7 +224,7 @@ void XLSharedStrings::clearString(int32_t index) const   // 2024-04-30: whitespa
 int32_t XLSharedStrings::rewriteXmlFromCache()
 {
     int32_t writtenStrings = 0;
-    xmlDocument().document_element().remove_children();  // clear all existing XML
+    xmlDocument().document_element().remove_children();    // clear all existing XML
     for (std::string& s : *m_stringCache) {
         XMLNode textNode = xmlDocument().document_element().append_child("si").append_child("t");
         if ((!s.empty()) && (s.front() == ' ' || s.back() == ' '))

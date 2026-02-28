@@ -47,10 +47,10 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLCELLREFERENCE_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 // ===== External Includes ===== //
 #include <cstdint>    // Pull request #276
@@ -250,9 +250,9 @@ namespace OpenXLSX
         //           Private Member Variables
         //----------------------------------------------------------------------------------------------------------------------
     private:
-        uint32_t    m_row { 1 };            /**< The row */
-        uint16_t    m_column { 1 };         /**< The column */
-        std::string m_cellAddress { "A1" }; /**< The address, e.g. 'A1' */
+        uint32_t    m_row{1};            /**< The row */
+        uint16_t    m_column{1};         /**< The column */
+        std::string m_cellAddress{"A1"}; /**< The address, e.g. 'A1' */
     };
 
     /**
@@ -262,9 +262,7 @@ namespace OpenXLSX
      * @return true if equal; otherwise false.
      */
     inline bool operator==(const XLCellReference& lhs, const XLCellReference& rhs)
-    {
-        return lhs.row() == rhs.row() && lhs.column() == rhs.column();
-    }
+    { return lhs.row() == rhs.row() && lhs.column() == rhs.column(); }
 
     /**
      * @brief Helper function to check for in-equality between two XLCellReferences
@@ -281,9 +279,7 @@ namespace OpenXLSX
      * @return true if lhs < rhs; otherwise false.
      */
     inline bool operator<(const XLCellReference& lhs, const XLCellReference& rhs)
-    {
-        return lhs.row() < rhs.row() || (lhs.row() <= rhs.row() && lhs.column() < rhs.column());
-    }
+    { return lhs.row() < rhs.row() || (lhs.row() <= rhs.row() && lhs.column() < rhs.column()); }
 
     /**
      * @brief Helper function to check if one XLCellReference is larger than another.
@@ -311,7 +307,7 @@ namespace OpenXLSX
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLCELLREFERENCE_HPP

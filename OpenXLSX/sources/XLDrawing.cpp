@@ -45,8 +45,8 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 // ===== External Includes ===== //
 // #include <algorithm>
-#include <cctype>    // std::isdigit (issue #330)
-#include <cstdint>   // uint64_t
+#include <cctype>     // std::isdigit (issue #330)
+#include <cstdint>    // uint64_t
 #include <pugixml.hpp>
 #include <string>    // std::string
 
@@ -54,7 +54,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include "XLDocument.hpp"    // pugi_parse_settings
 #include "XLDrawing.hpp"
 #include "XLRelationships.hpp"
-#include "utilities/XLUtilities.hpp"    // OpenXLSX::ignore, appendAndGetNode
+#include "XLUtilities.hpp"    // OpenXLSX::ignore, appendAndGetNode
 
 using namespace OpenXLSX;
 
@@ -67,7 +67,7 @@ namespace OpenXLSX
     const std::string NS_A   = "http://schemas.openxmlformats.org/drawingml/2006/main";
     const std::string NS_R   = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
 
-    constexpr uint32_t EMU_PER_PIXEL = 9525;
+    constexpr uint32_t EMU_PER_PIXEL      = 9525;
     constexpr uint32_t DEFAULT_IMAGE_SIZE = 100;
 
     // utility functions

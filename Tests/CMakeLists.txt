@@ -5,10 +5,15 @@ cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 project(OpenXLSX.Tests)
 
 #=======================================================================================================================
-# Set up Catch2 library
+# Set up Catch2 library (v3)
 #=======================================================================================================================
-add_library(Catch INTERFACE IMPORTED)
-target_include_directories(Catch SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/catch/>)
+include(FetchContent)
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.13.0
+)
+FetchContent_MakeAvailable(Catch2)
 
 #=======================================================================================================================
 # Define TEST target
@@ -45,5 +50,5 @@ target_sources(OpenXLSXTests
 target_link_libraries(OpenXLSXTests
         PRIVATE
         OpenXLSX::OpenXLSX
-        Catch
+        Catch2::Catch2WithMain
         )

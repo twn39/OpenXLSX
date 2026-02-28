@@ -53,7 +53,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
 // #include "XLDocument.hpp"
-#include "XLDrawing.hpp"   // XLVmlDrawing
+#include "XLDrawing.hpp"    // XLVmlDrawing
 #include "XLException.hpp"
 #include "XLXmlData.hpp"
 #include "XLXmlFile.hpp"
@@ -73,7 +73,7 @@ namespace OpenXLSX
         /**
          * @brief
          */
-        XLComment() = delete; // do not allow default constructor (for now) - could still be constructed with an empty XMLNode
+        XLComment() = delete;    // do not allow default constructor (for now) - could still be constructed with an empty XMLNode
 
         /**
          * @brief Constructor. New items should only be created through an XLComments object.
@@ -121,9 +121,9 @@ namespace OpenXLSX
         /**
          * @brief Getter functions
          */
-        std::string ref() const; // the cell reference of the comment
+        std::string ref() const;    // the cell reference of the comment
         std::string text() const;
-        uint16_t authorId() const;
+        uint16_t    authorId() const;
 
         /**
          * @brief Setter functions
@@ -137,16 +137,16 @@ namespace OpenXLSX
         //  */
         // std::string summary() const;
 
-    private:                                         // ---------- Private Member Variables ---------- //
-        mutable XMLNode m_commentNode;      /**< An XMLNode object with the comment item */
-     };
+    private:                           // ---------- Private Member Variables ---------- //
+        mutable XMLNode m_commentNode; /**< An XMLNode object with the comment item */
+    };
 
     /**
      * @brief The XLComments class is the base class for worksheet comments
      */
     class OPENXLSX_EXPORT XLComments : public XLXmlFile
     {
-        friend class XLWorksheet;   // for access to XLXmlFile::getXmlPath
+        friend class XLWorksheet;    // for access to XLXmlFile::getXmlPath
     public:
         /**
          * @brief Constructor
@@ -195,15 +195,14 @@ namespace OpenXLSX
          * @param vmlDrawing the worksheet's previously created XLVmlDrawing object
          * @return true upon success
          */
-        bool setVmlDrawing(XLVmlDrawing &vmlDrawing);
+        bool setVmlDrawing(XLVmlDrawing& vmlDrawing);
 
-    private: // helper functions with repeating code
+    private:    // helper functions with repeating code
         XMLNode authorNode(uint16_t index) const;
         XMLNode commentNode(size_t index) const;
         XMLNode commentNode(const std::string& cellRef) const;
 
     public:
-
         uint16_t authorCount() const;
 
         std::string author(uint16_t index) const;
@@ -256,15 +255,15 @@ namespace OpenXLSX
         void print(std::basic_ostream<char>& ostr) const;
 
     private:
-        XMLNode m_authors{};
-        XMLNode m_commentList{};
+        XMLNode                       m_authors{};
+        XMLNode                       m_commentList{};
         std::unique_ptr<XLVmlDrawing> m_vmlDrawing;
-        mutable XMLNode m_hintNode{};                 // the last comment XML Node accessed by index is stored here, if any - will be reset when comments are inserted or deleted
-        mutable size_t m_hintIndex{0};                // this has the index at which m_hintNode was accessed, only valid if not m_hintNode.empty()
-        inline static const std::vector< std::string_view > m_nodeOrder = {      // comments XML node required child sequence
-            "authors",
-            "commentList"
-        };
+        mutable XMLNode m_hintNode{};    // the last comment XML Node accessed by index is stored here, if any - will be reset when comments
+                                         // are inserted or deleted
+        mutable size_t m_hintIndex{0};    // this has the index at which m_hintNode was accessed, only valid if not m_hintNode.empty()
+        inline static const std::vector<std::string_view> m_nodeOrder = {// comments XML node required child sequence
+                                                                         "authors",
+                                                                         "commentList"};
     };
 }    // namespace OpenXLSX
 

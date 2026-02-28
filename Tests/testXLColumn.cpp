@@ -1,10 +1,12 @@
-#include <catch.hpp>
 #include <OpenXLSX.hpp>
+#include <catch2/catch_all.hpp>
 
 using namespace OpenXLSX;
 
-TEST_CASE("XLColumn Tests", "[XLColumn]") {
-    SECTION("Basic Column Operations") {
+TEST_CASE("XLColumn Tests", "[XLColumn]")
+{
+    SECTION("Basic Column Operations")
+    {
         XLDocument doc;
         doc.create("./testXLColumn.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
@@ -27,7 +29,8 @@ TEST_CASE("XLColumn Tests", "[XLColumn]") {
         doc.close();
     }
 
-    SECTION("Column Access by Name") {
+    SECTION("Column Access by Name")
+    {
         XLDocument doc;
         doc.create("./testXLColumnByName.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
@@ -39,14 +42,15 @@ TEST_CASE("XLColumn Tests", "[XLColumn]") {
         doc.close();
     }
 
-    SECTION("Automatic Column Node Creation") {
+    SECTION("Automatic Column Node Creation")
+    {
         XLDocument doc;
         doc.create("./testXLColumnCreation.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         // Column 10 doesn't exist yet
         auto col10 = wks.column(10);
-        REQUIRE(col10.width() > 0); // Default width
+        REQUIRE(col10.width() > 0);    // Default width
         col10.setWidth(25.0f);
         REQUIRE(wks.column(10).width() == 25.0f);
 

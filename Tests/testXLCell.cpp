@@ -3,7 +3,7 @@
 //
 
 #include <OpenXLSX.hpp>
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <fstream>
 
 using namespace OpenXLSX;
@@ -26,32 +26,29 @@ TEST_CASE("XLCell Tests", "[XLCell]")
         REQUIRE_FALSE(copy.hasFormula());
         REQUIRE_THROWS(copy.formula());
         REQUIRE_THROWS(copy.value());
-
-
     }
 
     SECTION("Create from worksheet")
     {
         XLDocument doc;
         doc.create("./testXLCell.xlsx");
-        XLWorksheet wks = doc.workbook().sheet(1);
-        auto cell = wks.cell("A1");
-        cell.value() = 42;
+        XLWorksheet wks  = doc.workbook().sheet(1);
+        auto        cell = wks.cell("A1");
+        cell.value()     = 42;
 
         REQUIRE(cell);
         REQUIRE(cell.cellReference().address() == "A1");
         REQUIRE_FALSE(cell.hasFormula());
         REQUIRE(cell.value().get<int>() == 42);
-
     }
 
     SECTION("Copy constructor")
     {
         XLDocument doc;
         doc.create("./testXLCell.xlsx");
-        XLWorksheet wks = doc.workbook().sheet(1);
-        auto cell = wks.cell("A1");
-        cell.value() = 42;
+        XLWorksheet wks  = doc.workbook().sheet(1);
+        auto        cell = wks.cell("A1");
+        cell.value()     = 42;
 
         auto copy = cell;
 
@@ -59,16 +56,15 @@ TEST_CASE("XLCell Tests", "[XLCell]")
         REQUIRE(copy.cellReference().address() == "A1");
         REQUIRE_FALSE(copy.hasFormula());
         REQUIRE(copy.value().get<int>() == 42);
-
     }
 
     SECTION("Move constructor")
     {
         XLDocument doc;
         doc.create("./testXLCell.xlsx");
-        XLWorksheet wks = doc.workbook().sheet(1);
-        auto cell = wks.cell("A1");
-        cell.value() = 42;
+        XLWorksheet wks  = doc.workbook().sheet(1);
+        auto        cell = wks.cell("A1");
+        cell.value()     = 42;
 
         XLCell copy = std::move(cell);
 
@@ -76,16 +72,15 @@ TEST_CASE("XLCell Tests", "[XLCell]")
         REQUIRE(copy.cellReference().address() == "A1");
         REQUIRE_FALSE(copy.hasFormula());
         REQUIRE(copy.value().get<int>() == 42);
-
     }
 
     SECTION("Copy assignment operator")
     {
         XLDocument doc;
         doc.create("./testXLCell.xlsx");
-        XLWorksheet wks = doc.workbook().sheet(1);
-        auto cell = wks.cell("A1");
-        cell.value() = 42;
+        XLWorksheet wks  = doc.workbook().sheet(1);
+        auto        cell = wks.cell("A1");
+        cell.value()     = 42;
 
         XLCell copy;
         copy = cell;
@@ -94,16 +89,15 @@ TEST_CASE("XLCell Tests", "[XLCell]")
         REQUIRE(copy.cellReference().address() == "A1");
         REQUIRE_FALSE(copy.hasFormula());
         REQUIRE(copy.value().get<int>() == 42);
-
     }
 
     SECTION("Move assignment operator")
     {
         XLDocument doc;
         doc.create("./testXLCell.xlsx");
-        XLWorksheet wks = doc.workbook().sheet(1);
-        auto cell = wks.cell("A1");
-        cell.value() = 42;
+        XLWorksheet wks  = doc.workbook().sheet(1);
+        auto        cell = wks.cell("A1");
+        cell.value()     = 42;
 
         XLCell copy;
         copy = std::move(cell);
@@ -112,17 +106,14 @@ TEST_CASE("XLCell Tests", "[XLCell]")
         REQUIRE(copy.cellReference().address() == "A1");
         REQUIRE_FALSE(copy.hasFormula());
         REQUIRE(copy.value().get<int>() == 42);
-
-
-
     }
 
     SECTION("Setters and Getters")
     {
         XLDocument doc;
         doc.create("./testXLCell.xlsx");
-        XLWorksheet wks = doc.workbook().sheet(1);
-        auto cell = wks.cell("A1");
+        XLWorksheet wks  = doc.workbook().sheet(1);
+        auto        cell = wks.cell("A1");
         cell.formula().set("=1+1");
         cell.value() = 42;
 
@@ -130,12 +121,10 @@ TEST_CASE("XLCell Tests", "[XLCell]")
         REQUIRE(cell.formula().get() == "=1+1");
         REQUIRE(cell.value().get<int>() == 42);
 
-
         const auto copy = cell;
         REQUIRE(copy.hasFormula());
         REQUIRE(copy.formula().get() == "=1+1");
         REQUIRE(copy.value().get<int>() == 42);
-
     }
 
     SECTION("Relational operators")
@@ -160,10 +149,10 @@ TEST_CASE("XLCell Tests", "[XLCell]")
         doc.create("./testXLCell.xlsx");
         auto wks = doc.workbook().worksheet("Sheet1");
 
-        auto cell1 = wks.cell("B2");
+        auto cell1    = wks.cell("B2");
         cell1.value() = "Value1";
 
-        auto cell2 = cell1.offset(1,1);
+        auto cell2    = cell1.offset(1, 1);
         cell2.value() = "Value2";
 
         REQUIRE(cell1.value().get<std::string>() == "Value1");
@@ -172,5 +161,4 @@ TEST_CASE("XLCell Tests", "[XLCell]")
 
         doc.save();
     }
-
 }

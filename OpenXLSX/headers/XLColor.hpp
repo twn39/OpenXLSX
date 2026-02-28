@@ -47,10 +47,10 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLCOLOR_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 // ===== External Includes ===== //
 #include <cstdint>    // Pull request #276
@@ -191,13 +191,13 @@ namespace OpenXLSX
         //----------------------------------------------------------------------------------------------------------------------
 
     private:
-        uint8_t m_alpha { 255 };
+        uint8_t m_alpha{255};
 
-        uint8_t m_red { 0 };
+        uint8_t m_red{0};
 
-        uint8_t m_green { 0 };
+        uint8_t m_green{0};
 
-        uint8_t m_blue { 0 };
+        uint8_t m_blue{0};
     };
 
 }    // namespace OpenXLSX
@@ -211,9 +211,7 @@ namespace OpenXLSX
      * @return
      */
     inline bool operator==(const XLColor& lhs, const XLColor& rhs)
-    {
-        return lhs.alpha() == rhs.alpha() && lhs.red() == rhs.red() && lhs.green() == rhs.green() && lhs.blue() == rhs.blue();
-    }
+    { return lhs.alpha() == rhs.alpha() && lhs.red() == rhs.red() && lhs.green() == rhs.green() && lhs.blue() == rhs.blue(); }
 
     /**
      * @brief
@@ -226,7 +224,7 @@ namespace OpenXLSX
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLCOLOR_HPP

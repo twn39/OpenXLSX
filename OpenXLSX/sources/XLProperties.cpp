@@ -60,7 +60,8 @@ using namespace OpenXLSX;
 namespace    // anonymous namespace for module local functions
 {
     /**
-     * @brief insert node with nodeNameToInsert before insertBeforeThis and copy all the consecutive whitespace nodes preceeding insertBeforeThis
+     * @brief insert node with nodeNameToInsert before insertBeforeThis and copy all the consecutive whitespace nodes preceeding
+     * insertBeforeThis
      * @param nodeNameToInsert create a new element node with this name
      * @param insertBeforeThis self-explanatory, isn't it? :)
      * @returns the inserted XMLNode
@@ -69,8 +70,7 @@ namespace    // anonymous namespace for module local functions
     XMLNode prettyInsertXmlNodeBefore(std::string nodeNameToInsert, XMLNode insertBeforeThis)
     {
         XMLNode parentNode = insertBeforeThis.parent();
-        if (parentNode.empty())
-            throw XLInternalError("prettyInsertXmlNodeBefore can not insert before a node that has no parent");
+        if (parentNode.empty()) throw XLInternalError("prettyInsertXmlNodeBefore can not insert before a node that has no parent");
 
         // ===== Find potential whitespaces preceeding insertBeforeThis
         XMLNode whitespaces = insertBeforeThis;
@@ -79,7 +79,7 @@ namespace    // anonymous namespace for module local functions
         // ===== Insert the nodeNameToInsert before insertBeforeThis, "hijacking" the preceeding whitespace nodes
         XMLNode insertedNode = parentNode.insert_child_before(nodeNameToInsert.c_str(), insertBeforeThis);
         // ===== Copy all hijacked whitespaces to also preceed (again) the node insertBeforeThis
-        while( whitespaces.type() == pugi::node_pcdata ) {
+        while (whitespaces.type() == pugi::node_pcdata) {
             parentNode.insert_copy_before(whitespaces, insertBeforeThis);
             whitespaces = whitespaces.next_sibling();
         }
@@ -96,20 +96,19 @@ namespace    // anonymous namespace for module local functions
     {
         XMLNode headingPairs = docNode.child("HeadingPairs");
         if (headingPairs.empty()) {
-            XMLNode titlesOfParts = docNode.child("TitlesOfParts");    // attempt to locate TitlesOfParts to insert HeadingPairs right before
-            if( titlesOfParts.empty() )
+            XMLNode titlesOfParts =
+                docNode.child("TitlesOfParts");    // attempt to locate TitlesOfParts to insert HeadingPairs right before
+            if (titlesOfParts.empty())
                 headingPairs = docNode.append_child("HeadingPairs");
             else
                 headingPairs = prettyInsertXmlNodeBefore("HeadingPairs", titlesOfParts);
-            if (headingPairs.empty())
-                throw XLInternalError("headingPairsNode was unable to create XML element HeadingPairs");
+            if (headingPairs.empty()) throw XLInternalError("headingPairsNode was unable to create XML element HeadingPairs");
         }
         XMLNode node = headingPairs.first_child_of_type(pugi::node_element);
-        if (node.empty()) { // heading pairs child "vt:vector" does not exist
+        if (node.empty()) {    // heading pairs child "vt:vector" does not exist
             node = headingPairs.append_child("vt:vector", XLForceNamespace);
-            if (node.empty())
-                throw XLInternalError("headingPairsNode was unable to create HeadingPairs child element <vt:vector>");
-            node.append_attribute("size") = 0; // NOTE: size counts each heading pair as 2 - but for now, there are no entries
+            if (node.empty()) throw XLInternalError("headingPairsNode was unable to create HeadingPairs child element <vt:vector>");
+            node.append_attribute("size")     = 0;    // NOTE: size counts each heading pair as 2 - but for now, there are no entries
             node.append_attribute("baseType") = "variant";
         }
         // ===== Finally, return what should be a good "vt:vector" node with all the heading pairs
@@ -117,14 +116,12 @@ namespace    // anonymous namespace for module local functions
     }
 
     XMLAttribute headingPairsSize(XMLNode docNode)
-    {
-        return docNode.child("HeadingPairs").first_child_of_type(pugi::node_element).attribute("size");
-    }
+    { return docNode.child("HeadingPairs").first_child_of_type(pugi::node_element).attribute("size"); }
 
 #ifdef __GNUC__    // conditionally enable GCC specific pragmas to suppress unused function warning
-#   pragma GCC diagnostic push
-#   pragma GCC diagnostic ignored "-Wunused-function"
-#endif // __GNUC__
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wunused-function"
+#endif    // __GNUC__
     std::vector<std::string> headingPairsCategoriesStrings(XMLNode docNode)
     {
         // 2024-05-28 DONE: tested this code with two pairs in headingPairsNode
@@ -135,12 +132,12 @@ namespace    // anonymous namespace for module local functions
             item = item.next_sibling_of_type(pugi::node_element)
                        .next_sibling_of_type(pugi::node_element);    // advance two elements to skip count node
         }
-        return result; // 2024-05-28: std::move should not be used when the operand of a return statement is the name of a local variable
-                       // as this can prevent named return value optimization (NRVO, copy elision)
+        return result;    // 2024-05-28: std::move should not be used when the operand of a return statement is the name of a local variable
+                          // as this can prevent named return value optimization (NRVO, copy elision)
     }
 #ifdef __GNUC__    // conditionally enable GCC specific pragmas to suppress unused function warning
-#   pragma GCC diagnostic pop
-#endif // __GNUC__
+#    pragma GCC diagnostic pop
+#endif    // __GNUC__
 
     /**
      * @brief fetch the <TitlesOfParts><vt:vector> XML node, create if not existing
@@ -153,18 +150,30 @@ namespace    // anonymous namespace for module local functions
         XMLNode titlesOfParts = docNode.child("TitlesOfParts");
         if (titlesOfParts.empty()) {
             // ===== Attempt to find a good position to insert TitlesOfParts
-            XMLNode node = docNode.first_child_of_type(pugi::node_element);
+            XMLNode     node     = docNode.first_child_of_type(pugi::node_element);
             std::string nodeName = node.name();
             while (not node.empty() && (
-            /**/                           nodeName == "Application"
-            /**/                        || nodeName == "AppVersion"
-            /**/                        || nodeName == "DocSecurity"
-            /**/                        || nodeName == "ScaleCrop"
-            /**/                        || nodeName == "Template"
-            /**/                        || nodeName == "TotalTime"
-            /**/                        || nodeName == "HeadingPairs"
-            /**/   )) {
-                node = node.next_sibling_of_type(pugi::node_element);
+                                           /**/ nodeName == "Application"
+                                           /**/
+                                           ||
+                                           nodeName == "AppVersion"
+                                           /**/
+                                           ||
+                                           nodeName == "DocSecurity"
+                                           /**/
+                                           ||
+                                           nodeName == "ScaleCrop"
+                                           /**/
+                                           ||
+                                           nodeName == "Template"
+                                           /**/
+                                           ||
+                                           nodeName == "TotalTime"
+                                           /**/
+                                           || nodeName == "HeadingPairs"
+                                           /**/))
+            {
+                node     = node.next_sibling_of_type(pugi::node_element);
                 nodeName = node.name();
             }
 
@@ -176,9 +185,8 @@ namespace    // anonymous namespace for module local functions
         XMLNode vtVector = titlesOfParts.first_child_of_type(pugi::node_element);
         if (vtVector.empty()) {
             vtVector = titlesOfParts.prepend_child("vt:vector", XLForceNamespace);
-            if (vtVector.empty())
-                throw XLInternalError("sheetNames was unable to create TitlesOfParts child element <vt:vector>");
-            vtVector.append_attribute("size") = 0;
+            if (vtVector.empty()) throw XLInternalError("sheetNames was unable to create TitlesOfParts child element <vt:vector>");
+            vtVector.append_attribute("size")     = 0;
             vtVector.append_attribute("baseType") = "lpstr";
         }
         return vtVector;
@@ -199,7 +207,7 @@ namespace    // anonymous namespace for module local functions
         while (not item.empty() && item.first_child_of_type(pugi::node_element).child_value() != name)
             item = item.next_sibling_of_type(pugi::node_element)
                        .next_sibling_of_type(pugi::node_element);    // advance two elements to skip count node
-        if (not item.empty())    // if name was found
+        if (not item.empty())                                        // if name was found
             item = item.next_sibling_of_type(pugi::node_element);    // advance once more to the value node
 
         // ===== Return the first element child of the <vt:variant> node containing the heading pair value
@@ -214,34 +222,33 @@ namespace    // anonymous namespace for module local functions
 void XLProperties::createFromTemplate()
 {
     // std::cout << "XLProperties created with empty docProps/core.xml, creating from scratch!" << std::endl;
-    if( m_xmlData == nullptr )
-        throw XLInternalError("XLProperties m_xmlData is nullptr");
+    if (m_xmlData == nullptr) throw XLInternalError("XLProperties m_xmlData is nullptr");
 
     // ===== OpenXLSX_XLRelationships::GetStringFromType yields almost the string needed here, with added /relationships
     //       TBD: use hardcoded string?
-    std::string xmlns = OpenXLSX_XLRelationships::GetStringFromType(XLRelationshipType::CoreProperties);
-    const std::string rels = "/relationships/";
-    size_t pos = xmlns.find(rels);
+    std::string       xmlns = OpenXLSX_XLRelationships::GetStringFromType(XLRelationshipType::CoreProperties);
+    const std::string rels  = "/relationships/";
+    size_t            pos   = xmlns.find(rels);
     if (pos != std::string::npos)
         xmlns.replace(pos, rels.size(), "/");
     else
-        xmlns = "http://schemas.openxmlformats.org/package/2006/metadata/core-properties"; // fallback to hardcoded string
+        xmlns = "http://schemas.openxmlformats.org/package/2006/metadata/core-properties";    // fallback to hardcoded string
 
-    XMLNode props = xmlDocument().prepend_child("cp:coreProperties");
-    props.append_attribute("xmlns:cp") = xmlns.c_str();
-    props.append_attribute("xmlns:dc") = "http://purl.org/dc/elements/1.1/";
-    props.append_attribute("xmlns:dcterms") = "http://purl.org/dc/terms/";
+    XMLNode props                            = xmlDocument().prepend_child("cp:coreProperties");
+    props.append_attribute("xmlns:cp")       = xmlns.c_str();
+    props.append_attribute("xmlns:dc")       = "http://purl.org/dc/elements/1.1/";
+    props.append_attribute("xmlns:dcterms")  = "http://purl.org/dc/terms/";
     props.append_attribute("xmlns:dcmitype") = "http://purl.org/dc/dcmitype/";
-    props.append_attribute("xmlns:xsi") = "http://www.w3.org/2001/XMLSchema-instance";
+    props.append_attribute("xmlns:xsi")      = "http://www.w3.org/2001/XMLSchema-instance";
 
     props.append_child("dc:creator").text().set("Kenneth Balslev");
     props.append_child("cp:lastModifiedBy").text().set("Kenneth Balslev");
 
-    XMLNode prop {};
-    prop = props.append_child("dcterms:created");
+    XMLNode prop{};
+    prop                              = props.append_child("dcterms:created");
     prop.append_attribute("xsi:type") = "dcterms:W3CDTF";
     prop.text().set("2019-08-16T00:34:14Z");
-    prop = props.append_child("dcterms:modified");
+    prop                              = props.append_child("dcterms:modified");
     prop.append_attribute("xsi:type") = "dcterms:W3CDTF";
     prop.text().set("2019-08-16T00:34:26Z");
 }
@@ -251,15 +258,15 @@ void XLProperties::createFromTemplate()
  */
 XLProperties::XLProperties(XLXmlData* xmlData) : XLXmlFile(xmlData)
 {
-    XMLNode doc = xmlData->getXmlDocument()->document_element();
-    XMLNode child = doc.first_child_of_type(pugi::node_element);
-    size_t childCount = 0;
+    XMLNode doc        = xmlData->getXmlDocument()->document_element();
+    XMLNode child      = doc.first_child_of_type(pugi::node_element);
+    size_t  childCount = 0;
     while (not child.empty()) {
         ++childCount;
         child = child.next_sibling_of_type(pugi::node_element);
-        break; // one child is enough to determine document is not empty.
+        break;    // one child is enough to determine document is not empty.
     }
-    if( !childCount ) createFromTemplate();
+    if (!childCount) createFromTemplate();
 }
 
 /**
@@ -312,70 +319,69 @@ void XLProperties::deleteProperty(const std::string& name)
         xmlDocument().document_element().remove_child(property);
 }
 
-
 /**
  * @details
  */
-void XLAppProperties::createFromTemplate(XMLDocument const & workbookXml)
+void XLAppProperties::createFromTemplate(XMLDocument const& workbookXml)
 {
     // std::cout << "XLAppProperties created with empty docProps/app.xml, creating from scratch!" << std::endl;
-    if( m_xmlData == nullptr )
-        throw XLInternalError("XLAppProperties m_xmlData is nullptr");
+    if (m_xmlData == nullptr) throw XLInternalError("XLAppProperties m_xmlData is nullptr");
 
-    std::map< uint32_t, std::string > sheetsOrderedById;
+    std::map<uint32_t, std::string> sheetsOrderedById;
 
     auto sheet = workbookXml.document_element().child("sheets").first_child_of_type(pugi::node_element);
     while (not sheet.empty()) {
         std::string sheetName = sheet.attribute("name").as_string();
-        uint32_t sheetId = sheet.attribute("sheetId").as_uint();
+        uint32_t    sheetId   = sheet.attribute("sheetId").as_uint();
         sheetsOrderedById.insert(std::pair<uint32_t, std::string>(sheetId, sheetName));
         sheet = sheet.next_sibling_of_type();
     }
 
     uint32_t worksheetCount = 0;
-    for (const auto & [key, value] : sheetsOrderedById) {
+    for (const auto& [key, value] : sheetsOrderedById) {
         if (key != ++worksheetCount)
-           throw XLInputError( "xl/workbook.xml is missing sheet with sheetId=\"" + std::to_string(worksheetCount) + "\"" );
+            throw XLInputError("xl/workbook.xml is missing sheet with sheetId=\"" + std::to_string(worksheetCount) + "\"");
     }
 
     // ===== OpenXLSX_XLRelationships::GetStringFromType yields almost the string needed here, with added /relationships
     //       TBD: use hardcoded string?
-    std::string xmlns = OpenXLSX_XLRelationships::GetStringFromType(XLRelationshipType::ExtendedProperties);
-    const std::string rels = "/relationships/";
-    size_t pos = xmlns.find(rels);
+    std::string       xmlns = OpenXLSX_XLRelationships::GetStringFromType(XLRelationshipType::ExtendedProperties);
+    const std::string rels  = "/relationships/";
+    size_t            pos   = xmlns.find(rels);
     if (pos != std::string::npos)
         xmlns.replace(pos, rels.size(), "/");
     else
-        xmlns = "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"; // fallback to hardcoded string
+        xmlns = "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties";    // fallback to hardcoded string
 
-    XMLNode props = xmlDocument().prepend_child("Properties");
-    props.append_attribute("xmlns") = xmlns.c_str();
+    XMLNode props                      = xmlDocument().prepend_child("Properties");
+    props.append_attribute("xmlns")    = xmlns.c_str();
     props.append_attribute("xmlns:vt") = "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes";
 
-    XMLNode prop {};
+    XMLNode prop{};
 
     props.append_child("Application").text().set("Microsoft Macintosh Excel");
     props.append_child("DocSecurity").text().set(0);
     props.append_child("ScaleCrop").text().set(false);
 
-    XMLNode headingPairs = props.append_child("HeadingPairs");
-    XMLNode vecHP = headingPairs.append_child("vt:vector", XLForceNamespace);
-    vecHP.append_attribute("size") = 2;
+    XMLNode headingPairs               = props.append_child("HeadingPairs");
+    XMLNode vecHP                      = headingPairs.append_child("vt:vector", XLForceNamespace);
+    vecHP.append_attribute("size")     = 2;
     vecHP.append_attribute("baseType") = "variant";
     vecHP.append_child("vt:variant", XLForceNamespace).append_child("vt:lpstr", XLForceNamespace).text().set("Worksheets");
     // ===== 2024-09-02 minor bugfix issue #220, "vt:i4" value of "Worksheets" pair should be sheet count
     vecHP.append_child("vt:variant", XLForceNamespace).append_child("vt:i4", XLForceNamespace).text().set(worksheetCount);
 
-    XMLNode sheetsVector = props.append_child("TitlesOfParts").append_child("vt:vector", XLForceNamespace); // 2024-08-17 BUGFIX: TitlesOfParts was wrongly appended to headingPairs
-    sheetsVector.append_attribute("size") = worksheetCount;
+    XMLNode sheetsVector =
+        props.append_child("TitlesOfParts")
+            .append_child("vt:vector", XLForceNamespace);    // 2024-08-17 BUGFIX: TitlesOfParts was wrongly appended to headingPairs
+    sheetsVector.append_attribute("size")     = worksheetCount;
     sheetsVector.append_attribute("baseType") = "lpstr";
-    for (const auto & [key, value] : sheetsOrderedById)
-        sheetsVector.append_child("vt:lpstr", XLForceNamespace).text().set(value.c_str());
+    for (const auto& [key, value] : sheetsOrderedById) sheetsVector.append_child("vt:lpstr", XLForceNamespace).text().set(value.c_str());
 
     // NOTE 2024-07-24: for an empty string, .text().set("") would create a "<Company></Company>" node that
     // would get reduced to <Company/> on a simple open + save operation and thereby cause the *only* diff
     // to the uncompressed workbook. For this cosmetic reasons, text().set was removed in this case
-    props.append_child("Company"); // .text().set("");
+    props.append_child("Company");    // .text().set("");
     props.append_child("LinksUpToDate").text().set(false);
     props.append_child("SharedDoc").text().set(false);
     props.append_child("HyperlinksChanged").text().set(false);
@@ -385,18 +391,17 @@ void XLAppProperties::createFromTemplate(XMLDocument const & workbookXml)
 /**
  * @details
  */
-XLAppProperties::XLAppProperties(XLXmlData* xmlData, XMLDocument const & workbookXml)
-    : XLXmlFile(xmlData)
+XLAppProperties::XLAppProperties(XLXmlData* xmlData, XMLDocument const& workbookXml) : XLXmlFile(xmlData)
 {
-    XMLNode doc = xmlData->getXmlDocument()->document_element();
-    XMLNode child = doc.first_child_of_type(pugi::node_element);
-    size_t childCount = 0;
+    XMLNode doc        = xmlData->getXmlDocument()->document_element();
+    XMLNode child      = doc.first_child_of_type(pugi::node_element);
+    size_t  childCount = 0;
     while (not child.empty()) {
         ++childCount;
         child = child.next_sibling_of_type(pugi::node_element);
-        break; // one child is enough to determine document is not empty.
+        break;    // one child is enough to determine document is not empty.
     }
-    if (!childCount) createFromTemplate(workbookXml); //    create fresh docProps/app.xml
+    if (!childCount) createFromTemplate(workbookXml);    //    create fresh docProps/app.xml
 }
 
 /**
@@ -417,11 +422,10 @@ XLAppProperties::~XLAppProperties() = default;
 void XLAppProperties::incrementSheetCount(int16_t increment)
 {
     int32_t newCount = sheetCount(xmlDocument().document_element()).as_int() + increment;
-    if (newCount < 1)
-        throw XLInternalError("must not decrement sheet count below 1");
+    if (newCount < 1) throw XLInternalError("must not decrement sheet count below 1");
     sheetCount(xmlDocument().document_element()).set_value(newCount);
     XMLNode headingPairWorksheetsValue = getHeadingPairsValue(xmlDocument().document_element(), "Worksheets");
-    if (headingPairWorksheetsValue.empty()) // seems heading pair does not exist
+    if (headingPairWorksheetsValue.empty())    // seems heading pair does not exist
         addHeadingPair("Worksheets", newCount);
     else
         headingPairWorksheetsValue.text().set(newCount);
@@ -431,16 +435,16 @@ void XLAppProperties::incrementSheetCount(int16_t increment)
  * @details ensure that <TitlesOfParts> contains the correct workbook sheet names and <HeadingPairs> Worksheets entry
  *          has the correct worksheet count
  */
-void XLAppProperties::alignWorksheets(std::vector<std::string> const & workbookSheetNames)
+void XLAppProperties::alignWorksheets(std::vector<std::string> const& workbookSheetNames)
 {
-    XMLNode titlesOfParts = sheetNames(xmlDocument().document_element()); // creates <TitlesOfParts><vt:vector> if not existing
-    XMLNode sheetName = titlesOfParts.first_child_of_type(pugi::node_element);
+    XMLNode titlesOfParts = sheetNames(xmlDocument().document_element());    // creates <TitlesOfParts><vt:vector> if not existing
+    XMLNode sheetName     = titlesOfParts.first_child_of_type(pugi::node_element);
     // size_t sheetCount = workbookSheetNames.size();
     for (std::string workbookSheetName : workbookSheetNames) {
-        if (sheetName.empty())
-            sheetName = titlesOfParts.append_child("vt:lpstr", XLForceNamespace);
+        if (sheetName.empty()) sheetName = titlesOfParts.append_child("vt:lpstr", XLForceNamespace);
         sheetName.text().set(workbookSheetName.c_str());
-        sheetName = sheetName.next_sibling_of_type(pugi::node_element); // advance to next entry in <TitlesOfParts>, potentially becomes an empty XMLNode()
+        sheetName = sheetName.next_sibling_of_type(
+            pugi::node_element);    // advance to next entry in <TitlesOfParts>, potentially becomes an empty XMLNode()
     }
 
     // ===== If there are any excess sheet names, clean up.
@@ -448,11 +452,11 @@ void XLAppProperties::alignWorksheets(std::vector<std::string> const & workbookS
         // ===== Delete all whitespace nodes prior to the sheet names to be deleted
         while (sheetName.previous_sibling().type() == pugi::node_pcdata) titlesOfParts.remove_child(sheetName.previous_sibling());
 
-        XMLNode lastSheetName = titlesOfParts.last_child_of_type(pugi::node_element); // delete up to & including this node, preserve whitespaces after
-        if (sheetName != lastSheetName) { // If lastSheetName is a node *behind* sheetName
+        XMLNode lastSheetName =
+            titlesOfParts.last_child_of_type(pugi::node_element);    // delete up to & including this node, preserve whitespaces after
+        if (sheetName != lastSheetName) {                            // If lastSheetName is a node *behind* sheetName
             // ===== Delete all nodes (elements and whitespace) up until lastSheetName
-            while (sheetName.next_sibling() != lastSheetName)
-                titlesOfParts.remove_child(sheetName.next_sibling());
+            while (sheetName.next_sibling() != lastSheetName) titlesOfParts.remove_child(sheetName.next_sibling());
             // ===== Delete lastSheetName
             titlesOfParts.remove_child(lastSheetName);
         }
@@ -460,8 +464,8 @@ void XLAppProperties::alignWorksheets(std::vector<std::string> const & workbookS
         titlesOfParts.remove_child(sheetName);
     }
 
-    sheetCount(xmlDocument().document_element()).set_value(workbookSheetNames.size()); // save size of <TitlesOfParts><vt:vector>
-    incrementSheetCount(0); // ensure that the sheet count is correctly reflected in <HeadingPairs> Worksheets entry
+    sheetCount(xmlDocument().document_element()).set_value(workbookSheetNames.size());    // save size of <TitlesOfParts><vt:vector>
+    incrementSheetCount(0);    // ensure that the sheet count is correctly reflected in <HeadingPairs> Worksheets entry
 }
 
 /**
@@ -522,7 +526,7 @@ void XLAppProperties::addHeadingPair(const std::string& name, int value)
                    .next_sibling_of_type(pugi::node_element);    // advance two elements to skip count node
 
     XMLNode pairCategory = item;    // could be an empty node
-    XMLNode pairValue {};           // initialize to empty node
+    XMLNode pairValue{};            // initialize to empty node
     if (not pairCategory.empty())
         pairValue = pairCategory.next_sibling_of_type(pugi::node_element).first_child_of_type(pugi::node_element);
     else {
@@ -562,10 +566,11 @@ void XLAppProperties::deleteHeadingPair(const std::string& name)
     // ===== If item with name was found, remove pair and update headingPairsSize
     if (not item.empty()) {
         const XMLNode count = item.next_sibling_of_type(pugi::node_element);
-        // ===== 2024-05-28: delete all (non-element) nodes between item and count node, *then* delete non-element nodes following a count node
+        // ===== 2024-05-28: delete all (non-element) nodes between item and count node, *then* delete non-element nodes following a count
+        // node
         if (not count.empty()) {
             while (item.next_sibling() != count)
-                HeadingPairsNode.remove_child(item.next_sibling());     // remove nodes between item & count nodes to be deleted jointly
+                HeadingPairsNode.remove_child(item.next_sibling());    // remove nodes between item & count nodes to be deleted jointly
 
             // ===== Delete all non-element nodes following the count node
             while ((not count.next_sibling().empty()) && (count.next_sibling().type() != pugi::node_element))

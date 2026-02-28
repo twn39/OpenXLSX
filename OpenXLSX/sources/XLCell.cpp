@@ -44,13 +44,13 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
  */
 
 // ===== External Includes ===== //
-#include <cstring>      // strcmp
+#include <cstring>    // strcmp
 #include <pugixml.hpp>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLCell.hpp"
 #include "XLCellRange.hpp"
-#include "utilities/XLUtilities.hpp"
+#include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
 
@@ -139,7 +139,7 @@ void XLCell::copyFrom(XLCell const& other)
     if (!m_cellNode) {
         // copyFrom invoked by empty XLCell: create a new cell with reference & m_cellNode from other
         m_cellNode      = std::make_unique<XMLNode>(*other.m_cellNode);
-        m_sharedStrings = other.m_sharedStrings; // TBD: check for XLSharedStringsDefaulted and avoid copy?
+        m_sharedStrings = other.m_sharedStrings;    // TBD: check for XLSharedStringsDefaulted and avoid copy?
         m_valueProxy    = XLCellValueProxy(this, m_cellNode.get());
         m_formulaProxy  = XLFormulaProxy(this, m_cellNode.get());
         return;
@@ -153,15 +153,16 @@ void XLCell::copyFrom(XLCell const& other)
         m_cellNode->remove_children();
 
         // ===== Copy all XML child nodes
-        for (XMLNode child = other.m_cellNode->first_child(); not child.empty(); child = child.next_sibling()) m_cellNode->append_copy(child);
+        for (XMLNode child = other.m_cellNode->first_child(); not child.empty(); child = child.next_sibling())
+            m_cellNode->append_copy(child);
 
         // ===== Delete all XML attributes that are not the cell reference ("r")
         // ===== 2024-07-26 BUGFIX: for-loop was invalidating loop variable with remove_attribute(attr) before advancing to next element
         XMLAttribute currentAttr = m_cellNode->first_attribute();
         while (not currentAttr.empty()) {
-            XMLAttribute nextAttr = currentAttr.next_attribute();                         // get a handle on next attribute before potentially removing attr
-            if (strcmp(currentAttr.name(), "r") != 0) m_cellNode->remove_attribute(currentAttr); // remove all but the cell reference
-            currentAttr = nextAttr;                                                       // advance to previously stored next attribute
+            XMLAttribute nextAttr = currentAttr.next_attribute();    // get a handle on next attribute before potentially removing attr
+            if (strcmp(currentAttr.name(), "r") != 0) m_cellNode->remove_attribute(currentAttr);    // remove all but the cell reference
+            currentAttr = nextAttr;    // advance to previously stored next attribute
         }
         // ===== Copy all XML attributes that are not the cell reference ("r")
         for (auto attr = other.m_cellNode->first_attribute(); not attr.empty(); attr = attr.next_attribute())
@@ -178,7 +179,7 @@ bool XLCell::empty() const { return (!m_cellNode) || m_cellNode->empty(); }
  * @details
  * @todo 2024-08-10 TBD whether body can be replaced with !empty() (performance?)
  */
-XLCell::operator bool() const { return m_cellNode && (not m_cellNode->empty() ); } // ===== 2024-05-28: replaced explicit bool evaluation
+XLCell::operator bool() const { return m_cellNode && (not m_cellNode->empty()); }    // ===== 2024-05-28: replaced explicit bool evaluation
 
 /**
  * @details This function returns a const reference to the cellReference property.
@@ -186,7 +187,7 @@ XLCell::operator bool() const { return m_cellNode && (not m_cellNode->empty() );
 XLCellReference XLCell::cellReference() const
 {
     if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
-    return XLCellReference { m_cellNode->attribute("r").value() };
+    return XLCellReference{m_cellNode->attribute("r").value()};
 }
 
 /**
@@ -198,7 +199,7 @@ XLCell XLCell::offset(uint16_t rowOffset, uint16_t colOffset) const
     const XLCellReference offsetRef(cellReference().row() + rowOffset, cellReference().column() + colOffset);
     const auto            rownode  = getRowNode(m_cellNode->parent().parent(), offsetRef.row());
     const auto            cellnode = getCellNode(rownode, offsetRef.column());
-    return XLCell { cellnode, m_sharedStrings.get() };
+    return XLCell{cellnode, m_sharedStrings.get()};
 }
 
 /**
@@ -220,8 +221,8 @@ XLFormulaProxy& XLCell::formula()
 }
 
 /**
-* @details get the value of the s attribute of the cell node
-*/
+ * @details get the value of the s attribute of the cell node
+ */
 size_t XLCell::cellFormat() const
 {
     if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
@@ -229,16 +230,15 @@ size_t XLCell::cellFormat() const
 }
 
 /**
-* @details set the s attribute of the cell node, pointing to an xl/styles.xml cellXfs index
-*          the attribute will be created if not existant, function will fail if attribute creation fails
-*/
+ * @details set the s attribute of the cell node, pointing to an xl/styles.xml cellXfs index
+ *          the attribute will be created if not existant, function will fail if attribute creation fails
+ */
 bool XLCell::setCellFormat(size_t cellFormatIndex)
 {
     if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
     XMLAttribute attr = m_cellNode->attribute("s");
-    if (attr.empty() && not m_cellNode->empty())
-        attr = m_cellNode->append_attribute("s");
-    attr.set_value(cellFormatIndex); // silently fails on empty attribute, which is intended here
+    if (attr.empty() && not m_cellNode->empty()) attr = m_cellNode->append_attribute("s");
+    attr.set_value(cellFormatIndex);    // silently fails on empty attribute, which is intended here
     return attr.empty() == false;
 }
 
@@ -254,22 +254,22 @@ void XLCell::print(std::basic_ostream<char>& ostr) const
 /**
  * @details
  */
-XLCellAssignable::XLCellAssignable (XLCell const & other) : XLCell(other) {}
+XLCellAssignable::XLCellAssignable(XLCell const& other) : XLCell(other) {}
 
 /**
  * @details
  */
-XLCellAssignable::XLCellAssignable (XLCellAssignable const & other) : XLCell(other) {}
+XLCellAssignable::XLCellAssignable(XLCellAssignable const& other) : XLCell(other) {}
 
 /**
  * @details
  */
-XLCellAssignable::XLCellAssignable (XLCell && other) : XLCell(std::move(other)) {}
+XLCellAssignable::XLCellAssignable(XLCell&& other) : XLCell(std::move(other)) {}
 
 /**
  * @details
  */
-XLCellAssignable::XLCellAssignable (XLCellAssignable && other) noexcept : XLCell(std::move(other)) {}
+XLCellAssignable::XLCellAssignable(XLCellAssignable&& other) noexcept : XLCell(std::move(other)) {}
 
 /**
  * @details
@@ -319,21 +319,21 @@ const XLFormulaProxy& XLCell::formula() const
 /**
  * @details clear cell contents except for those identified by keep
  */
-void  XLCell::clear(uint32_t keep)
+void XLCell::clear(uint32_t keep)
 {
     if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
     // ===== Clear attributes
     XMLAttribute attr = m_cellNode->first_attribute();
     while (not attr.empty()) {
         XMLAttribute nextAttr = attr.next_attribute();
-        std::string attrName = attr.name();
-        if ((attrName == "r")                                 // if this is cell reference (must always remain untouched)
-          ||((keep & XLKeepCellStyle) && attrName == "s")     // or style shall be kept & this is style
-          ||((keep & XLKeepCellType ) && attrName == "t"))    // or type shall be kept & this is type
-            attr = XMLAttribute{};                                // empty attribute won't get deleted
+        std::string  attrName = attr.name();
+        if ((attrName == "r")                                   // if this is cell reference (must always remain untouched)
+            || ((keep & XLKeepCellStyle) && attrName == "s")    // or style shall be kept & this is style
+            || ((keep & XLKeepCellType) && attrName == "t"))    // or type shall be kept & this is type
+            attr = XMLAttribute{};                              // empty attribute won't get deleted
         // ===== Remove all non-kept attributes
         if (not attr.empty()) m_cellNode->remove_attribute(attr);
-        attr = nextAttr; // advance to previously determined next cell node attribute
+        attr = nextAttr;    // advance to previously determined next cell node attribute
     }
 
     // ===== Clear node children
@@ -343,13 +343,13 @@ void  XLCell::clear(uint32_t keep)
         // ===== Only preserve non-whitespace nodes
         if (node.type() == pugi::node_element) {
             std::string nodeName = node.name();
-            if (((keep & XLKeepCellValue  ) && nodeName == "v")     // if value shall be kept & this is value
-              ||((keep & XLKeepCellFormula) && nodeName == "f"))    // or formula shall be kept & this is formula
-                node = XMLNode{};                                       // empty node won't get deleted
+            if (((keep & XLKeepCellValue) && nodeName == "v")          // if value shall be kept & this is value
+                || ((keep & XLKeepCellFormula) && nodeName == "f"))    // or formula shall be kept & this is formula
+                node = XMLNode{};                                      // empty node won't get deleted
         }
         // ===== Remove all non-kept cell node children
         if (not node.empty()) m_cellNode->remove_child(node);
-        node = nextNode; // advance to previously determined next cell node child
+        node = nextNode;    // advance to previously determined next cell node child
     }
 }
 

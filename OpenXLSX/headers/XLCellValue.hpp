@@ -47,10 +47,10 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLCELLVALUE_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 // ===== External Includes ===== //
 #include <cmath>
@@ -84,18 +84,20 @@ namespace OpenXLSX
     struct VisitXLCellValueTypeToDouble
     {
         std::string packageName = "VisitXLCellValueTypeToDouble";
-        double operator()(int64_t v) const { return v; }
-        double operator()(double v) const { return v; }
-        double operator()(bool v) const { return v; }
+        double      operator()(int64_t v) const { return v; }
+        double      operator()(double v) const { return v; }
+        double      operator()(bool v) const { return v; }
         // double operator()( struct timestamp v ) { /* to be implemented if this type ever gets supported */ }
-        double operator()(std::string v) const {
-            throw XLValueTypeError("string is not convertible to double."); // disable if implicit conversion of string to double shall be allowed
+        double operator()(std::string v) const
+        {
+            throw XLValueTypeError(
+                "string is not convertible to double.");    // disable if implicit conversion of string to double shall be allowed
             size_t pos;
             double dVal = stod(v, &pos);
-            while (v[ pos ] == ' ' || v[ pos ] == '\t') ++pos; // skip over potential trailing whitespaces
+            while (v[pos] == ' ' || v[pos] == '\t') ++pos;    // skip over potential trailing whitespaces
             // NOTE: std::string zero-termination is guaranteed, so the above loop will halt
             if (pos != v.length())
-                throw XLValueTypeError("string is not convertible to double."); // throw if the *full value* does not convert to double
+                throw XLValueTypeError("string is not convertible to double.");    // throw if the *full value* does not convert to double
             return dVal;
         }
     };
@@ -277,10 +279,11 @@ namespace OpenXLSX
                 // BUGFIX 2025-01-10: can not return const char* of a temporary object - use a static variable as workaround
                 // CAUTION: This is not thread-safe and this template return type really shouldn't be used.
                 //          Accordingly, an exception should be thrown in the future
-                if constexpr (std::is_same_v<std::decay_t<T>, std::string_view> ||
-                              std::is_same_v<std::decay_t<T>, const char*> ||
-                              (std::is_same_v<std::decay_t<T>, char*> && !std::is_same_v<T, bool>)) {
-                    // throw XLValueTypeError("(temporary) XLCellValue should not be requested as a reference type (string_view, (const) char*) - please fetch std::string");
+                if constexpr (std::is_same_v<std::decay_t<T>, std::string_view> || std::is_same_v<std::decay_t<T>, const char*> ||
+                              (std::is_same_v<std::decay_t<T>, char*> && !std::is_same_v<T, bool>))
+                {
+                    // throw XLValueTypeError("(temporary) XLCellValue should not be requested as a reference type (string_view, (const)
+                    // char*) - please fetch std::string");
                     static std::string s = std::get<std::string>(m_value);
                     return s.c_str();
                 }
@@ -295,7 +298,8 @@ namespace OpenXLSX
 
     private:
         /**
-         * @brief private templated getter - only to be used by functions that know for certain that *this is valid until the return value has been used
+         * @brief private templated getter - only to be used by functions that know for certain that *this is valid until the return value
+         * has been used
          * @tparam T The type of the value to be returned.
          * @return The value as a type T object.
          * @throws XLValueTypeError if the XLCellValue object does not contain a compatible type.
@@ -313,7 +317,8 @@ namespace OpenXLSX
                 if constexpr (std::is_integral_v<T> && !std::is_same_v<T, bool>) return static_cast<T>(std::get<int64_t>(m_value));
 
                 if constexpr (std::is_floating_point_v<T>) {
-                    return static_cast<T>(getDouble());  // 2025-01-10: allow implicit conversion of int and bool to double (string conversion disabled for now)
+                    return static_cast<T>(getDouble());    // 2025-01-10: allow implicit conversion of int and bool to double (string
+                                                           // conversion disabled for now)
                     // if (m_type == XLValueType::Error) return static_cast<T>(std::nan("1"));
                     // return static_cast<T>(std::get<double>(m_value));
                 }
@@ -324,21 +329,23 @@ namespace OpenXLSX
                     return std::get<std::string>(m_value).c_str();
 
                 if constexpr (std::is_same_v<T, XLDateTime>)
-                    return XLDateTime(getDouble());      // 2025-01-10: allow implicit conversion of int and bool to double (string conversion disabled for now)
+                    return XLDateTime(getDouble());    // 2025-01-10: allow implicit conversion of int and bool to double (string conversion
+                                                       // disabled for now)
             }
 
             catch (const std::bad_variant_access&) {
                 throw XLValueTypeError("XLCellValue object does not contain the requested type.");
             }
         }
-    public:
 
+    public:
         /**
          * @brief get the cell value as a double, regardless of value type
          * @return A double representation of value
          * @throws XLValueTypeError if the XLCellValue object is not convertible to double.
          */
-        double getDouble() const {
+        double getDouble() const
+        {
             if (m_type == XLValueType::Error) return static_cast<double>(std::nan("1"));
             try {
                 return std::visit(VisitXLCellValueTypeToDouble(), m_value);
@@ -358,7 +365,7 @@ namespace OpenXLSX
             try {
                 return std::visit(VisitXLCellValueTypeToString(), m_value);
             }
-            catch (...) { // 2024-05-27: was catch( string s ) - must have been a typo, currently nothing throws a string here
+            catch (...) {    // 2024-05-27: was catch( string s ) - must have been a typo, currently nothing throws a string here
                 throw XLValueTypeError("XLCellValue object is not convertible to string.");
             }
         }
@@ -368,9 +375,7 @@ namespace OpenXLSX
          * @return a const reference to m_value
          */
         const XLCellValueType& getVariant() const    // pull request #127
-        {
-            return m_value;
-        }
+        { return m_value; }
 
         /**
          * @brief Explicit conversion operator for easy conversion to supported types.
@@ -384,9 +389,7 @@ namespace OpenXLSX
                      std::is_same_v<std::decay_t<T>, std::string_view> || std::is_same_v<std::decay_t<T>, const char*> ||
                      std::is_same_v<std::decay_t<T>, char*> || std::is_same_v<T, XLDateTime>>>
         operator T() const
-        {
-            return this->get<T>();
-        }
+        { return this->get<T>(); }
 
         /**
          * @brief Clears the contents of the XLCellValue object.
@@ -415,8 +418,8 @@ namespace OpenXLSX
     private:
         //---------- Private Member Variables ---------- //
 
-        XLCellValueType m_value { std::string("") };   /**< The value contained in the cell. */
-        XLValueType     m_type { XLValueType::Empty }; /**< The value type of the cell. */
+        XLCellValueType m_value{std::string("")};   /**< The value contained in the cell. */
+        XLValueType     m_type{XLValueType::Empty}; /**< The value type of the cell. */
     };
 
     /**
@@ -428,7 +431,7 @@ namespace OpenXLSX
     {
         friend class XLCell;
         friend class XLCellValue;
-        friend class XLDocument; // for reindexing shared strings
+        friend class XLDocument;    // for reindexing shared strings
 
     public:
         //---------- Public Member Functions ----------//
@@ -520,9 +523,7 @@ namespace OpenXLSX
                      std::is_same_v<std::decay_t<T>, std::string_view> || std::is_same_v<std::decay_t<T>, const char*> ||
                      std::is_same_v<std::decay_t<T>, char*> || std::is_same_v<T, XLCellValue> || std::is_same_v<T, XLDateTime>>>
         void set(T value)
-        {
-            *this = value;
-        }
+        { *this = value; }
 
         /**
          * @brief
@@ -536,9 +537,7 @@ namespace OpenXLSX
                      std::is_same_v<std::decay_t<T>, std::string_view> || std::is_same_v<std::decay_t<T>, const char*> ||
                      std::is_same_v<std::decay_t<T>, char*> || std::is_same_v<T, XLDateTime>>>
         T get() const
-        {
-            return getValue().get<T>();
-        }
+        { return getValue().get<T>(); }
 
         /**
          * @brief Clear the contents of the cell.
@@ -581,9 +580,7 @@ namespace OpenXLSX
                      std::is_same_v<std::decay_t<T>, std::string_view> || std::is_same_v<std::decay_t<T>, const char*> ||
                      std::is_same_v<std::decay_t<T>, char*> || std::is_same_v<T, XLDateTime>>>
         operator T() const
-        {
-            return getValue().get<T>();
-        }
+        { return getValue().get<T>(); }
 
         /**
          * @brief get the cell value as a std::string, regardless of value type
@@ -751,7 +748,8 @@ namespace OpenXLSX
             case XLValueType::Float:
                 return os << value.get<double>();
             case XLValueType::String:
-                return os << value.get<std::string>(); // 2025-01-10 BUGFIX: for temporary value objects, this was undefined behavior due to returning a string_view
+                return os << value.get<std::string>();    // 2025-01-10 BUGFIX: for temporary value objects, this was undefined behavior due
+                                                          // to returning a string_view
             default:
                 return os << "";
         }
@@ -769,7 +767,8 @@ namespace OpenXLSX
             case XLValueType::Float:
                 return os << value.get<double>();
             case XLValueType::String:
-                return os << value.get<std::string>(); // 2025-01-10 BUGFIX: for temporary value objects, this was undefined behavior due to returning a string_view
+                return os << value.get<std::string>();    // 2025-01-10 BUGFIX: for temporary value objects, this was undefined behavior due
+                                                          // to returning a string_view
             default:
                 return os << "";
         }
@@ -780,14 +779,11 @@ namespace OpenXLSX
 template<>
 struct std::hash<OpenXLSX::XLCellValue>    // NOLINT
 {
-    std::size_t operator()(const OpenXLSX::XLCellValue& value) const noexcept
-    {
-        return std::hash<XLCellValueType> {}(value.m_value);
-    }
+    std::size_t operator()(const OpenXLSX::XLCellValue& value) const noexcept { return std::hash<XLCellValueType>{}(value.m_value); }
 };
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLCELLVALUE_HPP

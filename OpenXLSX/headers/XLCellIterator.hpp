@@ -47,10 +47,10 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLCELLITERATOR_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 #include <algorithm>
 
@@ -92,10 +92,10 @@ namespace OpenXLSX
          * @param cellRange
          * @param loc
          * @param colStyles is an optional vector with all column styles configured for the worksheet when the iterator is created.
-         *                  This vector - if provided - will be used to get default cell styles for newly created cells, instead of performing
-         *                   a potentially expensive lookup in <cols>
+         *                  This vector - if provided - will be used to get default cell styles for newly created cells, instead of
+         * performing a potentially expensive lookup in <cols>
          */
-        explicit XLCellIterator(const XLCellRange& cellRange, XLIteratorLocation loc, std::vector<XLStyleIndex> const * colStyles);
+        explicit XLCellIterator(const XLCellRange& cellRange, XLIteratorLocation loc, std::vector<XLStyleIndex> const* colStyles);
 
         /**
          * @brief
@@ -137,7 +137,7 @@ namespace OpenXLSX
          */
         void updateCurrentCell(bool createIfMissing);
 
-    public:     // ===== Switch back to public methods
+    public:    // ===== Switch back to public methods
         /**
          * @brief
          * @return
@@ -204,21 +204,21 @@ namespace OpenXLSX
         std::string address() const;
 
     private:
-        std::unique_ptr<XMLNode> m_dataNode;             /**< */
-        XLCellReference          m_topLeft;              /**< The cell reference of the first cell in the range */
-        XLCellReference          m_bottomRight;          /**< The cell reference of the last cell in the range */
-        XLSharedStringsRef       m_sharedStrings;        /**< */
-        bool                     m_endReached;           /**< */
-        XMLNode                  m_hintNode;             /**< The cell node of the last existing cell found up to current iterator position */
-        uint32_t                 m_hintRow;              /**<   the row number for m_hintCell */
-        XLCell                   m_currentCell;          /**< The cell to which the iterator is currently pointing, if it exists, otherwise an empty XLCell */
-        static constexpr const int XLNotLoaded  = 0;    // code readability for m_currentCellStatus
-        static constexpr const int XLNoSuchCell = 1;    //   "
-        static constexpr const int XLLoaded     = 2;    //   "
-        int                      m_currentCellStatus;    /**< Status of m_currentCell: XLNotLoaded, XLNoSuchCell or XLLoaded */
-        uint32_t                 m_currentRow;
-        uint16_t                 m_currentColumn;
-        std::vector<XLStyleIndex> const * m_colStyles;
+        std::unique_ptr<XMLNode> m_dataNode;      /**< */
+        XLCellReference          m_topLeft;       /**< The cell reference of the first cell in the range */
+        XLCellReference          m_bottomRight;   /**< The cell reference of the last cell in the range */
+        XLSharedStringsRef       m_sharedStrings; /**< */
+        bool                     m_endReached;    /**< */
+        XMLNode                  m_hintNode;      /**< The cell node of the last existing cell found up to current iterator position */
+        uint32_t                 m_hintRow;       /**<   the row number for m_hintCell */
+        XLCell m_currentCell; /**< The cell to which the iterator is currently pointing, if it exists, otherwise an empty XLCell */
+        static constexpr const int       XLNotLoaded  = 0;    // code readability for m_currentCellStatus
+        static constexpr const int       XLNoSuchCell = 1;    //   "
+        static constexpr const int       XLLoaded     = 2;    //   "
+        int                              m_currentCellStatus; /**< Status of m_currentCell: XLNotLoaded, XLNoSuchCell or XLLoaded */
+        uint32_t                         m_currentRow;
+        uint16_t                         m_currentColumn;
+        std::vector<XLStyleIndex> const* m_colStyles;
     };
 
     /**
@@ -240,13 +240,11 @@ namespace std    // NOLINT
     using OpenXLSX::XLCellIterator;
     template<>
     inline std::iterator_traits<XLCellIterator>::difference_type distance<XLCellIterator>(XLCellIterator first, XLCellIterator last)
-    {
-        return static_cast<std::iterator_traits<XLCellIterator>::difference_type>(first.distance(last));
-    }
+    { return static_cast<std::iterator_traits<XLCellIterator>::difference_type>(first.distance(last)); }
 }    // namespace std
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLCELLITERATOR_HPP

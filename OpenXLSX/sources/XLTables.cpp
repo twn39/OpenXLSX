@@ -51,7 +51,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 // #include "XLCellRange.hpp"
 // #include "XLDocument.hpp"
 #include "XLTables.hpp"
-#include "utilities/XLUtilities.hpp"    // OpenXLSX::ignore
+#include "XLUtilities.hpp"    // OpenXLSX::ignore
 
 using namespace OpenXLSX;
 
@@ -68,8 +68,7 @@ namespace OpenXLSX
  */
 XLTables::XLTables(XLXmlData* xmlData) : XLXmlFile(xmlData)
 {
-    if (xmlData->getXmlType() != XLContentType::Table)
-        throw XLInternalError("XLTables constructor: Invalid XML data.");
+    if (xmlData->getXmlType() != XLContentType::Table) throw XLInternalError("XLTables constructor: Invalid XML data.");
 }
 
 /**
@@ -97,4 +96,4 @@ bool XLTables::set(std::string cellRef)
 /**
  * @details Print the underlying XML using pugixml::xml_node::print
  */
-void XLTables::print(std::basic_ostream<char>& ostr) const { xmlDocument().document_element().print( ostr ); }
+void XLTables::print(std::basic_ostream<char>& ostr) const { xmlDocument().document_element().print(ostr); }

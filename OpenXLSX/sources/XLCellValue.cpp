@@ -74,7 +74,7 @@ XLCellValue& XLCellValue::clear()
  * @pre
  * @post
  */
-XLCellValue& XLCellValue::setError(const std::string &error)
+XLCellValue& XLCellValue::setError(const std::string& error)
 {
     m_type  = XLValueType::Error;
     m_value = error;
@@ -86,10 +86,7 @@ XLCellValue& XLCellValue::setError(const std::string &error)
  * @pre
  * @post
  */
-XLValueType XLCellValue::type() const
-{
-    return m_type;
-}
+XLValueType XLCellValue::type() const { return m_type; }
 
 /**
  * @details Get the value type of the current object, as a string representation
@@ -121,9 +118,9 @@ std::string XLCellValue::typeAsString() const
  */
 XLCellValueProxy::XLCellValueProxy(XLCell* cell, XMLNode* cellNode) : m_cell(cell), m_cellNode(cellNode)
 {
-    assert(cell != nullptr);         // NOLINT
-//    assert(cellNode);                 // NOLINT
-//    assert(not cellNode->empty());    // NOLINT
+    assert(cell != nullptr);    // NOLINT
+    //    assert(cellNode);                 // NOLINT
+    //    assert(not cellNode->empty());    // NOLINT
 }
 
 /**
@@ -156,9 +153,7 @@ XLCellValueProxy::XLCellValueProxy(XLCellValueProxy&& other) noexcept = default;
  */
 XLCellValueProxy& XLCellValueProxy::operator=(const XLCellValueProxy& other)
 {
-    if (&other != this) {
-        *this = other.getValue();
-    }
+    if (&other != this) { *this = other.getValue(); }
 
     return *this;
 }
@@ -175,9 +170,7 @@ XLCellValueProxy& XLCellValueProxy::operator=(XLCellValueProxy&& other) noexcept
  * @pre
  * @post
  */
-XLCellValueProxy::operator XLCellValue() const {
-    return getValue();
-}
+XLCellValueProxy::operator XLCellValue() const { return getValue(); }
 
 /**
  * @details Clear the contents of the cell. This removes all children of the cell node.
@@ -210,7 +203,7 @@ XLCellValueProxy& XLCellValueProxy::clear()
  * @pre The m_cellNode must not be null, and must point to a valid XML cell node object.
  * @post The cell node must be valid.
  */
-XLCellValueProxy& XLCellValueProxy::setError(const std::string &error)
+XLCellValueProxy& XLCellValueProxy::setError(const std::string& error)
 {
     // ===== Check that the m_cellNode is valid.
     assert(m_cellNode != nullptr);      // NOLINT
@@ -252,9 +245,12 @@ XLValueType XLCellValueProxy::type() const
     if (!m_cellNode->attribute("t") && !m_cellNode->child("v")) return XLValueType::Empty;
 
     // ===== If a Type attribute is not present, but a value node is, the cell contains a number.
-    if (m_cellNode->attribute("t").empty() || ((strcmp(m_cellNode->attribute("t").value(), "n") == 0) && not m_cellNode->child("v").empty())) {
-        if (const std::string numberString = m_cellNode->child("v").text().get();
-            numberString.find('.') != std::string::npos || numberString.find("E-") != std::string::npos || numberString.find("e-") != std::string::npos)
+    if (m_cellNode->attribute("t").empty() ||
+        ((strcmp(m_cellNode->attribute("t").value(), "n") == 0) && not m_cellNode->child("v").empty()))
+    {
+        if (const std::string numberString = m_cellNode->child("v").text().get(); numberString.find('.') != std::string::npos ||
+                                                                                  numberString.find("E-") != std::string::npos ||
+                                                                                  numberString.find("e-") != std::string::npos)
             return XLValueType::Float;
         return XLValueType::Integer;
     }
@@ -264,16 +260,13 @@ XLValueType XLCellValueProxy::type() const
         return XLValueType::String;    // NOLINT
 
     // ===== If the cell is of type "inlineStr", the cell contains an inline string.
-    if (not m_cellNode->attribute("t").empty() && strcmp(m_cellNode->attribute("t").value(), "inlineStr") == 0)
-        return XLValueType::String;
+    if (not m_cellNode->attribute("t").empty() && strcmp(m_cellNode->attribute("t").value(), "inlineStr") == 0) return XLValueType::String;
 
     // ===== If the cell is of type "str", the cell contains an ordinary string.
-    if (not m_cellNode->attribute("t").empty() && strcmp(m_cellNode->attribute("t").value(), "str") == 0)
-        return XLValueType::String;
+    if (not m_cellNode->attribute("t").empty() && strcmp(m_cellNode->attribute("t").value(), "str") == 0) return XLValueType::String;
 
     // ===== If the cell is of type "b", the cell contains a boolean.
-    if (not m_cellNode->attribute("t").empty() && strcmp(m_cellNode->attribute("t").value(), "b") == 0)
-        return XLValueType::Boolean;
+    if (not m_cellNode->attribute("t").empty() && strcmp(m_cellNode->attribute("t").value(), "b") == 0) return XLValueType::Boolean;
 
     // ===== Otherwise, the cell contains an error.
     return XLValueType::Error;    // the m_typeAttribute has the ValueAsString "e"
@@ -308,7 +301,7 @@ std::string XLCellValueProxy::typeAsString() const
  * @pre The m_cellNode must not be null, and must point to a valid XMLNode object.
  * @post The underlying XMLNode has been updated correctly, representing an integer value.
  */
-void XLCellValueProxy::setInteger(int64_t numberValue) // NOLINT
+void XLCellValueProxy::setInteger(int64_t numberValue)    // NOLINT
 {
     // ===== Check that the m_cellNode is valid.
     assert(m_cellNode != nullptr);      // NOLINT
@@ -336,7 +329,7 @@ void XLCellValueProxy::setInteger(int64_t numberValue) // NOLINT
  * @pre The m_cellNode must not be null, and must point to a valid XMLNode object.
  * @post The underlying XMLNode has been updated correctly, representing an bool value.
  */
-void XLCellValueProxy::setBoolean(bool numberValue) // NOLINT
+void XLCellValueProxy::setBoolean(bool numberValue)    // NOLINT
 {
     // ===== Check that the m_cellNode is valid.
     assert(m_cellNode != nullptr);      // NOLINT
@@ -402,7 +395,7 @@ void XLCellValueProxy::setFloat(double numberValue)
  * @pre The m_cellNode must not be null, and must point to a valid XMLNode object.
  * @post The underlying XMLNode has been updated correctly, representing a string value.
  */
-void XLCellValueProxy::setString(const char* stringValue) // NOLINT
+void XLCellValueProxy::setString(const char* stringValue)    // NOLINT
 {
     // ===== Check that the m_cellNode is valid.
     assert(m_cellNode != nullptr);      // NOLINT
@@ -427,10 +420,10 @@ void XLCellValueProxy::setString(const char* stringValue) // NOLINT
     // ===== Remove the is node (only relevant in case previous cell type was "inlineStr"). // pull request #188
     m_cellNode->remove_child("is");
 
-	 /* 2024-04-23: NOTE "embedded" strings are "inline strings" in XLSX, using a node like so:
-	  *     <c r="C1" s="3" t="inlineStr"><is><t>An inline string</t></is></c>
+    /* 2024-04-23: NOTE "embedded" strings are "inline strings" in XLSX, using a node like so:
+     *     <c r="C1" s="3" t="inlineStr"><is><t>An inline string</t></is></c>
      *  Those should be not confused with the below "str" type, which is I believe only relevant for the cell display format
-	  */
+     */
     // IMPLEMENTATION FOR EMBEDDED STRINGS:
     //    m_cellNode->attribute("t").set_value("str");
     //    m_cellNode->child("v").text().set(stringValue);
@@ -459,25 +452,24 @@ XLCellValue XLCellValueProxy::getValue() const
             return XLCellValue().clear();
 
         case XLValueType::Float:
-            return XLCellValue { m_cellNode->child("v").text().as_double() };
+            return XLCellValue{m_cellNode->child("v").text().as_double()};
 
         case XLValueType::Integer:
-            return XLCellValue { m_cellNode->child("v").text().as_llong() };
+            return XLCellValue{m_cellNode->child("v").text().as_llong()};
 
         case XLValueType::String:
             if (strcmp(m_cellNode->attribute("t").value(), "s") == 0)
-                return XLCellValue {
-                    m_cell->m_sharedStrings.get().getString(static_cast<int32_t>(m_cellNode->child("v").text().as_ullong()))
-                };
+                return XLCellValue{
+                    m_cell->m_sharedStrings.get().getString(static_cast<int32_t>(m_cellNode->child("v").text().as_ullong()))};
             else if (strcmp(m_cellNode->attribute("t").value(), "str") == 0)
-                return XLCellValue { m_cellNode->child("v").text().get() };
+                return XLCellValue{m_cellNode->child("v").text().get()};
             else if (strcmp(m_cellNode->attribute("t").value(), "inlineStr") == 0)
-                return XLCellValue { m_cellNode->child("is").child("t").text().get() };
+                return XLCellValue{m_cellNode->child("is").child("t").text().get()};
             else
                 throw XLInternalError("Unknown string type");
 
         case XLValueType::Boolean:
-            return XLCellValue { m_cellNode->child("v").text().as_bool() };
+            return XLCellValue{m_cellNode->child("v").text().as_bool()};
 
         case XLValueType::Error:
             return XLCellValue().setError(m_cellNode->child("v").text().as_string());
@@ -492,9 +484,10 @@ XLCellValue XLCellValueProxy::getValue() const
  */
 int32_t XLCellValueProxy::stringIndex() const
 {
-    if (strcmp(m_cellNode->attribute("t").value(), "s") != 0) return -1;   // cell value is not a shared string
-    return static_cast<int32_t>(m_cellNode->child("v").text().as_ullong(static_cast<unsigned long long>(-1)));                    // return the shared string index stored for this cell
-    /**/                                                                   // if, for whatever reason, the underlying XML has no reference stored, also return -1
+    if (strcmp(m_cellNode->attribute("t").value(), "s") != 0) return -1;    // cell value is not a shared string
+    return static_cast<int32_t>(m_cellNode->child("v").text().as_ullong(
+        static_cast<unsigned long long>(-1)));    // return the shared string index stored for this cell
+    /**/                                          // if, for whatever reason, the underlying XML has no reference stored, also return -1
 }
 
 /**
@@ -502,6 +495,6 @@ int32_t XLCellValueProxy::stringIndex() const
  */
 bool XLCellValueProxy::setStringIndex(int32_t newIndex)
 {
-    if (newIndex < 0 || strcmp(m_cellNode->attribute("t").value(), "s") != 0) return false;  // cell value is not a shared string
-    return m_cellNode->child("v").text().set(newIndex);                                      // set the shared string index directly
+    if (newIndex < 0 || strcmp(m_cellNode->attribute("t").value(), "s") != 0) return false;    // cell value is not a shared string
+    return m_cellNode->child("v").text().set(newIndex);                                        // set the shared string index directly
 }

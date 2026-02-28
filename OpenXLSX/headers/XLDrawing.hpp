@@ -443,23 +443,23 @@ namespace OpenXLSX
                       uint32_t           width,
                       uint32_t           height);
 
-                /**
-                 * @brief Add an image to the drawing, automatically maintaining aspect ratio
-                 * @param rId the relationship ID of the image file
-                 * @param name the name of the image
-                 * @param description the description of the image
-                 * @param data the binary data of the image (used to detect dimensions)
-                 * @param row the row where the image should be placed (0-indexed)
-                 * @param col the column where the image should be placed (0-indexed)
-                 * @param scalingFactor the factor to scale the image by (1.0 = original size)
-                 */
-                void addScaledImage(const std::string& rId,
-                                    const std::string& name,
-                                    const std::string& description,
-                                    const std::string& data,
-                                    uint32_t           row,
-                                    uint32_t           col,
-                                    double             scalingFactor = 1.0);
+        /**
+         * @brief Add an image to the drawing, automatically maintaining aspect ratio
+         * @param rId the relationship ID of the image file
+         * @param name the name of the image
+         * @param description the description of the image
+         * @param data the binary data of the image (used to detect dimensions)
+         * @param row the row where the image should be placed (0-indexed)
+         * @param col the column where the image should be placed (0-indexed)
+         * @param scalingFactor the factor to scale the image by (1.0 = original size)
+         */
+        void addScaledImage(const std::string& rId,
+                            const std::string& name,
+                            const std::string& description,
+                            const std::string& data,
+                            uint32_t           row,
+                            uint32_t           col,
+                            double             scalingFactor = 1.0);
 
         /**
          * @brief Get the drawing relationships

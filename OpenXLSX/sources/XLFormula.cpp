@@ -7,8 +7,8 @@
 #include <pugixml.hpp>
 
 // ===== OpenXLSX Includes ===== //
-#include "XLFormula.hpp"
 #include "XLException.hpp"
+#include "XLFormula.hpp"
 
 using namespace OpenXLSX;
 
@@ -89,9 +89,7 @@ XLFormulaProxy::XLFormulaProxy(XLFormulaProxy&& other) noexcept = default;
  */
 XLFormulaProxy& XLFormulaProxy::operator=(const XLFormulaProxy& other)
 {
-    if (&other != this) {
-        *this = other.getFormula();
-    }
+    if (&other != this) { *this = other.getFormula(); }
 
     return *this;
 }
@@ -134,13 +132,13 @@ XLFormulaProxy& XLFormulaProxy::clear()
  * @details Convenience function for setting the formula. This method is called from the templated
  * string assignment operator.
  */
-void XLFormulaProxy::setFormulaString(const char* formulaString, bool resetValue) // NOLINT
+void XLFormulaProxy::setFormulaString(const char* formulaString, bool resetValue)    // NOLINT
 {
     // ===== Check that the m_cellNode is valid.
     assert(m_cellNode != nullptr);      // NOLINT
     assert(not m_cellNode->empty());    // NOLINT
 
-    if (formulaString[0] == 0) {    // if formulaString is empty
+    if (formulaString[0] == 0) {          // if formulaString is empty
         m_cellNode->remove_child("f");    // clear the formula node
         return;                           // and exit
     }
@@ -184,12 +182,10 @@ XLFormula XLFormulaProxy::getFormula() const
     if (formulaNode.empty()) return XLFormula();
 
     // ===== If the formula type is 'shared' or 'array', throw an exception.
-    if (not formulaNode.attribute("t").empty() ) {    // 2024-05-28: de-duplicated check (only relevant for performance,
-                                                      //  xml_attribute::value() returns an empty string for empty attributes)
-        if (std::string(formulaNode.attribute("t").value()) == "shared")
-            throw XLFormulaError("Shared formulas not supported.");
-        if (std::string(formulaNode.attribute("t").value()) == "array")
-            throw XLFormulaError("Array formulas not supported.");
+    if (not formulaNode.attribute("t").empty()) {    // 2024-05-28: de-duplicated check (only relevant for performance,
+                                                     //  xml_attribute::value() returns an empty string for empty attributes)
+        if (std::string(formulaNode.attribute("t").value()) == "shared") throw XLFormulaError("Shared formulas not supported.");
+        if (std::string(formulaNode.attribute("t").value()) == "array") throw XLFormulaError("Array formulas not supported.");
     }
 
     return XLFormula(formulaNode.text().get());

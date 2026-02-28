@@ -1,39 +1,42 @@
-#include <catch.hpp>
 #include <OpenXLSX.hpp>
+#include <catch2/catch_all.hpp>
 
 using namespace OpenXLSX;
 
-TEST_CASE("XLProperties Tests", "[XLProperties]") {
-    SECTION("Core Properties") {
+TEST_CASE("XLProperties Tests", "[XLProperties]")
+{
+    SECTION("Core Properties")
+    {
         XLDocument doc;
         doc.create("./testXLProperties.xlsx", XLForceOverwrite);
-        
+
         doc.setProperty(XLProperty::Title, "Test Title");
         doc.setProperty(XLProperty::Creator, "Test Creator");
         doc.setProperty(XLProperty::Subject, "Test Subject");
-        
+
         REQUIRE(doc.property(XLProperty::Title) == "Test Title");
         REQUIRE(doc.property(XLProperty::Creator) == "Test Creator");
         REQUIRE(doc.property(XLProperty::Subject) == "Test Subject");
-        
+
         doc.deleteProperty(XLProperty::Subject);
-        // Depending on implementation, it might return empty or old value if not re-read correctly, 
+        // Depending on implementation, it might return empty or old value if not re-read correctly,
         // but property() should reflect current XML state.
         REQUIRE(doc.property(XLProperty::Subject) == "");
 
         doc.close();
     }
 
-    SECTION("App Properties") {
+    SECTION("App Properties")
+    {
         XLDocument doc;
         doc.create("./testXLAppProperties.xlsx", XLForceOverwrite);
-        
-        // App properties are usually set via the doc object as well, 
+
+        // App properties are usually set via the doc object as well,
         // though some are managed internally (like sheet names).
-        
+
         doc.workbook().addWorksheet("MySheet");
         auto sheetNames = doc.workbook().sheetNames();
-        bool found = false;
+        bool found      = false;
         for (const auto& name : sheetNames) {
             if (name == "MySheet") found = true;
         }
@@ -43,8 +46,10 @@ TEST_CASE("XLProperties Tests", "[XLProperties]") {
     }
 }
 
-TEST_CASE("XLWorkbook Tests", "[XLWorkbook]") {
-    SECTION("Sheet Management") {
+TEST_CASE("XLWorkbook Tests", "[XLWorkbook]")
+{
+    SECTION("Sheet Management")
+    {
         XLDocument doc;
         doc.create("./testXLWorkbook.xlsx", XLForceOverwrite);
         auto wb = doc.workbook();
@@ -66,7 +71,7 @@ TEST_CASE("XLWorkbook Tests", "[XLWorkbook]") {
         // Indexing
         REQUIRE(wb.indexOfSheet("Sheet1") == 1);
         REQUIRE(wb.indexOfSheet("Sheet2") == 2);
-        
+
         wb.setSheetIndex("Sheet2", 1);
         REQUIRE(wb.indexOfSheet("Sheet2") == 1);
         REQUIRE(wb.indexOfSheet("Sheet1") == 2);
@@ -82,13 +87,14 @@ TEST_CASE("XLWorkbook Tests", "[XLWorkbook]") {
         doc.close();
     }
 
-    SECTION("Sheet Names and Types") {
+    SECTION("Sheet Names and Types")
+    {
         XLDocument doc;
         doc.create("./testXLWorkbookNames.xlsx", XLForceOverwrite);
         auto wb = doc.workbook();
 
         wb.addWorksheet("Data");
-        
+
         auto names = wb.sheetNames();
         REQUIRE(names.size() == 2);
         REQUIRE(std::find(names.begin(), names.end(), "Data") != names.end());

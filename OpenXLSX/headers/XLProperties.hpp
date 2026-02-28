@@ -47,10 +47,10 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLPROPERTIES_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 // ===== External Includes ===== //
 #include <string>
@@ -173,7 +173,7 @@ namespace OpenXLSX
          * @brief constructor helper function: create app.xml content from template
          * @param workbook
          */
-        void createFromTemplate(XMLDocument const & workbookXml);
+        void createFromTemplate(XMLDocument const& workbookXml);
 
         //--------------------------------------------------------------------------------------------------------------
         //           Public Member Functions
@@ -190,7 +190,7 @@ namespace OpenXLSX
          * @param xmlData
          * @param workbook
          */
-        explicit XLAppProperties(XLXmlData* xmlData, XMLDocument const & workbookXml);
+        explicit XLAppProperties(XLXmlData* xmlData, XMLDocument const& workbookXml);
 
         /**
          * @brief
@@ -237,11 +237,12 @@ namespace OpenXLSX
         void incrementSheetCount(int16_t increment);
 
         /**
-         * @brief initialize <TitlesOfParts> to contain all and only entries from workbookSheetNames & ensure HeadingPairs entry for Worksheets has the correct count
+         * @brief initialize <TitlesOfParts> to contain all and only entries from workbookSheetNames & ensure HeadingPairs entry for
+         * Worksheets has the correct count
          * @param workbookSheetNames the vector of sheet names as returned by XLWorkbook::sheetNames()
          * @throws XLInternalError thrown by the underlying sheetNames call upon failure
          */
-        void alignWorksheets(std::vector<std::string> const & workbookSheetNames);
+        void alignWorksheets(std::vector<std::string> const& workbookSheetNames);
 
         /**
          * @brief
@@ -330,7 +331,7 @@ namespace OpenXLSX
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLPROPERTIES_HPP

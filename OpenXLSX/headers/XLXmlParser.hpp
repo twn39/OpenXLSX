@@ -46,33 +46,36 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #ifndef OPENXLSX_XLXMLPARSER_HPP
 #define OPENXLSX_XLXMLPARSER_HPP
 
-#include <memory> // shared_ptr
+#include <memory>    // shared_ptr
 
-// ===== pugixml.hpp needed for pugi::impl::xml_memory_page_type_mask, pugi::xml_node_type, pugi::char_t, pugi::node_element, pugi::xml_node, pugi::xml_attribute, pugi::xml_document
-#include <pugixml.hpp> 
+// ===== pugixml.hpp needed for pugi::impl::xml_memory_page_type_mask, pugi::xml_node_type, pugi::char_t, pugi::node_element,
+// pugi::xml_node, pugi::xml_attribute, pugi::xml_document
 #include "XLException.hpp"
+#include <pugixml.hpp>
 
-namespace { // anonymous namespace to define constants / functions that shall not be exported from this module
+namespace
+{    // anonymous namespace to define constants / functions that shall not be exported from this module
     constexpr const int XLMaxNamespacedNameLen = 100;
-} // anonymous namespace
+}    // anonymous namespace
 
 namespace OpenXLSX
 {
-#   define ENABLE_XML_NAMESPACES 1    // disable this line to control behavior via compiler flag
-#   define NO_MULTITHREADING_SAFETY 1 // if this is defined, the function namespaced_name_char will be used for XML namespace support,
-//                                    //  using a static character array for improved performance when multithreading conflicts are not a risk
+#define ENABLE_XML_NAMESPACES 1       // disable this line to control behavior via compiler flag
+#define NO_MULTITHREADING_SAFETY 1    // if this is defined, the function namespaced_name_char will be used for XML namespace support,
+    //                                    //  using a static character array for improved performance when multithreading conflicts are not
+    //                                    a risk
 
-#   ifdef ENABLE_XML_NAMESPACES
-        // ===== Macro for NAMESPACED_NAME when node names might need to be prefixed with the current node's namespace
-#       ifdef NO_MULTITHREADING_SAFETY
-#           define NAMESPACED_NAME(name_, force_ns_) namespaced_name_char(name_, force_ns_)
-#       else
-#           define NAMESPACED_NAME(name_, force_ns_) namespaced_name_shared_ptr(name_, force_ns_).get()
-#       endif
-#   else
-        // ===== Optimized version when no namespace support is desired - ignores force_ns_ setting
-#       define NAMESPACED_NAME(name_, force_ns_) name_
-#   endif
+#ifdef ENABLE_XML_NAMESPACES
+    // ===== Macro for NAMESPACED_NAME when node names might need to be prefixed with the current node's namespace
+#    ifdef NO_MULTITHREADING_SAFETY
+#        define NAMESPACED_NAME(name_, force_ns_) namespaced_name_char(name_, force_ns_)
+#    else
+#        define NAMESPACED_NAME(name_, force_ns_) namespaced_name_shared_ptr(name_, force_ns_).get()
+#    endif
+#else
+    // ===== Optimized version when no namespace support is desired - ignores force_ns_ setting
+#    define NAMESPACED_NAME(name_, force_ns_) name_
+#endif
 
     constexpr const bool XLForceNamespace = true;
     /**
@@ -82,7 +85,7 @@ namespace OpenXLSX
      * Affected XMLNode methods: ::set_name, ::append_child, ::prepend_child, ::insert_child_after, ::insert_child_before
      */
 
-    extern bool NO_XML_NS; // defined in XLXmlParser.cpp - default: no XML namespaces
+    extern bool NO_XML_NS;    // defined in XLXmlParser.cpp - default: no XML namespaces
     /**
      * @brief Set NO_XML_NS to false
      * @return true if PUGI_AUGMENTED is defined (success), false if PUGI_AUGMENTED is not in use (function would be pointless)
@@ -97,25 +100,26 @@ namespace OpenXLSX
     bool disable_xml_namespaces();
 
     // disable this line to use original (non-augmented) pugixml - as of 2024-07-29 this is no longer a realistic option
-#   define PUGI_AUGMENTED
+#define PUGI_AUGMENTED
 
     // ===== Using statements to switch between pugixml and augmented pugixml implementation
-#   ifdef PUGI_AUGMENTED
-        // ===== Forward declarations for using statements below
-        class OpenXLSX_xml_node;
-        class OpenXLSX_xml_document;
+#ifdef PUGI_AUGMENTED
+    // ===== Forward declarations for using statements below
+    class OpenXLSX_xml_node;
+    class OpenXLSX_xml_document;
 
-        using XMLNode      = OpenXLSX_xml_node;
-        using XMLAttribute = pugi::xml_attribute;
-        using XMLDocument  = OpenXLSX_xml_document;
-#   else
-        using XMLNode      = pugi::xml_node;
-        using XMLAttribute = pugi::xml_attribute;
-        using XMLDocument  = pugi::xml_document;
-#   endif
+    using XMLNode      = OpenXLSX_xml_node;
+    using XMLAttribute = pugi::xml_attribute;
+    using XMLDocument  = OpenXLSX_xml_document;
+#else
+    using XMLNode      = pugi::xml_node;
+    using XMLAttribute = pugi::xml_attribute;
+    using XMLDocument  = pugi::xml_document;
+#endif
 
     // ===== Custom OpenXLSX_xml_node to add functionality to pugi::xml_node
-    class OpenXLSX_xml_node : public pugi::xml_node {
+    class OpenXLSX_xml_node : public pugi::xml_node
+    {
     public:
         /**
          * @brief Default constructor. Constructs a null object.
@@ -127,13 +131,14 @@ namespace OpenXLSX
          */
         template<class base>
         // explicit OpenXLSX_xml_node(base b) : pugi::xml_node(b), name_begin(0) // TBD on explicit keyword
-        OpenXLSX_xml_node(base b) : pugi::xml_node(b), name_begin(0)
+        OpenXLSX_xml_node(base b) : pugi::xml_node(b),
+                                    name_begin(0)
         {
             if (NO_XML_NS) return;
-                const char *name = xml_node::name();
-            size_t pos = 0;
-            while (name[pos] && name[pos] != ':') ++pos; // find name delimiter
-            if (name[pos] == ':') name_begin = pos + 1;  // if delimiter was found: update name_begin to point behind that position
+            const char* name = xml_node::name();
+            size_t      pos  = 0;
+            while (name[pos] && name[pos] != ':') ++pos;    // find name delimiter
+            if (name[pos] == ':') name_begin = pos + 1;     // if delimiter was found: update name_begin to point behind that position
         }
 
         /**
@@ -159,7 +164,6 @@ namespace OpenXLSX
          */
         std::shared_ptr<pugi::char_t> namespaced_name_shared_ptr(const pugi::char_t* name_, bool force_ns) const;
 
-
         // ===== BEGIN: Wrappers for xml_node member functions to ensure OpenXLSX_xml_node return values
         //                and overrides for xml_node member functions to support ignoring the node namespace
         // ===== CAUTION: this section might be incomplete, only functions actually used by OpenXLSX to date have been checked
@@ -180,7 +184,9 @@ namespace OpenXLSX
          * @brief for all functions returning xml_node: invoke base class function, but with a return type of XMLNode (OpenXLSX_xml_node)
          */
         XMLNode parent() { return pugi::xml_node::parent(); }
-        template <typename Predicate> XMLNode find_child(Predicate pred) const { return pugi::xml_node::find_child(pred); }
+        template<typename Predicate>
+        XMLNode find_child(Predicate pred) const
+        { return pugi::xml_node::find_child(pred); }
         XMLNode child(const pugi::char_t* name_) const { return xml_node::child(NAMESPACED_NAME(name_, false)); }
         XMLNode next_sibling(const pugi::char_t* name_) const { return xml_node::next_sibling(NAMESPACED_NAME(name_, false)); }
         XMLNode next_sibling() const { return xml_node::next_sibling(); }
@@ -189,23 +195,26 @@ namespace OpenXLSX
         const pugi::char_t* child_value() const { return xml_node::child_value(); }
         const pugi::char_t* child_value(const pugi::char_t* name_) const { return xml_node::child_value(NAMESPACED_NAME(name_, false)); }
         bool set_name(const pugi::char_t* rhs, bool force_ns = false) { return xml_node::set_name(NAMESPACED_NAME(rhs, force_ns)); }
-        bool set_name(const pugi::char_t* rhs, size_t size, bool force_ns = false) { return xml_node::set_name(NAMESPACED_NAME(rhs, force_ns), size + name_begin); }
+        bool set_name(const pugi::char_t* rhs, size_t size, bool force_ns = false)
+        { return xml_node::set_name(NAMESPACED_NAME(rhs, force_ns), size + name_begin); }
         XMLNode append_child(pugi::xml_node_type type_) { return xml_node::append_child(type_); }
         XMLNode prepend_child(pugi::xml_node_type type_) { return xml_node::prepend_child(type_); }
-        XMLNode append_child(const pugi::char_t* name_, bool force_ns = false) { return xml_node::append_child(NAMESPACED_NAME(name_, force_ns)); }
-        XMLNode prepend_child(const pugi::char_t* name_, bool force_ns = false) { return xml_node::prepend_child(NAMESPACED_NAME(name_, force_ns)); }
+        XMLNode append_child(const pugi::char_t* name_, bool force_ns = false)
+        { return xml_node::append_child(NAMESPACED_NAME(name_, force_ns)); }
+        XMLNode prepend_child(const pugi::char_t* name_, bool force_ns = false)
+        { return xml_node::prepend_child(NAMESPACED_NAME(name_, force_ns)); }
         XMLNode insert_child_after(pugi::xml_node_type type_, const xml_node& node) { return xml_node::insert_child_after(type_, node); }
         XMLNode insert_child_before(pugi::xml_node_type type_, const xml_node& node) { return xml_node::insert_child_before(type_, node); }
         XMLNode insert_child_after(const pugi::char_t* name_, const xml_node& node, bool force_ns = false)
-            { return xml_node::insert_child_after(NAMESPACED_NAME(name_, force_ns), node); }
+        { return xml_node::insert_child_after(NAMESPACED_NAME(name_, force_ns), node); }
         XMLNode insert_child_before(const pugi::char_t* name_, const xml_node& node, bool force_ns = false)
-            { return xml_node::insert_child_before(NAMESPACED_NAME(name_, force_ns), node); }
-        bool remove_child(const pugi::char_t* name_) { return xml_node::remove_child(NAMESPACED_NAME(name_, false)); }
-        bool remove_child(const xml_node& n) { return xml_node::remove_child(n); }
+        { return xml_node::insert_child_before(NAMESPACED_NAME(name_, force_ns), node); }
+        bool    remove_child(const pugi::char_t* name_) { return xml_node::remove_child(NAMESPACED_NAME(name_, false)); }
+        bool    remove_child(const xml_node& n) { return xml_node::remove_child(n); }
         XMLNode find_child_by_attribute(const pugi::char_t* name_, const pugi::char_t* attr_name, const pugi::char_t* attr_value) const
-            { return xml_node::find_child_by_attribute(NAMESPACED_NAME(name_, false), attr_name, attr_value); }
+        { return xml_node::find_child_by_attribute(NAMESPACED_NAME(name_, false), attr_name, attr_value); }
         XMLNode find_child_by_attribute(const pugi::char_t* attr_name, const pugi::char_t* attr_value) const
-            { return xml_node::find_child_by_attribute(attr_name, attr_value); }
+        { return xml_node::find_child_by_attribute(attr_name, attr_value); }
         // DISCLAIMER: unused by OpenXLSX, but theoretically impacted by xml namespaces:
         // PUGI_IMPL_FN xml_node xml_node::first_element_by_path(const pugi::char_t* path_, pugi::char_t delimiter) const
         // ===== END: Wrappers for xml_node member functions
@@ -262,12 +271,14 @@ namespace OpenXLSX
         XMLNode previous_sibling_of_type(const pugi::char_t* name_, pugi::xml_node_type type_ = pugi::node_element) const;
 
     private:
-        size_t name_begin; // nameBegin holds the position in xml_node::name() where the actual node name begins - 0 for non-namespaced nodes
-                         // for nodes with a namespace: the position following namespace + delimiter colon, e.g. "x:c" -> nameBegin = 2
+        size_t name_begin;    // nameBegin holds the position in xml_node::name() where the actual node name begins - 0 for non-namespaced
+                              // nodes for nodes with a namespace: the position following namespace + delimiter colon, e.g. "x:c" ->
+                              // nameBegin = 2
     };
 
     // ===== Custom OpenXLSX_xml_document to override relevant pugi::xml_document member functions with OpenXLSX_xml_node return value
-    class OpenXLSX_xml_document : public pugi::xml_document {
+    class OpenXLSX_xml_document : public pugi::xml_document
+    {
     public:
         /**
          * @brief Default constructor. Constructs a null object.

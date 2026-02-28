@@ -47,31 +47,31 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLMERGECELLS_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 #include <deque>
 #include <limits>     // std::numeric_limits
 #include <memory>     // std::unique_ptr
 #include <ostream>    // std::basic_ostream
 #include <string>
-#include <string_view>  // std::string_view
-#include <vector>       // std::vector
+#include <string_view>    // std::string_view
+#include <vector>         // std::vector
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
 #include "XLCellReference.hpp"
-#include "XLXmlParser.hpp" // XMLNode, pugi node types
+#include "XLXmlParser.hpp"    // XMLNode, pugi node types
 
 namespace OpenXLSX
 {
-    typedef int32_t XLMergeIndex;
+    typedef int32_t              XLMergeIndex;
     constexpr const XLMergeIndex XLMergeNotFound = -1;
 
     // pull request #261: wrapped max in parentheses to prevent expansion of windows.h "max" macro
-    constexpr size_t XLMaxMergeCells = (std::numeric_limits< XLMergeIndex >::max)();
+    constexpr size_t XLMaxMergeCells = (std::numeric_limits<XLMergeIndex>::max)();
 
     /**
      * @brief This class encapsulate the Excel concept of <mergeCells>. Each worksheet that has merged cells has a list of
@@ -96,7 +96,7 @@ namespace OpenXLSX
          * @param node The root node of the worksheet document - must not be an empty node
          * @param nodeOrder the worksheet node sequence to respect when inserting <mergeCells> node
          */
-        explicit XLMergeCells(const XMLNode& rootNode, std::vector< std::string_view > const & nodeOrder);
+        explicit XLMergeCells(const XMLNode& rootNode, std::vector<std::string_view> const& nodeOrder);
 
         /**
          * @brief Destructor
@@ -202,15 +202,15 @@ namespace OpenXLSX
         void print(std::basic_ostream<char>& ostr) const;
 
     private:
-        std::unique_ptr<XMLNode> m_rootNode;         /**< An XMLNode object with the worksheet root node (document element) */
-        std::vector< std::string_view > m_nodeOrder; /**< worksheet XML root node required child sequence as passed into constructor */
-        std::unique_ptr<XMLNode> m_mergeCellsNode; /**< An XMLNode object with the mergeCells item */
-        std::deque<std::string> m_referenceCache;
+        std::unique_ptr<XMLNode>      m_rootNode;       /**< An XMLNode object with the worksheet root node (document element) */
+        std::vector<std::string_view> m_nodeOrder;      /**< worksheet XML root node required child sequence as passed into constructor */
+        std::unique_ptr<XMLNode>      m_mergeCellsNode; /**< An XMLNode object with the mergeCells item */
+        std::deque<std::string>       m_referenceCache;
     };
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLMERGECELLS_HPP

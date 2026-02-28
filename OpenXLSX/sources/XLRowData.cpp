@@ -51,7 +51,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include "XLCell.hpp"
 #include "XLRow.hpp"
 #include "XLRowData.hpp"
-#include "utilities/XLUtilities.hpp"
+#include "XLUtilities.hpp"
 
 // ========== XLRowDataIterator  ============================================ //
 namespace OpenXLSX
@@ -65,8 +65,8 @@ namespace OpenXLSX
      */
     XLRowDataIterator::XLRowDataIterator(const XLRowDataRange& rowDataRange, XLIteratorLocation loc)
         : m_dataRange(std::make_unique<XLRowDataRange>(rowDataRange)),
-          m_cellNode(std::make_unique<XMLNode>(
-              getCellNode((m_dataRange->size() ? *m_dataRange->m_rowNode : XMLNode {}), m_dataRange->m_firstCol))),
+          m_cellNode(
+              std::make_unique<XMLNode>(getCellNode((m_dataRange->size() ? *m_dataRange->m_rowNode : XMLNode{}), m_dataRange->m_firstCol))),
           m_currentCell(loc == XLIteratorLocation::End ? XLCell() : XLCell(*m_cellNode, m_dataRange->m_sharedStrings.get()))
     {}
 
@@ -124,7 +124,7 @@ namespace OpenXLSX
      */
     XLRowDataIterator& XLRowDataIterator::operator++()
     {
-        if( not m_currentCell ) // 2025-07-14 BUGFIX issue #368: check that m_currentCell is valid
+        if (not m_currentCell)    // 2025-07-14 BUGFIX issue #368: check that m_currentCell is valid
             throw XLInputError("XLRowDataIterator: tried to increment beyond end operator");
 
         // ===== Compute the column number, and move the m_cellNode to the next sibling.
@@ -248,7 +248,8 @@ namespace OpenXLSX
      * @post
      */
     XLRowDataRange::XLRowDataRange(const XLRowDataRange& other)
-        : m_rowNode((other.m_rowNode != nullptr) ? std::make_unique<XMLNode>(*other.m_rowNode) : nullptr),    // 2024-05-28: support for copy-construction from an empty XLDataRange
+        : m_rowNode((other.m_rowNode != nullptr) ? std::make_unique<XMLNode>(*other.m_rowNode)
+                                                 : nullptr),    // 2024-05-28: support for copy-construction from an empty XLDataRange
           m_firstCol(other.m_firstCol),
           m_lastCol(other.m_lastCol),
           m_sharedStrings(other.m_sharedStrings)
@@ -304,14 +305,15 @@ namespace OpenXLSX
      * @post
      * @note 2024-05-28: enhanced ::begin() to return an end iterator for an empty range
      */
-    XLRowDataIterator XLRowDataRange::begin() { return XLRowDataIterator { *this, (size() > 0 ? XLIteratorLocation::Begin : XLIteratorLocation::End) }; }
+    XLRowDataIterator XLRowDataRange::begin()
+    { return XLRowDataIterator{*this, (size() > 0 ? XLIteratorLocation::Begin : XLIteratorLocation::End)}; }
 
     /**
      * @details Get an iterator to (one past) the last cell in the range.
      * @pre
      * @post
      */
-    XLRowDataIterator XLRowDataRange::end() { return XLRowDataIterator { *this, XLIteratorLocation::End }; }
+    XLRowDataIterator XLRowDataRange::end() { return XLRowDataIterator{*this, XLIteratorLocation::End}; }
 
 }    // namespace OpenXLSX
 
@@ -333,9 +335,7 @@ namespace OpenXLSX
      */
     XLRowDataProxy& XLRowDataProxy::operator=(const XLRowDataProxy& other)
     {
-        if (&other != this) {
-            *this = other.getValues();
-        }
+        if (&other != this) { *this = other.getValues(); }
 
         return *this;
     }
@@ -384,11 +384,11 @@ namespace OpenXLSX
 
         // ===== prepend new cell nodes to current row node
         // Performance optimization: cache row number and use lightweight address generation
-        XMLNode curNode{};
-        uint16_t colNo = static_cast<uint16_t>(values.size());
+        XMLNode        curNode{};
+        uint16_t       colNo  = static_cast<uint16_t>(values.size());
         const uint32_t rowNum = m_row->rowNumber();
-        char addrBuffer[16];  // Buffer for cell address (e.g., "XFD1048576")
-        
+        char           addrBuffer[16];    // Buffer for cell address (e.g., "XFD1048576")
+
         for (auto value = values.rbegin(); value != values.rend(); ++value) {    // NOLINT
             curNode = m_rowNode->prepend_child("c");
             // Use lightweight address generation instead of XLCellReference object
@@ -504,8 +504,8 @@ namespace OpenXLSX
                 XMLNode nextNode = cellNode.next_sibling();    // get next "regular" sibling (any type) before advancing cellNode
                 cellNode         = cellNode.next_sibling_of_type(pugi::node_element);
                 // ===== Iterate over non-element nodes and mark them for deletion
-                while (nextNode != cellNode)
-                {    // this also works with the empty node returned past last sibling, as for XMLNode a{}, b{}, ( a == b ) is true
+                while (nextNode != cellNode) {    // this also works with the empty node returned past last sibling, as for XMLNode a{},
+                                                  // b{}, ( a == b ) is true
                     toBeDeleted.emplace_back(nextNode);
                     nextNode = nextNode.next_sibling();
                 }

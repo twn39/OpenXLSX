@@ -47,10 +47,10 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLROW_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
@@ -201,9 +201,7 @@ namespace OpenXLSX
          */
         template<typename T>
         T values() const
-        {
-            return static_cast<T>(values());
-        }
+        { return static_cast<T>(values()); }
 
         /**
          * @brief
@@ -320,7 +318,8 @@ namespace OpenXLSX
          */
         XLRowIterator& operator=(XLRowIterator&& other) noexcept;
 
-    private:    // ===== Switch to private method that is used by the XLRowIterator increment operator++ and the dereference operators * and ->
+    private
+        :    // ===== Switch to private method that is used by the XLRowIterator increment operator++ and the dereference operators * and ->
         static constexpr const bool XLCreateIfMissing      = true;     // code readability for updateCurrentRow parameter createIfMissing
         static constexpr const bool XLDoNotCreateIfMissing = false;    //   "
         /**
@@ -329,8 +328,7 @@ namespace OpenXLSX
          */
         void updateCurrentRow(bool createIfMissing);
 
-    public:     // ===== Switch back to public methods
-
+    public:    // ===== Switch back to public methods
         /**
          * @brief
          * @return
@@ -394,21 +392,21 @@ namespace OpenXLSX
         uint32_t rowNumber() const { return m_endReached ? m_lastRow + 1 : m_currentRowNumber; }
 
     private:
-        std::unique_ptr<XMLNode> m_dataNode;       /**< */
-        uint32_t                 m_firstRow { 1 }; /**< The cell reference of the first cell in the range */
-        uint32_t                 m_lastRow { 1 };  /**< The cell reference of the last cell in the range */
-        XLRow                    m_currentRow;     /**< */
-        XLSharedStringsRef       m_sharedStrings;  /**< */
+        std::unique_ptr<XMLNode> m_dataNode;      /**< */
+        uint32_t                 m_firstRow{1};   /**< The cell reference of the first cell in the range */
+        uint32_t                 m_lastRow{1};    /**< The cell reference of the last cell in the range */
+        XLRow                    m_currentRow;    /**< */
+        XLSharedStringsRef       m_sharedStrings; /**< */
 
         // helper variables for non-creating iterator functionality
-        bool                     m_endReached;           /**< */
-        XMLNode                  m_hintRow;              /**< The cell node of the last existing row found up to current iterator position */
-        uint32_t                 m_hintRowNumber;        /**<   the row number for m_hintRow */
-        static constexpr const int XLNotLoaded  = 0;    // code readability for m_currentRowStatus
-        static constexpr const int XLNoSuchRow  = 1;    //   "
-        static constexpr const int XLLoaded     = 2;    //   "
-        int                      m_currentRowStatus;    /**< Status of m_currentRow: XLNotLoaded, XLNoSuchRow or XLLoaded */
-        uint32_t                 m_currentRowNumber;
+        bool                       m_endReached;       /**< */
+        XMLNode                    m_hintRow;          /**< The cell node of the last existing row found up to current iterator position */
+        uint32_t                   m_hintRowNumber;    /**<   the row number for m_hintRow */
+        static constexpr const int XLNotLoaded = 0;    // code readability for m_currentRowStatus
+        static constexpr const int XLNoSuchRow = 1;    //   "
+        static constexpr const int XLLoaded    = 2;    //   "
+        int                        m_currentRowStatus; /**< Status of m_currentRow: XLNotLoaded, XLNoSuchRow or XLLoaded */
+        uint32_t                   m_currentRowNumber;
     };
 
     /**
@@ -548,7 +546,7 @@ namespace OpenXLSX
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLROW_HPP

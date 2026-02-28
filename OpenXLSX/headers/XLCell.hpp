@@ -47,14 +47,14 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLCELL_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
-#include <iostream> // std::ostream
-#include <ostream>  // std::basic_ostream
+#include <iostream>    // std::ostream
 #include <memory>
+#include <ostream>    // std::basic_ostream
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
@@ -62,17 +62,17 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include "XLCellValue.hpp"
 #include "XLFormula.hpp"
 #include "XLSharedStrings.hpp"
-#include "XLStyles.hpp"          // XLStyleIndex
+#include "XLStyles.hpp"    // XLStyleIndex
 
 // ========== CLASS AND ENUM TYPE DEFINITIONS ========== //
 namespace OpenXLSX
 {
     // ===== Flags that can be passed to XLCell::clear as parameter keep, flags can be combined with bitwise OR
     //                                  // Do not clear the cell's:
-    constexpr const uint32_t XLKeepCellStyle   =  1; // style (attribute s)
-    constexpr const uint32_t XLKeepCellType    =  2; // type (attribute t)
-    constexpr const uint32_t XLKeepCellValue   =  4; // value (child node v)
-    constexpr const uint32_t XLKeepCellFormula =  8; // formula (child node f)
+    constexpr const uint32_t XLKeepCellStyle   = 1;    // style (attribute s)
+    constexpr const uint32_t XLKeepCellType    = 2;    // type (attribute t)
+    constexpr const uint32_t XLKeepCellValue   = 4;    // value (child node v)
+    constexpr const uint32_t XLKeepCellFormula = 8;    // formula (child node f)
 
     class XLCellRange;
 
@@ -161,7 +161,8 @@ namespace OpenXLSX
          * @brief clear all cell content and attributes except for the cell reference (attribute r)
          * @param keep do not clear cell properties whose flags are set in keep (XLKeepCellStyle, XLKeepCellType,
          *              XLKeepCellValue, XLKeepCellFormula), flags can be combined with bitwise OR
-         * @note due to the way OOXML separates comments from the cells, this function will *not* clear a cell comment - refer to XLComments& XLSheet::comments() for that
+         * @note due to the way OOXML separates comments from the cells, this function will *not* clear a cell comment - refer to
+         * XLComments& XLSheet::comments() for that
          */
         void clear(uint32_t keep);
 
@@ -259,23 +260,23 @@ namespace OpenXLSX
          * @brief Copy constructor. Constructs an assignable XLCell from an existing cell
          * @param other the cell to construct from
          */
-        XLCellAssignable (XLCell const & other);
-        XLCellAssignable (XLCellAssignable const & other);
+        XLCellAssignable(XLCell const& other);
+        XLCellAssignable(XLCellAssignable const& other);
 
         /**
          * @brief Move constructor. Constructs an assignable XLCell from a temporary (r)value
          * @param other the cell to construct from
          */
-        XLCellAssignable (XLCell && other);
-        XLCellAssignable (XLCellAssignable && other) noexcept;
+        XLCellAssignable(XLCell&& other);
+        XLCellAssignable(XLCellAssignable&& other) noexcept;
 
         // /**
         //  * @brief Inherit all constructors with parameters from XLCell
         //  */
         // template<class base>
         // // explicit XLCellAssignable(base b) : XLCell(b)
-        // // NOTE: BUG: explicit keyword triggers tons of compiler errors when << operator attempts to use an XLCell (implicit conversion works because << is overloaded for XLCellAssignable)
-        // XLCellAssignable(base b) : XLCell(b)
+        // // NOTE: BUG: explicit keyword triggers tons of compiler errors when << operator attempts to use an XLCell (implicit conversion
+        // works because << is overloaded for XLCellAssignable) XLCellAssignable(base b) : XLCell(b)
         // {}
 
         /**
@@ -309,7 +310,7 @@ namespace OpenXLSX
                      std::is_same_v<std::decay_t<T>, char*> || std::is_same_v<T, XLDateTime>>>
         XLCellAssignable& operator=(T value)
         {
-            XLCell::value() = value; // forward implementation to templated XLCellValue& XLCellValue::operator=(T value)
+            XLCell::value() = value;    // forward implementation to templated XLCellValue& XLCellValue::operator=(T value)
             return *this;
         }
     };
@@ -362,7 +363,7 @@ namespace OpenXLSX
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLCELL_HPP

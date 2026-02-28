@@ -1,10 +1,12 @@
-#include <catch.hpp>
 #include <OpenXLSX.hpp>
+#include <catch2/catch_all.hpp>
 
 using namespace OpenXLSX;
 
-TEST_CASE("XLMergeCells Tests", "[XLMergeCells]") {
-    SECTION("Basic Merge and Unmerge") {
+TEST_CASE("XLMergeCells Tests", "[XLMergeCells]")
+{
+    SECTION("Basic Merge and Unmerge")
+    {
         XLDocument doc;
         doc.create("./testXLMergeCells.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
@@ -21,7 +23,8 @@ TEST_CASE("XLMergeCells Tests", "[XLMergeCells]") {
         doc.close();
     }
 
-    SECTION("Multiple Merges") {
+    SECTION("Multiple Merges")
+    {
         XLDocument doc;
         doc.create("./testXLMultipleMerges.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
@@ -36,13 +39,14 @@ TEST_CASE("XLMergeCells Tests", "[XLMergeCells]") {
         doc.close();
     }
 
-    SECTION("Find Merge by Cell") {
+    SECTION("Find Merge by Cell")
+    {
         XLDocument doc;
         doc.create("./testXLMergeByCell.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.mergeCells("B2:C3");
-        
+
         REQUIRE(wks.merges().findMergeByCell("B2") == 0);
         REQUIRE(wks.merges().findMergeByCell("C3") == 0);
         REQUIRE(wks.merges().findMergeByCell("B3") == 0);
@@ -52,25 +56,27 @@ TEST_CASE("XLMergeCells Tests", "[XLMergeCells]") {
         doc.close();
     }
 
-    SECTION("Overlap Detection") {
+    SECTION("Overlap Detection")
+    {
         XLDocument doc;
         doc.create("./testXLMergeOverlap.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.mergeCells("B2:D4");
-        
+
         // Overlapping cases
-        REQUIRE_THROWS_AS(wks.mergeCells("C3:E5"), XLInputError); // Partial overlap
-        REQUIRE_THROWS_AS(wks.mergeCells("B2:D4"), XLInputError); // Exact same
-        REQUIRE_THROWS_AS(wks.mergeCells("C3:C3"), XLInputError); // Inside (though 1x1 is also invalid)
-        
+        REQUIRE_THROWS_AS(wks.mergeCells("C3:E5"), XLInputError);    // Partial overlap
+        REQUIRE_THROWS_AS(wks.mergeCells("B2:D4"), XLInputError);    // Exact same
+        REQUIRE_THROWS_AS(wks.mergeCells("C3:C3"), XLInputError);    // Inside (though 1x1 is also invalid)
+
         // Non-overlapping
         REQUIRE_NOTHROW(wks.mergeCells("E5:F6"));
 
         doc.close();
     }
 
-    SECTION("Empty Hidden Cells") {
+    SECTION("Empty Hidden Cells")
+    {
         XLDocument doc;
         doc.create("./testXLEmptyHiddenCells.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");

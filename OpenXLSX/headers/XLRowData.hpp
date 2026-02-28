@@ -6,10 +6,10 @@
 #define OPENXLSX_XLROWDATA_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 // ===== External Includes ===== //
 #include <deque>
@@ -222,10 +222,10 @@ namespace OpenXLSX
          */
         explicit XLRowDataRange();
 
-        std::unique_ptr<XMLNode> m_rowNode;        /**< */
-        uint16_t                 m_firstCol { 1 }; /**< The cell reference of the first cell in the range */
-        uint16_t                 m_lastCol { 1 };  /**< The cell reference of the last cell in the range */
-        XLSharedStringsRef       m_sharedStrings;  /**< */
+        std::unique_ptr<XMLNode> m_rowNode;       /**< */
+        uint16_t                 m_firstCol{1};   /**< The cell reference of the first cell in the range */
+        uint16_t                 m_lastCol{1};    /**< The cell reference of the last cell in the range */
+        XLSharedStringsRef       m_sharedStrings; /**< */
     };
 
     /**
@@ -363,9 +363,7 @@ namespace OpenXLSX
                                                             typename std::iterator_traits<typename Container::iterator>::iterator_category>,
                                       Container>>
         explicit operator Container() const
-        {
-            return convertContainer<Container>();
-        }
+        { return convertContainer<Container>(); }
 
         /**
          * @brief Clears all values for the current row.
@@ -464,14 +462,14 @@ namespace OpenXLSX
 
         //---------- Private Member Variables ---------- //
 
-        XLRow*   m_row { nullptr };     /**< Pointer to the parent XLRow object. */
-        XMLNode* m_rowNode { nullptr }; /**< Pointer the the XML node representing the row. */
+        XLRow*   m_row{nullptr};     /**< Pointer to the parent XLRow object. */
+        XMLNode* m_rowNode{nullptr}; /**< Pointer the the XML node representing the row. */
     };
 
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLROWDATA_HPP
