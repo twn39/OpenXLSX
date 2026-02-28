@@ -9,7 +9,7 @@ OpenXLSX is a high-performance C++ library for reading, writing, creating, and m
 - **Language**: C++17 (required for `std::variant`, `std::optional`, and other features).
 - **Build System**: Unified CMake 3.15+ (Single root `CMakeLists.txt`).
 - **XML Parsing**: [PugiXML](https://pugixml.org/) (DOM-based, fast).
-- **ZIP Handling**: [Zippy](https://github.com/troldal/Zippy) (wrapper around `miniz`).
+- **ZIP Handling**: [minizip-ng](https://github.com/zlib-ng/minizip-ng) with [zlib-ng](https://github.com/zlib-ng/zlib-ng) (SIMD optimized, Zip64 support).
 - **Unicode**: [Boost.Nowide](https://github.com/boostorg/nowide) (UTF-8 support on Windows).
 - **Testing & Benchmarking**: [Catch2 v3](https://github.com/catchorg/Catch2) (Integrated via `FetchContent`).
 - **Safety**: [Microsoft GSL v4.2.1](https://github.com/microsoft/GSL) (C++ Core Guidelines Support Library).
@@ -82,8 +82,8 @@ The project utilizes Microsoft GSL to enforce C++ Core Guidelines and ensure mem
 - Test data (images) is automatically copied to the build directory during the build process.
 
 ### Third Party (`third_party/`)
-- Local versions of `pugixml`, `nowide`, and `zippy`. 
-- `fmt` and `fast_float` are managed via `FetchContent` in the root `CMakeLists.txt`.
+- Local versions of `pugixml` and `nowide`.
+- `fmt`, `fast_float`, `Microsoft GSL`, `zlib-ng`, and `minizip-ng` are managed via `FetchContent` in the root `CMakeLists.txt`.
 
 ## Usage Tips for AI
 - **Single Build Entry**: Do not look for `CMakeLists.txt` in subdirectories; everything is in the root.

@@ -32,6 +32,26 @@ FetchContent_MakeAvailable(fmt)
 FetchContent_Declare(GSL GIT_REPOSITORY https://github.com/microsoft/GSL.git GIT_TAG v4.2.1)
 FetchContent_MakeAvailable(GSL)
 
+# Set up zlib-ng
+FetchContent_Declare(zlib_ng GIT_REPOSITORY https://github.com/zlib-ng/zlib-ng.git GIT_TAG 2.2.4)
+set(ZLIB_COMPAT ON CACHE BOOL "Enable zlib compatibility mode")
+set(ZLIB_ENABLE_SIMD ON CACHE BOOL "Enable SIMD optimizations")
+FetchContent_MakeAvailable(zlib_ng)
+
+# Set up minizip-ng
+FetchContent_Declare(minizip_ng GIT_REPOSITORY https://github.com/zlib-ng/minizip-ng.git GIT_TAG 4.0.8)
+set(MZ_COMPAT ON CACHE BOOL "Enable zlib compatibility mode")
+set(MZ_ZLIB ON CACHE BOOL "Enable ZLIB support")
+set(MZ_BZIP2 OFF CACHE BOOL "Disable BZIP2 support")
+set(MZ_LZMA OFF CACHE BOOL "Disable LZMA support")
+set(MZ_PKCRYPT OFF CACHE BOOL "Disable PKWARE encryption")
+set(MZ_WZAES OFF CACHE BOOL "Disable WinZAES encryption")
+set(MZ_LIBCOMP OFF CACHE BOOL "Disable Apple Compression Framework")
+set(MZ_ZSTD OFF CACHE BOOL "Disable ZSTD support")
+set(MZ_OPENSSL OFF CACHE BOOL "Disable OpenSSL support")
+set(MZ_ICONV OFF CACHE BOOL "Disable ICONV support")
+FetchContent_MakeAvailable(minizip_ng)
+
 # Set up Catch2 (if tests or benchmarks are enabled)
 if(OPENXLSX_BUILD_TESTS OR OPENXLSX_BUILD_BENCHMARKS)
     FetchContent_Declare(Catch2 GIT_REPOSITORY https://github.com/catchorg/Catch2.git GIT_TAG v3.13.0)
@@ -66,10 +86,9 @@ target_include_directories(OpenXLSX
         $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/third_party/pugixml/src>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/third_party/zippy>
 )
 
-target_link_libraries(OpenXLSX PUBLIC pugixml Microsoft.GSL::GSL)
+target_link_libraries(OpenXLSX PUBLIC pugixml Microsoft.GSL::GSL minizip)
 target_compile_definitions(OpenXLSX PUBLIC FMT_HEADER_ONLY)
 
 if (OPENXLSX_ENABLE_NOWIDE)
