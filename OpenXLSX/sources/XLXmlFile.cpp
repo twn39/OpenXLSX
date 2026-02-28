@@ -60,8 +60,6 @@ using namespace OpenXLSX;
  */
 XLXmlFile::XLXmlFile(XLXmlData* xmlData) : m_xmlData(xmlData) {}
 
-XLXmlFile::~XLXmlFile() = default;
-
 /**
  * @details This method sets the XML data with a std::string as input. The underlying XMLDocument reads the data.
  * When envoking the load_string method in PugiXML, the flag 'parse_ws_pcdata' is passed along with the default flags.
@@ -69,42 +67,28 @@ XLXmlFile::~XLXmlFile() = default;
  * empty strings, which is not what we want. The downside is that whitespace characters such as \\n and \\t in the
  * input xml file may mess up the parsing.
  */
-void XLXmlFile::setXmlData(const std::string& xmlData) // NOLINT
-{
-    m_xmlData->setRawData(xmlData);
-}
+void XLXmlFile::setXmlData(const std::string& xmlData)    // NOLINT
+{ m_xmlData->setRawData(xmlData); }
 
 /**
  * @details This method retrieves the underlying XML data as a std::string.
  */
-std::string XLXmlFile::xmlData() const
-{
-    return m_xmlData->getRawData();
-}
+std::string XLXmlFile::xmlData(XLXmlSavingDeclaration savingDeclaration) const { return m_xmlData->getRawData(savingDeclaration); }
 
 /**
  * @details
  */
-const XLDocument& XLXmlFile::parentDoc() const
-{
-    return *m_xmlData->getParentDoc();
-}
+const XLDocument& XLXmlFile::parentDoc() const { return *m_xmlData->getParentDoc(); }
 
 /**
  * @details
  */
-XLDocument& XLXmlFile::parentDoc()
-{
-    return *m_xmlData->getParentDoc();
-}
+XLDocument& XLXmlFile::parentDoc() { return *m_xmlData->getParentDoc(); }
 
 /**
  * @details
  */
-std::string XLXmlFile::relationshipID() const
-{
-    return m_xmlData->getXmlID();
-}
+std::string XLXmlFile::relationshipID() const { return m_xmlData->getXmlID(); }
 
 /**
  * @details This method returns a pointer to the underlying XMLDocument resource.
@@ -118,15 +102,9 @@ XMLDocument& XLXmlFile::xmlDocument()
 /**
  * @details This method returns a pointer to the underlying XMLDocument resource as const.
  */
-const XMLDocument& XLXmlFile::xmlDocument() const
-{
-    return *m_xmlData->getXmlDocument();
-}
+const XMLDocument& XLXmlFile::xmlDocument() const { return *m_xmlData->getXmlDocument(); }
 
 /**
  * @details provide access to the underlying XLXmlData::getXmlPath() function
  */
-std::string XLXmlFile::getXmlPath() const
-{
-    return m_xmlData == nullptr ? "" : m_xmlData->getXmlPath();
-}
+std::string XLXmlFile::getXmlPath() const { return m_xmlData == nullptr ? "" : m_xmlData->getXmlPath(); }

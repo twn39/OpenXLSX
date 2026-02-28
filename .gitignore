@@ -117,3 +117,5 @@
 !/Tests/catch/*.hpp
 !/Tests/CMakeLists.txt
 !/Tests/*.cpp
+!/Tests/test.jpg
+!/Tests/test.png

@@ -47,16 +47,16 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLDOCUMENT_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 // ===== External Includes ===== //
-#include <algorithm> // std::find_if
+#include <algorithm>    // std::find_if
 #include <list>
 #include <string>
-#include <unordered_map> // O(1) shared string lookup
+#include <unordered_map>    // O(1) shared string lookup
 
 // ===== OpenXLSX Includes ===== //
 #include "IZipArchive.hpp"
@@ -76,10 +76,10 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 namespace OpenXLSX
 {
-    constexpr const unsigned int pugi_parse_settings = pugi::parse_default | pugi::parse_ws_pcdata; // TBD: | pugi::parse_comments
+    constexpr const unsigned int pugi_parse_settings = pugi::parse_default | pugi::parse_ws_pcdata;    // TBD: | pugi::parse_comments
 
-    constexpr const bool XLForceOverwrite = true;    // readability constant for 2nd parameter of XLDocument::saveAs
-    constexpr const bool XLDoNotOverwrite = false;   //  "
+    constexpr const bool XLForceOverwrite = true;     // readability constant for 2nd parameter of XLDocument::saveAs
+    constexpr const bool XLDoNotOverwrite = false;    //  "
 
     /**
      * @brief The XLDocumentProperties class is an enumeration of the possible properties (metadata) that can be set
@@ -245,6 +245,12 @@ namespace OpenXLSX
         const std::string& path() const;
 
         /**
+         * @brief Get the content types object
+         * @return a reference to the XLContentTypes object
+         */
+        XLContentTypes& contentTypes();
+
+        /**
          * @brief Get the underlying workbook object, as a const object.
          * @return A const pointer to the XLWorkbook object.
          */
@@ -310,6 +316,13 @@ namespace OpenXLSX
         bool hasSheetComments(uint16_t sheetXmlNo) const;
 
         /**
+         * @brief determine whether a worksheet drawing file exists for sheetXmlNo
+         * @param sheetXmlNo check for this sheet number # (xl/drawings/drawing#.xml)
+         * @return true if drawing file exists
+         */
+        bool hasSheetDrawing(uint16_t sheetXmlNo) const;
+
+        /**
          * @brief determine whether a worksheet table(s) file exists for sheetXmlNo
          * @param sheetXmlNo check for this sheet number # (xl/tables/table#.xml)
          * @return true if table(s) file exists
@@ -324,11 +337,33 @@ namespace OpenXLSX
         XLRelationships sheetRelationships(uint16_t sheetXmlNo);
 
         /**
+         * @brief fetch the worksheet drawing for sheetXmlNo, create the file if it does not exist
+         * @param sheetXmlNo fetch for this sheet #
+         * @return an XLDrawing object initialized with the sheet drawing
+         */
+        XLDrawing sheetDrawing(uint16_t sheetXmlNo);
+
+        /**
          * @brief fetch the worksheet VML drawing for sheetXmlNo, create the file if it does not exist
          * @param sheetXmlNo fetch for this sheet #
          * @return an XLVmlDrawing object initialized with the sheet drawing
          */
         XLVmlDrawing sheetVmlDrawing(uint16_t sheetXmlNo);
+
+        /**
+         * @brief Add an image to the document archive (xl/media/)
+         * @param name The name of the image file (e.g. "image1.png")
+         * @param data The binary data of the image
+         * @return The path to the image in the archive
+         */
+        std::string addImage(const std::string& name, const std::string& data);
+
+        /**
+         * @brief Get image data from the document archive (xl/media/)
+         * @param path The path to the image in the archive (e.g. "xl/media/image1.png")
+         * @return The binary data of the image
+         */
+        std::string getImage(const std::string& path) const;
 
         /**
          * @brief fetch the worksheet comments for sheetXmlNo, create the file if it does not exist
@@ -343,6 +378,13 @@ namespace OpenXLSX
          * @return an XLTables object initialized with the sheet tables
          */
         XLTables sheetTables(uint16_t sheetXmlNo);
+
+        /**
+         * @brief fetch the drawing relationships for a drawing file, create the file if it does not exist
+         * @param drawingPath The path to the drawing file (e.g. "xl/drawings/drawing1.xml")
+         * @return an XLRelationships object initialized with the drawing relationships
+         */
+        XLRelationships drawingRelationships(const std::string& drawingPath);
 
     public:
         /**
@@ -388,7 +430,8 @@ namespace OpenXLSX
         const XLSharedStrings& sharedStrings() const { return m_sharedStrings; }
 
         /**
-         * @brief rewrite the shared strings cache (and update all cells referencing an index from the shared strings), dropping unused strings
+         * @brief rewrite the shared strings cache (and update all cells referencing an index from the shared strings), dropping unused
+         * strings
          * @note potentially time-intensive (on documents with many strings or many cells referring shared strings)
          */
         void cleanupSharedStrings();
@@ -433,27 +476,27 @@ namespace OpenXLSX
         //----------------------------------------------------------------------------------------------------------------------
 
     private:
-        bool m_suppressWarnings {true}; /**< If true, will suppress output of warnings where supported */
+        bool m_suppressWarnings{true}; /**< If true, will suppress output of warnings where supported */
 
-        std::string m_filePath {};      /**< The path to the original file*/
+        std::string m_filePath{}; /**< The path to the original file*/
 
-        XLXmlSavingDeclaration m_xmlSavingDeclaration;  /**< The xml saving declaration that will be passed to pugixml before generating the XML output data*/
+        XLXmlSavingDeclaration
+            m_xmlSavingDeclaration; /**< The xml saving declaration that will be passed to pugixml before generating the XML output data*/
 
-        mutable std::list<XLXmlData>    m_data {};              /**<  */
-        mutable std::deque<std::string> m_sharedStringCache {}; /**<  */
-        mutable std::unordered_map<std::string, int32_t> m_sharedStringIndex {}; /**< O(1) string -> index lookup */
-        mutable XLSharedStrings         m_sharedStrings {};     /**<  */
+        mutable std::list<XLXmlData>                     m_data{};              /**<  */
+        mutable std::deque<std::string>                  m_sharedStringCache{}; /**<  */
+        mutable std::unordered_map<std::string, int32_t> m_sharedStringIndex{}; /**< O(1) string -> index lookup */
+        mutable XLSharedStrings                          m_sharedStrings{};     /**<  */
 
-        XLRelationships m_docRelationships {}; /**< A pointer to the document relationships object*/
-        XLRelationships m_wbkRelationships {}; /**< A pointer to the document relationships object*/
-        XLContentTypes  m_contentTypes {};     /**< A pointer to the content types object*/
-        XLAppProperties m_appProperties {};    /**< A pointer to the App properties object */
-        XLProperties    m_coreProperties {};   /**< A pointer to the Core properties object*/
-        XLStyles        m_styles {};           /**< A pointer to the document styles object*/
-        XLWorkbook      m_workbook {};         /**< A pointer to the workbook object */
-        IZipArchive     m_archive {};          /**<  */
+        XLRelationships m_docRelationships{}; /**< A pointer to the document relationships object*/
+        XLRelationships m_wbkRelationships{}; /**< A pointer to the document relationships object*/
+        XLContentTypes  m_contentTypes{};     /**< A pointer to the content types object*/
+        XLAppProperties m_appProperties{};    /**< A pointer to the App properties object */
+        XLProperties    m_coreProperties{};   /**< A pointer to the Core properties object*/
+        XLStyles        m_styles{};           /**< A pointer to the document styles object*/
+        XLWorkbook      m_workbook{};         /**< A pointer to the workbook object */
+        IZipArchive     m_archive{};          /**<  */
     };
-
 
     //----------------------------------------------------------------------------------------------------------------------
     //           Global utility functions
@@ -466,20 +509,20 @@ namespace OpenXLSX
      * @return A string with the base-16 representation of the data bytes
      * @note 2024-08-18 BUGFIX: replaced char array with std::string, as ISO C++ standard does not permit variable size arrays
      */
-    OPENXLSX_EXPORT std::string BinaryAsHexString(const void *data, const size_t size);
+    OPENXLSX_EXPORT std::string BinaryAsHexString(const void* data, const size_t size);
 
     /**
      * @brief Calculate the two-byte XLSX password hash for password
      * @param password the string to hash
      * @return the two byte value calculated according to the XLSX password hashing algorithm
      */
-    OPENXLSX_EXPORT uint16_t ExcelPasswordHash (std::string password);
+    OPENXLSX_EXPORT uint16_t ExcelPasswordHash(std::string password);
     /**
      * @brief Same as ExcelPasswordHash but format the output as a 4-digit hexadecimal string
      * @param password the string to hash
      * @return a string that can be stored in OOXML as a password hash
      */
-    OPENXLSX_EXPORT std::string ExcelPasswordHashAsString (std::string password);
+    OPENXLSX_EXPORT std::string ExcelPasswordHashAsString(std::string password);
 
     /**
      * @brief eliminate from pathA leading subdirectories shared with pathB and find a path from pathB to pathA destination
@@ -501,7 +544,7 @@ namespace OpenXLSX
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLDOCUMENT_HPP

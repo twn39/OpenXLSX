@@ -47,14 +47,15 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLXMLFILE_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
 #include "XLXmlParser.hpp"
+#include "XLXmlSavingDeclaration.hpp"
 
 namespace OpenXLSX
 {
@@ -63,13 +64,13 @@ namespace OpenXLSX
 
     /**
      * @brief The XLUnsupportedElement class provides a stub implementation that can be used as function
-	  *  parameter or return type for currently unsupported XML features.
+     *  parameter or return type for currently unsupported XML features.
      */
     class OPENXLSX_EXPORT XLUnsupportedElement
     {
     public:
         XLUnsupportedElement() {}
-        bool empty() const { return true; }
+        bool        empty() const { return true; }
         std::string summary() const { return "XLUnsupportedElement"; }
     };
 
@@ -86,6 +87,13 @@ namespace OpenXLSX
          * @brief Default constructor.
          */
         XLXmlFile() = default;
+
+        /**
+         * @brief Method for getting the XML data represented by the object.
+         * @param savingDeclaration @optional specify an XML saving declaration to use
+         * @return A std::string with the XML data.
+         */
+        std::string xmlData(XLXmlSavingDeclaration savingDeclaration = XLXmlSavingDeclaration{}) const;
 
         /**
          * @brief Constructor. Creates an object based on the xmlData input.
@@ -108,13 +116,14 @@ namespace OpenXLSX
         /**
          * @brief Destructor. Default implementation used.
          */
-        ~XLXmlFile();
+        ~XLXmlFile() = default;
 
         /**
          * @brief check whether class is linked to a valid XML file
          * @return true if the class should have a link to valid data
          * @return false if accessing any other sheet properties / methods could cause a segmentation fault
-         * @note for example, if an XLSheet is created with a default constructor, XLSheetBase::valid() (derived from XLXmlFile) would return false
+         * @note for example, if an XLSheet is created with a default constructor, XLSheetBase::valid() (derived from XLXmlFile) would
+         * return false
          */
         bool valid() const { return m_xmlData != nullptr; }
 
@@ -133,12 +142,6 @@ namespace OpenXLSX
         XLXmlFile& operator=(XLXmlFile&& other) noexcept = default;
 
     protected:    // ===== PROTECTED MEMBER FUNCTIONS
-        /**
-         * @brief Method for getting the XML data represented by the object.
-         * @return A std::string with the XML data.
-         */
-        std::string xmlData() const;
-
         /**
          * @brief Provide the XML data represented by the object.
          * @param xmlData A std::string with the XML data.
@@ -182,13 +185,13 @@ namespace OpenXLSX
          */
         std::string getXmlPath() const;
 
-    protected:                            // ===== PROTECTED MEMBER VARIABLES
-        XLXmlData* m_xmlData { nullptr }; /**< The underlying XML data object. */
+    protected:                         // ===== PROTECTED MEMBER VARIABLES
+        XLXmlData* m_xmlData{nullptr}; /**< The underlying XML data object. */
     };
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLXMLFILE_HPP

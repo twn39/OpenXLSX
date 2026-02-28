@@ -47,10 +47,10 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLXMLDATA_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 // ===== External Includes ===== //
 #include <memory>
@@ -60,40 +60,10 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include "OpenXLSX-Exports.hpp"
 #include "XLContentTypes.hpp"
 #include "XLXmlParser.hpp"
+#include "XLXmlSavingDeclaration.hpp"
 
 namespace OpenXLSX
 {
-    constexpr const char * XLXmlDefaultVersion = "1.0";
-    constexpr const char * XLXmlDefaultEncoding = "UTF-8";
-    constexpr const bool   XLXmlStandalone = true;
-    constexpr const bool   XLXmlNotStandalone = false;
-    /**
-     * @brief The XLXmlSavingDeclaration class encapsulates the properties of an XML saving declaration,
-     * that can be used in calls to XLXmlData::getRawData to enforce specific settings
-     */
-    class OPENXLSX_EXPORT XLXmlSavingDeclaration {
-    public:
-        // ===== PUBLIC MEMBER FUNCTIONS ===== //
-        XLXmlSavingDeclaration() : m_version(XLXmlDefaultVersion), m_encoding(XLXmlDefaultEncoding), m_standalone(XLXmlNotStandalone) {}
-        XLXmlSavingDeclaration(XLXmlSavingDeclaration const & other) = default; // copy constructor
-        XLXmlSavingDeclaration(std::string version, std::string encoding, bool standalone = XLXmlNotStandalone)
-            : m_version(version), m_encoding(encoding), m_standalone(standalone) {}
-        ~XLXmlSavingDeclaration() {}
-
-        /**
-         * @brief: getter functions: version, encoding, standalone
-         */
-        std::string const & version() const { return m_version; }
-        std::string const & encoding() const { return m_encoding; }
-        bool standalone_as_bool() const { return m_standalone; }
-        std::string const standalone() const { return m_standalone ? "yes" : "no"; }
-    private:
-        // ===== PRIVATE MEMBER VARIABLES ===== //
-        std::string m_version;
-        std::string m_encoding;
-        bool        m_standalone;
-    };
-
     /**
      * @brief The XLXmlData class encapsulates the properties and behaviour of the .xml files in an .xlsx file zip
      * package. Objects of the XLXmlData type are intended to be stored centrally in an XLDocument object, from where
@@ -235,16 +205,16 @@ namespace OpenXLSX
     private:
         // ===== PRIVATE MEMBER VARIABLES ===== //
 
-        XLDocument*                          m_parentDoc {}; /**< A pointer to the parent XLDocument object. >*/
-        std::string                          m_xmlPath {};   /**< The path of the XML data in the .xlsx zip archive. >*/
-        std::string                          m_xmlID {};     /**< The relationship ID of the XML data. >*/
-        XLContentType                        m_xmlType {};   /**< The type represented by the XML data. >*/
-        mutable std::unique_ptr<XMLDocument> m_xmlDoc;       /**< The underlying XMLDocument object. >*/
+        XLDocument*                          m_parentDoc{}; /**< A pointer to the parent XLDocument object. >*/
+        std::string                          m_xmlPath{};   /**< The path of the XML data in the .xlsx zip archive. >*/
+        std::string                          m_xmlID{};     /**< The relationship ID of the XML data. >*/
+        XLContentType                        m_xmlType{};   /**< The type represented by the XML data. >*/
+        mutable std::unique_ptr<XMLDocument> m_xmlDoc;      /**< The underlying XMLDocument object. >*/
     };
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLXMLDATA_HPP

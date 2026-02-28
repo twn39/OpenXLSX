@@ -47,18 +47,18 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLSHEET_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 // ===== External Includes ===== //
-#include <cstdint>      // uint8_t, uint16_t, uint32_t
-#include <ostream>      // std::basic_ostream
-#include <string_view>  // std::string_view
+#include <cstdint>        // uint8_t, uint16_t, uint32_t
+#include <ostream>        // std::basic_ostream
+#include <string_view>    // std::string_view
 #include <type_traits>
 #include <variant>
-#include <vector>       // std::vector< std::string_view >
+#include <vector>    // std::vector< std::string_view >
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
@@ -68,128 +68,127 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include "XLColor.hpp"
 #include "XLColumn.hpp"
 #include "XLCommandQuery.hpp"
-#include "XLComments.hpp" // XLComments
+#include "XLComments.hpp"    // XLComments
 #include "XLDocument.hpp"
 #include "XLException.hpp"
 #include "XLMergeCells.hpp"
 #include "XLRow.hpp"
-#include "XLStyles.hpp"   // XLStyleIndex
-#include "XLTables.hpp"   // XLTables
+#include "XLStyles.hpp"    // XLStyleIndex
+#include "XLTables.hpp"    // XLTables
 #include "XLXmlFile.hpp"
 
 namespace OpenXLSX
 {
-    constexpr const bool XLEmptyHiddenCells = true; // readability constant for XLWorksheet::mergeCells parameter emptyHiddenCells
+    constexpr const bool XLEmptyHiddenCells = true;    // readability constant for XLWorksheet::mergeCells parameter emptyHiddenCells
 
     /**
      * @brief The XLSheetState is an enumeration of the possible (visibility) states, e.g. Visible or Hidden.
      */
     enum class XLSheetState : uint8_t { Visible, Hidden, VeryHidden };
 
-    constexpr const uint16_t XLPriorityNotSet = 0; // readability constant for XLCfRule::priority()
+    constexpr const uint16_t XLPriorityNotSet = 0;    // readability constant for XLCfRule::priority()
 
     enum class XLCfType : uint8_t {
-        Expression        =   0,
-        CellIs            =   1,
-        ColorScale        =   2,
-        DataBar           =   3,
-        IconSet           =   4,
-        Top10             =   5,
-        UniqueValues      =   6,
-        DuplicateValues   =   7,
-        ContainsText      =   8,
-        NotContainsText   =   9,
-        BeginsWith        =  10,
-        EndsWith          =  11,
-        ContainsBlanks    =  12,
-        NotContainsBlanks =  13,
-        ContainsErrors    =  14,
-        NotContainsErrors =  15,
-        TimePeriod        =  16,
-        AboveAverage      =  17,
+        Expression        = 0,
+        CellIs            = 1,
+        ColorScale        = 2,
+        DataBar           = 3,
+        IconSet           = 4,
+        Top10             = 5,
+        UniqueValues      = 6,
+        DuplicateValues   = 7,
+        ContainsText      = 8,
+        NotContainsText   = 9,
+        BeginsWith        = 10,
+        EndsWith          = 11,
+        ContainsBlanks    = 12,
+        NotContainsBlanks = 13,
+        ContainsErrors    = 14,
+        NotContainsErrors = 15,
+        TimePeriod        = 16,
+        AboveAverage      = 17,
         Invalid           = 255
     };
 
     enum class XLCfOperator : uint8_t {
-        LessThan           =   0,
-        LessThanOrEqual    =   1,
-        Equal              =   2,
-        NotEqual           =   3,
-        GreaterThanOrEqual =   4,
-        GreaterThan        =   5,
-        Between            =   6,
-        NotBetween         =   7,
-        ContainsText       =   8,
-        NotContains        =   9,
-        BeginsWith         =  10,
-        EndsWith           =  11,
+        LessThan           = 0,
+        LessThanOrEqual    = 1,
+        Equal              = 2,
+        NotEqual           = 3,
+        GreaterThanOrEqual = 4,
+        GreaterThan        = 5,
+        Between            = 6,
+        NotBetween         = 7,
+        ContainsText       = 8,
+        NotContains        = 9,
+        BeginsWith         = 10,
+        EndsWith           = 11,
         Invalid            = 255
     };
 
     enum class XLCfTimePeriod : uint8_t {
-        Today     =   0,
-        Yesterday =   1,
-        Tomorrow  =   2,
-        Last7Days =   3,
-        ThisMonth =   4,
-        LastMonth =   5,
-        NextMonth =   6,
-        ThisWeek  =   7,
-        LastWeek  =   8,
-        NextWeek  =   9,
+        Today     = 0,
+        Yesterday = 1,
+        Tomorrow  = 2,
+        Last7Days = 3,
+        ThisMonth = 4,
+        LastMonth = 5,
+        NextMonth = 6,
+        ThisWeek  = 7,
+        LastWeek  = 8,
+        NextWeek  = 9,
         Invalid   = 255
     };
 
-    const std::vector< std::string_view > XLWorksheetNodeOrder = {      // worksheet XML root node required child sequence
-            "sheetPr",
-            "dimension",
-            "sheetViews",
-            "sheetFormatPr",
-            "cols",
-            "sheetData",
-            "sheetCalcPr",
-            "sheetProtection",
-            "protectedRanges",
-            "scenarios",
-            "autoFilter",
-            "sortState",
-            "dataConsolidate",
-            "customSheetViews",
-            "mergeCells",
-            "phoneticPr",
-            "conditionalFormatting",
-            "dataValidations",
-            "hyperlinks",
-            "printOptions",
-            "pageMargins",
-            "pageSetup",
-            "headerFooter",
-            "rowBreaks",
-            "colBreaks",
-            "customProperties",
-            "cellWatches",
-            "ignoredErrors",
-            "smartTags",
-            "drawing",
-            "legacyDrawing",
-            "legacyDrawingHF",
-            "picture",
-            "oleObjects",
-            "controls",
-            "webPublishItems",
-            "tableParts",
-            "extLst"
-    }; // END: const std::vector< std::string_view > XLWorksheetNodeOrder
+    const std::vector<std::string_view> XLWorksheetNodeOrder = {    // worksheet XML root node required child sequence
+        "sheetPr",
+        "dimension",
+        "sheetViews",
+        "sheetFormatPr",
+        "cols",
+        "sheetData",
+        "sheetCalcPr",
+        "sheetProtection",
+        "protectedRanges",
+        "scenarios",
+        "autoFilter",
+        "sortState",
+        "dataConsolidate",
+        "customSheetViews",
+        "mergeCells",
+        "phoneticPr",
+        "conditionalFormatting",
+        "dataValidations",
+        "hyperlinks",
+        "printOptions",
+        "pageMargins",
+        "pageSetup",
+        "headerFooter",
+        "rowBreaks",
+        "colBreaks",
+        "customProperties",
+        "cellWatches",
+        "ignoredErrors",
+        "smartTags",
+        "drawing",
+        "legacyDrawing",
+        "legacyDrawingHF",
+        "picture",
+        "oleObjects",
+        "controls",
+        "webPublishItems",
+        "tableParts",
+        "extLst"};    // END: const std::vector< std::string_view > XLWorksheetNodeOrder
 
     // ================================================================================
     // Converter functions between OpenXLSX class specific enum class types and OOXML values
     // ================================================================================
-    OPENXLSX_EXPORT XLCfType       XLCfTypeFromString      (std::string const& typeString      );
-    OPENXLSX_EXPORT std::string    XLCfTypeToString        (XLCfType           cfType          );
-    OPENXLSX_EXPORT XLCfOperator   XLCfOperatorFromString  (std::string const& operatorString  );
-    OPENXLSX_EXPORT std::string    XLCfOperatorToString    (XLCfOperator       cfOperator      );
+    OPENXLSX_EXPORT XLCfType XLCfTypeFromString(std::string const& typeString);
+    OPENXLSX_EXPORT std::string  XLCfTypeToString(XLCfType cfType);
+    OPENXLSX_EXPORT XLCfOperator XLCfOperatorFromString(std::string const& operatorString);
+    OPENXLSX_EXPORT std::string    XLCfOperatorToString(XLCfOperator cfOperator);
     OPENXLSX_EXPORT XLCfTimePeriod XLCfTimePeriodFromString(std::string const& timePeriodString);
-    OPENXLSX_EXPORT std::string    XLCfTimePeriodToString  (XLCfTimePeriod     cfTimePeriod    );
+    OPENXLSX_EXPORT std::string XLCfTimePeriodToString(XLCfTimePeriod cfTimePeriod);
 
     /**
      * @brief The XLSheetBase class is the base class for the XLWorksheet and XLChartsheet classes. However,
@@ -256,11 +255,9 @@ namespace OpenXLSX
             XLQuery query(XLQueryType::QuerySheetVisibility);
             query.setParam("sheetID", relationshipID());
             const auto state  = parentDoc().execQuery(query).template result<std::string>();
-            auto result = XLSheetState::Visible;
+            auto       result = XLSheetState::Visible;
 
-            if (state == "visible" || state.empty()) {
-                result = XLSheetState::Visible;
-            }
+            if (state == "visible" || state.empty()) { result = XLSheetState::Visible; }
             else if (state == "hidden") {
                 result = XLSheetState::Hidden;
             }
@@ -302,22 +299,17 @@ namespace OpenXLSX
          * @return
          * @todo To be implemented.
          */
-        XLColor color() const
-        {
-            return static_cast<const T&>(*this).getColor_impl();
-        }
+        XLColor color() const { return static_cast<const T&>(*this).getColor_impl(); }
 
         /**
          * @brief
          * @param color
          */
-        void setColor(const XLColor& color)
-        {
-            static_cast<T&>(*this).setColor_impl(color);
-        }
+        void setColor(const XLColor& color) { static_cast<T&>(*this).setColor_impl(color); }
 
         /**
-         * @brief look up sheet name via relationshipID, then attempt to match that to a sheet in XLWorkbook::sheet(uint16_t index), looping over index
+         * @brief look up sheet name via relationshipID, then attempt to match that to a sheet in XLWorkbook::sheet(uint16_t index), looping
+         * over index
          * @return the index by which the sheet could be accessed from XLWorkbook::sheet
          */
         uint16_t index() const
@@ -333,9 +325,8 @@ namespace OpenXLSX
          */
         void setIndex(uint16_t index)
         {
-            parentDoc().execCommand(XLCommand(XLCommandType::SetSheetIndex)
-                                        .setParam("sheetID", relationshipID())
-                                        .setParam("sheetIndex", index));
+            parentDoc().execCommand(
+                XLCommand(XLCommandType::SetSheetIndex).setParam("sheetID", relationshipID()).setParam("sheetIndex", index));
         }
 
         /**
@@ -365,36 +356,24 @@ namespace OpenXLSX
          * @brief
          * @return
          */
-        bool isSelected() const
-        {
-            return static_cast<const T&>(*this).isSelected_impl();
-        }
+        bool isSelected() const { return static_cast<const T&>(*this).isSelected_impl(); }
 
         /**
          * @brief
          * @param selected
          */
-        void setSelected(bool selected)
-        {
-            static_cast<T&>(*this).setSelected_impl(selected);
-        }
+        void setSelected(bool selected) { static_cast<T&>(*this).setSelected_impl(selected); }
 
         /**
          * @brief
          * @return
          */
-        bool isActive() const
-        {
-            return static_cast<const T&>(*this).isActive_impl();
-        }
+        bool isActive() const { return static_cast<const T&>(*this).isActive_impl(); }
 
         /**
          * @brief
          */
-        bool setActive()
-        {
-            return static_cast<T&>(*this).setActive_impl();
-        }
+        bool setActive() { return static_cast<T&>(*this).setActive_impl(); }
 
         /**
          * @brief Method for cloning the sheet.
@@ -404,14 +383,12 @@ namespace OpenXLSX
          */
         void clone(const std::string& newName)
         {
-            parentDoc().execCommand(XLCommand(XLCommandType::CloneSheet)
-                                        .setParam("sheetID", relationshipID())
-                                        .setParam("cloneName", newName));
+            parentDoc().execCommand(
+                XLCommand(XLCommandType::CloneSheet).setParam("sheetID", relationshipID()).setParam("cloneName", newName));
         }
 
-    private:   // ---------- Private Member Variables ---------- //
+    private:    // ---------- Private Member Variables ---------- //
     };
-
 
     // ================================================================================
     // XLConditionalFormats Class
@@ -423,7 +400,7 @@ namespace OpenXLSX
     class OPENXLSX_EXPORT XLCfRule
     {
         friend class XLCfRules;    // for access to m_cfRuleNode in XLCfRules::create
-    public:    // ---------- Public Member Functions ---------- //
+    public:                        // ---------- Public Member Functions ---------- //
         /**
          * @brief
          */
@@ -475,48 +452,52 @@ namespace OpenXLSX
         /**
          * @brief Element getter functions
          */
-        std::string formula() const;
+        std::string          formula() const;
         XLUnsupportedElement colorScale() const;
-        XLUnsupportedElement dataBar()    const;
-        XLUnsupportedElement iconSet()    const;
-        XLUnsupportedElement extLst()     const;
+        XLUnsupportedElement dataBar() const;
+        XLUnsupportedElement iconSet() const;
+        XLUnsupportedElement extLst() const;
 
         /**
          * @brief Attribute getter functions
          */
 
-        XLCfType type() const;
+        XLCfType     type() const;
         XLStyleIndex dxfId() const;
-        uint16_t priority() const; // >= 1
-        bool stopIfTrue() const;   // default: false
-        bool aboveAverage() const; // default: true
-        bool percent() const; // default: false
-        bool bottom() const; // default: false
-        XLCfOperator Operator() const; // Valid only when @type = cellIs
-        std::string text() const; // The text value in a "text contains" conditional formatting rule. Valid only for @type = containsText.
-        XLCfTimePeriod timePeriod() const; // The applicable time period in a "date occurring..." conditional formatting rule. Valid only for @type = timePeriod.
-        uint16_t rank() const; // The value of "n" in a "top/bottom n" conditional formatting rule. Valid only for @type = top10.
-        int16_t stdDev() const; // The number of standard deviations to include above or below the average in the conditional formatting rule. Valid only for @type = aboveAverage
-        bool equalAverage() const; // default: false. Flag indicating whether the 'aboveAverage' and 'belowAverage' criteria
+        uint16_t     priority() const;        // >= 1
+        bool         stopIfTrue() const;      // default: false
+        bool         aboveAverage() const;    // default: true
+        bool         percent() const;         // default: false
+        bool         bottom() const;          // default: false
+        XLCfOperator Operator() const;        // Valid only when @type = cellIs
+        std::string
+            text() const;    // The text value in a "text contains" conditional formatting rule. Valid only for @type = containsText.
+        XLCfTimePeriod timePeriod()
+            const;    // The applicable time period in a "date occurring..." conditional formatting rule. Valid only for @type = timePeriod.
+        uint16_t rank() const;      // The value of "n" in a "top/bottom n" conditional formatting rule. Valid only for @type = top10.
+        int16_t  stdDev() const;    // The number of standard deviations to include above or below the average in the conditional formatting
+                                    // rule. Valid only for @type = aboveAverage
+        bool equalAverage() const;    // default: false. Flag indicating whether the 'aboveAverage' and 'belowAverage' criteria
         //                             is inclusive of the average itself, or exclusive of that value. '1' indicates to include
         //                             the average value in the criteria. Valid only for @type = aboveAverage.
 
         /**
          * @brief Element setter functions
          */
-        bool setFormula   (std::string const& newFormula);
-        bool setColorScale(XLUnsupportedElement const& newColorScale); // unsupported
-        bool setDataBar   (XLUnsupportedElement const& newDataBar   ); // unsupported
-        bool setIconSet   (XLUnsupportedElement const& newIconSet   ); // unsupported
-        bool setExtLst    (XLUnsupportedElement const& newExtLst    ); // unsupported
+        bool setFormula(std::string const& newFormula);
+        bool setColorScale(XLUnsupportedElement const& newColorScale);    // unsupported
+        bool setDataBar(XLUnsupportedElement const& newDataBar);          // unsupported
+        bool setIconSet(XLUnsupportedElement const& newIconSet);          // unsupported
+        bool setExtLst(XLUnsupportedElement const& newExtLst);            // unsupported
 
         /**
          * @brief Attribute setter functions
          */
         bool setType(XLCfType newType);
         bool setDxfId(XLStyleIndex newDxfId);
-    private: // Protect setPriority from access by any but the parent XLCfRules class
-        bool setPriority(uint16_t newPriority); // internal function, user access through XLCfRules::setPriority
+
+    private:                                       // Protect setPriority from access by any but the parent XLCfRules class
+        bool setPriority(uint16_t newPriority);    // internal function, user access through XLCfRules::setPriority
     public:
         bool setStopIfTrue(bool set = true);
         bool setAboveAverage(bool set = true);
@@ -535,19 +516,17 @@ namespace OpenXLSX
          */
         std::string summary() const;
 
-    private:                                    // ---------- Private Member Variables ---------- //
-        mutable XMLNode m_cfRuleNode;  /**< An XMLNode object with the conditional formatting item */
-        inline static const std::vector< std::string_view > m_nodeOrder = {      // cfRule XML node required child sequence
-            "formula", // TODO: maxOccurs = 3!
+    private:                                                                 // ---------- Private Member Variables ---------- //
+        mutable XMLNode                                   m_cfRuleNode;      /**< An XMLNode object with the conditional formatting item */
+        inline static const std::vector<std::string_view> m_nodeOrder = {    // cfRule XML node required child sequence
+            "formula",                                                       // TODO: maxOccurs = 3!
             "colorScale",
             "dataBar",
             "iconSet",
-            "extLst"
-        };
+            "extLst"};
     };
 
-
-    constexpr const char * XLDefaultCfRulePrefix = "\n\t\t"; // indentation to use for newly created cfRule nodes
+    constexpr const char* XLDefaultCfRulePrefix = "\n\t\t";    // indentation to use for newly created cfRule nodes
     /**
      * @brief An encapsulation of a conditional formatting rules item
      */
@@ -609,7 +588,8 @@ namespace OpenXLSX
         uint16_t maxPriorityValue() const;
 
         /**
-         * @brief Provide a duplication-free interface to setting rule priorities: if a newPriority value exists, increment all existing priorities >= newPriority by 1
+         * @brief Provide a duplication-free interface to setting rule priorities: if a newPriority value exists, increment all existing
+         * priorities >= newPriority by 1
          * @param cfRuleIndex the index of the rule for which to set the priority
          * @param newPriority the priority value to assign
          * @return true on success, false if ruleIndex does not exist
@@ -655,15 +635,13 @@ namespace OpenXLSX
          */
         std::string summary() const;
 
-    private:                                                   // ---------- Private Member Variables ---------- //
-        mutable XMLNode m_conditionalFormattingNode;  /**< An XMLNode object with the conditional formatting item */
+    private:                                         // ---------- Private Member Variables ---------- //
+        mutable XMLNode m_conditionalFormattingNode; /**< An XMLNode object with the conditional formatting item */
         // TODO: pass in m_nodeOrder from XLConditionalFormat
-        inline static const std::vector< std::string_view > m_nodeOrder = {      // conditionalFormatting XML node required child sequence
+        inline static const std::vector<std::string_view> m_nodeOrder = {    // conditionalFormatting XML node required child sequence
             "cfRule",
-            "extLst"
-        };
+            "extLst"};
     };
-
 
     /**
      * @brief An encapsulation of a conditional formatting item
@@ -671,7 +649,7 @@ namespace OpenXLSX
     class OPENXLSX_EXPORT XLConditionalFormat
     {
         friend class XLConditionalFormats;    // for access to m_conditionalFormattingNode in XLConditionalFormats::create
-    public:    // ---------- Public Member Functions ---------- //
+    public:                                   // ---------- Public Member Functions ---------- //
         /**
          * @brief
          */
@@ -732,23 +710,23 @@ namespace OpenXLSX
          */
         XLCfRules cfRules() const;
 
-
         /**
          * @brief Unsupported getter
          */
-        XLUnsupportedElement extLst() const { return XLUnsupportedElement{}; } // <conditionalFormatting><extLst>...</extLst></conditionalFormatting>
+        XLUnsupportedElement extLst() const
+        { return XLUnsupportedElement{}; }    // <conditionalFormatting><extLst>...</extLst></conditionalFormatting>
 
         /**
          * @brief Setter functions for conditional formatting parameters
          * @param value that shall be set
          * @return true for success, false for failure
          */
-        bool setSqref        (std::string newSqref);
+        bool setSqref(std::string newSqref);
 
         /**
          * @brief Unsupported setter
          */
-        bool setExtLst   (XLUnsupportedElement const& newExtLst);
+        bool setExtLst(XLUnsupportedElement const& newExtLst);
 
         /**
          * @brief Return a string summary of the conditional format properties
@@ -756,16 +734,15 @@ namespace OpenXLSX
          */
         std::string summary() const;
 
-    private:                                                   // ---------- Private Member Variables ---------- //
-        mutable XMLNode m_conditionalFormattingNode;  /**< An XMLNode object with the conditional formatting item */
-        inline static const std::vector< std::string_view > m_nodeOrder = {   // conditionalFormatting XML node required child sequence
+    private:                                                                 // ---------- Private Member Variables ---------- //
+        mutable XMLNode m_conditionalFormattingNode;                         /**< An XMLNode object with the conditional formatting item */
+        inline static const std::vector<std::string_view> m_nodeOrder = {    // conditionalFormatting XML node required child sequence
             "cfRule",
-            "extLst"
-        };
+            "extLst"};
     };
 
-
-    constexpr const char * XLDefaultConditionalFormattingPrefix = "\n\t"; // indentation to use for newly created conditional formatting nodes
+    constexpr const char* XLDefaultConditionalFormattingPrefix =
+        "\n\t";    // indentation to use for newly created conditional formatting nodes
     /**
      * @brief An encapsulation of the XLSX conditional formats
      */
@@ -845,7 +822,8 @@ namespace OpenXLSX
          * @param conditionalFormattingPrefix Prefix the newly created conditionalFormatting XMLNode with this pugi::node_pcdata text
          * @returns The index of the new conditional formatting as used by operator[]
          */
-        size_t create(XLConditionalFormat copyFrom = XLConditionalFormat{}, std::string conditionalFormattingPrefix = XLDefaultConditionalFormattingPrefix);
+        size_t create(XLConditionalFormat copyFrom                    = XLConditionalFormat{},
+                      std::string         conditionalFormattingPrefix = XLDefaultConditionalFormattingPrefix);
 
         /**
          * @brief Return a string summary of the conditional formattings properties
@@ -853,9 +831,10 @@ namespace OpenXLSX
          */
         std::string summary() const;
 
-    private:                                    // ---------- Private Member Variables ---------- //
-        mutable XMLNode m_sheetNode;   /**< An XMLNode object with the sheet item */
-        inline static const std::vector< std::string_view >& m_nodeOrder = XLWorksheetNodeOrder;  // worksheet XML root node required child sequence
+    private:                                                            // ---------- Private Member Variables ---------- //
+        mutable XMLNode                                    m_sheetNode; /**< An XMLNode object with the sheet item */
+        inline static const std::vector<std::string_view>& m_nodeOrder =
+            XLWorksheetNodeOrder;    // worksheet XML root node required child sequence
     };
 
     /**
@@ -946,13 +925,14 @@ namespace OpenXLSX
         XLCellAssignable findCell(const XLCellReference& ref) const;
 
         /**
-         * @brief Find the cell at the given coordinates. Do *not* create row & cell XML if missing and return an empty XLCellAssignable instead
+         * @brief Find the cell at the given coordinates. Do *not* create row & cell XML if missing and return an empty XLCellAssignable
+         * instead
          * @param rowNumber The row number (index base 1).
          * @param columnNumber The column number (index base 1).
          * @return A reference to the XLCell object at the given coordinates or an empty XLCell object
          * @note Must test (XLCell::empty() == false) before accessing any other methods of the returned object.
-         * @warning This is a usability feature with bad performance. When testing a large amounts of cells or working with large worksheets,
-         *           it is better to use an XLCellIterator with the cell range of interest.
+         * @warning This is a usability feature with bad performance. When testing a large amounts of cells or working with large
+         * worksheets, it is better to use an XLCellIterator with the cell range of interest.
          */
         XLCellAssignable findCell(uint32_t rowNumber, uint16_t columnNumber) const;
 
@@ -1064,7 +1044,7 @@ namespace OpenXLSX
          * @brief get an XLMergeCells object to directly access the member functions
          * @returns an XLMergeCells object for this worksheet
          */
-        XLMergeCells & merges();
+        XLMergeCells& merges();
 
         /**
          * @brief merge the cells indicated by range
@@ -1148,27 +1128,29 @@ namespace OpenXLSX
          * @param set if true, action will be allowed despite sheet protection, if false, action will be denied / protected
          * @note #1 default for all (if attribute is not present) is "true" = the action is protected / not allowed
          * @note #2 none of the sheet protection settings have any effect if protectSheet is not set
-         * @note (library internal) counter-intuitively, the underlying bool attributes need to be set to "false" to "disable protection" for these actions
+         * @note (library internal) counter-intuitively, the underlying bool attributes need to be set to "false" to "disable protection"
+         * for these actions
          */
-        bool allowInsertColumns(bool set = true);       // default: not allowed in a protected worksheet
-        bool allowInsertRows(bool set = true);          //   "    :  "
-        bool allowDeleteColumns(bool set = true);       //   "    :  "
-        bool allowDeleteRows(bool set = true);          //   "    :  "
-        bool allowSelectLockedCells(bool set = true);   // default: allowed in a protected worksheet
-        bool allowSelectUnlockedCells(bool set = true); //   "    :  "
+        bool allowInsertColumns(bool set = true);          // default: not allowed in a protected worksheet
+        bool allowInsertRows(bool set = true);             //   "    :  "
+        bool allowDeleteColumns(bool set = true);          //   "    :  "
+        bool allowDeleteRows(bool set = true);             //   "    :  "
+        bool allowSelectLockedCells(bool set = true);      // default: allowed in a protected worksheet
+        bool allowSelectUnlockedCells(bool set = true);    //   "    :  "
         /**
          * @brief Convenience shortcuts for allow<*>( false );
          */
-        bool denyInsertColumns()       { return allowInsertColumns      (false); }
-        bool denyInsertRows()          { return allowInsertRows         (false); }
-        bool denyDeleteColumns()       { return allowDeleteColumns      (false); }
-        bool denyDeleteRows()          { return allowDeleteRows         (false); }
-        bool denySelectLockedCells()   { return allowSelectLockedCells  (false); }
+        bool denyInsertColumns() { return allowInsertColumns(false); }
+        bool denyInsertRows() { return allowInsertRows(false); }
+        bool denyDeleteColumns() { return allowDeleteColumns(false); }
+        bool denyDeleteRows() { return allowDeleteRows(false); }
+        bool denySelectLockedCells() { return allowSelectLockedCells(false); }
         bool denySelectUnlockedCells() { return allowSelectUnlockedCells(false); }
 
         /**
          * @brief Set the sheetProtection password attribute
-         * @param hash directly stores a password hash to the password attribute, for use cases where the password shall not be used in clear text in the API
+         * @param hash directly stores a password hash to the password attribute, for use cases where the password shall not be used in
+         * clear text in the API
          * @note ExcelPasswordHash or ExcelPasswordHashAsString (defined in XLDocument header) can be used to calculate the hash
          * @note an empty password hash can be used to clear any password protection
          * @return true upon success, false in case of any failure
@@ -1197,19 +1179,19 @@ namespace OpenXLSX
          * @brief getter functions for sheet protection settings
          * @return true if setting is "action allowed"
          */
-        bool sheetProtected()     const;
-        bool objectsProtected()   const;
+        bool sheetProtected() const;
+        bool objectsProtected() const;
         bool scenariosProtected() const;
 
         /**
          * @brief getter functions for detailed sheet protections
          * @note none of the sheet protection settings have any effect if protectSheet is not set
          */
-        bool insertColumnsAllowed()       const;
-        bool insertRowsAllowed()          const;
-        bool deleteColumnsAllowed()       const;
-        bool deleteRowsAllowed()          const;
-        bool selectLockedCellsAllowed()   const;
+        bool insertColumnsAllowed() const;
+        bool insertRowsAllowed() const;
+        bool deleteColumnsAllowed() const;
+        bool deleteRowsAllowed() const;
+        bool selectLockedCellsAllowed() const;
         bool selectUnlockedCellsAllowed() const;
 
         /**
@@ -1232,6 +1214,11 @@ namespace OpenXLSX
         bool hasRelationships() const;
 
         /**
+         * @brief test whether a worksheet drawing XML file exists for this worksheet
+         */
+        bool hasDrawing() const;
+
+        /**
          * @brief test whether a VML drawing XML file exists for this worksheet
          */
         bool hasVmlDrawing() const;
@@ -1245,6 +1232,11 @@ namespace OpenXLSX
          * @brief test whether a tables XML file exists for this worksheet
          */
         bool hasTables() const;
+
+        /**
+         * @brief fetch a reference to the worksheet drawing object
+         */
+        XLDrawing& drawing();
 
         /**
          * @brief fetch a reference to the worksheet VML drawing object
@@ -1262,7 +1254,6 @@ namespace OpenXLSX
         XLTables& tables();
 
     private:
-
         /**
          * @brief fetch the # number from the xml path xl/worksheets/sheet#.xml
          */
@@ -1309,13 +1300,15 @@ namespace OpenXLSX
          */
         bool setActive_impl();
 
-    private:   // ---------- Private Member Variables ---------- //
-        XLRelationships m_relationships{};    /**< class handling the worksheet relationships */
-        XLMergeCells    m_merges{};           /**< class handling the <mergeCells> */
-        XLVmlDrawing    m_vmlDrawing{};       /**< class handling the worksheet VML drawing object */
-        XLComments      m_comments{};         /**< class handling the worksheet comments */
-        XLTables        m_tables{};           /**< class handling the worksheet table settings */
-        inline static const std::vector< std::string_view >& m_nodeOrder = XLWorksheetNodeOrder;  // worksheet XML root node required child sequence
+    private:                                                                  // ---------- Private Member Variables ---------- //
+        XLRelationships                                    m_relationships{}; /**< class handling the worksheet relationships */
+        XLMergeCells                                       m_merges{};        /**< class handling the <mergeCells> */
+        XLDrawing                                          m_drawing{};       /**< class handling the worksheet drawing object */
+        XLVmlDrawing                                       m_vmlDrawing{};    /**< class handling the worksheet VML drawing object */
+        XLComments                                         m_comments{};      /**< class handling the worksheet comments */
+        XLTables                                           m_tables{};        /**< class handling the worksheet table settings */
+        inline static const std::vector<std::string_view>& m_nodeOrder =
+            XLWorksheetNodeOrder;    // worksheet XML root node required child sequence
     };
 
     /**
@@ -1373,7 +1366,6 @@ namespace OpenXLSX
         XLChartsheet& operator=(XLChartsheet&& other) noexcept = default;
 
     private:
-
         /**
          * @brief
          * @return
@@ -1401,14 +1393,14 @@ namespace OpenXLSX
         /**
          * @brief test issue #316 resolution
          */
-        bool isActive_impl() const { return false; } // TODO: implement actual function body, if possible for chartsheets
+        bool isActive_impl() const { return false; }    // TODO: implement actual function body, if possible for chartsheets
 
         /**
          * @brief test issue #316 resolution
          */
-        bool setActive_impl() { return true; } // TODO: implement actual function body, if possible for chartsheets
+        bool setActive_impl() { return true; }    // TODO: implement actual function body, if possible for chartsheets
 
-    private:   // ---------- Private Member Variables ---------- //
+    private:    // ---------- Private Member Variables ---------- //
     };
 
     /**
@@ -1536,13 +1528,10 @@ namespace OpenXLSX
          * @brief Method to get the type of the sheet.
          * @return An XLSheetType enum object with the sheet type.
          */
-        template<
-            typename SheetType,
+        template<typename SheetType,
                  typename = std::enable_if_t<std::is_same_v<SheetType, XLWorksheet> || std::is_same_v<SheetType, XLChartsheet>>>
         bool isType() const
-        {
-            return std::holds_alternative<SheetType>(m_sheet);
-        }
+        { return std::holds_alternative<SheetType>(m_sheet); }
 
         /**
          * @brief Method for cloning the sheet.
@@ -1590,13 +1579,13 @@ namespace OpenXLSX
          */
         void print(std::basic_ostream<char>& ostr) const;
 
-    private:   // ---------- Private Member Variables ---------- //
+    private:                                             // ---------- Private Member Variables ---------- //
         std::variant<XLWorksheet, XLChartsheet> m_sheet; /**<  */
     };
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLSHEET_HPP

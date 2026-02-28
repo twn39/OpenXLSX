@@ -47,13 +47,13 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #define OPENXLSX_XLCONTENTTYPES_HPP
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4251)
+#    pragma warning(disable : 4275)
+#endif    // _MSC_VER
 
 // ===== External Includes ===== //
-#include <cstdint> // uint8_t
+#include <cstdint>    // uint8_t
 #include <memory>
 #include <string>
 #include <vector>
@@ -99,7 +99,7 @@ namespace OpenXLSX
      * @param type the XLContentType to get a name for
      * @return a string with the name of type
      */
-    std::string XLContentTypeToString( XLContentType type );
+    std::string XLContentTypeToString(XLContentType type);
 
     /**
      * @brief
@@ -123,7 +123,7 @@ namespace OpenXLSX
         /**
          * @brief
          */
-        ~XLContentItem();
+        ~XLContentItem() = default;
 
         /**
          * @brief
@@ -193,7 +193,7 @@ namespace OpenXLSX
         /**
          * @brief Destructor
          */
-        ~XLContentTypes();
+        ~XLContentTypes() = default;
 
         /**
          * @brief
@@ -220,6 +220,27 @@ namespace OpenXLSX
          * @return
          */
         XLContentTypes& operator=(XLContentTypes&& other) noexcept;
+
+        /**
+         * @brief Check if a default extension exists.
+         * @param extension The extension
+         * @return true if it exists
+         */
+        bool hasDefault(const std::string& extension) const;
+
+        /**
+         * @brief Check if an override exists.
+         * @param path The path
+         * @return true if it exists
+         */
+        bool hasOverride(const std::string& path) const;
+
+        /**
+         * @brief Add a new default extension key/value pair to the data store.
+         * @param extension The extension
+         * @param contentType The content type
+         */
+        void addDefault(const std::string& extension, const std::string& contentType);
 
         /**
          * @brief Add a new override key/getValue pair to the data store.
@@ -253,12 +274,12 @@ namespace OpenXLSX
          */
         std::vector<XLContentItem> getContentItems();
 
-    private:   // ---------- Private Member Variables ---------- //
+    private:    // ---------- Private Member Variables ---------- //
     };
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
+#    pragma warning(pop)
+#endif    // _MSC_VER
 
 #endif    // OPENXLSX_XLCONTENTTYPES_HPP

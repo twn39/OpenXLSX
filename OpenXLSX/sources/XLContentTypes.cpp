@@ -49,13 +49,12 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 // ===== OpenXLSX Includes ===== //
 #include "XLContentTypes.hpp"
-#include "XLDocument.hpp"
-
 #include "XLException.hpp"
 
 using namespace OpenXLSX;
 
-namespace { // anonymous namespace for local functions
+namespace
+{    // anonymous namespace for local functions
 
     const std::string applicationOpenXmlOfficeDocument = "application/vnd.openxmlformats-officedocument";
     const std::string applicationOpenXmlPackage        = "application/vnd.openxmlformats-package";
@@ -65,11 +64,12 @@ namespace { // anonymous namespace for local functions
     /**
      * @details
      * @note 2024-08-31: In line with a change to hardcoded XML relationship domains in XLRelationships.cpp, replaced the repeating
-     *          hardcoded strings here with the above declared constants, preparing a potential need for a similar "dumb" fallback implementation
+     *          hardcoded strings here with the above declared constants, preparing a potential need for a similar "dumb" fallback
+     * implementation
      */
-    XLContentType GetContentTypeFromString(const std::string& typeString)
+    static XLContentType GetContentTypeFromString(const std::string& typeString)
     {
-        XLContentType type { XLContentType::Unknown };
+        XLContentType type{XLContentType::Unknown};
 
         if (typeString == applicationMicrosoftExcel + ".sheet.macroEnabled.main+xml")
             type = XLContentType::WorkbookMacroEnabled;
@@ -124,7 +124,7 @@ namespace { // anonymous namespace for local functions
     /**
      * @details
      */
-    std::string GetStringFromType(XLContentType type)
+    static std::string GetStringFromType(XLContentType type)
     {
         std::string typeString;
 
@@ -202,17 +202,15 @@ XLContentItem::XLContentItem(XLContentItem&& other) noexcept = default;
 /**
  * @details
  */
-XLContentItem::~XLContentItem() = default;
-
-/**
- * @details
- */
 XLContentItem& XLContentItem::operator=(const XLContentItem& other)
 {
     if (&other != this) *m_contentNode = *other.m_contentNode;
     return *this;
 }
 
+/**
+ * @details
+ */
 XLContentItem& XLContentItem::operator=(XLContentItem&& other) noexcept = default;
 
 /**
@@ -238,11 +236,6 @@ XLContentTypes::XLContentTypes(XLXmlData* xmlData) : XLXmlFile(xmlData) {}
 /**
  * @details
  */
-XLContentTypes::~XLContentTypes() = default;
-
-/**
- * @details
- */
 XLContentTypes::XLContentTypes(const XLContentTypes& other) = default;
 
 /**
@@ -262,34 +255,63 @@ XLContentTypes& XLContentTypes::operator=(XLContentTypes&& other) noexcept = def
 
 /**
  * @details
+ */
+bool XLContentTypes::hasDefault(const std::string& extension) const
+{ return !xmlDocument().document_element().find_child_by_attribute("Default", "Extension", extension.c_str()).empty(); }
+
+/**
+ * @details
+ */
+bool XLContentTypes::hasOverride(const std::string& path) const
+{
+    std::string internalPath = path;
+    if (internalPath[0] != '/') internalPath.insert(0, "/");
+    return !xmlDocument().document_element().find_child_by_attribute("Override", "PartName", internalPath.c_str()).empty();
+}
+
+/**
+ * @details
+ */
+void XLContentTypes::addDefault(const std::string& extension, const std::string& contentType)
+{
+    // Check if it already exists
+    if (!xmlDocument().document_element().find_child_by_attribute("Default", "Extension", extension.c_str()).empty()) return;
+
+    XMLNode root = xmlDocument().document_element();
+    // Default nodes should come before Override nodes.
+    // Find the first Override node to insert before it, or just append if none exists.
+    XMLNode firstOverride = root.child("Override");
+    XMLNode node{};
+    if (firstOverride.empty())
+        node = root.append_child("Default");
+    else
+        node = root.insert_child_before("Default", firstOverride);
+
+    node.append_attribute("Extension").set_value(extension.c_str());
+    node.append_attribute("ContentType").set_value(contentType.c_str());
+}
+
+/**
+ * @details
  * @note 2024-07-22: added more intelligent whitespace support
  */
 void XLContentTypes::addOverride(const std::string& path, XLContentType type)
 {
-    const std::string typeString = GetStringFromType(type);
+    const std::string typeString   = GetStringFromType(type);
+    std::string       internalPath = path;
+    if (internalPath[0] != '/') internalPath.insert(0, "/");
 
-    XMLNode lastOverride = xmlDocument().document_element().last_child_of_type(pugi::node_element); // see if there's a last element
-    XMLNode node{};    // scope declaration
+    XMLNode lastOverride = xmlDocument().document_element().last_child_of_type(pugi::node_element);    // see if there's a last element
+    XMLNode node{};                                                                                    // scope declaration
 
     // Create new node in the [Content_Types].xml file
     if (lastOverride.empty())
-        node = xmlDocument().document_element().prepend_child("Override");
-    else { // if last element found
+        node = xmlDocument().document_element().append_child("Override");
+    else {    // if last element found
         // ===== Insert node after previous override
         node = xmlDocument().document_element().insert_child_after("Override", lastOverride);
-
-        // ===== Using whitespace nodes prior to lastOverride as a template, insert whitespaces between lastOverride and the new node
-        XMLNode copyWhitespaceFrom = lastOverride;    // start looking for whitespace nodes before previous override
-        XMLNode insertBefore = node;                  // start inserting the same whitespace nodes before new override
-        while (copyWhitespaceFrom.previous_sibling().type() == pugi::node_pcdata) { // empty node returns pugi::node_null
-            // Advance to previous "template" whitespace node, ensured to exist in while-condition
-            copyWhitespaceFrom = copyWhitespaceFrom.previous_sibling();
-            // ===== Insert a whitespace node
-            insertBefore = xmlDocument().document_element().insert_child_before(pugi::node_pcdata, insertBefore);
-            insertBefore.set_value(copyWhitespaceFrom.value());            // copy the a whitespace in sequence node value
-        }
     }
-    node.append_attribute("PartName").set_value(path.c_str());
+    node.append_attribute("PartName").set_value(internalPath.c_str());
     node.append_attribute("ContentType").set_value(typeString.c_str());
 }
 
@@ -297,9 +319,7 @@ void XLContentTypes::addOverride(const std::string& path, XLContentType type)
  * @details
  */
 void XLContentTypes::deleteOverride(const std::string& path)
-{
-    xmlDocument().document_element().remove_child(xmlDocument().document_element().find_child_by_attribute("PartName", path.c_str()));
-}
+{ xmlDocument().document_element().remove_child(xmlDocument().document_element().find_child_by_attribute("PartName", path.c_str())); }
 
 /**
  * @details
@@ -310,9 +330,7 @@ void XLContentTypes::deleteOverride(const XLContentItem& item) { deleteOverride(
  * @details
  */
 XLContentItem XLContentTypes::contentItem(const std::string& path)
-{
-    return XLContentItem(xmlDocument().document_element().find_child_by_attribute("PartName", path.c_str()));
-}
+{ return XLContentItem(xmlDocument().document_element().find_child_by_attribute("PartName", path.c_str())); }
 
 /**
  * @details

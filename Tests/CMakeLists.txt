@@ -28,6 +28,7 @@ target_sources(OpenXLSXTests
         testXLComments.cpp
         testXLDateTime.cpp
         testXLFormula.cpp
+        testXLImage.cpp
         testXLIntegration.cpp
         testXLMergeCells.cpp
         testXLRow.cpp
