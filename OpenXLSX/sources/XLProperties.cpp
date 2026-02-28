@@ -70,7 +70,7 @@ namespace    // anonymous namespace for module local functions
     XMLNode prettyInsertXmlNodeBefore(std::string nodeNameToInsert, XMLNode insertBeforeThis)
     {
         XMLNode parentNode = insertBeforeThis.parent();
-        if (parentNode.empty()) throw XLInternalError("prettyInsertXmlNodeBefore can not insert before a node that has no parent");
+        Expects(not parentNode.empty());    // Use GSL contract: if parentNode is empty, logic failed
 
         // ===== Find potential whitespaces preceeding insertBeforeThis
         XMLNode whitespaces = insertBeforeThis;
@@ -421,8 +421,9 @@ XLAppProperties::~XLAppProperties() = default;
  */
 void XLAppProperties::incrementSheetCount(int16_t increment)
 {
-    int32_t newCount = sheetCount(xmlDocument().document_element()).as_int() + increment;
-    if (newCount < 1) throw XLInternalError("must not decrement sheet count below 1");
+    int32_t newCount = gsl::narrow<int32_t>(sheetCount(xmlDocument().document_element()).as_int() + increment);
+    Expects(newCount >= 1);
+
     sheetCount(xmlDocument().document_element()).set_value(newCount);
     XMLNode headingPairWorksheetsValue = getHeadingPairsValue(xmlDocument().document_element(), "Worksheets");
     if (headingPairWorksheetsValue.empty())    // seems heading pair does not exist
@@ -464,7 +465,7 @@ void XLAppProperties::alignWorksheets(std::vector<std::string> const& workbookSh
         titlesOfParts.remove_child(sheetName);
     }
 
-    sheetCount(xmlDocument().document_element()).set_value(workbookSheetNames.size());    // save size of <TitlesOfParts><vt:vector>
+    sheetCount(xmlDocument().document_element()).set_value(gsl::narrow<uint32_t>(workbookSheetNames.size()));    // save size of <TitlesOfParts><vt:vector>
     incrementSheetCount(0);    // ensure that the sheet count is correctly reflected in <HeadingPairs> Worksheets entry
 }
 
@@ -707,4 +708,101 @@ void XLAppProperties::insertSheetName(const std::string& sheetName, unsigned int
     theNode.text().set(sheetName.c_str());
 
     incrementSheetCount(+1);
+}
+
+/**
+ * @details
+ */
+void XLCustomProperties::createFromTemplate()
+{
+    if (m_xmlData == nullptr) throw XLInternalError("XLCustomProperties m_xmlData is nullptr");
+
+    XMLNode props                      = xmlDocument().prepend_child("Properties");
+    props.append_attribute("xmlns")    = "http://schemas.openxmlformats.org/officeDocument/2006/custom-properties";
+    props.append_attribute("xmlns:vt") = "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes";
+}
+
+/**
+ * @details
+ */
+XLCustomProperties::XLCustomProperties(XLXmlData* xmlData) : XLXmlFile(xmlData)
+{
+    XMLNode doc        = xmlData->getXmlDocument()->document_element();
+    XMLNode child      = doc.first_child_of_type(pugi::node_element);
+    size_t  childCount = 0;
+    while (not child.empty()) {
+        ++childCount;
+        child = child.next_sibling_of_type(pugi::node_element);
+        break;
+    }
+    if (!childCount) createFromTemplate();
+}
+
+/**
+ * @details
+ */
+XLCustomProperties::~XLCustomProperties() = default;
+
+/**
+ * @details
+ */
+void XLCustomProperties::setProperty(const std::string& name, const std::string& value)
+{
+    if (m_xmlData == nullptr) return;
+
+    XMLNode props = xmlDocument().document_element();
+    XMLNode prop  = props.find_child_by_attribute("property", "name", name.c_str());
+
+    if (prop.empty()) {
+        prop = props.append_child("property");
+        prop.append_attribute("fmtid") = "{D5CDD505-2E9C-101B-9397-08002B2CF9AE}";
+
+        // Find the highest pid and increment it
+        int maxPid = 1;
+        for (auto p : props.children("property")) {
+            int pid = p.attribute("pid").as_int();
+            if (pid > maxPid) maxPid = pid;
+        }
+        prop.append_attribute("pid")  = gsl::narrow<int>(maxPid + 1);
+        prop.append_attribute("name") = name.c_str();
+    }
+
+    XMLNode val = prop.child("vt:lpwstr");
+    if (val.empty()) {
+        prop.remove_children();
+        val = prop.append_child("vt:lpwstr", XLForceNamespace);
+    }
+    val.text().set(value.c_str());
+}
+
+/**
+ * @details
+ */
+std::string XLCustomProperties::property(const std::string& name) const
+{
+    if (m_xmlData == nullptr) return "";
+    XMLNode prop = xmlDocument().document_element().find_child_by_attribute("property", "name", name.c_str());
+    if (prop.empty()) return "";
+
+    return prop.child("vt:lpwstr").text().get();
+}
+
+/**
+ * @details
+ */
+void XLCustomProperties::deleteProperty(const std::string& name)
+{
+    if (m_xmlData == nullptr) return;
+    XMLNode props = xmlDocument().document_element();
+    XMLNode prop  = props.find_child_by_attribute("property", "name", name.c_str());
+    if (not prop.empty()) props.remove_child(prop);
+}
+
+/**
+ * @details
+ */
+bool XLCustomProperties::propertyExists(const std::string& name) const
+{
+    if (m_xmlData == nullptr) return false;
+    return not xmlDocument().document_element().find_child_by_attribute("property", "name", name.c_str()).empty();
 }

@@ -44,6 +44,33 @@ TEST_CASE("XLProperties Tests", "[XLProperties]")
 
         doc.close();
     }
+
+    SECTION("Custom Properties")
+    {
+        XLDocument doc;
+        doc.create("./testXLCustomProperties.xlsx", XLForceOverwrite);
+
+        doc.setCustomProperty("MyProp", "MyValue");
+        doc.setCustomProperty("AnotherProp", "AnotherValue");
+
+        REQUIRE(doc.customProperty("MyProp") == "MyValue");
+        REQUIRE(doc.customProperty("AnotherProp") == "AnotherValue");
+
+        doc.save();
+        doc.close();
+
+        // Re-open and verify
+        XLDocument doc2;
+        doc2.open("./testXLCustomProperties.xlsx");
+        REQUIRE(doc2.customProperty("MyProp") == "MyValue");
+        REQUIRE(doc2.customProperty("AnotherProp") == "AnotherValue");
+
+        doc2.deleteCustomProperty("MyProp");
+        REQUIRE(doc2.customProperty("MyProp") == "");
+
+        doc2.save();
+        doc2.close();
+    }
 }
 
 TEST_CASE("XLWorkbook Tests", "[XLWorkbook]")

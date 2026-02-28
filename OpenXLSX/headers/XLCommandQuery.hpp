@@ -72,6 +72,7 @@ namespace OpenXLSX
         ResetCalcChain,
         CheckAndFixCoreProperties,
         CheckAndFixExtendedProperties,
+        CheckAndFixCustomProperties,
         AddSharedStrings,
         AddWorksheet,
         AddChartsheet,

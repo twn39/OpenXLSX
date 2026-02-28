@@ -12,6 +12,7 @@ OpenXLSX is a high-performance C++ library for reading, writing, creating, and m
 - **ZIP Handling**: [Zippy](https://github.com/troldal/Zippy) (wrapper around `miniz`).
 - **Unicode**: [Boost.Nowide](https://github.com/boostorg/nowide) (UTF-8 support on Windows).
 - **Testing & Benchmarking**: [Catch2 v3](https://github.com/catchorg/Catch2) (Integrated via `FetchContent`).
+- **Safety**: [Microsoft GSL v4.2.1](https://github.com/microsoft/GSL) (C++ Core Guidelines Support Library).
 
 ## Building and Running
 
@@ -38,6 +39,21 @@ cmake --build . --target OpenXLSXBenchmark
 ```
 
 ## Development Conventions
+
+### Safety & GSL (Guidelines Support Library)
+The project utilizes Microsoft GSL to enforce C++ Core Guidelines and ensure memory safety without runtime performance penalties. 
+
+**Core Rules for GSL Usage:**
+1.  **Pointer Safety**: Use `gsl::not_null<T*>` for pointers that must never be null (e.g., in constructors). This moves the null check to the call site and documents the requirement in the type system.
+2.  **Bounds Safety**: Use `gsl::span<T>` for all raw array operations, buffer manipulations, and binary data parsing. Avoid raw `T* + size` combinations.
+3.  **Safe Conversions**: Use `gsl::narrow<T>` when casting between numeric types (e.g., `size_t` to `int32_t`) where truncation or overflow is possible. It will throw if the value cannot be represented. Use `gsl::narrow_cast<T>` only for intentional, documented truncation.
+4.  **Contract Programming**: Use `Expects()` for function preconditions (e.g., verifying a buffer is large enough) and `Ensures()` for postconditions.
+5.  **Safe Indexing**: Prefer `gsl::at()` for container access where bounds checking is critical and cannot be verified at compile-time.
+
+**Best Practices in OpenXLSX:**
+- **Backward Compatibility**: When updating legacy utility functions, provide a new `gsl::span`-based core implementation and wrap it with the original pointer-based function for compatibility.
+- **Excel Limits**: Since Excel has strict limits (1,048,576 rows and 16,384 columns), always use `gsl::narrow` when converting external data or large integers to row/column indices.
+- **Zero-Cost Abstractions**: Use GSL types like `span` and `not_null` internally to help the compiler optimize while providing high safety guarantees.
 
 ### Coding Standards
 - **Naming**: Member functions use `camelCase` (e.g., `worksheetCount()`). Classes use `PascalCase` (e.g., `XLDocument`).
@@ -71,6 +87,7 @@ cmake --build . --target OpenXLSXBenchmark
 
 ## Usage Tips for AI
 - **Single Build Entry**: Do not look for `CMakeLists.txt` in subdirectories; everything is in the root.
+- **GSL First**: When implementing new logic or refactoring, prioritize GSL safety (span, not_null, narrow). Do not use raw `memcpy` or `strcpy`; use `gsl::copy` or `span` slices.
 - **Clean Code**: The project has been refactored to remove all compiler warnings (except for third-party libs). Ensure new code maintains this standard.
 - **Testing**: Always run `OpenXLSXTests` after changes. For performance-related changes, run `OpenXLSXBenchmark`.
 - **API Preference**: Use `XLForceOverwrite` explicitly when creating or saving files in tests.

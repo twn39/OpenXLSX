@@ -54,6 +54,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 // ===== External Includes ===== //
 #include <string>
+#include <gsl/gsl>
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
@@ -326,6 +327,83 @@ namespace OpenXLSX
          * @return
          */
         void insertSheetName(const std::string& sheetName, unsigned int index);
+    };
+
+    /**
+     * @brief This class is a specialization of the XLXmlFile, with the purpose of representing the
+     * document custom properties in the custom.xml file (docProps folder) in the .xlsx package.
+     */
+    class OPENXLSX_EXPORT XLCustomProperties : public XLXmlFile
+    {
+    private:
+        /**
+         * @brief constructor helper function: create custom.xml content from template
+         */
+        void createFromTemplate();
+
+    public:
+        /**
+         * @brief Default constructor
+         */
+        XLCustomProperties() = default;
+
+        /**
+         * @brief Constructor taking a pointer to the XLXmlData object
+         * @param xmlData Pointer to the XLXmlData object
+         */
+        explicit XLCustomProperties(XLXmlData* xmlData);
+
+        /**
+         * @brief Copy constructor
+         */
+        XLCustomProperties(const XLCustomProperties& other) = default;
+
+        /**
+         * @brief Move constructor
+         */
+        XLCustomProperties(XLCustomProperties&& other) noexcept = default;
+
+        /**
+         * @brief Destructor
+         */
+        ~XLCustomProperties();
+
+        /**
+         * @brief Copy assignment operator
+         */
+        XLCustomProperties& operator=(const XLCustomProperties& other) = default;
+
+        /**
+         * @brief Move assignment operator
+         */
+        XLCustomProperties& operator=(XLCustomProperties&& other) noexcept = default;
+
+        /**
+         * @brief Set a custom property
+         * @param name The name of the property
+         * @param value The value of the property
+         */
+        void setProperty(const std::string& name, const std::string& value);
+
+        /**
+         * @brief Get a custom property
+         * @param name The name of the property
+         * @return The value of the property as a string
+         */
+        std::string property(const std::string& name) const;
+
+        /**
+         * @brief Delete a custom property
+         * @param name The name of the property
+         */
+        void deleteProperty(const std::string& name);
+
+        /**
+         * @brief Check if a property exists
+         * @param name The name of the property
+         * @return True if it exists, false otherwise
+         */
+        bool propertyExists(const std::string& name) const;
     };
 
 }    // namespace OpenXLSX

@@ -272,6 +272,26 @@ namespace OpenXLSX
         void setProperty(XLProperty prop, const std::string& value);
 
         /**
+         * @brief Get a custom property
+         * @param name The name of the property
+         * @return The value of the property as a string
+         */
+        std::string customProperty(const std::string& name) const;
+
+        /**
+         * @brief Set a custom property
+         * @param name The name of the property
+         * @param value The value of the property
+         */
+        void setCustomProperty(const std::string& name, const std::string& value);
+
+        /**
+         * @brief Delete a custom property
+         * @param name The name of the property
+         */
+        void deleteCustomProperty(const std::string& name);
+
+        /**
          * @brief Delete the property from the document
          * @param theProperty The property to delete from the document
          */
@@ -502,6 +522,7 @@ namespace OpenXLSX
         XLContentTypes  m_contentTypes{};     /**< A pointer to the content types object*/
         XLAppProperties m_appProperties{};    /**< A pointer to the App properties object */
         XLProperties    m_coreProperties{};   /**< A pointer to the Core properties object*/
+        XLCustomProperties m_customProperties{}; /**< A pointer to the Custom properties object */
         XLStyles        m_styles{};           /**< A pointer to the document styles object*/
         XLWorkbook      m_workbook{};         /**< A pointer to the workbook object */
         IZipArchive     m_archive{};          /**<  */
