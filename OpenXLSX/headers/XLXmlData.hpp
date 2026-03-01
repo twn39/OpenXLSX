@@ -152,7 +152,7 @@ namespace OpenXLSX
          * @param savingDeclaration @optional specify an XML saving declaration to use
          * @return A std::string with the raw XML text data.
          */
-        std::string getRawData(XLXmlSavingDeclaration savingDeclaration = XLXmlSavingDeclaration{}) const;
+        std::string getRawData(XLXmlSavingDeclaration savingDeclaration = XLXmlSavingDeclaration{});
 
         /**
          * @brief Access the parent XLDocument object.
@@ -170,13 +170,13 @@ namespace OpenXLSX
          * @brief Retrieve the path of the XML data in the .xlsx zip archive.
          * @return A std::string with the path.
          */
-        std::string getXmlPath() const;
+        const std::string& getXmlPath() const;
 
         /**
          * @brief Retrieve the relationship ID of the XML file.
          * @return A std::string with the relationship ID.
          */
-        std::string getXmlID() const;
+        const std::string& getXmlID() const;
 
         /**
          * @brief Retrieve the type represented by the XML data.

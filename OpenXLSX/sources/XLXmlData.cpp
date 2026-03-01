@@ -62,7 +62,9 @@ XLXmlData::XLXmlData(XLDocument* parentDoc, const std::string& xmlPath, const st
       m_xmlID(xmlId),
       m_xmlType(xmlType),
       m_xmlDoc(std::make_unique<XMLDocument>())
-{ m_xmlDoc->reset(); }
+{
+    m_xmlDoc->reset();
+}
 
 /**
  * @details
@@ -73,15 +75,17 @@ XLXmlData::~XLXmlData() = default;
  * @details
  */
 void XLXmlData::setRawData(const std::string& data)    // NOLINT
-{ m_xmlDoc->load_string(data.c_str(), pugi_parse_settings); }
+{
+    m_xmlDoc->load_string(data.c_str(), pugi_parse_settings);
+}
 
 /**
  * @details
  * @note Default encoding for pugixml xml_document::save is pugi::encoding_auto, becomes pugi::encoding_utf8
  */
-std::string XLXmlData::getRawData(XLXmlSavingDeclaration savingDeclaration) const
+std::string XLXmlData::getRawData(XLXmlSavingDeclaration savingDeclaration)
 {
-    XMLDocument* doc = const_cast<XMLDocument*>(getXmlDocument());
+    XMLDocument* doc = getXmlDocument();
 
     // ===== 2024-07-08: ensure that the default encoding UTF-8 is explicitly written to the XML document with a custom saving declaration
     XMLNode saveDeclaration = doc->first_child();
@@ -99,7 +103,7 @@ std::string XLXmlData::getRawData(XLXmlSavingDeclaration savingDeclaration) cons
         if (attrEncoding.empty()) attrEncoding = saveDeclaration.append_attribute("encoding");
         XMLAttribute attrStandalone = saveDeclaration.attribute("standalone");
         if (attrStandalone.empty() and savingDeclaration.standalone_as_bool())    // only if standalone is set in passed savingDeclaration
-            attrStandalone = saveDeclaration.append_attribute("standalone");     // then make sure it exists
+            attrStandalone = saveDeclaration.append_attribute("standalone");      // then make sure it exists
 
         // ===== Set saving declaration attribute values (potentially overwriting existing values)
         attrVersion  = savingDeclaration.version().c_str();     // version="1.0" is XML default
@@ -127,12 +131,12 @@ const XLDocument* XLXmlData::getParentDoc() const { return m_parentDoc; }
 /**
  * @details
  */
-std::string XLXmlData::getXmlPath() const { return m_xmlPath; }
+const std::string& XLXmlData::getXmlPath() const { return m_xmlPath; }
 
 /**
  * @details
  */
-std::string XLXmlData::getXmlID() const { return m_xmlID; }
+const std::string& XLXmlData::getXmlID() const { return m_xmlID; }
 
 /**
  * @details

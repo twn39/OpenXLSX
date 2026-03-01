@@ -145,10 +145,11 @@ namespace OpenXLSX
         XLDocument(const XLDocument& other) = delete;
 
         /**
-         * @brief
+         * @brief Move constructor deleted: XLXmlData objects store raw m_parentDoc pointers
+         *        that would become dangling after a move.
          * @param other
          */
-        XLDocument(XLDocument&& other) noexcept = default;
+        XLDocument(XLDocument&& other) noexcept = delete;
 
         /**
          * @brief Destructor
@@ -163,11 +164,12 @@ namespace OpenXLSX
         XLDocument& operator=(const XLDocument& other) = delete;
 
         /**
-         * @brief
+         * @brief Move assignment deleted: XLXmlData objects store raw m_parentDoc pointers
+         *        that would become dangling after a move.
          * @param other
          * @return
          */
-        XLDocument& operator=(XLDocument&& other) noexcept = default;
+        XLDocument& operator=(XLDocument&& other) noexcept = delete;
 
         /**
          * @brief ensure that warnings are shown (default setting)
@@ -516,7 +518,8 @@ namespace OpenXLSX
         XLXmlSavingDeclaration
             m_xmlSavingDeclaration; /**< The xml saving declaration that will be passed to pugixml before generating the XML output data*/
 
-        struct SharedFormula {
+        struct SharedFormula
+        {
             std::string formula;
             uint32_t    baseRow;
             uint16_t    baseCol;
@@ -529,15 +532,15 @@ namespace OpenXLSX
         mutable std::map<const XMLDocument*, std::unordered_map<uint32_t, SharedFormula>>
             m_sharedFormulas{}; /**< Cache for shared formulas, scoped by worksheet document */
 
-        XLRelationships m_docRelationships{}; /**< A pointer to the document relationships object*/
-        XLRelationships m_wbkRelationships{}; /**< A pointer to the document relationships object*/
-        XLContentTypes  m_contentTypes{};     /**< A pointer to the content types object*/
-        XLAppProperties m_appProperties{};    /**< A pointer to the App properties object */
-        XLProperties    m_coreProperties{};   /**< A pointer to the Core properties object*/
+        XLRelationships    m_docRelationships{}; /**< A pointer to the document relationships object*/
+        XLRelationships    m_wbkRelationships{}; /**< A pointer to the document relationships object*/
+        XLContentTypes     m_contentTypes{};     /**< A pointer to the content types object*/
+        XLAppProperties    m_appProperties{};    /**< A pointer to the App properties object */
+        XLProperties       m_coreProperties{};   /**< A pointer to the Core properties object*/
         XLCustomProperties m_customProperties{}; /**< A pointer to the Custom properties object */
-        XLStyles        m_styles{};           /**< A pointer to the document styles object*/
-        XLWorkbook      m_workbook{};         /**< A pointer to the workbook object */
-        IZipArchive     m_archive{};          /**<  */
+        XLStyles           m_styles{};           /**< A pointer to the document styles object*/
+        XLWorkbook         m_workbook{};         /**< A pointer to the workbook object */
+        IZipArchive        m_archive{};          /**<  */
     };
 
     //----------------------------------------------------------------------------------------------------------------------

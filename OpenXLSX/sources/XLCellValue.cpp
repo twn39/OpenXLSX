@@ -8,7 +8,7 @@
 #include <fast_float/fast_float.h>
 
 #ifndef FMT_HEADER_ONLY
-#define FMT_HEADER_ONLY
+#    define FMT_HEADER_ONLY
 #endif
 #include <fmt/base.h>
 #include <fmt/format.h>
@@ -72,7 +72,7 @@ XLCellValue& OpenXLSX::XLCellValue::operator=(OpenXLSX::XLCellValue&& other) noe
 XLCellValue& XLCellValue::clear()
 {
     m_type  = XLValueType::Empty;
-    m_value = std::string("");
+    m_value = std::string{};
     return *this;
 }
 
@@ -160,7 +160,9 @@ XLCellValueProxy::XLCellValueProxy(XLCellValueProxy&& other) noexcept = default;
  */
 XLCellValueProxy& XLCellValueProxy::operator=(const XLCellValueProxy& other)
 {
-    if (&other != this) { *this = other.getValue(); }
+    if (&other != this) {
+        *this = other.getValue();
+    }
 
     return *this;
 }
@@ -248,13 +250,15 @@ XLValueType XLCellValueProxy::type() const
     assert(m_cellNode != nullptr);      // NOLINT
     assert(not m_cellNode->empty());    // NOLINT
 
+    // ===== Cache attribute lookup to avoid repeated XML queries (was called 7+ times)
+    const auto  typeAttr = m_cellNode->attribute("t");
+    const char* typeStr  = typeAttr.empty() ? "" : typeAttr.value();
+
     // ===== If neither a Type attribute or a getValue node is present, the cell is empty.
-    if (!m_cellNode->attribute("t") and !m_cellNode->child("v")) return XLValueType::Empty;
+    if (typeAttr.empty() and !m_cellNode->child("v")) return XLValueType::Empty;
 
     // ===== If a Type attribute is not present, but a value node is, the cell contains a number.
-    if (m_cellNode->attribute("t").empty() ||
-        ((strcmp(m_cellNode->attribute("t").value(), "n") == 0) and not m_cellNode->child("v").empty()))
-    {
+    if (typeAttr.empty() || (strcmp(typeStr, "n") == 0 and not m_cellNode->child("v").empty())) {
         if (const std::string numberString = m_cellNode->child("v").text().get(); numberString.find('.') != std::string::npos ||
                                                                                   numberString.find("E-") != std::string::npos ||
                                                                                   numberString.find("e-") != std::string::npos)
@@ -263,17 +267,16 @@ XLValueType XLCellValueProxy::type() const
     }
 
     // ===== If the cell is of type "s", the cell contains a shared string.
-    if (not m_cellNode->attribute("t").empty() and strcmp(m_cellNode->attribute("t").value(), "s") == 0)
-        return XLValueType::String;    // NOLINT
+    if (strcmp(typeStr, "s") == 0) return XLValueType::String;    // NOLINT
 
     // ===== If the cell is of type "inlineStr", the cell contains an inline string.
-    if (not m_cellNode->attribute("t").empty() and strcmp(m_cellNode->attribute("t").value(), "inlineStr") == 0) return XLValueType::String;
+    if (strcmp(typeStr, "inlineStr") == 0) return XLValueType::String;
 
     // ===== If the cell is of type "str", the cell contains an ordinary string.
-    if (not m_cellNode->attribute("t").empty() and strcmp(m_cellNode->attribute("t").value(), "str") == 0) return XLValueType::String;
+    if (strcmp(typeStr, "str") == 0) return XLValueType::String;
 
     // ===== If the cell is of type "b", the cell contains a boolean.
-    if (not m_cellNode->attribute("t").empty() and strcmp(m_cellNode->attribute("t").value(), "b") == 0) return XLValueType::Boolean;
+    if (strcmp(typeStr, "b") == 0) return XLValueType::Boolean;
 
     // ===== Otherwise, the cell contains an error.
     return XLValueType::Error;    // the m_typeAttribute has the ValueAsString "e"
@@ -382,9 +385,9 @@ void XLCellValueProxy::setFloat(double numberValue)
         m_cellNode->remove_attribute("t");
 
         // ===== Set the text of the value node using fmt for speed.
-        char   buffer[32];
-        auto   res = fmt::format_to(buffer, "{}", numberValue);
-        *res       = '\0';
+        char buffer[32];
+        auto res         = fmt::format_to_n(buffer, sizeof(buffer) - 1, "{}", numberValue);
+        buffer[res.size] = '\0';
         m_cellNode->child("v").text().set(buffer);
 
         // ===== Disable space preservation (only relevant for strings).
