@@ -55,11 +55,55 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 // ===== External Includes ===== //
 #include <any>
 #include <cstdint>    // uint8_t
+#include <cstring>    // strcmp
 #include <map>
 #include <string>
+#include <type_traits>
 
 namespace OpenXLSX
 {
+    // ===== Cross-TU any_cast helpers ===== //
+    //
+    // On macOS with hidden symbol visibility (e.g., nanobind/pybind extensions),
+    // std::any_cast can fail even when the stored type IS correct. This happens
+    // because libc++'s any_cast compares typeid pointers across translation units,
+    // and hidden visibility prevents the linker from deduplicating type_info objects.
+    //
+    // Workaround: for enum types (small, trivially-copyable), store the underlying
+    // integral type in std::any instead, avoiding cross-TU typeid comparisons for
+    // custom enum types entirely.
+
+    namespace detail
+    {
+        // For enum types, store as the underlying integral type to avoid cross-TU typeid issues
+        template<typename T>
+        auto wrap_for_any(T value) -> std::enable_if_t<std::is_enum_v<T>, std::underlying_type_t<T>>
+        {
+            return static_cast<std::underlying_type_t<T>>(value);
+        }
+
+        // For all other types, store as-is
+        template<typename T>
+        auto wrap_for_any(T value) -> std::enable_if_t<!std::is_enum_v<T>, T>
+        {
+            return value;
+        }
+
+        // For enum types, retrieve from the underlying type and cast back
+        template<typename T>
+        auto unwrap_from_any(const std::any& a) -> std::enable_if_t<std::is_enum_v<T>, T>
+        {
+            return static_cast<T>(std::any_cast<std::underlying_type_t<T>>(a));
+        }
+
+        // For all other types, use normal any_cast
+        template<typename T>
+        auto unwrap_from_any(const std::any& a) -> std::enable_if_t<!std::is_enum_v<T>, T>
+        {
+            return std::any_cast<T>(a);
+        }
+    }    // namespace detail
+
     /**
      * @brief
      */
@@ -103,7 +147,7 @@ namespace OpenXLSX
         template<typename T>
         XLCommand& setParam(const std::string& param, T value)
         {
-            m_params[param] = value;
+            m_params[param] = detail::wrap_for_any(value);
             return *this;
         }
 
@@ -116,20 +160,7 @@ namespace OpenXLSX
         template<typename T>
         T getParam(const std::string& param) const
         {
-            try {
-                return std::any_cast<T>(m_params.at(param));
-            }
-            catch (const std::bad_any_cast&) {
-                if constexpr (std::is_enum_v<T> || std::is_integral_v<T>) {
-                    auto& val = m_params.at(param);
-                    if (val.type() == typeid(int)) return static_cast<T>(std::any_cast<int>(val));
-                    if (val.type() == typeid(unsigned int)) return static_cast<T>(std::any_cast<unsigned int>(val));
-                    if (val.type() == typeid(uint8_t)) return static_cast<T>(std::any_cast<uint8_t>(val));
-                    if (val.type() == typeid(int64_t)) return static_cast<T>(std::any_cast<int64_t>(val));
-                    if (val.type() == typeid(uint64_t)) return static_cast<T>(std::any_cast<uint64_t>(val));
-                }
-                throw;
-            }
+            return detail::unwrap_from_any<T>(m_params.at(param));
         }
 
         /**
@@ -181,7 +212,7 @@ namespace OpenXLSX
         template<typename T>
         XLQuery& setParam(const std::string& param, T value)
         {
-            m_params[param] = value;
+            m_params[param] = detail::wrap_for_any(value);
             return *this;
         }
 
@@ -194,20 +225,7 @@ namespace OpenXLSX
         template<typename T>
         T getParam(const std::string& param) const
         {
-            try {
-                return std::any_cast<T>(m_params.at(param));
-            }
-            catch (const std::bad_any_cast&) {
-                if constexpr (std::is_enum_v<T> || std::is_integral_v<T>) {
-                    auto& val = m_params.at(param);
-                    if (val.type() == typeid(int)) return static_cast<T>(std::any_cast<int>(val));
-                    if (val.type() == typeid(unsigned int)) return static_cast<T>(std::any_cast<unsigned int>(val));
-                    if (val.type() == typeid(uint8_t)) return static_cast<T>(std::any_cast<uint8_t>(val));
-                    if (val.type() == typeid(int64_t)) return static_cast<T>(std::any_cast<int64_t>(val));
-                    if (val.type() == typeid(uint64_t)) return static_cast<T>(std::any_cast<uint64_t>(val));
-                }
-                throw;
-            }
+            return detail::unwrap_from_any<T>(m_params.at(param));
         }
 
         /**
@@ -219,7 +237,7 @@ namespace OpenXLSX
         template<typename T>
         XLQuery& setResult(T value)
         {
-            m_result = value;
+            m_result = detail::wrap_for_any(value);
             return *this;
         }
 
@@ -231,19 +249,7 @@ namespace OpenXLSX
         template<typename T>
         T result() const
         {
-            try {
-                return std::any_cast<T>(m_result);
-            }
-            catch (const std::bad_any_cast&) {
-                if constexpr (std::is_enum_v<T> || std::is_integral_v<T>) {
-                    if (m_result.type() == typeid(int)) return static_cast<T>(std::any_cast<int>(m_result));
-                    if (m_result.type() == typeid(unsigned int)) return static_cast<T>(std::any_cast<unsigned int>(m_result));
-                    if (m_result.type() == typeid(uint8_t)) return static_cast<T>(std::any_cast<uint8_t>(m_result));
-                    if (m_result.type() == typeid(int64_t)) return static_cast<T>(std::any_cast<int64_t>(m_result));
-                    if (m_result.type() == typeid(uint64_t)) return static_cast<T>(std::any_cast<uint64_t>(m_result));
-                }
-                throw;
-            }
+            return detail::unwrap_from_any<T>(m_result);
         }
 
         /**
