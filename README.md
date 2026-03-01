@@ -91,7 +91,6 @@ The build system includes platform-specific optimizations for `Release` builds (
 - [minizip-ng](https://github.com/zlib-ng/minizip-ng) - Next-generation ZIP manipulation.
 - [zlib-ng](https://github.com/zlib-ng/zlib-ng) - SIMD-optimized compression backend.
 - [Microsoft GSL](https://github.com/microsoft/GSL) - Guidelines Support Library for C++ safety.
-- [Boost.Nowide](https://github.com/boostorg/nowide) - UTF-8 file system support on Windows.
 
 ---
 

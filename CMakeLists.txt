@@ -10,7 +10,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(OPENXLSX_BUILD_TESTS "Build and run library tests" ON)
 option(OPENXLSX_BUILD_BENCHMARKS "Build benchmark programs" OFF)
 option(OPENXLSX_CREATE_DOCS "Build library documentation" OFF)
-option(OPENXLSX_ENABLE_NOWIDE "Enable Nowide for UTF-8 support on Windows" ON)
 option(OPENXLSX_ENABLE_LTO "Enable Link-Time Optimization (LTO/IPO) if supported" ON)
 
 set(OPENXLSX_LIBRARY_TYPE "STATIC" CACHE STRING "Library type (STATIC or SHARED)")
@@ -82,14 +81,6 @@ endif()
 set(PUGIXML_XPATH OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/pugixml EXCLUDE_FROM_ALL)
 
-set(NOWIDE_INSTALL OFF CACHE BOOL "" FORCE)
-set(NOWIDE_TESTING OFF CACHE BOOL "" FORCE)
-add_subdirectory(third_party/nowide EXCLUDE_FROM_ALL)
-
-if(WIN32)
-    set(OPENXLSX_ENABLE_NOWIDE ON)
-endif()
-
 # Sources
 file(GLOB OPENXLSX_SOURCES OpenXLSX/sources/*.cpp)
 
@@ -128,11 +119,6 @@ if(WIN32)
 endif()
 
 target_compile_definitions(OpenXLSX PUBLIC FMT_HEADER_ONLY)
-
-if (OPENXLSX_ENABLE_NOWIDE)
-    target_link_libraries(OpenXLSX PRIVATE nowide::nowide)
-    target_compile_definitions(OpenXLSX PRIVATE ENABLE_NOWIDE)
-endif ()
 
 if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
     target_compile_definitions(OpenXLSX PUBLIC OPENXLSX_STATIC_DEFINE)
