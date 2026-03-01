@@ -31,6 +31,11 @@ FetchContent_MakeAvailable(fmt)
 FetchContent_Declare(GSL GIT_REPOSITORY https://github.com/microsoft/GSL.git GIT_TAG v4.2.1)
 FetchContent_MakeAvailable(GSL)
 
+# Set up pugixml
+FetchContent_Declare(pugixml GIT_REPOSITORY https://github.com/zeux/pugixml.git GIT_TAG v1.15)
+set(PUGIXML_STATIC ON CACHE BOOL "Build pugixml as static library")
+FetchContent_MakeAvailable(pugixml)
+
 # Disable testing for third-party dependencies
 set(BUILD_TESTING_OLD ${BUILD_TESTING})
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
@@ -77,11 +82,8 @@ if(OPENXLSX_BUILD_TESTS OR OPENXLSX_BUILD_BENCHMARKS)
     FetchContent_MakeAvailable(Catch2)
 endif()
 
-# Third-party subdirectories
-set(PUGIXML_XPATH OFF CACHE BOOL "" FORCE)
-add_subdirectory(third_party/pugixml EXCLUDE_FROM_ALL)
-
 # Sources
+file(GLOB OPENXLSX_SOURCES OpenXLSX/sources/*.cpp)
 file(GLOB OPENXLSX_SOURCES OpenXLSX/sources/*.cpp)
 
 # Library Target
@@ -96,7 +98,6 @@ target_include_directories(OpenXLSX
     SYSTEM PUBLIC
         $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/third_party/pugixml/src>
         $<BUILD_INTERFACE:${minizip_ng_SOURCE_DIR}>
 )
 
