@@ -115,7 +115,22 @@ namespace OpenXLSX
          */
         template<typename T>
         T getParam(const std::string& param) const
-        { return std::any_cast<T>(m_params.at(param)); }
+        {
+            try {
+                return std::any_cast<T>(m_params.at(param));
+            }
+            catch (const std::bad_any_cast&) {
+                if constexpr (std::is_enum_v<T> || std::is_integral_v<T>) {
+                    auto& val = m_params.at(param);
+                    if (val.type() == typeid(int)) return static_cast<T>(std::any_cast<int>(val));
+                    if (val.type() == typeid(unsigned int)) return static_cast<T>(std::any_cast<unsigned int>(val));
+                    if (val.type() == typeid(uint8_t)) return static_cast<T>(std::any_cast<uint8_t>(val));
+                    if (val.type() == typeid(int64_t)) return static_cast<T>(std::any_cast<int64_t>(val));
+                    if (val.type() == typeid(uint64_t)) return static_cast<T>(std::any_cast<uint64_t>(val));
+                }
+                throw;
+            }
+        }
 
         /**
          * @brief
@@ -178,7 +193,22 @@ namespace OpenXLSX
          */
         template<typename T>
         T getParam(const std::string& param) const
-        { return std::any_cast<T>(m_params.at(param)); }
+        {
+            try {
+                return std::any_cast<T>(m_params.at(param));
+            }
+            catch (const std::bad_any_cast&) {
+                if constexpr (std::is_enum_v<T> || std::is_integral_v<T>) {
+                    auto& val = m_params.at(param);
+                    if (val.type() == typeid(int)) return static_cast<T>(std::any_cast<int>(val));
+                    if (val.type() == typeid(unsigned int)) return static_cast<T>(std::any_cast<unsigned int>(val));
+                    if (val.type() == typeid(uint8_t)) return static_cast<T>(std::any_cast<uint8_t>(val));
+                    if (val.type() == typeid(int64_t)) return static_cast<T>(std::any_cast<int64_t>(val));
+                    if (val.type() == typeid(uint64_t)) return static_cast<T>(std::any_cast<uint64_t>(val));
+                }
+                throw;
+            }
+        }
 
         /**
          * @brief
@@ -200,7 +230,21 @@ namespace OpenXLSX
          */
         template<typename T>
         T result() const
-        { return std::any_cast<T>(m_result); }
+        {
+            try {
+                return std::any_cast<T>(m_result);
+            }
+            catch (const std::bad_any_cast&) {
+                if constexpr (std::is_enum_v<T> || std::is_integral_v<T>) {
+                    if (m_result.type() == typeid(int)) return static_cast<T>(std::any_cast<int>(m_result));
+                    if (m_result.type() == typeid(unsigned int)) return static_cast<T>(std::any_cast<unsigned int>(m_result));
+                    if (m_result.type() == typeid(uint8_t)) return static_cast<T>(std::any_cast<uint8_t>(m_result));
+                    if (m_result.type() == typeid(int64_t)) return static_cast<T>(std::any_cast<int64_t>(m_result));
+                    if (m_result.type() == typeid(uint64_t)) return static_cast<T>(std::any_cast<uint64_t>(m_result));
+                }
+                throw;
+            }
+        }
 
         /**
          * @brief
