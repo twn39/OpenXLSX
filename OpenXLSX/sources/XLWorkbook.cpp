@@ -539,9 +539,8 @@ std::vector<std::string> XLWorkbook::worksheetNames() const    // 2024-05-01: wh
     for (XMLNode item = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not item.empty();
          item         = item.next_sibling_of_type(pugi::node_element))
     {
-        XLQuery query(XLQueryType::QuerySheetType);
-        query.setParam("sheetID", std::string(item.attribute("r:id").value()));
-        if (parentDoc().execQuery(query).result<XLContentType>() == XLContentType::Worksheet)
+        std::string relId = item.attribute("r:id").value();
+        if (parentDoc().workbookRelationships().relationshipById(relId).type() == XLRelationshipType::Worksheet)
             results.emplace_back(item.attribute("name").value());
     }
 

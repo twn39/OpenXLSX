@@ -316,6 +316,18 @@ namespace OpenXLSX
         XLStyles& styles();
 
         /**
+         * @brief Get the workbook relationships
+         * @return a reference to the XLRelationships object
+         */
+        XLRelationships& workbookRelationships();
+
+        /**
+         * @brief Get the workbook relationships
+         * @return a const reference to the XLRelationships object
+         */
+        const XLRelationships& workbookRelationships() const;
+
+        /**
          * @brief determine whether a worksheet relationships file exists for sheetXmlNo
          * @param sheetXmlNo check for this sheet number # (xl/worksheets/_reals/sheet#.xml.rels)
          * @return true if relationships file exists

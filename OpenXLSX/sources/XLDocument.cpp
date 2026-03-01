@@ -1078,6 +1078,16 @@ bool XLDocument::isOpen() const { return this->operator bool(); }
 XLStyles& XLDocument::styles() { return m_styles; }
 
 /**
+ * @details
+ */
+XLRelationships& XLDocument::workbookRelationships() { return m_wbkRelationships; }
+
+/**
+ * @details
+ */
+const XLRelationships& XLDocument::workbookRelationships() const { return m_wbkRelationships; }
+
+/**
  * @details determine - without creation - whether the document contains a sheet relationships file for sheet with sheetXmlNo
  */
 bool XLDocument::hasSheetRelationships(uint16_t sheetXmlNo) const
