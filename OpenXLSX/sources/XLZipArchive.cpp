@@ -58,6 +58,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include <unordered_map>
 #include <vector>
 #include <cstring>
+#include <filesystem>
 #include <gsl/gsl>
 
 // ===== OpenXLSX Includes ===== //
@@ -76,9 +77,16 @@ public:
     {
         m_fileName = fileName;
         m_entries.clear();
+        m_isOpen = false;
 
         void* reader = mz_zip_reader_create();
-        if (mz_zip_reader_open_file(reader, fileName.c_str()) == MZ_OK) {
+        
+        // On Windows, pass UTF-8 string directly. minizip-ng handles UTF-8 if configured.
+        // However, if the path is relative or has special characters, we ensure it's absolute UTF-8.
+        std::string utf8Path = std::filesystem::absolute(std::filesystem::path(fileName)).u8string();
+
+        if (mz_zip_reader_open_file(reader, utf8Path.c_str()) == MZ_OK) {
+            m_isOpen = true;
             int32_t err = mz_zip_reader_goto_first_entry(reader);
             while (err == MZ_OK) {
                 mz_zip_file* file_info = nullptr;
@@ -96,8 +104,15 @@ public:
             }
             mz_zip_reader_close(reader);
         }
+        else {
+            // Check if file exists to distinguish between "new file" and "open error"
+            if (std::filesystem::exists(std::filesystem::path(fileName))) {
+                mz_zip_reader_delete(&reader);
+                throw XLInputError("Failed to open existing zip file: " + fileName);
+            }
+            m_isOpen = true; 
+        }
         mz_zip_reader_delete(&reader);
-        m_isOpen = true;
     }
 
     void close()
@@ -111,7 +126,14 @@ public:
         std::string savePath = path.empty() ? m_fileName : path;
         void* writer = mz_zip_writer_create();
         
-        if (mz_zip_writer_open_file(writer, savePath.c_str(), 0, 0) != MZ_OK) {
+        std::filesystem::path p(savePath);
+        if (p.has_parent_path() && !std::filesystem::exists(p.parent_path())) {
+            std::filesystem::create_directories(p.parent_path());
+        }
+
+        std::string utf8Path = std::filesystem::absolute(p).u8string();
+
+        if (mz_zip_writer_open_file(writer, utf8Path.c_str(), 0, 0) != MZ_OK) {
             mz_zip_writer_delete(&writer);
             throw XLInternalError("Failed to open zip file for writing: " + savePath);
         }
@@ -138,7 +160,12 @@ public:
 
     void addEntry(const std::string& name, const std::string& data) { m_entries[name] = data; }
     void deleteEntry(const std::string& entryName) { m_entries.erase(entryName); }
-    std::string getEntry(const std::string& name) const { return m_entries.at(name); }
+    std::string getEntry(const std::string& name) const 
+    { 
+        auto it = m_entries.find(name);
+        if (it == m_entries.end()) throw XLInternalError("Path " + name + " does not exist in zip archive.");
+        return it->second; 
+    }
     bool hasEntry(const std::string& entryName) const { return m_entries.find(entryName) != m_entries.end(); }
     bool isOpen() const { return m_isOpen; }
 
