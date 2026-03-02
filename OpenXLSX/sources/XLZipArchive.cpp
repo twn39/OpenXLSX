@@ -175,6 +175,14 @@ public:
     bool hasEntry(const std::string& entryName) const { return m_entries.find(entryName) != m_entries.end(); }
     bool isOpen() const { return m_isOpen; }
 
+    std::vector<std::string> entryNames() const
+    {
+        std::vector<std::string> names;
+        names.reserve(m_entries.size());
+        for (const auto& [key, _] : m_entries) names.push_back(key);
+        return names;
+    }
+
 private:
     std::string                                  m_fileName;
     bool                                         m_isOpen = false;
@@ -208,5 +216,6 @@ void XLZipArchive::deleteEntry(const std::string& entryName)
 {
     if (m_archive) m_archive->deleteEntry(entryName);
 }
-std::string XLZipArchive::getEntry(const std::string& name) const { return m_archive ? m_archive->getEntry(name) : ""; }
-bool        XLZipArchive::hasEntry(const std::string& entryName) const { return m_archive && m_archive->hasEntry(entryName); }
+std::string              XLZipArchive::getEntry(const std::string& name) const { return m_archive ? m_archive->getEntry(name) : ""; }
+bool                     XLZipArchive::hasEntry(const std::string& entryName) const { return m_archive && m_archive->hasEntry(entryName); }
+std::vector<std::string> XLZipArchive::entryNames() const { return m_archive ? m_archive->entryNames() : std::vector<std::string>{}; }

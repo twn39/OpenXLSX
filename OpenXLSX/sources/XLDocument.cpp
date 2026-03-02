@@ -817,6 +817,15 @@ std::string XLDocument::name() const
  */
 XLContentTypes& XLDocument::contentTypes() { return m_contentTypes; }
 
+IZipArchive&       XLDocument::archive() { return m_archive; }
+const IZipArchive& XLDocument::archive() const { return m_archive; }
+
+XLAppProperties&       XLDocument::appProperties() { return m_appProperties; }
+const XLAppProperties& XLDocument::appProperties() const { return m_appProperties; }
+
+XLProperties&       XLDocument::coreProperties() { return m_coreProperties; }
+const XLProperties& XLDocument::coreProperties() const { return m_coreProperties; }
+
 /**
  * @details
  */

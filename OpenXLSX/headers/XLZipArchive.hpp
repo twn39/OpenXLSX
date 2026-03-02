@@ -57,6 +57,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace OpenXLSX
 {
@@ -161,6 +162,12 @@ namespace OpenXLSX
          * @return
          */
         bool hasEntry(const std::string& entryName) const;
+
+        /**
+         * @brief Get a list of all entry names in the archive.
+         * @return A vector of entry name strings.
+         */
+        std::vector<std::string> entryNames() const;
 
     private:
         std::shared_ptr<Impl> m_archive; /**< */

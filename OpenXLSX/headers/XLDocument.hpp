@@ -254,6 +254,42 @@ namespace OpenXLSX
         XLContentTypes& contentTypes();
 
         /**
+         * @brief Get the underlying zip archive object
+         * @return a reference to the IZipArchive object
+         */
+        IZipArchive& archive();
+
+        /**
+         * @brief Get the underlying zip archive object (const)
+         * @return a const reference to the IZipArchive object
+         */
+        const IZipArchive& archive() const;
+
+        /**
+         * @brief Get the application properties object
+         * @return a reference to the XLAppProperties object
+         */
+        XLAppProperties& appProperties();
+
+        /**
+         * @brief Get the application properties object (const)
+         * @return a const reference to the XLAppProperties object
+         */
+        const XLAppProperties& appProperties() const;
+
+        /**
+         * @brief Get the core properties object
+         * @return a reference to the XLProperties object
+         */
+        XLProperties& coreProperties();
+
+        /**
+         * @brief Get the core properties object (const)
+         * @return a const reference to the XLProperties object
+         */
+        const XLProperties& coreProperties() const;
+
+        /**
          * @brief Get the underlying workbook object, as a const object.
          * @return A const pointer to the XLWorkbook object.
          */
