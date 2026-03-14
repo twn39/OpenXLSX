@@ -28,6 +28,11 @@ FetchContent_MakeAvailable(fast_float)
 FetchContent_Declare(fmt GIT_REPOSITORY https://github.com/fmtlib/fmt.git GIT_TAG 12.1.0)
 FetchContent_MakeAvailable(fmt)
 
+# Set up pugixml
+set(PUGIXML_XPATH OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(pugixml GIT_REPOSITORY https://github.com/zeux/pugixml.git GIT_TAG v1.15)
+FetchContent_MakeAvailable(pugixml)
+
 # Set up Catch2 (if tests or benchmarks are enabled)
 if(OPENXLSX_BUILD_TESTS OR OPENXLSX_BUILD_BENCHMARKS)
     FetchContent_Declare(Catch2 GIT_REPOSITORY https://github.com/catchorg/Catch2.git GIT_TAG v3.13.0)
@@ -35,9 +40,6 @@ if(OPENXLSX_BUILD_TESTS OR OPENXLSX_BUILD_BENCHMARKS)
 endif()
 
 # Third-party subdirectories
-set(PUGIXML_XPATH OFF CACHE BOOL "" FORCE)
-add_subdirectory(third_party/pugixml EXCLUDE_FROM_ALL)
-
 set(NOWIDE_INSTALL OFF CACHE BOOL "" FORCE)
 set(NOWIDE_TESTING OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/nowide EXCLUDE_FROM_ALL)
@@ -61,7 +63,6 @@ target_include_directories(OpenXLSX
     SYSTEM PUBLIC
         $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/third_party/pugixml/src>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/third_party/zippy>
 )
 
