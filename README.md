@@ -8,14 +8,14 @@ OpenXLSX is a high-performance C++ library for reading, writing, creating, and m
 
 - **Modern C++**: Built with C++17, ensuring type safety and modern abstractions.
 - **High Performance**: Optimized for speed, capable of processing millions of cells per second.
-- **LTO Support**: Optional Link-Time Optimization (LTO/IPO) for maximum execution performance.
+- **Zero-Dependency Core**: All dependencies (`libzip`, `pugixml`, `fmt`, `fast_float`) are integrated via CMake's `FetchContent` or standard library.
+- **Unicode Support**: Consistent UTF-8 handling across all platforms using C++17 `std::filesystem`.
 - **Comprehensive Image Support**: Insert and read images (PNG/JPEG) with automatic dimension detection and aspect ratio preservation.
 - **Rich Formatting**: Support for styles, fonts, fills, borders, and conditional formatting.
+- **Data Validation**: Full CRUD support for cell data validations (drop-down lists, numeric ranges, etc.).
 - **Worksheet Management**: Create, clone, rename, and delete worksheets with validation.
 - **Data Integrity**: Enforces OOXML standards, including strict XML declarations and metadata handling.
-- **Advanced Iterators**: Efficient cell and row iterators that minimize XML overhead.
 - **Modern Testing**: Integrated with **Catch2 v3.13.0** for robust verification.
-- **Simplified Build**: A unified single-root CMake configuration for easy integration.
 
 ## 🛠 Quick Start
 
@@ -75,7 +75,7 @@ The library features a comprehensive test suite. To run the tests after building
 ## ⚠️ Development Conventions
 
 ### Unicode / UTF-8
-**All string input and output must be in UTF-8 encoding.** OpenXLSX does not perform internal encoding conversion. Ensure your source files are saved in UTF-8.
+**All string input and output must be in UTF-8 encoding.** OpenXLSX uses `std::filesystem` to handle cross-platform path conversion (including UTF-8 on Windows). Ensure your source files are saved in UTF-8.
 
 ### Indexing
 - **Sheet Indexing**: 1-based (consistent with Excel).
@@ -87,18 +87,25 @@ The build system includes platform-specific optimizations for `Release` builds (
 ## 🤝 Credits
 - [PugiXML](https://pugixml.org/) - Fast XML parsing.
 - [libzip](https://libzip.org/) & [zlib-ng](https://github.com/zlib-ng/zlib-ng) - Fast and compatible ZIP archive handling.
-- [std::filesystem] - UTF-8 file system support on Windows (C++17).
+- [fmt](https://github.com/fmtlib/fmt) - Modern formatting library.
+- [fast_float](https://github.com/fastfloat/fast_float) - Fast floating-point parsing.
 
 ---
 
 <details>
-<summary><b>Detailed Change Log (Feb 2026)</b></summary>
+<summary><b>Detailed Change Log</b></summary>
+
+### 2026-03-14: Dependency Cleanup & Data Integrity
+- **Removed `nowide` Dependency**: Migrated to C++17 `std::filesystem::u8path` for cross-platform UTF-8 path support, reducing the library footprint and simplifying build logic.
+- **Fixed Document Properties**: Resolved issues where Title, Subject, and Creator were not correctly updated in `core.xml` due to OOXML namespace handling.
+- **XML Format Optimization**: Switched to standard XML formatting to ensure XML declarations are preserved, improving compatibility with Excel and other spreadsheet viewers.
+- **CI Enhancement**: Added caching for dependencies in GitHub Actions to speed up build times.
 
 ### 2026-02-28: Major Refactor & Feature Update
 - **Unified Build System**: Consolidated all sub-module CMake configurations into a single root `CMakeLists.txt`.
 - **Optimization Suite**: Added LTO support and platform-specific Release optimizations (`/O2`, `-O3`, dead-code stripping).
 - **Image Support**: Implemented `XLDrawing` and aspect-ratio aware image insertion.
-- **Cleanup**: Removed deprecated `Examples`, legacy `Makefile.GNU`, and redundant config files.
+- **Data Validation**: Enhanced data validation support with full CRUD operations and Excel-compliant XML serialization.
 - **Enhanced Testing**: Merged test suite into main build flow with automatic test data handling.
 
 </details>
