@@ -1,6 +1,7 @@
 #include <OpenXLSX.hpp>
 #include <catch2/catch_all.hpp>
 #include <filesystem>
+#include <fstream>
 
 using namespace OpenXLSX;
 
@@ -197,6 +198,75 @@ TEST_CASE("OOXML Verification Tests", "[OOXML]")
             REQUIRE(relsXml.find("Id=\"" + rId + "\"") != std::string::npos);
             REQUIRE(relsXml.find("Target=\"https://www.github.com\"") != std::string::npos);
             REQUIRE(relsXml.find("TargetMode=\"External\"") != std::string::npos);
+
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
+
+    SECTION("Verify Image insertion OOXML structure")
+    {
+        std::string filename = "ooxml_image_test.xlsx";
+        std::string imagePath = "./Tests/test.png";
+        
+        // Skip if test image doesn't exist
+        if (!std::filesystem::exists(imagePath)) return;
+
+        std::string imgData;
+        {
+            std::ifstream file(imagePath, std::ios::binary);
+            imgData = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        }
+
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            wks.addImage("inserted_test.png", imgData, 5, 5, 100, 100);
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLDocumentTest testDoc;
+            testDoc.open(filename);
+
+            // 1. Verify sheet1.xml has a drawing reference
+            std::string sheetXml = testDoc.getRawXml("xl/worksheets/sheet1.xml");
+            size_t drawingPos = sheetXml.find("<drawing r:id=\"");
+            REQUIRE(drawingPos != std::string::npos);
+            
+            size_t idStart = drawingPos + 15;
+            size_t idEnd = sheetXml.find("\"", idStart);
+            std::string rId = sheetXml.substr(idStart, idEnd - idStart);
+
+            // 2. Verify sheet1.xml.rels points to drawing1.xml
+            std::string sheetRelsXml = testDoc.getRawXml("xl/worksheets/_rels/sheet1.xml.rels");
+            REQUIRE(sheetRelsXml.find("Id=\"" + rId + "\"") != std::string::npos);
+            REQUIRE(sheetRelsXml.find("Target=\"../drawings/drawing1.xml\"") != std::string::npos);
+
+            // 3. Verify drawing1.xml exists and contains a picture element
+            std::string drawingXml = testDoc.getRawXml("xl/drawings/drawing1.xml");
+            REQUIRE(drawingXml.find("<xdr:pic>") != std::string::npos);
+            REQUIRE(drawingXml.find("<xdr:cNvPr id=\"") != std::string::npos);
+            REQUIRE(drawingXml.find("name=\"inserted_test.png\"") != std::string::npos);
+            
+            // Get image relationship ID from drawing1.xml
+            size_t picPos = drawingXml.find("<xdr:blipFill>");
+            size_t blipPos = drawingXml.find("r:embed=\"", picPos);
+            REQUIRE(blipPos != std::string::npos);
+            size_t imgIdStart = blipPos + 9;
+            size_t imgIdEnd = drawingXml.find("\"", imgIdStart);
+            std::string imgRId = drawingXml.substr(imgIdStart, imgIdEnd - imgIdStart);
+
+            // 4. Verify drawing1.xml.rels points to the media file
+            std::string drawingRelsXml = testDoc.getRawXml("xl/drawings/_rels/drawing1.xml.rels");
+            REQUIRE(drawingRelsXml.find("Id=\"" + imgRId + "\"") != std::string::npos);
+            REQUIRE(drawingRelsXml.find("Target=\"../media/inserted_test.png\"") != std::string::npos);
+
+            // 5. Verify the media file exists and has correct data
+            std::string retrievedImgData = testDoc.getRawXml("xl/media/inserted_test.png");
+            REQUIRE(retrievedImgData == imgData);
 
             testDoc.close();
         }
