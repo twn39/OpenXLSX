@@ -328,6 +328,107 @@ namespace OpenXLSX
         void insertSheetName(const std::string& sheetName, unsigned int index);
     };
 
+    /**
+     * @brief The XLCustomProperties class encapsulates the functionality for reading and writing
+     * custom document properties in docProps/custom.xml. Custom properties allow users to attach
+     * arbitrary metadata to the workbook, which can be seen in Excel's file properties.
+     */
+    class OPENXLSX_EXPORT XLCustomProperties : public XLXmlFile
+    {
+    private:
+        /**
+         * @brief Initialize a new custom.xml file with the required namespaces if it doesn't exist.
+         */
+        void createFromTemplate();
+
+    public:
+        /**
+         * @brief Default constructor.
+         */
+        XLCustomProperties() = default;
+
+        /**
+         * @brief Constructor that binds to existing XML data. If the XML is empty, it initializes it from template.
+         * @param xmlData Pointer to the XML data managed by the parent document.
+         */
+        explicit XLCustomProperties(XLXmlData* xmlData);
+
+        /**
+         * @brief Copy constructor.
+         */
+        XLCustomProperties(const XLCustomProperties& other) = default;
+
+        /**
+         * @brief Move constructor.
+         */
+        XLCustomProperties(XLCustomProperties&& other) noexcept = default;
+
+        /**
+         * @brief Destructor.
+         */
+        ~XLCustomProperties();
+
+        /**
+         * @brief Copy assignment operator.
+         */
+        XLCustomProperties& operator=(const XLCustomProperties& other) = default;
+
+        /**
+         * @brief Move assignment operator.
+         */
+        XLCustomProperties& operator=(XLCustomProperties&& other) noexcept = default;
+
+        /**
+         * @brief Set a string custom property. If a property with the same name exists, it will be updated.
+         * We use vt:lpwstr for strings to ensure compatibility with most Excel versions and support for Unicode.
+         * @param name The name of the property.
+         * @param value The string value.
+         */
+        void setProperty(const std::string& name, const std::string& value);
+
+        /**
+         * @brief Overload for string literals to prevent unwanted implicit conversion to bool.
+         * @param name The name of the property.
+         * @param value The string literal value.
+         */
+        void setProperty(const std::string& name, const char* value);
+
+        /**
+         * @brief Set an integer custom property using vt:i4 (32-bit signed integer).
+         * @param name The name of the property.
+         * @param value The integer value.
+         */
+        void setProperty(const std::string& name, int value);
+
+        /**
+         * @brief Set a double custom property using vt:r8 (64-bit floating point).
+         * @param name The name of the property.
+         * @param value The double value.
+         */
+        void setProperty(const std::string& name, double value);
+
+        /**
+         * @brief Set a boolean custom property using vt:bool.
+         * @param name The name of the property.
+         * @param value The boolean value.
+         */
+        void setProperty(const std::string& name, bool value);
+
+        /**
+         * @brief Retrieve the value of a custom property as a string, regardless of its underlying XML type.
+         * Returns an empty string if the property is not found.
+         * @param name The name of the property to find.
+         * @return The property value as a string.
+         */
+        std::string property(const std::string& name) const;
+
+        /**
+         * @brief Remove a custom property by name. Does nothing if the property doesn't exist.
+         * @param name The name of the property to delete.
+         */
+        void deleteProperty(const std::string& name);
+    };
+
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas

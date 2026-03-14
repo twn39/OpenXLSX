@@ -614,6 +614,7 @@ void XLDocument::open(const std::string& fileName)
 
     m_coreProperties = XLProperties(getXmlData("docProps/core.xml"));
     m_appProperties  = XLAppProperties(getXmlData("docProps/app.xml"), m_workbook.xmlDocument());
+    if (hasXmlData("docProps/custom.xml")) m_customProperties = XLCustomProperties(getXmlData("docProps/custom.xml"));
     // ===== 2024-09-02: ensure that all worksheets are contained in app.xml <TitlesOfParts> and reflected in <HeadingPairs> value for
     // Worksheets
     m_appProperties.alignWorksheets(m_workbook.sheetNames());
@@ -721,6 +722,7 @@ void XLDocument::close()
     m_contentTypes     = XLContentTypes();
     m_appProperties    = XLAppProperties();
     m_coreProperties   = XLProperties();
+    m_customProperties = XLCustomProperties();
     m_styles           = XLStyles();
     m_workbook         = XLWorkbook();
     m_sharedFormulas.clear();
@@ -771,7 +773,9 @@ void XLDocument::saveAs(const std::string& fileName, bool forceOverwrite)
             continue;
 
         bool xmlIsStandalone = m_xmlSavingDeclaration.standalone_as_bool();
-        if ((item.getXmlPath() == "docProps/core.xml") or (item.getXmlPath() == "docProps/app.xml")) xmlIsStandalone = XLXmlStandalone;
+        if ((item.getXmlPath() == "docProps/core.xml") or (item.getXmlPath() == "docProps/app.xml") or
+            (item.getXmlPath() == "docProps/custom.xml"))
+            xmlIsStandalone = XLXmlStandalone;
         m_archive.addEntry(
             item.getXmlPath(),
             item.getRawData(XLXmlSavingDeclaration(m_xmlSavingDeclaration.version(), m_xmlSavingDeclaration.encoding(), xmlIsStandalone)));
@@ -802,6 +806,15 @@ std::string XLDocument::name() const
  * @details
  */
 XLContentTypes& XLDocument::contentTypes() { return m_contentTypes; }
+
+/**
+ * @details
+ */
+XLCustomProperties& XLDocument::customProperties()
+{
+    if (!hasXmlData("docProps/custom.xml")) execCommand(XLCommand(XLCommandType::CheckAndFixCustomProperties));
+    return m_customProperties;
+}
 
 /**
  * @details
@@ -1401,6 +1414,23 @@ bool XLDocument::execCommand(const XLCommand& command)
                     /* xmlID     */ m_docRelationships.relationshipByTarget("docProps/app.xml").id(),
                     /* xmlType   */ XLContentType::ExtendedProperties);
             }
+        } break;
+        case XLCommandType::CheckAndFixCustomProperties: {    // does nothing if custom properties are in good shape
+            // ===== If _rels/.rels has no entry for docProps/custom.xml
+            if (!m_docRelationships.targetExists("docProps/custom.xml"))
+                m_docRelationships.addRelationship(XLRelationshipType::CustomProperties, "docProps/custom.xml");
+
+            // ===== If docProps/custom.xml is missing
+            if (!m_archive.hasEntry("docProps/custom.xml"))
+                m_archive.addEntry("docProps/custom.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"standalone=\"yes\"?>");
+
+            // ===== If [Content Types].xml has no relationship for docProps/custom.xml
+            if (!hasXmlData("docProps/custom.xml")) {
+                m_contentTypes.addOverride("/docProps/custom.xml", XLContentType::CustomProperties);
+                m_data.emplace_back(this, "docProps/custom.xml", m_docRelationships.relationshipByTarget("docProps/custom.xml").id(),
+                                    XLContentType::CustomProperties);
+            }
+            m_customProperties = XLCustomProperties(getXmlData("docProps/custom.xml"));
         } break;
         case XLCommandType::AddSharedStrings: {
             m_contentTypes.addOverride("/xl/sharedStrings.xml", XLContentType::SharedStrings);

@@ -44,6 +44,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
  */
 
 // ===== External Includes ===== //
+#include <fmt/format.h>
 #include <pugixml.hpp>
 #include <string>
 #include <vector>
@@ -290,12 +291,12 @@ void XLProperties::setProperty(const std::string& name, const std::string& value
 /**
  * @details
  */
-void XLProperties::setProperty(const std::string& name, int value) { setProperty(name, std::to_string(value)); }
+void XLProperties::setProperty(const std::string& name, int value) { setProperty(name, fmt::format("{}", value)); }
 
 /**
  * @details
  */
-void XLProperties::setProperty(const std::string& name, double value) { setProperty(name, std::to_string(value)); }
+void XLProperties::setProperty(const std::string& name, double value) { setProperty(name, fmt::format("{}", value)); }
 
 /**
  * @details
@@ -542,7 +543,7 @@ void XLAppProperties::addHeadingPair(const std::string& name, int value)
     }
 
     if (not pairValue.empty())
-        pairValue.text().set(std::to_string(value).c_str());
+        pairValue.text().set(fmt::format("{}", value).c_str());
     else {
         using namespace std::literals::string_literals;
         throw XLInternalError("XLAppProperties::addHeadingPair: found no matching pair count value to name "s + name);
@@ -596,7 +597,7 @@ void XLAppProperties::setHeadingPair(const std::string& name, int newValue)
     XMLNode pairValue = getHeadingPairsValue(xmlDocument().document_element(), name);
     using namespace std::literals::string_literals;
     if (not pairValue.empty() and (pairValue.raw_name() == "vt:i4"s))
-        pairValue.text().set(std::to_string(newValue).c_str());
+        pairValue.text().set(fmt::format("{}", newValue).c_str());
     else
         throw XLInternalError("XLAppProperties::setHeadingPair: found no matching pair count value to name "s + name);
 }
@@ -649,6 +650,277 @@ void XLAppProperties::appendSheetName(const std::string& sheetName)
     auto theNode = sheetNames(xmlDocument().document_element()).append_child("vt:lpstr", XLForceNamespace);
     theNode.text().set(sheetName.c_str());
     incrementSheetCount(+1);
+}
+
+/**
+ * @details
+ */
+void XLCustomProperties::createFromTemplate()
+{
+    if (m_xmlData == nullptr) throw XLInternalError("XLCustomProperties m_xmlData is nullptr");
+
+    XMLNode props = xmlDocument().prepend_child("Properties");
+    props.append_attribute("xmlns")    = "http://schemas.openxmlformats.org/officeDocument/2006/custom-properties";
+    props.append_attribute("xmlns:vt") = "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes";
+}
+
+/**
+ * @details
+ */
+XLCustomProperties::XLCustomProperties(XLXmlData* xmlData) : XLXmlFile(xmlData)
+{
+    if (m_xmlData == nullptr) return;
+    XMLNode doc        = xmlData->getXmlDocument()->document_element();
+    XMLNode child      = doc.first_child_of_type(pugi::node_element);
+    size_t  childCount = 0;
+    while (not child.empty()) {
+        ++childCount;
+        child = child.next_sibling_of_type(pugi::node_element);
+    }
+    if (!childCount) createFromTemplate();
+}
+
+/**
+ * @details
+ */
+XLCustomProperties::~XLCustomProperties() = default;
+
+/**
+ * @details
+ */
+void XLCustomProperties::setProperty(const std::string& name, const std::string& value)
+{
+    if (m_xmlData == nullptr) return;
+    pugi::xml_node props = xmlDocument().document_element();
+    pugi::xml_node prop;
+    for (auto p : props.children()) {
+        std::string nodeName = p.name();
+        if (nodeName.find("property") != std::string::npos) {
+            if (std::string(p.attribute("name").value()) == name) {
+                prop = p;
+                break;
+            }
+        }
+    }
+
+    if (prop.empty()) {
+        int maxPid = 1;
+        for (auto p : props.children()) {
+            std::string nodeName = p.name();
+            if (nodeName.find("property") != std::string::npos) {
+                int pid = p.attribute("pid").as_int();
+                if (pid > maxPid) maxPid = pid;
+            }
+        }
+
+        prop = props.append_child("property");
+        prop.append_attribute("fmtid") = "{D5CDD502-2E9C-101B-9397-08002B2CF9AE}";
+        prop.append_attribute("pid")   = maxPid + 1;
+        prop.append_attribute("name")  = name.c_str();
+    }
+
+    pugi::xml_node valueNode = prop.first_child();
+    while (!valueNode.empty() && valueNode.type() != pugi::node_element) valueNode = valueNode.next_sibling();
+
+    if (valueNode.empty())
+        valueNode = prop.append_child("vt:lpwstr");
+    else if (std::string(valueNode.name()) != "vt:lpwstr") {
+        prop.remove_child(valueNode);
+        valueNode = prop.append_child("vt:lpwstr");
+    }
+    valueNode.text().set(value.c_str());
+}
+
+/**
+ * @details
+ */
+void XLCustomProperties::setProperty(const std::string& name, const char* value)
+{
+    setProperty(name, std::string(value));
+}
+
+/**
+ * @details
+ */
+void XLCustomProperties::setProperty(const std::string& name, int value)
+{
+    if (m_xmlData == nullptr) return;
+    pugi::xml_node props = xmlDocument().document_element();
+    pugi::xml_node prop;
+    for (auto p : props.children()) {
+        std::string nodeName = p.name();
+        if (nodeName.find("property") != std::string::npos) {
+            if (std::string(p.attribute("name").value()) == name) {
+                prop = p;
+                break;
+            }
+        }
+    }
+
+    if (prop.empty()) {
+        int maxPid = 1;
+        for (auto p : props.children()) {
+            std::string nodeName = p.name();
+            if (nodeName.find("property") != std::string::npos) {
+                int pid = p.attribute("pid").as_int();
+                if (pid > maxPid) maxPid = pid;
+            }
+        }
+
+        prop = props.append_child("property");
+        prop.append_attribute("fmtid") = "{D5CDD502-2E9C-101B-9397-08002B2CF9AE}";
+        prop.append_attribute("pid")   = maxPid + 1;
+        prop.append_attribute("name")  = name.c_str();
+    }
+
+    pugi::xml_node valueNode = prop.first_child();
+    while (!valueNode.empty() && valueNode.type() != pugi::node_element) valueNode = valueNode.next_sibling();
+
+    if (valueNode.empty())
+        valueNode = prop.append_child("vt:i4");
+    else if (std::string(valueNode.name()) != "vt:i4") {
+        prop.remove_child(valueNode);
+        valueNode = prop.append_child("vt:i4");
+    }
+    valueNode.text().set(fmt::format("{}", value).c_str());
+}
+
+/**
+ * @details
+ */
+void XLCustomProperties::setProperty(const std::string& name, double value)
+{
+    if (m_xmlData == nullptr) return;
+    pugi::xml_node props = xmlDocument().document_element();
+    pugi::xml_node prop;
+    for (auto p : props.children()) {
+        std::string nodeName = p.name();
+        if (nodeName.find("property") != std::string::npos) {
+            if (std::string(p.attribute("name").value()) == name) {
+                prop = p;
+                break;
+            }
+        }
+    }
+
+    if (prop.empty()) {
+        int maxPid = 1;
+        for (auto p : props.children()) {
+            std::string nodeName = p.name();
+            if (nodeName.find("property") != std::string::npos) {
+                int pid = p.attribute("pid").as_int();
+                if (pid > maxPid) maxPid = pid;
+            }
+        }
+
+        prop = props.append_child("property");
+        prop.append_attribute("fmtid") = "{D5CDD502-2E9C-101B-9397-08002B2CF9AE}";
+        prop.append_attribute("pid")   = maxPid + 1;
+        prop.append_attribute("name")  = name.c_str();
+    }
+
+    pugi::xml_node valueNode = prop.first_child();
+    while (!valueNode.empty() && valueNode.type() != pugi::node_element) valueNode = valueNode.next_sibling();
+
+    if (valueNode.empty())
+        valueNode = prop.append_child("vt:r8");
+    else if (std::string(valueNode.name()) != "vt:r8") {
+        prop.remove_child(valueNode);
+        valueNode = prop.append_child("vt:r8");
+    }
+    valueNode.text().set(fmt::format("{}", value).c_str());
+}
+
+/**
+ * @details
+ */
+void XLCustomProperties::setProperty(const std::string& name, bool value)
+{
+    if (m_xmlData == nullptr) return;
+    pugi::xml_node props = xmlDocument().document_element();
+    pugi::xml_node prop;
+    for (auto p : props.children()) {
+        std::string nodeName = p.name();
+        if (nodeName.find("property") != std::string::npos) {
+            if (std::string(p.attribute("name").value()) == name) {
+                prop = p;
+                break;
+            }
+        }
+    }
+
+    if (prop.empty()) {
+        int maxPid = 1;
+        for (auto p : props.children()) {
+            std::string nodeName = p.name();
+            if (nodeName.find("property") != std::string::npos) {
+                int pid = p.attribute("pid").as_int();
+                if (pid > maxPid) maxPid = pid;
+            }
+        }
+
+        prop = props.append_child("property");
+        prop.append_attribute("fmtid") = "{D5CDD502-2E9C-101B-9397-08002B2CF9AE}";
+        prop.append_attribute("pid")   = maxPid + 1;
+        prop.append_attribute("name")  = name.c_str();
+    }
+
+    pugi::xml_node valueNode = prop.first_child();
+    while (!valueNode.empty() && valueNode.type() != pugi::node_element) valueNode = valueNode.next_sibling();
+
+    if (valueNode.empty())
+        valueNode = prop.append_child("vt:bool");
+    else if (std::string(valueNode.name()) != "vt:bool") {
+        prop.remove_child(valueNode);
+        valueNode = prop.append_child("vt:bool");
+    }
+    valueNode.text().set(value ? "true" : "false");
+}
+
+/**
+ * @details
+ */
+std::string XLCustomProperties::property(const std::string& name) const
+{
+    if (m_xmlData == nullptr) return "";
+    pugi::xml_node props = xmlDocument().document_element();
+    pugi::xml_node prop;
+    for (auto p : props.children()) {
+        std::string nodeName = p.name();
+        if (nodeName.find("property") != std::string::npos) {
+            if (std::string(p.attribute("name").value()) == name) {
+                prop = p;
+                break;
+            }
+        }
+    }
+
+    if (prop.empty()) return "";
+
+    pugi::xml_node valueNode = prop.first_child();
+    while (!valueNode.empty() && valueNode.type() != pugi::node_element) valueNode = valueNode.next_sibling();
+
+    return valueNode.text().get();
+}
+
+/**
+ * @details
+ */
+void XLCustomProperties::deleteProperty(const std::string& name)
+{
+    if (m_xmlData == nullptr) return;
+    pugi::xml_node props = xmlDocument().document_element();
+    pugi::xml_node prop;
+    for (auto p : props.children()) {
+        std::string nodeName = p.name();
+        if (nodeName.find("property") != std::string::npos) {
+            if (std::string(p.attribute("name").value()) == name) {
+                prop = p;
+                break;
+            }
+        }
+    }
+    if (not prop.empty()) props.remove_child(prop);
 }
 
 /**

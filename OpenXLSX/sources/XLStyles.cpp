@@ -45,6 +45,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 // ===== External Includes ===== //
 #include <cstdint>     // uint32_t
+#include <fmt/format.h>
 #include <iostream>    // std::cout, std::cerr
 #include <memory>      // std::make_unique
 #include <pugixml.hpp>
@@ -507,14 +508,7 @@ namespace    // anonymous namespace for module local functions
      */
     std::string formatDoubleAsString(double val, int decimalPlaces = 2)
     {
-        std::string result     = std::to_string(val);
-        size_t      decimalPos = result.find_first_of('.');
-        if (decimalPos >= result.length())
-            throw XLException("formatDoubleAsString: return value of std::to_string(double val) contains no decimal separator - this "
-                              "should never happen");
-
-        // ===== Return the string representation of val with the decimal separator and decimalPlaces digits following
-        return result.substr(0, decimalPos + 1 + static_cast<size_t>(decimalPlaces));
+        return fmt::format("{:.{}f}", val, decimalPlaces);
     }
 
     /**
@@ -998,7 +992,7 @@ bool XLDataBarColor::setTint(double newTint)
         tintString = checkAndFormatDoubleAsString(newTint, -1.0, +1.0, 0.01);
         if (tintString.length() == 0) {
             using namespace std::literals::string_literals;
-            throw XLException("XLDataBarColor::setTint: color tint "s + std::to_string(newTint) + " is not in range [-1.0;+1.0]"s);
+            throw XLException("XLDataBarColor::setTint: color tint "s + fmt::format("{}", newTint) + " is not in range [-1.0;+1.0]"s);
         }
     }
     if (tintString.length() == 0) return m_colorNode->remove_attribute("tint");    // remove tint attribute for a value 0
@@ -1330,7 +1324,7 @@ bool XLFill::setDegree(double newDegree)
     std::string degreeString = checkAndFormatDoubleAsString(newDegree, 0.0, 360.0, 0.01);
     if (degreeString.length() == 0) {
         using namespace std::literals::string_literals;
-        throw XLException("XLFill::setDegree: gradientFill degree value "s + std::to_string(newDegree) + " is not in range [0.0;360.0]"s);
+        throw XLException("XLFill::setDegree: gradientFill degree value "s + fmt::format("{}", newDegree) + " is not in range [0.0;360.0]"s);
     }
     XMLNode fillDescription = getValidFillDescription(XLGradientFill, __func__);
     return appendAndSetAttribute(fillDescription, "degree", degreeString).empty() == false;

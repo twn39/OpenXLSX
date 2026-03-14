@@ -252,6 +252,12 @@ namespace OpenXLSX
         XLContentTypes& contentTypes();
 
         /**
+         * @brief Get the custom properties object
+         * @return a reference to the XLCustomProperties object
+         */
+        XLCustomProperties& customProperties();
+
+        /**
          * @brief Get the underlying workbook object, as a const object.
          * @return A const pointer to the XLWorkbook object.
          */
@@ -502,6 +508,7 @@ namespace OpenXLSX
         XLContentTypes  m_contentTypes{};     /**< A pointer to the content types object*/
         XLAppProperties m_appProperties{};    /**< A pointer to the App properties object */
         XLProperties    m_coreProperties{};   /**< A pointer to the Core properties object*/
+        XLCustomProperties m_customProperties{}; /**< A pointer to the Custom properties object */
         XLStyles        m_styles{};           /**< A pointer to the document styles object*/
         XLWorkbook      m_workbook{};         /**< A pointer to the workbook object */
         IZipArchive     m_archive{};          /**<  */
