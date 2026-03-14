@@ -1257,6 +1257,16 @@ namespace OpenXLSX
         void addImage(const std::string& name, const std::string& data, uint32_t row, uint32_t col, uint32_t width, uint32_t height);
 
         /**
+         * @brief Add an image to the worksheet, automatically maintaining aspect ratio.
+         * @param name The name of the image.
+         * @param data The binary data of the image.
+         * @param row The row where the image should be placed (0-indexed).
+         * @param col The column where the image should be placed (0-indexed).
+         * @param scalingFactor The factor to scale the image by (1.0 = original size).
+         */
+        void addScaledImage(const std::string& name, const std::string& data, uint32_t row, uint32_t col, double scalingFactor = 1.0);
+
+        /**
          * @brief Get a list of images in this worksheet.
          * @return A vector of XLDrawingItem objects.
          */

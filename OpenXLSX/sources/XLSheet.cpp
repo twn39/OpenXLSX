@@ -1801,6 +1801,31 @@ void XLWorksheet::addImage(const std::string& name, const std::string& data, uin
 /**
  * @details
  */
+void XLWorksheet::addScaledImage(const std::string& name, const std::string& data, uint32_t row, uint32_t col, double scalingFactor)
+{
+    // 1. Add image to document archive
+    std::string internalPath = parentDoc().addImage(name, data);
+
+    // 2. Ensure drawing object is initialized
+    XLDrawing& drw = drawing();
+
+    // 3. Add relationship from drawing to image
+    std::string drawingPath = drw.getXmlPath();
+    std::string imageRelativePath = getPathARelativeToPathB(internalPath, drawingPath);
+    
+    XLRelationshipItem imgRel;
+    if (!drw.relationships().targetExists(imageRelativePath))
+        imgRel = drw.relationships().addRelationship(XLRelationshipType::Image, imageRelativePath);
+    else
+        imgRel = drw.relationships().relationshipByTarget(imageRelativePath);
+
+    // 4. Add scaled image to drawing XML
+    drw.addScaledImage(imgRel.id(), name, "", data, row, col, scalingFactor);
+}
+
+/**
+ * @details
+ */
 std::vector<XLDrawingItem> XLWorksheet::images()
 {
     std::vector<XLDrawingItem> result;
