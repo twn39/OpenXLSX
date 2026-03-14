@@ -40,8 +40,14 @@ endif()
 
 # Set up zlib-ng (libzip dependency)
 set(ZLIB_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
+set(ZLIB_COMPAT ON CACHE BOOL "" FORCE)
 FetchContent_Declare(zlib GIT_REPOSITORY https://github.com/zlib-ng/zlib-ng.git GIT_TAG 2.2.4)
 FetchContent_MakeAvailable(zlib)
+
+# Help libzip find zlib-ng
+set(ZLIB_LIBRARY zlib CACHE INTERNAL "")
+set(ZLIB_INCLUDE_DIR "${zlib_SOURCE_DIR};${zlib_BINARY_DIR}" CACHE INTERNAL "")
+set(ZLIB_FOUND TRUE CACHE INTERNAL "")
 
 # Set up libzip
 set(ENABLE_BZIP2 OFF CACHE BOOL "" FORCE)
