@@ -1293,7 +1293,7 @@ namespace OpenXLSX
          * @param url The target URL.
          * @param tooltip Optional tooltip text.
          */
-        void addHyperlink(const std::string& cellRef, const std::string& url, const std::string& tooltip = "");
+        void addHyperlink(std::string_view cellRef, std::string_view url, std::string_view tooltip = "");
 
         /**
          * @brief Add an internal hyperlink (to a location within the workbook).
@@ -1301,27 +1301,27 @@ namespace OpenXLSX
          * @param location The target location (e.g. "Sheet2!A1").
          * @param tooltip Optional tooltip text.
          */
-        void addInternalHyperlink(const std::string& cellRef, const std::string& location, const std::string& tooltip = "");
+        void addInternalHyperlink(std::string_view cellRef, std::string_view location, std::string_view tooltip = "");
 
         /**
          * @brief Check if a cell has a hyperlink.
          * @param cellRef The cell reference (e.g. "A1").
          * @return True if the cell has a hyperlink, false otherwise.
          */
-        bool hasHyperlink(const std::string& cellRef) const;
+        [[nodiscard]] bool hasHyperlink(std::string_view cellRef) const;
 
         /**
          * @brief Get the hyperlink target for a cell.
          * @param cellRef The cell reference (e.g. "A1").
          * @return The hyperlink target (URL or internal location), or an empty string if no hyperlink exists.
          */
-        std::string getHyperlink(const std::string& cellRef) const;
+        [[nodiscard]] std::string getHyperlink(std::string_view cellRef) const;
 
         /**
          * @brief Remove a hyperlink from a cell.
          * @param cellRef The cell reference (e.g. "A1").
          */
-        void removeHyperlink(const std::string& cellRef);
+        void removeHyperlink(std::string_view cellRef);
 
         /**
          * @brief Helper method to create an internal location string.
@@ -1329,7 +1329,7 @@ namespace OpenXLSX
          * @param cellRef The target cell reference.
          * @return A string in the format "SheetName!CellRef".
          */
-        static std::string makeInternalLocation(const std::string& sheetName, const std::string& cellRef);
+        [[nodiscard]] static std::string makeInternalLocation(std::string_view sheetName, std::string_view cellRef);
 
     private:
         /**

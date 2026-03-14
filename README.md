@@ -86,8 +86,7 @@ The build system includes platform-specific optimizations for `Release` builds (
 
 ## 🤝 Credits
 - [PugiXML](https://pugixml.org/) - Fast XML parsing.
-- [miniz](https://github.com/richgel999/miniz) - ZIP compression/decompression.
-- [Zippy](https://github.com/troldal/Zippy) - C++ wrapper for miniz.
+- [libzip](https://libzip.org/) & [zlib-ng](https://github.com/zlib-ng/zlib-ng) - Fast and compatible ZIP archive handling.
 - [Boost.Nowide](https://github.com/boostorg/nowide) - UTF-8 file system support on Windows.
 
 ---

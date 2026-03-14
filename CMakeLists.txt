@@ -39,6 +39,25 @@ if(OPENXLSX_BUILD_TESTS OR OPENXLSX_BUILD_BENCHMARKS)
     FetchContent_MakeAvailable(Catch2)
 endif()
 
+# Set up zlib-ng (libzip dependency)
+set(ZLIB_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(zlib GIT_REPOSITORY https://github.com/zlib-ng/zlib-ng.git GIT_TAG 2.2.4)
+FetchContent_MakeAvailable(zlib)
+
+# Set up libzip
+set(ENABLE_BZIP2 OFF CACHE BOOL "" FORCE)
+set(ENABLE_LZMA OFF CACHE BOOL "" FORCE)
+set(ENABLE_ZSTD OFF CACHE BOOL "" FORCE)
+set(ENABLE_GNUTLS OFF CACHE BOOL "" FORCE)
+set(ENABLE_OPENSSL OFF CACHE BOOL "" FORCE)
+set(BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(BUILD_REGRESS OFF CACHE BOOL "" FORCE)
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_DOC OFF CACHE BOOL "" FORCE)
+set(LIBZIP_DO_INSTALL OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(libzip GIT_REPOSITORY https://github.com/nih-at/libzip.git GIT_TAG v1.11.4)
+FetchContent_MakeAvailable(libzip)
+
 # Third-party subdirectories
 set(NOWIDE_INSTALL OFF CACHE BOOL "" FORCE)
 set(NOWIDE_TESTING OFF CACHE BOOL "" FORCE)
@@ -63,10 +82,9 @@ target_include_directories(OpenXLSX
     SYSTEM PUBLIC
         $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/third_party/zippy>
 )
 
-target_link_libraries(OpenXLSX PUBLIC pugixml)
+target_link_libraries(OpenXLSX PUBLIC pugixml libzip::zip)
 target_compile_definitions(OpenXLSX PUBLIC FMT_HEADER_ONLY)
 
 if (OPENXLSX_ENABLE_NOWIDE)
@@ -115,6 +133,9 @@ if(OPENXLSX_BUILD_TESTS)
     file(GLOB TEST_SOURCES Tests/testXL*.cpp Tests/main.cpp)
     add_executable(OpenXLSXTests ${TEST_SOURCES})
     target_link_libraries(OpenXLSXTests PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
+
+    add_executable(comprehensive_verify comprehensive_verify.cpp)
+    target_link_libraries(comprehensive_verify PRIVATE OpenXLSX::OpenXLSX)
 
     # Copy test data to build directory
     add_custom_command(TARGET OpenXLSXTests POST_BUILD

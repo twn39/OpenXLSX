@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
+#include <array>
+#include <string_view>
 
 namespace OpenXLSX
 {
@@ -15,7 +17,7 @@ namespace OpenXLSX
             std::string name;
             std::string value;
         };
-        std::vector<std::string> order = {
+        static constexpr std::array<std::string_view, 13> order = {
             "sqref", "showDropDown", "showInputMessage", "showErrorMessage", "allowBlank", 
             "errorTitle", "error", "promptTitle", "prompt", "type", "operator", "errorStyle", "imeMode"
         };
@@ -29,9 +31,9 @@ namespace OpenXLSX
 
         std::vector<Attr> presentAttrs;
         for (const auto& name : order) {
-            auto attr = node.attribute(name.c_str());
+            auto attr = node.attribute(name.data());
             if (attr) {
-                presentAttrs.push_back({name, attr.value()});
+                presentAttrs.push_back({std::string(name), attr.value()});
             }
         }
 
@@ -101,7 +103,10 @@ namespace OpenXLSX
     bool XLDataValidation::showDropDown() const
     {
         if (!m_node) return false;
-        return m_node.attribute("showDropDown").as_bool();
+        // In OOXML, showDropDown="1" means HIDE.
+        // Therefore, if attribute is true ("1"), it means the dropdown is NOT shown.
+        // If attribute is missing or false ("0"), the dropdown IS shown.
+        return !m_node.attribute("showDropDown").as_bool();
     }
 
     bool XLDataValidation::showInputMessage() const
@@ -166,11 +171,11 @@ namespace OpenXLSX
         return XLDataValidationErrorStyle::Stop;
     }
 
-    void XLDataValidation::setSqref(const std::string& sqref)
+    void XLDataValidation::setSqref(std::string_view sqref)
     {
         if (!m_node) return;
         m_node.remove_attribute("sqref");
-        m_node.append_attribute("sqref") = sqref.c_str();
+        m_node.append_attribute("sqref") = std::string(sqref).c_str();
         reorderAttributes(m_node);
     }
 
@@ -247,17 +252,17 @@ namespace OpenXLSX
         reorderAttributes(m_node);
     }
 
-    void XLDataValidation::setFormula1(const std::string& formula)
+    void XLDataValidation::setFormula1(std::string_view formula)
     {
         if (!m_node) return;
         auto fNode = m_node.child("formula1");
         if (!fNode) {
             fNode = m_node.prepend_child("formula1");
         }
-        fNode.text().set(formula.c_str());
+        fNode.text().set(std::string(formula).c_str());
     }
 
-    void XLDataValidation::setFormula2(const std::string& formula)
+    void XLDataValidation::setFormula2(std::string_view formula)
     {
         if (!m_node) return;
         auto fNode = m_node.child("formula2");
@@ -268,18 +273,18 @@ namespace OpenXLSX
             else
                 fNode = m_node.append_child("formula2");
         }
-        fNode.text().set(formula.c_str());
+        fNode.text().set(std::string(formula).c_str());
     }
 
-    void XLDataValidation::setPrompt(const std::string& title, const std::string& msg)
+    void XLDataValidation::setPrompt(std::string_view title, std::string_view msg)
     {
         if (!m_node) return;
 
         m_node.remove_attribute("promptTitle");
-        if (!title.empty()) m_node.append_attribute("promptTitle") = title.c_str();
+        if (!title.empty()) m_node.append_attribute("promptTitle") = std::string(title).c_str();
 
         m_node.remove_attribute("prompt");
-        if (!msg.empty()) m_node.append_attribute("prompt") = msg.c_str();
+        if (!msg.empty()) m_node.append_attribute("prompt") = std::string(msg).c_str();
 
         m_node.remove_attribute("showInputMessage");
         m_node.append_attribute("showInputMessage") = "1";
@@ -287,7 +292,7 @@ namespace OpenXLSX
         reorderAttributes(m_node);
     }
 
-    void XLDataValidation::setError(const std::string& title, const std::string& msg, XLDataValidationErrorStyle style)
+    void XLDataValidation::setError(std::string_view title, std::string_view msg, XLDataValidationErrorStyle style)
     {
         if (!m_node) return;
 
@@ -305,10 +310,10 @@ namespace OpenXLSX
         }
 
         m_node.remove_attribute("errorTitle");
-        if (!title.empty()) m_node.append_attribute("errorTitle") = title.c_str();
+        if (!title.empty()) m_node.append_attribute("errorTitle") = std::string(title).c_str();
 
         m_node.remove_attribute("error");
-        if (!msg.empty()) m_node.append_attribute("error") = msg.c_str();
+        if (!msg.empty()) m_node.append_attribute("error") = std::string(msg).c_str();
 
         m_node.remove_attribute("showErrorMessage");
         m_node.append_attribute("showErrorMessage") = "1";
@@ -320,7 +325,11 @@ namespace OpenXLSX
     {
         if (!m_node) return;
         m_node.remove_attribute("showDropDown");
-        m_node.append_attribute("showDropDown") = show ? "1" : "0";
+        // In OOXML, showDropDown="1" means HIDE the drop-down. 
+        // We want the API 'show' parameter to be intuitive (true = show arrow).
+        // Therefore, if show is true, we set to "0" (or omit, but "0" is safe).
+        // If show is false, we set to "1" (hide).
+        m_node.append_attribute("showDropDown") = show ? "0" : "1";
         reorderAttributes(m_node);
     }
 
@@ -390,7 +399,7 @@ namespace OpenXLSX
         reorderAttributes(m_node);
     }
 
-    void XLDataValidation::setDateRange(const std::string& min, const std::string& max)
+    void XLDataValidation::setDateRange(std::string_view min, std::string_view max)
     {
         setType(XLDataValidationType::Date);
         setOperator(XLDataValidationOperator::Between);
@@ -402,7 +411,7 @@ namespace OpenXLSX
         reorderAttributes(m_node);
     }
 
-    void XLDataValidation::setTimeRange(const std::string& min, const std::string& max)
+    void XLDataValidation::setTimeRange(std::string_view min, std::string_view max)
     {
         setType(XLDataValidationType::Time);
         setOperator(XLDataValidationOperator::Between);
@@ -420,11 +429,8 @@ namespace OpenXLSX
         setOperator(XLDataValidationOperator::Between);
         setAllowBlank(true);
 
-        std::ostringstream ss1, ss2;
-        ss1 << min;
-        ss2 << max;
-        setFormula1(ss1.str());
-        setFormula2(ss2.str());
+        setFormula1(std::to_string(min));
+        setFormula2(std::to_string(max));
 
         reorderAttributes(m_node);
     }
@@ -434,11 +440,26 @@ namespace OpenXLSX
         setType(XLDataValidationType::List);
         setAllowBlank(true);
 
+        if (items.empty()) {
+            setFormula1("\"\"");
+            reorderAttributes(m_node);
+            return;
+        }
+
+        // Calculate total length to avoid multiple allocations
+        size_t total_len = 0;
+        for (const auto& item : items) {
+            total_len += item.size() + 1; // +1 for comma
+        }
+
         std::string list;
+        list.reserve(total_len);
+
         for (const auto& item : items) {
             if (!list.empty()) list += ",";
             list += item;
         }
+        
         // Excel expects the list to be double quoted if it's literal items
         setFormula1("\"" + list + "\"");
 
@@ -453,12 +474,7 @@ namespace OpenXLSX
         auto dvNode = m_sheetNode.child("dataValidations");
         if (!dvNode) return 0;
         
-        size_t count = 0;
-        for (auto node : dvNode.children("dataValidation")) {
-            (void)node;
-            ++count;
-        }
-        return count;
+        return dvNode.attribute("count").as_ullong();
     }
 
     XLDataValidation XLDataValidations::append()
@@ -515,14 +531,14 @@ namespace OpenXLSX
         return XLDataValidation{};
     }
 
-    XLDataValidation XLDataValidations::at(const std::string& sqref)
+    XLDataValidation XLDataValidations::at(std::string_view sqref)
     {
         if (!m_sheetNode) return XLDataValidation{};
         auto dvNode = m_sheetNode.child("dataValidations");
         if (!dvNode) return XLDataValidation{};
 
         for (auto node : dvNode.children("dataValidation")) {
-            if (std::string(node.attribute("sqref").value()) == sqref)
+            if (std::string_view(node.attribute("sqref").value()) == sqref)
                 return XLDataValidation(node);
         }
         return XLDataValidation{};

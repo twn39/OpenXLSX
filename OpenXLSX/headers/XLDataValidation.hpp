@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <string_view>
 #include "OpenXLSX-Exports.hpp"
 #include "XLXmlParser.hpp"
 
@@ -75,34 +76,34 @@ namespace OpenXLSX
         XLDataValidation() : m_node(nullptr) {}
         explicit XLDataValidation(const XMLNode& node) : m_node(node) {}
 
-        bool empty() const { return !m_node; }
+        [[nodiscard]] bool empty() const { return !m_node; }
 
         // Getters
-        std::string sqref() const;
-        XLDataValidationType type() const;
-        XLDataValidationOperator operator_() const;
-        bool allowBlank() const;
-        std::string formula1() const;
-        std::string formula2() const;
-        bool showDropDown() const;
-        bool showInputMessage() const;
-        bool showErrorMessage() const;
-        XLIMEMode imeMode() const;
-        std::string promptTitle() const;
-        std::string prompt() const;
-        std::string errorTitle() const;
-        std::string error() const;
-        XLDataValidationErrorStyle errorStyle() const;
+        [[nodiscard]] std::string sqref() const;
+        [[nodiscard]] XLDataValidationType type() const;
+        [[nodiscard]] XLDataValidationOperator operator_() const;
+        [[nodiscard]] bool allowBlank() const;
+        [[nodiscard]] std::string formula1() const;
+        [[nodiscard]] std::string formula2() const;
+        [[nodiscard]] bool showDropDown() const;
+        [[nodiscard]] bool showInputMessage() const;
+        [[nodiscard]] bool showErrorMessage() const;
+        [[nodiscard]] XLIMEMode imeMode() const;
+        [[nodiscard]] std::string promptTitle() const;
+        [[nodiscard]] std::string prompt() const;
+        [[nodiscard]] std::string errorTitle() const;
+        [[nodiscard]] std::string error() const;
+        [[nodiscard]] XLDataValidationErrorStyle errorStyle() const;
 
         // Setters
-        void setSqref(const std::string& sqref);
+        void setSqref(std::string_view sqref);
         void setType(XLDataValidationType type);
         void setOperator(XLDataValidationOperator op);
         void setAllowBlank(bool allow);
-        void setFormula1(const std::string& formula);
-        void setFormula2(const std::string& formula);
-        void setPrompt(const std::string& title, const std::string& msg);
-        void setError(const std::string& title, const std::string& msg, XLDataValidationErrorStyle style = XLDataValidationErrorStyle::Stop);
+        void setFormula1(std::string_view formula);
+        void setFormula2(std::string_view formula);
+        void setPrompt(std::string_view title, std::string_view msg);
+        void setError(std::string_view title, std::string_view msg, XLDataValidationErrorStyle style = XLDataValidationErrorStyle::Stop);
 
         // Priority 1 New Properties
         void setShowDropDown(bool show);
@@ -113,8 +114,8 @@ namespace OpenXLSX
         // Specific helpers
         void setWholeNumberRange(double min, double max);
         void setDecimalRange(double min, double max);
-        void setDateRange(const std::string& min, const std::string& max);
-        void setTimeRange(const std::string& min, const std::string& max);
+        void setDateRange(std::string_view min, std::string_view max);
+        void setTimeRange(std::string_view min, std::string_view max);
         void setTextLengthRange(int min, int max);
         void setList(const std::vector<std::string>& items);
 
@@ -131,11 +132,11 @@ namespace OpenXLSX
         XLDataValidations() : m_sheetNode(nullptr) {}
         explicit XLDataValidations(const XMLNode& node) : m_sheetNode(node) {}
 
-        bool empty() const { return !m_sheetNode; }
-        size_t count() const;
+        [[nodiscard]] bool empty() const { return !m_sheetNode; }
+        [[nodiscard]] size_t count() const;
         XLDataValidation append();
-        XLDataValidation at(size_t index);
-        XLDataValidation at(const std::string& sqref);
+        [[nodiscard]] XLDataValidation at(size_t index);
+        [[nodiscard]] XLDataValidation at(std::string_view sqref);
         void clear();
 
     private:

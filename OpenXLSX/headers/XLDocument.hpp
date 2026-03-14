@@ -190,7 +190,7 @@ namespace OpenXLSX
          * @param fileName The path of the new .xlsx file.
          * @param forceOverwrite If not true (XLForceOverwrite) and fileName exists, create will throw an exception
          * @throw XLException (OpenXLSX failed checks)
-         * @throw ZipRuntimeError (zippy failed archive / file access)
+         * @throw ZipRuntimeError (libzip failed archive / file access)
          */
         void create(const std::string& fileName, bool forceOverwrite);
 
@@ -210,7 +210,7 @@ namespace OpenXLSX
         /**
          * @brief Save the current document using the current filename, overwriting the existing file.
          * @throw XLException (OpenXLSX failed checks)
-         * @throw ZipRuntimeError (zippy failed archive / file access)
+         * @throw ZipRuntimeError (libzip failed archive / file access)
          */
         void save();
 
@@ -219,7 +219,7 @@ namespace OpenXLSX
          * @param fileName The path of the file
          * @param forceOverwrite If not true (XLForceOverwrite) and fileName exists, saveAs will throw an exception
          * @throw XLException (OpenXLSX failed checks)
-         * @throw ZipRuntimeError (zippy failed archive / file access)
+         * @throw ZipRuntimeError (libzip failed archive / file access)
          */
         void saveAs(const std::string& fileName, bool forceOverwrite);
 
