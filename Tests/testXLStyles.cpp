@@ -1,5 +1,6 @@
 #include <OpenXLSX.hpp>
 #include <catch2/catch_all.hpp>
+#include <filesystem>
 
 using namespace OpenXLSX;
 
@@ -129,5 +130,66 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         REQUIRE(xf.alignment().textRotation() == 90);
 
         doc.close();
+    }
+
+    SECTION("Cell Styles")
+    {
+        XLDocument doc;
+        doc.create("./testXLStylesCellStyles.xlsx", XLForceOverwrite);
+        auto styles = doc.styles();
+
+        auto cellStyles = styles.cellStyles();
+        size_t initialCount = cellStyles.count();
+
+        size_t idx = cellStyles.create();
+        auto cellStyle = cellStyles[idx];
+
+        cellStyle.setName("My Custom Style");
+        cellStyle.setXfId(0);
+        cellStyle.setBuiltinId(0);
+        cellStyle.setOutlineStyle(2);
+        cellStyle.setHidden(true);
+        cellStyle.setCustomBuiltin(true);
+
+        REQUIRE(cellStyles.count() == initialCount + 1);
+        REQUIRE(cellStyle.name() == "My Custom Style");
+        REQUIRE(cellStyle.xfId() == 0);
+        REQUIRE(cellStyle.builtinId() == 0);
+        REQUIRE(cellStyle.outlineStyle() == 2);
+        REQUIRE(cellStyle.hidden() == true);
+        REQUIRE(cellStyle.customBuiltin() == true);
+
+        doc.close();
+        std::filesystem::remove("./testXLStylesCellStyles.xlsx");
+    }
+
+    SECTION("Diff Cell Formats")
+    {
+        XLDocument doc;
+        doc.create("./testXLStylesDiffCellFormats.xlsx", XLForceOverwrite);
+        auto styles = doc.styles();
+
+        auto diffCellFormats = styles.diffCellFormats();
+        size_t initialCount = diffCellFormats.count();
+
+        size_t idx = diffCellFormats.create();
+        auto diffCellFormat = diffCellFormats[idx];
+
+        auto font = diffCellFormat.font();
+        font.setBold(true);
+        font.setFontColor(XLColor(255, 255, 0, 0)); // Red
+
+        auto fill = diffCellFormat.fill();
+        fill.setPatternType(XLPatternSolid);
+        fill.setBackgroundColor(XLColor(255, 0, 255, 0)); // Green
+
+        REQUIRE(diffCellFormats.count() == initialCount + 1);
+        REQUIRE(diffCellFormat.font().bold() == true);
+        REQUIRE(diffCellFormat.font().fontColor().hex() == "ffff0000");
+        REQUIRE(diffCellFormat.fill().patternType() == XLPatternSolid);
+        REQUIRE(diffCellFormat.fill().backgroundColor().hex() == "ff00ff00");
+
+        doc.close();
+        std::filesystem::remove("./testXLStylesDiffCellFormats.xlsx");
     }
 }
