@@ -418,4 +418,70 @@ testTestDoc:    // Wait, I'll just use the doc directly.
         }
         std::filesystem::remove(filename);
     }
+
+    SECTION("Verify Properties Structure in OOXML")
+    {
+        std::string filename = "ooxml_properties_test.xlsx";
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            
+            auto& core = doc.coreProperties();
+            core.setTitle("OOXML Title");
+            core.setCreator("OOXML Creator");
+            core.setCreated(XLDateTime::fromString("2020-01-01 12:00:00"));
+
+            auto& app = doc.appProperties();
+            app.setProperty("Company", "OOXML Company");
+            app.setProperty("Application", "OpenXLSX");
+            app.setProperty("AppVersion", "1.0");
+
+            auto& custom = doc.customProperties();
+            custom.setProperty("StringProp", "Value");
+            custom.setProperty("IntProp", 123);
+            custom.setProperty("DateProp", XLDateTime::fromString("2021-01-01 10:00:00"));
+
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLDocumentTest testDoc;
+            testDoc.open(filename);
+
+            // 1. Verify docProps/core.xml
+            std::string coreXml = testDoc.getRawXml("docProps/core.xml");
+            REQUIRE(coreXml.find("xmlns:cp=\"http://schemas.openxmlformats.org/package/2006/metadata/core-properties\"") != std::string::npos);
+            REQUIRE(coreXml.find("<dc:title>OOXML Title</dc:title>") != std::string::npos);
+            REQUIRE(coreXml.find("<dc:creator>OOXML Creator</dc:creator>") != std::string::npos);
+            REQUIRE(coreXml.find("<dcterms:created xsi:type=\"dcterms:W3CDTF\">2020-01-01T12:00:00Z</dcterms:created>") != std::string::npos);
+
+            // 2. Verify docProps/app.xml
+            std::string appXml = testDoc.getRawXml("docProps/app.xml");
+            REQUIRE(appXml.find("xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\"") != std::string::npos);
+            REQUIRE(appXml.find("<Company>OOXML Company</Company>") != std::string::npos);
+            REQUIRE(appXml.find("<Application>") != std::string::npos);
+            REQUIRE(appXml.find("OpenXLSX") != std::string::npos);
+            REQUIRE(appXml.find("</Application>") != std::string::npos);
+
+            // 3. Verify docProps/custom.xml
+            std::string customXml = testDoc.getRawXml("docProps/custom.xml");
+            REQUIRE(customXml.find("xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/custom-properties\"") != std::string::npos);
+            
+            // String property
+            REQUIRE(customXml.find("name=\"StringProp\"") != std::string::npos);
+            REQUIRE(customXml.find("<vt:lpwstr>Value</vt:lpwstr>") != std::string::npos);
+            
+            // Int property
+            REQUIRE(customXml.find("name=\"IntProp\"") != std::string::npos);
+            REQUIRE(customXml.find("<vt:i4>123</vt:i4>") != std::string::npos);
+            
+            // Date property (vt:filetime)
+            REQUIRE(customXml.find("name=\"DateProp\"") != std::string::npos);
+            REQUIRE(customXml.find("<vt:filetime>2021-01-01T10:00:00Z</vt:filetime>") != std::string::npos);
+
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
 }
