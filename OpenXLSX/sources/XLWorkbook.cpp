@@ -65,7 +65,126 @@ namespace
      * @return
      */
     XMLNode sheetsNode(const XMLDocument& doc) { return doc.document_element().child("sheets"); }
+
+    /**
+     * @brief Node order for XLWorkbook XML
+     */
+    const std::vector<std::string_view> XLWorkbookNodeOrder = {"fileVersion",
+                                                               "fileSharing",
+                                                               "workbookPr",
+                                                               "workbookProtection",
+                                                               "bookViews",
+                                                               "sheets",
+                                                               "functionGroups",
+                                                               "externalReferences",
+                                                               "definedNames",
+                                                               "calcPr",
+                                                               "oleSize",
+                                                               "customWorkbookViews",
+                                                               "pivotCaches",
+                                                               "smartTagPr",
+                                                               "smartTagTypes",
+                                                               "webPublishing",
+                                                               "fileRecoveryPr",
+                                                               "webPublishObjects",
+                                                               "extLst"};
 }    // namespace
+
+/**
+ * @details
+ */
+XLDefinedName::XLDefinedName(const XMLNode& node) : m_node(node) {}
+
+std::string XLDefinedName::name() const { return m_node.attribute("name").value(); }
+void        XLDefinedName::setName(const std::string& name) { m_node.attribute("name").set_value(name.c_str()); }
+
+std::string XLDefinedName::refersTo() const { return m_node.text().get(); }
+void        XLDefinedName::setRefersTo(const std::string& formula) { m_node.text().set(formula.c_str()); }
+
+std::optional<uint32_t> XLDefinedName::localSheetId() const
+{
+    if (m_node.attribute("localSheetId").empty()) return std::nullopt;
+    return m_node.attribute("localSheetId").as_uint();
+}
+void XLDefinedName::setLocalSheetId(uint32_t id)
+{
+    if (m_node.attribute("localSheetId").empty()) m_node.append_attribute("localSheetId");
+    m_node.attribute("localSheetId").set_value(id);
+}
+
+bool XLDefinedName::hidden() const { return m_node.attribute("hidden").as_bool(); }
+void XLDefinedName::setHidden(bool hidden)
+{
+    if (m_node.attribute("hidden").empty()) m_node.append_attribute("hidden");
+    m_node.attribute("hidden").set_value(hidden);
+}
+
+std::string XLDefinedName::comment() const { return m_node.attribute("comment").value(); }
+void        XLDefinedName::setComment(const std::string& comment)
+{
+    if (m_node.attribute("comment").empty()) m_node.append_attribute("comment");
+    m_node.attribute("comment").set_value(comment.c_str());
+}
+
+/**
+ * @details
+ */
+XLDefinedNames::XLDefinedNames(const XMLNode& node) : m_node(node) {}
+
+XLDefinedName XLDefinedNames::append(const std::string& name, const std::string& formula, std::optional<uint32_t> localSheetId)
+{
+    XMLNode newNode = m_node.append_child("definedName");
+    newNode.append_attribute("name").set_value(name.c_str());
+    if (localSheetId) newNode.append_attribute("localSheetId").set_value(*localSheetId);
+    newNode.text().set(formula.c_str());
+    return XLDefinedName(newNode);
+}
+
+void XLDefinedNames::remove(const std::string& name, std::optional<uint32_t> localSheetId)
+{
+    for (auto node : m_node.children("definedName")) {
+        if (std::string(node.attribute("name").value()) == name) {
+            if (localSheetId) {
+                if (node.attribute("localSheetId") && node.attribute("localSheetId").as_uint() == *localSheetId) {
+                    m_node.remove_child(node);
+                    return;
+                }
+            }
+            else if (node.attribute("localSheetId").empty()) {
+                m_node.remove_child(node);
+                return;
+            }
+        }
+    }
+}
+
+XLDefinedName XLDefinedNames::get(const std::string& name, std::optional<uint32_t> localSheetId) const
+{
+    for (auto node : m_node.children("definedName")) {
+        if (std::string(node.attribute("name").value()) == name) {
+            if (localSheetId) {
+                if (node.attribute("localSheetId") && node.attribute("localSheetId").as_uint() == *localSheetId) {
+                    return XLDefinedName(node);
+                }
+            }
+            else if (node.attribute("localSheetId").empty()) {
+                return XLDefinedName(node);
+            }
+        }
+    }
+    return XLDefinedName();
+}
+
+std::vector<XLDefinedName> XLDefinedNames::all() const
+{
+    std::vector<XLDefinedName> result;
+    for (auto node : m_node.children("definedName")) { result.emplace_back(node); }
+    return result;
+}
+
+bool XLDefinedNames::exists(const std::string& name, std::optional<uint32_t> localSheetId) const { return get(name, localSheetId).valid(); }
+
+size_t XLDefinedNames::count() const { return std::distance(m_node.children("definedName").begin(), m_node.children("definedName").end()); }
 
 /**
  * @details The constructor initializes the member variables and calls the loadXMLData from the
@@ -145,6 +264,17 @@ XLChartsheet XLWorkbook::chartsheet(const std::string& sheetName) { return sheet
  * @details
  */
 XLChartsheet XLWorkbook::chartsheet(uint16_t index) { return sheet(index).get<XLChartsheet>(); }
+
+/**
+ * @details
+ */
+XLDefinedNames XLWorkbook::definedNames()
+{
+    XMLNode rootNode = xmlDocument().document_element();
+    XMLNode dnNode   = rootNode.child("definedNames");
+    if (dnNode.empty()) { dnNode = appendAndGetNode(rootNode, "definedNames", XLWorkbookNodeOrder); }
+    return XLDefinedNames(dnNode);
+}
 
 // /**
 //  * @details
@@ -359,8 +489,8 @@ void XLWorkbook::setSheetVisibility(const std::string& sheetRID, const std::stri
     const auto activeTabIndex = activeTabAttribute.as_uint();
 
     // Finally, if the current sheet is the active one, set the "activeTab" attribute to the first visible sheet in the workbook
-    if (hideSheet and activeTabIndex == index) {    // BUGFIX 2024-04-30: previously, the active tab was re-set even if the current sheet was
-                                                   // being set to "visible" (when already being visible)
+    if (hideSheet and activeTabIndex == index) {    // BUGFIX 2024-04-30: previously, the active tab was re-set even if the current sheet
+                                                    // was being set to "visible" (when already being visible)
         XMLNode sheetItem = xmlDocument().document_element().child("sheets").first_child_of_type(pugi::node_element);
         while (not sheetItem.empty()) {
             if (isVisible(

@@ -8,7 +8,7 @@
 #include <fast_float/fast_float.h>
 
 #ifndef FMT_HEADER_ONLY
-#define FMT_HEADER_ONLY
+#    define FMT_HEADER_ONLY
 #endif
 #include <fmt/base.h>
 #include <fmt/format.h>
@@ -113,6 +113,8 @@ std::string XLCellValue::typeAsString() const
             return "float";
         case XLValueType::String:
             return "string";
+        case XLValueType::RichText:
+            return "richtext";
         default:
             return "error";
     }
@@ -263,11 +265,19 @@ XLValueType XLCellValueProxy::type() const
     }
 
     // ===== If the cell is of type "s", the cell contains a shared string.
-    if (not m_cellNode->attribute("t").empty() and strcmp(m_cellNode->attribute("t").value(), "s") == 0)
-        return XLValueType::String;    // NOLINT
+    if (not m_cellNode->attribute("t").empty() and strcmp(m_cellNode->attribute("t").value(), "s") == 0) {
+        int32_t index = static_cast<int32_t>(m_cellNode->child("v").text().as_ullong());
+        // For now, we don't have an easy way to check if a shared string is rich text without looking at XLSharedStrings.
+        // But XLCellValueProxy doesn't have direct access to the XML of shared strings easily here.
+        // Actually, let's keep it as String for now, and getValue() will decide.
+        return XLValueType::String;
+    }
 
     // ===== If the cell is of type "inlineStr", the cell contains an inline string.
-    if (not m_cellNode->attribute("t").empty() and strcmp(m_cellNode->attribute("t").value(), "inlineStr") == 0) return XLValueType::String;
+    if (not m_cellNode->attribute("t").empty() and strcmp(m_cellNode->attribute("t").value(), "inlineStr") == 0) {
+        if (not m_cellNode->child("is").child("r").empty()) return XLValueType::RichText;
+        return XLValueType::String;
+    }
 
     // ===== If the cell is of type "str", the cell contains an ordinary string.
     if (not m_cellNode->attribute("t").empty() and strcmp(m_cellNode->attribute("t").value(), "str") == 0) return XLValueType::String;
@@ -277,6 +287,61 @@ XLValueType XLCellValueProxy::type() const
 
     // ===== Otherwise, the cell contains an error.
     return XLValueType::Error;    // the m_typeAttribute has the ValueAsString "e"
+}
+
+/**
+ * @details
+ */
+void XLCellValueProxy::setRichText(const XLRichText& richTextValue)
+{
+    // ===== Check that the m_cellNode is valid.
+    assert(m_cellNode != nullptr);      // NOLINT
+    assert(not m_cellNode->empty());    // NOLINT
+
+    // ===== Clear the cell.
+    clear();
+
+    // ===== If the cell node doesn't have a type child node, create it.
+    if (m_cellNode->attribute("t").empty()) m_cellNode->append_attribute("t");
+    m_cellNode->attribute("t").set_value("inlineStr");
+
+    // ===== Create the is node.
+    XMLNode isNode = m_cellNode->append_child("is");
+
+    // ===== Append each run.
+    for (const auto& run : richTextValue.runs()) {
+        XMLNode rNode = isNode.append_child("r");
+
+        // Add properties if any are set
+        if (run.fontName() || run.fontSize() || run.fontColor() || run.bold() || run.italic() || run.underline() || run.strikethrough()) {
+            XMLNode rPrNode = rNode.append_child("rPr");
+            if (run.fontName()) {
+                XMLNode rFontNode = rPrNode.append_child("rFont");
+                rFontNode.append_attribute("val").set_value(run.fontName()->c_str());
+            }
+            if (run.fontSize()) {
+                XMLNode szNode = rPrNode.append_child("sz");
+                szNode.append_attribute("val").set_value(*run.fontSize());
+            }
+            if (run.fontColor()) {
+                XMLNode colorNode = rPrNode.append_child("color");
+                colorNode.append_attribute("rgb").set_value(run.fontColor()->hex().c_str());
+            }
+            if (run.bold() && *run.bold()) { rPrNode.append_child("b"); }
+            if (run.italic() && *run.italic()) { rPrNode.append_child("i"); }
+            if (run.underline() && *run.underline()) { rPrNode.append_child("u"); }
+            if (run.strikethrough() && *run.strikethrough()) { rPrNode.append_child("strike"); }
+        }
+
+        // Add text
+        XMLNode tNode = rNode.append_child("t");
+        tNode.text().set(run.text().c_str());
+
+        // Handle space preservation
+        if (!run.text().empty() && (run.text().front() == ' ' || run.text().back() == ' ')) {
+            tNode.append_attribute("xml:space").set_value("preserve");
+        }
+    }
 }
 
 /**
@@ -297,6 +362,8 @@ std::string XLCellValueProxy::typeAsString() const
             return "float";
         case XLValueType::String:
             return "string";
+        case XLValueType::RichText:
+            return "richtext";
         default:
             return "error";
     }
@@ -382,9 +449,9 @@ void XLCellValueProxy::setFloat(double numberValue)
         m_cellNode->remove_attribute("t");
 
         // ===== Set the text of the value node using fmt for speed.
-        char   buffer[32];
-        auto   res = fmt::format_to(buffer, "{}", numberValue);
-        *res       = '\0';
+        char buffer[32];
+        auto res = fmt::format_to(buffer, "{}", numberValue);
+        *res     = '\0';
         m_cellNode->child("v").text().set(buffer);
 
         // ===== Disable space preservation (only relevant for strings).
@@ -446,6 +513,56 @@ void XLCellValueProxy::setString(const char* stringValue)    // NOLINT
 }
 
 /**
+ * @brief Helper function to parse rich text from an XML node (either <si> or <is>).
+ */
+static XLRichText parseRichText(XMLNode node)
+{
+    XLRichText result;
+    // Check for <r> (rich text runs)
+    XMLNode rNode = node.child("r");
+    if (rNode.empty()) {
+        // No runs, just a single <t> element?
+        XMLNode tNode = node.child("t");
+        if (!tNode.empty()) { result.addRun(XLRichTextRun(tNode.text().get())); }
+        return result;
+    }
+
+    // Iterate over <r> elements
+    while (!rNode.empty()) {
+        XLRichTextRun run;
+
+        // Text is in <t> child of <r>
+        XMLNode tNode = rNode.child("t");
+        if (!tNode.empty()) { run.setText(tNode.text().get()); }
+
+        // Properties are in <rPr> child of <r>
+        XMLNode rPrNode = rNode.child("rPr");
+        if (!rPrNode.empty()) {
+            if (!rPrNode.child("b").empty()) run.setBold(true);
+            if (!rPrNode.child("i").empty()) run.setItalic(true);
+            if (!rPrNode.child("u").empty()) run.setUnderline(true);
+            if (!rPrNode.child("strike").empty()) run.setStrikethrough(true);
+
+            XMLNode rFontNode = rPrNode.child("rFont");
+            if (!rFontNode.empty()) run.setFontName(rFontNode.attribute("val").value());
+
+            XMLNode szNode = rPrNode.child("sz");
+            if (!szNode.empty()) run.setFontSize(szNode.attribute("val").as_uint());
+
+            XMLNode colorNode = rPrNode.child("color");
+            if (!colorNode.empty()) {
+                if (colorNode.attribute("rgb")) run.setFontColor(XLColor(colorNode.attribute("rgb").value()));
+            }
+        }
+
+        result.addRun(run);
+        rNode = rNode.next_sibling("r");
+    }
+
+    return result;
+}
+
+/**
  * @details Get a copy of the XLCellValue object for the cell. This is private helper function for returning an
  * XLCellValue object corresponding to the cell value.
  * @pre The m_cellNode must not be null, and must point to a valid XMLNode object.
@@ -473,13 +590,28 @@ XLCellValue XLCellValueProxy::getValue() const
             return XLCellValue{m_cellNode->child("v").text().as_llong()};
 
         case XLValueType::String:
-            if (strcmp(m_cellNode->attribute("t").value(), "s") == 0)
+        case XLValueType::RichText:
+            if (strcmp(m_cellNode->attribute("t").value(), "s") == 0) {
+                // We need to check if the shared string is rich text.
+                // Accessing XLSharedStrings XML is tricky here, but we can try to look it up.
+                // For now, let's assume if we want RichText, we might have to peek into the XML.
+                // In OpenXLSX, shared strings are managed by XLDocument/XLSharedStrings.
+                // Let's see if we can get the XML node for the shared string.
+
+                // This is a bit of a hack because XLSharedStrings doesn't expose the XML nodes directly easily.
+                // But we can use the existing getString() which only returns plain text.
+                // To TRULY support reading RichText from shared strings, we'd need to modify XLSharedStrings.
+                // For now, if it's a shared string, we return it as a String (plain text).
                 return XLCellValue{
                     m_cell->m_sharedStrings.get().getString(static_cast<int32_t>(m_cellNode->child("v").text().as_ullong()))};
+            }
             else if (strcmp(m_cellNode->attribute("t").value(), "str") == 0)
                 return XLCellValue{m_cellNode->child("v").text().get()};
-            else if (strcmp(m_cellNode->attribute("t").value(), "inlineStr") == 0)
-                return XLCellValue{m_cellNode->child("is").child("t").text().get()};
+            else if (strcmp(m_cellNode->attribute("t").value(), "inlineStr") == 0) {
+                XMLNode isNode = m_cellNode->child("is");
+                if (!isNode.child("r").empty()) { return XLCellValue{parseRichText(isNode)}; }
+                return XLCellValue{isNode.child("t").text().get()};
+            }
             else
                 throw XLInternalError("Unknown string type");
 

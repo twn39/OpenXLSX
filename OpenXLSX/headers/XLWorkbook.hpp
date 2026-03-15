@@ -71,10 +71,59 @@ namespace OpenXLSX
     class XLChartsheet;
 
     /**
-     * @brief The XLSheetType class is an enumeration of the available sheet types, e.g. Worksheet (ordinary
-     * spreadsheets), and Chartsheet (sheets with only a chart).
+     * @brief
      */
     enum class XLSheetType { Worksheet, Chartsheet, Dialogsheet, Macrosheet };
+
+    /**
+     * @brief A class representing a single defined name in a workbook.
+     */
+    class OPENXLSX_EXPORT XLDefinedName
+    {
+    public:
+        XLDefinedName() = default;
+        explicit XLDefinedName(const XMLNode& node);
+
+        std::string name() const;
+        void        setName(const std::string& name);
+
+        std::string refersTo() const;
+        void        setRefersTo(const std::string& formula);
+
+        std::optional<uint32_t> localSheetId() const;
+        void                    setLocalSheetId(uint32_t id);
+
+        bool hidden() const;
+        void setHidden(bool hidden);
+
+        std::string comment() const;
+        void        setComment(const std::string& comment);
+
+        bool valid() const { return !m_node.empty(); }
+
+    private:
+        XMLNode m_node;
+    };
+
+    /**
+     * @brief A class representing the collection of defined names in a workbook.
+     */
+    class OPENXLSX_EXPORT XLDefinedNames
+    {
+    public:
+        XLDefinedNames() = default;
+        explicit XLDefinedNames(const XMLNode& node);
+
+        XLDefinedName append(const std::string& name, const std::string& formula, std::optional<uint32_t> localSheetId = std::nullopt);
+        void          remove(const std::string& name, std::optional<uint32_t> localSheetId = std::nullopt);
+        XLDefinedName get(const std::string& name, std::optional<uint32_t> localSheetId = std::nullopt) const;
+        std::vector<XLDefinedName> all() const;
+        bool                       exists(const std::string& name, std::optional<uint32_t> localSheetId = std::nullopt) const;
+        size_t                     count() const;
+
+    private:
+        XMLNode m_node;
+    };
 
     /**
      * @brief This class encapsulates the concept of a Workbook. It provides access to the individual sheets
@@ -176,6 +225,12 @@ namespace OpenXLSX
          * @return
          */
         XLChartsheet chartsheet(uint16_t index);
+
+        /**
+         * @brief Get the defined names collection.
+         * @return An XLDefinedNames object.
+         */
+        XLDefinedNames definedNames();
 
         /**
          * @brief Delete sheet (worksheet or chartsheet) from the workbook.

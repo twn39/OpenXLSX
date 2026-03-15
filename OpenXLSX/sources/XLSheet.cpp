@@ -1317,6 +1317,37 @@ XLColumn XLWorksheet::column(uint16_t columnNumber) const
 XLColumn XLWorksheet::column(std::string const& columnRef) const { return column(XLCellReference::columnAsNumber(columnRef)); }
 
 /**
+ * @details Set the AutoFilter range for the worksheet.
+ */
+void XLWorksheet::setAutoFilter(const XLCellRange& range)
+{
+    XMLNode docElement     = xmlDocument().document_element();
+    XMLNode autoFilterNode = docElement.child("autoFilter");
+    if (autoFilterNode.empty()) { autoFilterNode = appendAndGetNode(docElement, "autoFilter", m_nodeOrder); }
+    appendAndSetAttribute(autoFilterNode, "ref", range.address());
+}
+
+/**
+ * @details Clear the AutoFilter from the worksheet.
+ */
+void XLWorksheet::clearAutoFilter() { xmlDocument().document_element().remove_child("autoFilter"); }
+
+/**
+ * @details Check if the worksheet has an AutoFilter.
+ */
+bool XLWorksheet::hasAutoFilter() const { return !xmlDocument().document_element().child("autoFilter").empty(); }
+
+/**
+ * @details Get the AutoFilter range reference.
+ */
+std::string XLWorksheet::autoFilter() const
+{
+    XMLNode autoFilterNode = xmlDocument().document_element().child("autoFilter");
+    if (autoFilterNode.empty()) return "";
+    return autoFilterNode.attribute("ref").value();
+}
+
+/**
  * @details Returns an XLCellReference to the last cell using rowCount() and columnCount() methods.
  */
 XLCellReference XLWorksheet::lastCell() const noexcept { return {rowCount(), columnCount()}; }
@@ -1506,7 +1537,7 @@ bool XLWorksheet::setColumnFormat(uint16_t columnNumber, XLStyleIndex cellFormat
     for (XLRowIterator rowIt = allRows.begin(); rowIt != allRows.end(); ++rowIt) {
         XLCell curCell = rowIt->findCell(columnNumber);
         if (curCell and !curCell.setCellFormat(cellFormatIndex))    // attempt to set cell format for a non empty cell
-            return false;                                          // failure to set cell format
+            return false;                                           // failure to set cell format
     }
     return true;    // if loop finished nominally: success
 }
@@ -1538,6 +1569,39 @@ bool XLWorksheet::setRowFormat(uint32_t rowNumber, XLStyleIndex cellFormatIndex)
  * @details Provide access to worksheet conditional formats
  */
 XLConditionalFormats XLWorksheet::conditionalFormats() const { return XLConditionalFormats(xmlDocument().document_element()); }
+
+/**
+ * @details
+ */
+XLPageMargins XLWorksheet::pageMargins() const
+{
+    XMLNode rootNode = xmlDocument().document_element();
+    XMLNode node     = rootNode.child("pageMargins");
+    if (node.empty()) node = appendAndGetNode(rootNode, "pageMargins", m_nodeOrder);
+    return XLPageMargins(node);
+}
+
+/**
+ * @details
+ */
+XLPrintOptions XLWorksheet::printOptions() const
+{
+    XMLNode rootNode = xmlDocument().document_element();
+    XMLNode node     = rootNode.child("printOptions");
+    if (node.empty()) node = appendAndGetNode(rootNode, "printOptions", m_nodeOrder);
+    return XLPrintOptions(node);
+}
+
+/**
+ * @details
+ */
+XLPageSetup XLWorksheet::pageSetup() const
+{
+    XMLNode rootNode = xmlDocument().document_element();
+    XMLNode node     = rootNode.child("pageSetup");
+    if (node.empty()) node = appendAndGetNode(rootNode, "pageSetup", m_nodeOrder);
+    return XLPageSetup(node);
+}
 
 /**
  * @brief Set the <sheetProtection> attributes sheet, objects and scenarios respectively
@@ -1785,9 +1849,9 @@ void XLWorksheet::addImage(const std::string& name, const std::string& data, uin
     XLDrawing& drw = drawing();
 
     // 3. Add relationship from drawing to image
-    std::string drawingPath = drw.getXmlPath();
+    std::string drawingPath       = drw.getXmlPath();
     std::string imageRelativePath = getPathARelativeToPathB(internalPath, drawingPath);
-    
+
     XLRelationshipItem imgRel;
     if (!drw.relationships().targetExists(imageRelativePath))
         imgRel = drw.relationships().addRelationship(XLRelationshipType::Image, imageRelativePath);
@@ -1810,9 +1874,9 @@ void XLWorksheet::addScaledImage(const std::string& name, const std::string& dat
     XLDrawing& drw = drawing();
 
     // 3. Add relationship from drawing to image
-    std::string drawingPath = drw.getXmlPath();
+    std::string drawingPath       = drw.getXmlPath();
     std::string imageRelativePath = getPathARelativeToPathB(internalPath, drawingPath);
-    
+
     XLRelationshipItem imgRel;
     if (!drw.relationships().targetExists(imageRelativePath))
         imgRel = drw.relationships().addRelationship(XLRelationshipType::Image, imageRelativePath);
@@ -1839,15 +1903,13 @@ std::vector<XLDrawingItem> XLWorksheet::images()
             }
         }
         if (drawingRelativePath.empty()) return result;
-        
+
         // Load drawing
         m_drawing = drawing();
     }
 
     uint32_t count = m_drawing.imageCount();
-    for (uint32_t i = 0; i < count; ++i) {
-        result.push_back(m_drawing.image(i));
-    }
+    for (uint32_t i = 0; i < count; ++i) { result.push_back(m_drawing.image(i)); }
     return result;
 }
 
@@ -1937,7 +1999,7 @@ void XLWorksheet::addHyperlink(std::string_view cellRef, std::string_view url, s
     const auto rel = m_relationships.addRelationship(XLRelationshipType::Hyperlink, std::string(url), true);
 
     // 3. Find or create <hyperlinks> node
-    XMLNode docElement    = xmlDocument().document_element();
+    XMLNode docElement     = xmlDocument().document_element();
     XMLNode hyperlinksNode = docElement.child("hyperlinks");
     if (hyperlinksNode.empty()) { hyperlinksNode = appendAndGetNode(docElement, "hyperlinks", m_nodeOrder); }
 
@@ -1954,7 +2016,7 @@ void XLWorksheet::addInternalHyperlink(std::string_view cellRef, std::string_vie
     removeHyperlink(cellRef);
 
     // 1. Find or create <hyperlinks> node
-    XMLNode docElement    = xmlDocument().document_element();
+    XMLNode docElement     = xmlDocument().document_element();
     XMLNode hyperlinksNode = docElement.child("hyperlinks");
     if (hyperlinksNode.empty()) { hyperlinksNode = appendAndGetNode(docElement, "hyperlinks", m_nodeOrder); }
 
@@ -1968,7 +2030,7 @@ void XLWorksheet::addInternalHyperlink(std::string_view cellRef, std::string_vie
 
 bool XLWorksheet::hasHyperlink(std::string_view cellRef) const
 {
-    XMLNode docElement    = xmlDocument().document_element();
+    XMLNode docElement     = xmlDocument().document_element();
     XMLNode hyperlinksNode = docElement.child("hyperlinks");
     if (hyperlinksNode.empty()) return false;
 
@@ -1980,7 +2042,7 @@ bool XLWorksheet::hasHyperlink(std::string_view cellRef) const
 
 std::string XLWorksheet::getHyperlink(std::string_view cellRef) const
 {
-    XMLNode docElement    = xmlDocument().document_element();
+    XMLNode docElement     = xmlDocument().document_element();
     XMLNode hyperlinksNode = docElement.child("hyperlinks");
     if (hyperlinksNode.empty()) return "";
 
@@ -1998,7 +2060,7 @@ std::string XLWorksheet::getHyperlink(std::string_view cellRef) const
 
 void XLWorksheet::removeHyperlink(std::string_view cellRef)
 {
-    XMLNode docElement    = xmlDocument().document_element();
+    XMLNode docElement     = xmlDocument().document_element();
     XMLNode hyperlinksNode = docElement.child("hyperlinks");
     if (hyperlinksNode.empty()) return;
 
@@ -2010,9 +2072,7 @@ void XLWorksheet::removeHyperlink(std::string_view cellRef)
     }
 
     // Clean up <hyperlinks> node if empty
-    if (hyperlinksNode.first_child().empty()) {
-        docElement.remove_child(hyperlinksNode);
-    }
+    if (hyperlinksNode.first_child().empty()) { docElement.remove_child(hyperlinksNode); }
 }
 
 std::string XLWorksheet::makeInternalLocation(std::string_view sheetName, std::string_view cellRef)
@@ -2024,7 +2084,8 @@ std::string XLWorksheet::makeInternalLocation(std::string_view sheetName, std::s
         result += sheetName;
         result += "'!";
         result += cellRef;
-    } else {
+    }
+    else {
         result.reserve(sheetName.size() + cellRef.size() + 1);
         result += sheetName;
         result += "!";

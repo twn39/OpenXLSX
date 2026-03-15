@@ -73,6 +73,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include "XLDocument.hpp"
 #include "XLException.hpp"
 #include "XLMergeCells.hpp"
+#include "XLPageSetup.hpp"
 #include "XLRow.hpp"
 #include "XLStyles.hpp"    // XLStyleIndex
 #include "XLTables.hpp"    // XLTables
@@ -1010,6 +1011,29 @@ namespace OpenXLSX
         XLColumn column(std::string const& columnRef) const;
 
         /**
+         * @brief Set the AutoFilter range for the worksheet.
+         * @param range The range to set the AutoFilter for.
+         */
+        void setAutoFilter(const XLCellRange& range);
+
+        /**
+         * @brief Clear the AutoFilter from the worksheet.
+         */
+        void clearAutoFilter();
+
+        /**
+         * @brief Check if the worksheet has an AutoFilter.
+         * @return true if an AutoFilter exists, false otherwise.
+         */
+        bool hasAutoFilter() const;
+
+        /**
+         * @brief Get the AutoFilter range reference.
+         * @return A string with the range reference (e.g., "A1:C10"), or an empty string if no AutoFilter exists.
+         */
+        std::string autoFilter() const;
+
+        /**
          * @brief Get an XLCellReference to the last (bottom right) cell in the worksheet.
          * @return An XLCellReference for the last cell.
          */
@@ -1121,6 +1145,24 @@ namespace OpenXLSX
          * @return An XLConditionalFormats object
          */
         XLConditionalFormats conditionalFormats() const;
+
+        /**
+         * @brief Get the page margins object
+         * @return An XLPageMargins object
+         */
+        XLPageMargins pageMargins() const;
+
+        /**
+         * @brief Get the print options object
+         * @return An XLPrintOptions object
+         */
+        XLPrintOptions printOptions() const;
+
+        /**
+         * @brief Get the page setup object
+         * @return An XLPageSetup object
+         */
+        XLPageSetup pageSetup() const;
 
         /**
          * @brief Set the <sheetProtection> attributes sheet, objects and scenarios respectively
@@ -1378,14 +1420,14 @@ namespace OpenXLSX
          */
         bool setActive_impl();
 
-    private:                                                                  // ---------- Private Member Variables ---------- //
-        XLRelationships                                    m_relationships{}; /**< class handling the worksheet relationships */
-        XLMergeCells                                       m_merges{};        /**< class handling the <mergeCells> */
+    private:                                                                    // ---------- Private Member Variables ---------- //
+        XLRelationships                                    m_relationships{};   /**< class handling the worksheet relationships */
+        XLMergeCells                                       m_merges{};          /**< class handling the <mergeCells> */
         XLDataValidations                                  m_dataValidations{}; /**< class handling the <dataValidations> */
-        XLDrawing                                          m_drawing{};       /**< class handling the worksheet drawing object */
-        XLVmlDrawing                                       m_vmlDrawing{};    /**< class handling the worksheet VML drawing object */
-        XLComments                                         m_comments{};      /**< class handling the worksheet comments */
-        XLTables                                           m_tables{};        /**< class handling the worksheet table settings */
+        XLDrawing                                          m_drawing{};         /**< class handling the worksheet drawing object */
+        XLVmlDrawing                                       m_vmlDrawing{};      /**< class handling the worksheet VML drawing object */
+        XLComments                                         m_comments{};        /**< class handling the worksheet comments */
+        XLTables                                           m_tables{};          /**< class handling the worksheet table settings */
         inline static const std::vector<std::string_view>& m_nodeOrder =
             XLWorksheetNodeOrder;    // worksheet XML root node required child sequence
     };

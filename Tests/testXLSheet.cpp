@@ -7,6 +7,33 @@
 
 using namespace OpenXLSX;
 
+namespace
+{
+    // Hack to access protected member without inheritance (since XLDocument is final)
+    template<typename Tag, typename Tag::type M>
+    struct Rob
+    {
+        friend typename Tag::type get_impl(Tag) { return M; }
+    };
+
+    struct XLDocument_extractXmlFromArchive
+    {
+        typedef std::string (XLDocument::*type)(const std::string&);
+    };
+
+    template struct Rob<XLDocument_extractXmlFromArchive, &XLDocument::extractXmlFromArchive>;
+
+    // Prototype declaration for the friend function
+    std::string (XLDocument::* get_impl(XLDocument_extractXmlFromArchive))(const std::string&);
+
+    // Function to call the protected member
+    std::string getRawXml(XLDocument& doc, const std::string& path)
+    {
+        static auto fn = get_impl(XLDocument_extractXmlFromArchive());
+        return (doc.*fn)(path);
+    }
+}    // namespace
+
 TEST_CASE("XLSheet Tests", "[XLSheet]")
 {
     SECTION("XLSheet Visibility")
@@ -72,5 +99,117 @@ TEST_CASE("XLSheet Tests", "[XLSheet]")
         REQUIRE_FALSE(wks3.color() == XLColor(0, 0, 0));
 
         doc.save();
+    }
+
+    SECTION("XLSheet AutoFilter")
+    {
+        XLDocument doc;
+        doc.create("./testXLSheet3.xlsx", XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
+
+        REQUIRE_FALSE(wks.hasAutoFilter());
+        REQUIRE(wks.autoFilter().empty());
+
+        wks.setAutoFilter(wks.range("A1", "C10"));
+        REQUIRE(wks.hasAutoFilter());
+        REQUIRE(wks.autoFilter() == "A1:C10");
+
+        wks.clearAutoFilter();
+        REQUIRE_FALSE(wks.hasAutoFilter());
+        REQUIRE(wks.autoFilter().empty());
+
+        doc.save();
+    }
+
+    SECTION("XLSheet Page Setup")
+    {
+        XLDocument doc;
+        doc.create("./testXLSheet4.xlsx", XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
+
+        // Test Page Margins
+        auto margins = wks.pageMargins();
+        margins.setLeft(1.0);
+        margins.setRight(1.0);
+        margins.setTop(1.5);
+        margins.setBottom(1.5);
+        margins.setHeader(0.5);
+        margins.setFooter(0.5);
+
+        REQUIRE(margins.left() == 1.0);
+        REQUIRE(margins.right() == 1.0);
+        REQUIRE(margins.top() == 1.5);
+        REQUIRE(margins.bottom() == 1.5);
+        REQUIRE(margins.header() == 0.5);
+        REQUIRE(margins.footer() == 0.5);
+
+        // Test Print Options
+        auto printOpts = wks.printOptions();
+        printOpts.setGridLines(true);
+        printOpts.setHeadings(true);
+        printOpts.setHorizontalCentered(true);
+        printOpts.setVerticalCentered(false);
+
+        REQUIRE(printOpts.gridLines() == true);
+        REQUIRE(printOpts.headings() == true);
+        REQUIRE(printOpts.horizontalCentered() == true);
+        REQUIRE(printOpts.verticalCentered() == false);
+
+        // Test Page Setup
+        auto setup = wks.pageSetup();
+        setup.setPaperSize(9);    // A4
+        setup.setOrientation(XLPageOrientation::Landscape);
+        setup.setScale(85);
+        setup.setBlackAndWhite(true);
+
+        REQUIRE(setup.paperSize() == 9);
+        REQUIRE(setup.orientation() == XLPageOrientation::Landscape);
+        REQUIRE(setup.scale() == 85);
+        REQUIRE(setup.blackAndWhite() == true);
+
+        doc.save();
+        doc.close();
+
+        // Re-open and verify
+        XLDocument doc2;
+        doc2.open("./testXLSheet4.xlsx");
+        auto wks2 = doc2.workbook().worksheet("Sheet1");
+
+        REQUIRE(wks2.pageMargins().left() == 1.0);
+        REQUIRE(wks2.printOptions().gridLines() == true);
+        REQUIRE(wks2.pageSetup().orientation() == XLPageOrientation::Landscape);
+
+        // Verify XML structure
+        std::string sheetXml = getRawXml(doc2, "xl/worksheets/sheet1.xml");
+
+        // 1. Check margins
+        REQUIRE(sheetXml.find("<pageMargins") != std::string::npos);
+        REQUIRE(sheetXml.find("left=\"1.000000\"") != std::string::npos);
+
+        // 2. Check print options
+        REQUIRE(sheetXml.find("<printOptions") != std::string::npos);
+        REQUIRE(sheetXml.find("gridLines=\"1\"") != std::string::npos);
+        REQUIRE(sheetXml.find("headings=\"1\"") != std::string::npos);
+        REQUIRE(sheetXml.find("horizontalCentered=\"1\"") != std::string::npos);
+
+        // 3. Check page setup
+        REQUIRE(sheetXml.find("<pageSetup") != std::string::npos);
+        REQUIRE(sheetXml.find("orientation=\"landscape\"") != std::string::npos);
+        REQUIRE(sheetXml.find("paperSize=\"9\"") != std::string::npos);
+        REQUIRE(sheetXml.find("scale=\"85\"") != std::string::npos);
+        REQUIRE(sheetXml.find("blackAndWhite=\"1\"") != std::string::npos);
+
+        // 4. Check ordering: printOptions < pageMargins < pageSetup
+        size_t printPos  = sheetXml.find("<printOptions");
+        size_t marginPos = sheetXml.find("<pageMargins");
+        size_t setupPos  = sheetXml.find("<pageSetup");
+
+        REQUIRE(printPos != std::string::npos);
+        REQUIRE(marginPos != std::string::npos);
+        REQUIRE(setupPos != std::string::npos);
+        REQUIRE(printPos < marginPos);
+        REQUIRE(marginPos < setupPos);
+
+        doc2.close();
     }
 }

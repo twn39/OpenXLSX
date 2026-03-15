@@ -139,6 +139,8 @@ namespace OpenXLSX
                 return "Error"s;
             case XLValueType::String:
                 return "String"s;
+            case XLValueType::RichText:
+                return "RichText"s;
         }
         throw XLInternalError(__func__ + "Invalid XLValueType."s);
     }

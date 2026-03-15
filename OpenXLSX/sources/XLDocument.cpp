@@ -618,10 +618,7 @@ namespace
      * @param path Check for existence of this
      * @return true if path exists as a file or directory
      */
-    bool pathExists(const std::string& path)
-    {
-        return std::filesystem::exists(std::filesystem::u8path(path));
-    }
+    bool pathExists(const std::string& path) { return std::filesystem::exists(std::filesystem::u8path(path)); }
 #ifdef __GNUC__    // conditionally enable GCC specific pragmas to suppress unused function warning
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wunused-function"
@@ -633,11 +630,13 @@ namespace
      */
     bool fileExists(const std::string& fileName)
     {
-        return std::filesystem::exists(std::filesystem::u8path(fileName)) && !std::filesystem::is_directory(std::filesystem::u8path(fileName));
+        return std::filesystem::exists(std::filesystem::u8path(fileName)) &&
+               !std::filesystem::is_directory(std::filesystem::u8path(fileName));
     }
     bool isDirectory(const std::string& fileName)
     {
-        return std::filesystem::exists(std::filesystem::u8path(fileName)) && std::filesystem::is_directory(std::filesystem::u8path(fileName));
+        return std::filesystem::exists(std::filesystem::u8path(fileName)) &&
+               std::filesystem::is_directory(std::filesystem::u8path(fileName));
     }
 #ifdef __GNUC__    // conditionally enable GCC specific pragmas to suppress unused function warning
 #    pragma GCC diagnostic pop
@@ -1400,7 +1399,9 @@ bool XLDocument::execCommand(const XLCommand& command)
             // ===== If [Content Types].xml has no relationship for docProps/custom.xml
             if (!hasXmlData("docProps/custom.xml")) {
                 m_contentTypes.addOverride("/docProps/custom.xml", XLContentType::CustomProperties);
-                m_data.emplace_back(this, "docProps/custom.xml", m_docRelationships.relationshipByTarget("docProps/custom.xml").id(),
+                m_data.emplace_back(this,
+                                    "docProps/custom.xml",
+                                    m_docRelationships.relationshipByTarget("docProps/custom.xml").id(),
                                     XLContentType::CustomProperties);
             }
             m_customProperties = XLCustomProperties(getXmlData("docProps/custom.xml"));
@@ -1799,7 +1800,7 @@ namespace OpenXLSX
     std::string getPathARelativeToPathB(std::string const& pathA, std::string const& pathB)
     {
         size_t startpos = 0;
-        while (pathA[startpos] == pathB[startpos]) ++startpos;            // find position where pathA and pathB differ
+        while (pathA[startpos] == pathB[startpos]) ++startpos;             // find position where pathA and pathB differ
         while (startpos > 0 and pathA[startpos - 1] != '/') --startpos;    // then iterate back to last slash before that position
         if (startpos == 0) throw XLInternalError("getPathARelativeToPathB: pathA and pathB have no common beginning");
 

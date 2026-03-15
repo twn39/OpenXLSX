@@ -252,7 +252,8 @@ namespace OpenXLSX
         XLContentTypes& contentTypes();
 
         /**
-         * @brief Get the custom properties object
+         * @brief Get the workbook relationships object
+
          * @return a reference to the XLCustomProperties object
          */
         XLCustomProperties& customProperties();
@@ -397,21 +398,21 @@ namespace OpenXLSX
          * @brief Get the underlying zip archive
          * @return A reference to the zip archive object
          */
-        IZipArchive& archive() { return m_archive; }
+        IZipArchive&       archive() { return m_archive; }
         const IZipArchive& archive() const { return m_archive; }
 
         /**
          * @brief Get the App properties object
          * @return A reference to the App properties object
          */
-        XLAppProperties& appProperties() { return m_appProperties; }
+        XLAppProperties&       appProperties() { return m_appProperties; }
         const XLAppProperties& appProperties() const { return m_appProperties; }
 
         /**
          * @brief Get the Core properties object
          * @return A reference to the Core properties object
          */
-        XLProperties& coreProperties() { return m_coreProperties; }
+        XLProperties&       coreProperties() { return m_coreProperties; }
         const XLProperties& coreProperties() const { return m_coreProperties; }
 
     public:
@@ -511,7 +512,8 @@ namespace OpenXLSX
         XLXmlSavingDeclaration
             m_xmlSavingDeclaration; /**< The xml saving declaration that will be passed to pugixml before generating the XML output data*/
 
-        struct SharedFormula {
+        struct SharedFormula
+        {
             std::string formula;
             uint32_t    baseRow;
             uint16_t    baseCol;
@@ -524,15 +526,15 @@ namespace OpenXLSX
         mutable std::map<const XMLDocument*, std::unordered_map<uint32_t, SharedFormula>>
             m_sharedFormulas{}; /**< Cache for shared formulas, scoped by worksheet document */
 
-        XLRelationships m_docRelationships{}; /**< A pointer to the document relationships object*/
-        XLRelationships m_wbkRelationships{}; /**< A pointer to the document relationships object*/
-        XLContentTypes  m_contentTypes{};     /**< A pointer to the content types object*/
-        XLAppProperties m_appProperties{};    /**< A pointer to the App properties object */
-        XLProperties    m_coreProperties{};   /**< A pointer to the Core properties object*/
+        XLRelationships    m_docRelationships{}; /**< A pointer to the document relationships object*/
+        XLRelationships    m_wbkRelationships{}; /**< A pointer to the document relationships object*/
+        XLContentTypes     m_contentTypes{};     /**< A pointer to the content types object*/
+        XLAppProperties    m_appProperties{};    /**< A pointer to the App properties object */
+        XLProperties       m_coreProperties{};   /**< A pointer to the Core properties object*/
         XLCustomProperties m_customProperties{}; /**< A pointer to the Custom properties object */
-        XLStyles        m_styles{};           /**< A pointer to the document styles object*/
-        XLWorkbook      m_workbook{};         /**< A pointer to the workbook object */
-        IZipArchive     m_archive{};          /**<  */
+        XLStyles           m_styles{};           /**< A pointer to the document styles object*/
+        XLWorkbook         m_workbook{};         /**< A pointer to the workbook object */
+        IZipArchive        m_archive{};          /**<  */
     };
 
     //----------------------------------------------------------------------------------------------------------------------

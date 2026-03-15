@@ -5,37 +5,40 @@
 
 using namespace OpenXLSX;
 
-// Hack to access protected member without inheritance (since XLDocument is final)
-template <typename Tag, typename Tag::type M>
-struct Rob
+namespace
 {
-    friend typename Tag::type get_impl(Tag) { return M; }
-};
+    // Hack to access protected member without inheritance (since XLDocument is final)
+    template<typename Tag, typename Tag::type M>
+    struct Rob
+    {
+        friend typename Tag::type get_impl(Tag) { return M; }
+    };
 
-struct XLDocument_extractXmlFromArchive
-{
-    typedef std::string (XLDocument::*type)(const std::string&);
-};
+    struct XLDocument_extractXmlFromArchive
+    {
+        typedef std::string (XLDocument::*type)(const std::string&);
+    };
 
-template struct Rob<XLDocument_extractXmlFromArchive, &XLDocument::extractXmlFromArchive>;
+    template struct Rob<XLDocument_extractXmlFromArchive, &XLDocument::extractXmlFromArchive>;
 
-// Prototype declaration for the friend function
-std::string (XLDocument::*get_impl(XLDocument_extractXmlFromArchive)) (const std::string&);
+    // Prototype declaration for the friend function
+    std::string (XLDocument::* get_impl(XLDocument_extractXmlFromArchive))(const std::string&);
 
-// Function to call the protected member
-std::string getRawXml(XLDocument& doc, const std::string& path)
-{
-    static auto fn = get_impl(XLDocument_extractXmlFromArchive());
-    return (doc.*fn)(path);
-}
+    // Function to call the protected member
+    std::string getRawXml(XLDocument& doc, const std::string& path)
+    {
+        static auto fn = get_impl(XLDocument_extractXmlFromArchive());
+        return (doc.*fn)(path);
+    }
+}    // namespace
 
 // Wrapper class for easier testing
 class XLDocumentTest
 {
 public:
-    XLDocument doc;
-    void open(const std::string& filename) { doc.open(filename); }
-    void close() { doc.close(); }
+    XLDocument  doc;
+    void        open(const std::string& filename) { doc.open(filename); }
+    void        close() { doc.close(); }
     std::string getRawXml(const std::string& path) { return ::getRawXml(doc, path); }
     std::string property(XLProperty prop) { return doc.property(prop); }
 };
@@ -57,7 +60,7 @@ TEST_CASE("OOXML Verification Tests", "[OOXML]")
 
         {
             XLDocumentTest testDoc;
-            testTestDoc: // Wait, I'll just use the doc directly.
+testTestDoc:    // Wait, I'll just use the doc directly.
             testDoc.open(filename);
 
             // Verify properties via API
@@ -171,15 +174,15 @@ TEST_CASE("OOXML Verification Tests", "[OOXML]")
 
             // 1. Verify sheet1.xml
             std::string sheetXml = testDoc.getRawXml("xl/worksheets/sheet1.xml");
-            
+
             // Check hyperlinks container
             REQUIRE(sheetXml.find("<hyperlinks>") != std::string::npos);
-            
+
             // Check external link entry (should have r:id and tooltip, but no location)
             REQUIRE(sheetXml.find("ref=\"A1\"") != std::string::npos);
             REQUIRE(sheetXml.find("tooltip=\"GitHub\"") != std::string::npos);
             REQUIRE(sheetXml.find("r:id=\"") != std::string::npos);
-            
+
             // Check internal link entry (should have location and tooltip)
             REQUIRE(sheetXml.find("ref=\"B2\"") != std::string::npos);
             REQUIRE(sheetXml.find("location=\"Sheet1!A10\"") != std::string::npos);
@@ -187,13 +190,13 @@ TEST_CASE("OOXML Verification Tests", "[OOXML]")
 
             // 2. Verify sheet1.xml.rels for the external link
             std::string relsXml = testDoc.getRawXml("xl/worksheets/_rels/sheet1.xml.rels");
-            
+
             // Find the relationship ID used in A1
-            size_t a1Pos = sheetXml.find("ref=\"A1\"");
-            size_t idStart = sheetXml.find("r:id=\"", a1Pos) + 6;
-            size_t idEnd = sheetXml.find("\"", idStart);
-            std::string rId = sheetXml.substr(idStart, idEnd - idStart);
-            
+            size_t      a1Pos   = sheetXml.find("ref=\"A1\"");
+            size_t      idStart = sheetXml.find("r:id=\"", a1Pos) + 6;
+            size_t      idEnd   = sheetXml.find("\"", idStart);
+            std::string rId     = sheetXml.substr(idStart, idEnd - idStart);
+
             // Verify this ID exists in rels and points to GitHub
             REQUIRE(relsXml.find("Id=\"" + rId + "\"") != std::string::npos);
             REQUIRE(relsXml.find("Target=\"https://www.github.com\"") != std::string::npos);
@@ -206,9 +209,9 @@ TEST_CASE("OOXML Verification Tests", "[OOXML]")
 
     SECTION("Verify Image insertion OOXML structure")
     {
-        std::string filename = "ooxml_image_test.xlsx";
+        std::string filename  = "ooxml_image_test.xlsx";
         std::string imagePath = "./Tests/test.png";
-        
+
         // Skip if test image doesn't exist
         if (!std::filesystem::exists(imagePath)) return;
 
@@ -232,13 +235,13 @@ TEST_CASE("OOXML Verification Tests", "[OOXML]")
             testDoc.open(filename);
 
             // 1. Verify sheet1.xml has a drawing reference
-            std::string sheetXml = testDoc.getRawXml("xl/worksheets/sheet1.xml");
-            size_t drawingPos = sheetXml.find("<drawing r:id=\"");
+            std::string sheetXml   = testDoc.getRawXml("xl/worksheets/sheet1.xml");
+            size_t      drawingPos = sheetXml.find("<drawing r:id=\"");
             REQUIRE(drawingPos != std::string::npos);
-            
-            size_t idStart = drawingPos + 15;
-            size_t idEnd = sheetXml.find("\"", idStart);
-            std::string rId = sheetXml.substr(idStart, idEnd - idStart);
+
+            size_t      idStart = drawingPos + 15;
+            size_t      idEnd   = sheetXml.find("\"", idStart);
+            std::string rId     = sheetXml.substr(idStart, idEnd - idStart);
 
             // 2. Verify sheet1.xml.rels points to drawing1.xml
             std::string sheetRelsXml = testDoc.getRawXml("xl/worksheets/_rels/sheet1.xml.rels");
@@ -250,14 +253,14 @@ TEST_CASE("OOXML Verification Tests", "[OOXML]")
             REQUIRE(drawingXml.find("<xdr:pic>") != std::string::npos);
             REQUIRE(drawingXml.find("<xdr:cNvPr id=\"") != std::string::npos);
             REQUIRE(drawingXml.find("name=\"inserted_test.png\"") != std::string::npos);
-            
+
             // Get image relationship ID from drawing1.xml
-            size_t picPos = drawingXml.find("<xdr:blipFill>");
+            size_t picPos  = drawingXml.find("<xdr:blipFill>");
             size_t blipPos = drawingXml.find("r:embed=\"", picPos);
             REQUIRE(blipPos != std::string::npos);
-            size_t imgIdStart = blipPos + 9;
-            size_t imgIdEnd = drawingXml.find("\"", imgIdStart);
-            std::string imgRId = drawingXml.substr(imgIdStart, imgIdEnd - imgIdStart);
+            size_t      imgIdStart = blipPos + 9;
+            size_t      imgIdEnd   = drawingXml.find("\"", imgIdStart);
+            std::string imgRId     = drawingXml.substr(imgIdStart, imgIdEnd - imgIdStart);
 
             // 4. Verify drawing1.xml.rels points to the media file
             std::string drawingRelsXml = testDoc.getRawXml("xl/drawings/_rels/drawing1.xml.rels");
