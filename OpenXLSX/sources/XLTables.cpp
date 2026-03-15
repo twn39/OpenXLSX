@@ -1,12 +1,23 @@
 // ===== External Includes ===== //
 #include <pugixml.hpp>
 #include <string_view>
+#include <vector>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLTables.hpp"
 #include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
+
+namespace {
+    const std::vector<std::string_view> TableNodeOrder = {
+        "autoFilter",
+        "sortState",
+        "tableColumns",
+        "tableStyleInfo",
+        "extLst"
+    };
+}
 
 // ========== XLTables Member Functions
 
@@ -16,8 +27,13 @@ using namespace OpenXLSX;
 XLTables::XLTables(XLXmlData* xmlData) : XLXmlFile(xmlData)
 {
     if (xmlData && xmlData->getXmlType() != XLContentType::Table) throw XLInternalError("XLTables constructor: Invalid XML data.");
-    if (xmlDocument().document_element().empty()) {
-        xmlDocument().append_child("table");
+    
+    auto root = xmlDocument().document_element();
+    if (root.empty() || std::string_view(root.name()) != "table") {
+        xmlDocument().remove_children();
+        root = xmlDocument().append_child("table");
+        root.append_attribute("xmlns").set_value("http://schemas.openxmlformats.org/spreadsheetml/2006/main");
+        root.append_attribute("id").set_value("1"); // Default ID
     }
 }
 
@@ -74,11 +90,9 @@ void XLTables::setRangeReference(std::string_view ref)
     auto docNode = xmlDocument().document_element();
     appendAndSetAttribute(docNode, "ref", std::string(ref));
     
-    // Also update autoFilter if it exists
-    auto autoFilter = docNode.child("autoFilter");
-    if (!autoFilter.empty()) {
-        appendAndSetAttribute(autoFilter, "ref", std::string(ref));
-    }
+    // Ensure autoFilter exists and matches ref
+    auto autoFilter = appendAndGetNode(docNode, "autoFilter", TableNodeOrder);
+    appendAndSetAttribute(autoFilter, "ref", std::string(ref));
 }
 
 /**
@@ -95,10 +109,7 @@ std::string XLTables::styleName() const
 void XLTables::setStyleName(std::string_view styleName)
 {
     auto docNode = xmlDocument().document_element();
-    auto info = docNode.child("tableStyleInfo");
-    if (info.empty()) {
-        info = docNode.append_child("tableStyleInfo");
-    }
+    auto info = appendAndGetNode(docNode, "tableStyleInfo", TableNodeOrder);
     appendAndSetAttribute(info, "name", std::string(styleName));
 }
 
@@ -115,8 +126,8 @@ bool XLTables::showRowStripes() const
  */
 void XLTables::setShowRowStripes(bool show)
 {
-    auto info = xmlDocument().document_element().child("tableStyleInfo");
-    if (info.empty()) info = xmlDocument().document_element().append_child("tableStyleInfo");
+    auto docNode = xmlDocument().document_element();
+    auto info = appendAndGetNode(docNode, "tableStyleInfo", TableNodeOrder);
     appendAndSetAttribute(info, "showRowStripes", show ? "1" : "0");
 }
 
@@ -133,8 +144,8 @@ bool XLTables::showColumnStripes() const
  */
 void XLTables::setShowColumnStripes(bool show)
 {
-    auto info = xmlDocument().document_element().child("tableStyleInfo");
-    if (info.empty()) info = xmlDocument().document_element().append_child("tableStyleInfo");
+    auto docNode = xmlDocument().document_element();
+    auto info = appendAndGetNode(docNode, "tableStyleInfo", TableNodeOrder);
     appendAndSetAttribute(info, "showColumnStripes", show ? "1" : "0");
 }
 
@@ -151,8 +162,8 @@ bool XLTables::showFirstColumn() const
  */
 void XLTables::setShowFirstColumn(bool show)
 {
-    auto info = xmlDocument().document_element().child("tableStyleInfo");
-    if (info.empty()) info = xmlDocument().document_element().append_child("tableStyleInfo");
+    auto docNode = xmlDocument().document_element();
+    auto info = appendAndGetNode(docNode, "tableStyleInfo", TableNodeOrder);
     appendAndSetAttribute(info, "showFirstColumn", show ? "1" : "0");
 }
 
@@ -169,9 +180,26 @@ bool XLTables::showLastColumn() const
  */
 void XLTables::setShowLastColumn(bool show)
 {
-    auto info = xmlDocument().document_element().child("tableStyleInfo");
-    if (info.empty()) info = xmlDocument().document_element().append_child("tableStyleInfo");
+    auto docNode = xmlDocument().document_element();
+    auto info = appendAndGetNode(docNode, "tableStyleInfo", TableNodeOrder);
     appendAndSetAttribute(info, "showLastColumn", show ? "1" : "0");
+}
+
+/**
+ * @details Append a new column to the table
+ */
+void XLTables::appendColumn(std::string_view name)
+{
+    auto docNode = xmlDocument().document_element();
+    auto columns = appendAndGetNode(docNode, "tableColumns", TableNodeOrder);
+    
+    uint32_t count = columns.attribute("count").as_uint(0);
+    count++;
+    appendAndSetAttribute(columns, "count", std::to_string(count));
+    
+    auto column = columns.append_child("tableColumn");
+    appendAndSetAttribute(column, "id", std::to_string(count));
+    appendAndSetAttribute(column, "name", std::string(name));
 }
 
 /**

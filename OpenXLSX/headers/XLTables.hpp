@@ -164,6 +164,12 @@ namespace OpenXLSX
         void setShowLastColumn(bool show);
 
         /**
+         * @brief Append a new column to the table
+         * @param name The column name
+         */
+        void appendColumn(std::string_view name);
+
+        /**
          * @brief Print the XML contents of this XLTables instance using the underlying XMLNode print function
          */
         void print(std::basic_ostream<char>& ostr) const;

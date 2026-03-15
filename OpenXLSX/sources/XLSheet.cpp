@@ -2108,8 +2108,20 @@ XLTables& XLWorksheet::tables()
         m_tables = parentDoc().sheetTables(sheetXmlNo);    // fetch tables for this worksheet
         if (!m_tables.valid()) throw XLException("XLWorksheet::tables(): could not create tables XML");
         std::string tablesRelativePath = getPathARelativeToPathB(m_tables.getXmlPath(), getXmlPath());
-        if (!m_relationships.targetExists(tablesRelativePath))
-            m_relationships.addRelationship(XLRelationshipType::Table, tablesRelativePath);
+        if (!m_relationships.targetExists(tablesRelativePath)) {
+            auto relItem = m_relationships.addRelationship(XLRelationshipType::Table, tablesRelativePath);
+
+            // Add <tableParts> to worksheet XML
+            auto rootNode   = xmlDocument().document_element();
+            auto tableParts = appendAndGetNode(rootNode, "tableParts", m_nodeOrder);
+            if (tableParts.attribute("count").empty())
+                tableParts.append_attribute("count").set_value(1);
+            else
+                tableParts.attribute("count").set_value(tableParts.attribute("count").as_uint() + 1);
+
+            auto tablePart = tableParts.append_child("tablePart");
+            tablePart.append_attribute("r:id").set_value(relItem.id().c_str());
+        }
     }
 
     return m_tables;
