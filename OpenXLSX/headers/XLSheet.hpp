@@ -1021,6 +1021,11 @@ namespace OpenXLSX
         void updateSheetName(const std::string& oldName, const std::string& newName);
 
         /**
+         * @brief Update the dimension (used range) of the worksheet based on current row and column data.
+         */
+        void updateDimension();
+
+        /**
          * @brief get an XLMergeCells object to directly access the member functions
          * @returns an XLMergeCells object for this worksheet
          */

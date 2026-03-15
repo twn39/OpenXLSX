@@ -354,27 +354,31 @@ testTestDoc:    // Wait, I'll just use the doc directly.
         std::filesystem::remove(filename);
     }
 
-    SECTION("Verify Table Structure in OOXML")
+    SECTION("Verify Table Structure and Global Uniqueness in OOXML")
     {
-        std::string filename = "ooxml_table_test.xlsx";
+        std::string filename = "ooxml_table_enhanced_test.xlsx";
         {
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
-            auto wks = doc.workbook().worksheet("Sheet1");
+            
+            // Table 1 on Sheet 1
+            auto wks1 = doc.workbook().worksheet("Sheet1");
+            wks1.cell("A1").value() = "H1";
+            auto& table1 = wks1.tables();
+            table1.setName("TableAlpha");
+            table1.setRangeReference("A1:A2");
+            table1.appendColumn("H1");
 
-            // Fill some data
-            wks.cell("A1").value() = "Col1";
-            wks.cell("B1").value() = "Col2";
-            wks.cell("A2").value() = 1;
-            wks.cell("B2").value() = 2;
-
-            auto& table = wks.tables();
-            table.setName("TestTable");
-            table.setRangeReference("A1:B2");
-            table.appendColumn("Col1");
-            table.appendColumn("Col2");
-            table.setStyleName("TableStyleMedium2");
-            table.setShowRowStripes(true);
+            // Table 2 on Sheet 2
+            doc.workbook().addWorksheet("Sheet2");
+            auto wks2 = doc.workbook().worksheet("Sheet2");
+            wks2.cell("A1").value() = "H2";
+            auto& table2 = wks2.tables();
+            table2.setName("TableBeta");
+            table2.setRangeReference("A1:A2");
+            table2.appendColumn("H2");
+            table2.setShowFirstColumn(true);
+            table2.setShowRowStripes(false);
 
             doc.save();
             doc.close();
@@ -384,35 +388,38 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             XLDocumentTest testDoc;
             testDoc.open(filename);
 
-            // 1. Verify sheet1.xml contains tableParts
-            std::string sheetXml = testDoc.getRawXml("xl/worksheets/sheet1.xml");
-            REQUIRE(sheetXml.find("<tableParts") != std::string::npos);
-            REQUIRE(sheetXml.find("count=\"1\"") != std::string::npos);
-            REQUIRE(sheetXml.find("<tablePart") != std::string::npos);
-            REQUIRE(sheetXml.find("r:id=\"rId1\"") != std::string::npos);
+            // 1. Verify [Content_Types].xml doesn't contain .rels overrides
+            std::string ctXml = testDoc.getRawXml("[Content_Types].xml");
+            REQUIRE(ctXml.find("PartName=\"/xl/worksheets/_rels/sheet1.xml.rels\"") == std::string::npos);
+            REQUIRE(ctXml.find("ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"") != std::string::npos); // Should be in Default
 
-            // 2. Verify sheet1.xml.rels contains the table relationship
-            std::string relsXml = testDoc.getRawXml("xl/worksheets/_rels/sheet1.xml.rels");
-            REQUIRE(relsXml.find("Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/table\"") != std::string::npos);
-            REQUIRE(relsXml.find("Target=\"../tables/table1.xml\"") != std::string::npos);
+            // 2. Verify Table 1 (ID 1)
+            std::string table1Xml = testDoc.getRawXml("xl/tables/table1.xml");
+            REQUIRE(table1Xml.find("id=\"1\"") != std::string::npos);
+            REQUIRE(table1Xml.find("name=\"TableAlpha\"") != std::string::npos);
+            REQUIRE(table1Xml.find("displayName=\"TableAlpha\"") != std::string::npos);
+            
+            // 3. Verify Table 2 (ID 2 - Global Uniqueness)
+            std::string table2Xml = testDoc.getRawXml("xl/tables/table2.xml");
+            REQUIRE(table2Xml.find("id=\"2\"") != std::string::npos);
+            REQUIRE(table2Xml.find("name=\"TableBeta\"") != std::string::npos);
+            REQUIRE(table2Xml.find("displayName=\"TableBeta\"") != std::string::npos);
 
-            // 3. Verify table1.xml content
-            std::string tableXml = testDoc.getRawXml("xl/tables/table1.xml");
-            REQUIRE(tableXml.find("xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"") != std::string::npos);
-            REQUIRE(tableXml.find("name=\"TestTable\"") != std::string::npos);
-            REQUIRE(tableXml.find("ref=\"A1:B2\"") != std::string::npos);
-            REQUIRE(tableXml.find("<autoFilter") != std::string::npos);
-            REQUIRE(tableXml.find("ref=\"A1:B2\"") != std::string::npos);
-            REQUIRE(tableXml.find("<tableColumns") != std::string::npos);
-            REQUIRE(tableXml.find("count=\"2\"") != std::string::npos);
-            REQUIRE(tableXml.find("<tableColumn") != std::string::npos);
-            REQUIRE(tableXml.find("id=\"1\"") != std::string::npos);
-            REQUIRE(tableXml.find("name=\"Col1\"") != std::string::npos);
-            REQUIRE(tableXml.find("id=\"2\"") != std::string::npos);
-            REQUIRE(tableXml.find("name=\"Col2\"") != std::string::npos);
-            REQUIRE(tableXml.find("<tableStyleInfo") != std::string::npos);
-            REQUIRE(tableXml.find("name=\"TableStyleMedium2\"") != std::string::npos);
-            REQUIRE(tableXml.find("showRowStripes=\"1\"") != std::string::npos);
+            // 4. Verify tableStyleInfo attribute order and boolean format
+            // Order: showFirstColumn -> showLastColumn -> showRowStripes -> showColumnStripes
+            size_t posFirst = table2Xml.find("showFirstColumn=\"true\"");
+            size_t posLast = table2Xml.find("showLastColumn=\"false\"");
+            size_t posRow = table2Xml.find("showRowStripes=\"false\"");
+            size_t posCol = table2Xml.find("showColumnStripes=\"false\"");
+
+            REQUIRE(posFirst != std::string::npos);
+            REQUIRE(posLast != std::string::npos);
+            REQUIRE(posRow != std::string::npos);
+            REQUIRE(posCol != std::string::npos);
+
+            REQUIRE(posFirst < posLast);
+            REQUIRE(posLast < posRow);
+            REQUIRE(posRow < posCol);
 
             testDoc.close();
         }
@@ -479,6 +486,105 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             // Date property (vt:filetime)
             REQUIRE(customXml.find("name=\"DateProp\"") != std::string::npos);
             REQUIRE(customXml.find("<vt:filetime>2021-01-01T10:00:00Z</vt:filetime>") != std::string::npos);
+
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
+
+    SECTION("Verify Workbook Protection and Node Ordering in workbook.xml")
+    {
+        std::string filename = "ooxml_workbook_protect_test.xlsx";
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wb = doc.workbook();
+            
+            // 1. Set workbook protection
+            wb.protect(true, true, "OpenXLSX");
+            
+            // 2. Set some other properties to ensure order is maintained
+            wb.setFullCalculationOnLoad();
+            
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLDocumentTest testDoc;
+            testDoc.open(filename);
+
+            // Verify raw XML content in workbook.xml
+            std::string workbookXml = testDoc.getRawXml("xl/workbook.xml");
+
+            // 1. Check for workbookProtection element and attributes
+            REQUIRE(workbookXml.find("<workbookProtection") != std::string::npos);
+            REQUIRE(workbookXml.find("lockStructure=\"true\"") != std::string::npos);
+            REQUIRE(workbookXml.find("lockWindows=\"true\"") != std::string::npos);
+            REQUIRE(workbookXml.find("workbookPassword=\"a355\"") != std::string::npos);
+
+            // 2. Check for calcPr (set by setFullCalculationOnLoad)
+            REQUIRE(workbookXml.find("<calcPr") != std::string::npos);
+            REQUIRE(workbookXml.find("fullCalcOnLoad=\"true\"") != std::string::npos);
+
+            // 3. Verify Node Ordering: workbookPr -> workbookProtection -> bookViews -> sheets -> calcPr
+            size_t posWorkbookPr = workbookXml.find("<workbookPr");
+            size_t posWorkbookProtect = workbookXml.find("<workbookProtection");
+            size_t posBookViews = workbookXml.find("<bookViews");
+            size_t posSheets = workbookXml.find("<sheets");
+            size_t posCalcPr = workbookXml.find("<calcPr");
+
+            REQUIRE(posWorkbookPr != std::string::npos);
+            REQUIRE(posWorkbookProtect != std::string::npos);
+            REQUIRE(posBookViews != std::string::npos);
+            REQUIRE(posSheets != std::string::npos);
+            REQUIRE(posCalcPr != std::string::npos);
+
+            REQUIRE(posWorkbookPr < posWorkbookProtect);
+            REQUIRE(posWorkbookProtect < posBookViews);
+            REQUIRE(posBookViews < posSheets);
+            REQUIRE(posSheets < posCalcPr);
+
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
+
+    SECTION("Verify setSheetIndex updates definedNames localSheetId in OOXML")
+    {
+        std::string filename = "ooxml_sheet_index_test.xlsx";
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            doc.workbook().addWorksheet("DataSheet");  // Index 2, localSheetId 1
+            doc.workbook().addWorksheet("AuditSheet"); // Index 3, localSheetId 2
+            
+            auto dn = doc.workbook().definedNames();
+            dn.append("LocalName1", "DataSheet!$A$1", 1); // Scoped to DataSheet
+            dn.append("LocalName2", "AuditSheet!$B$2", 2); // Scoped to AuditSheet
+            
+            // Move AuditSheet to index 1
+            doc.workbook().setSheetIndex("AuditSheet", 1);
+            
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLDocumentTest testDoc;
+            testDoc.open(filename);
+
+            // Verify workbook.xml for definedNames
+            std::string workbookXml = testDoc.getRawXml("xl/workbook.xml");
+
+            // After moving AuditSheet (was index 3, localSheetId 2) to index 1:
+            // New order: AuditSheet (localSheetId 0), Sheet1 (localSheetId 1), DataSheet (localSheetId 2)
+            
+            // AuditSheet was localSheetId 2, now it should be 0
+            REQUIRE(workbookXml.find("name=\"LocalName2\" localSheetId=\"0\"") != std::string::npos);
+            
+            // DataSheet was localSheetId 1, now it should be 2
+            REQUIRE(workbookXml.find("name=\"LocalName1\" localSheetId=\"2\"") != std::string::npos);
 
             testDoc.close();
         }

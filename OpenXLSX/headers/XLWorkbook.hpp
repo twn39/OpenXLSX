@@ -281,6 +281,11 @@ namespace OpenXLSX
         void deleteNamedRanges();
 
         /**
+         * @brief Update the dimension (used range) for all worksheets in the workbook.
+         */
+        void updateWorksheetDimensions();
+
+        /**
          * @brief Set a flag to force full calculation upon loading the file in Excel.
          */
         void setFullCalculationOnLoad();

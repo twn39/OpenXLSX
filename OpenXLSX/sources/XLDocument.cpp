@@ -639,7 +639,7 @@ void XLDocument::close()
 
     m_filePath.clear();
 
-    m_xmlSavingDeclaration = XLXmlSavingDeclaration();
+    m_xmlSavingDeclaration = XLXmlSavingDeclaration("1.0", "UTF-8", false);
 
     m_data.clear();
     m_sharedStringCache.clear();            // 2024-12-18 BUGFIX: clear shared strings cache - addresses issue #283
@@ -677,6 +677,9 @@ void XLDocument::saveAs(const std::string& fileName, bool forceOverwrite)
     }
 
     m_filePath = fileName;
+
+    // ===== Update worksheet dimensions before saving
+    workbook().updateWorksheetDimensions();
 
     // ===== Delete the calcChain.xml file in order to force re-calculation of the sheet
     // TODO: Is this the best way to do it? Maybe there is a flag that can be set, that forces re-calculalion.
@@ -753,6 +756,18 @@ const std::string& XLDocument::path() const { return m_filePath; }
 /**
  * @details Get a const pointer to the underlying XLWorkbook object.
  */
+uint32_t XLDocument::nextTableId() const
+{
+    uint32_t maxId = 0;
+    for (const auto& item : m_data) {
+        if (item.getXmlType() == XLContentType::Table) {
+            auto id = item.getXmlDocument()->document_element().attribute("id").as_uint();
+            if (id > maxId) maxId = id;
+        }
+    }
+    return maxId + 1;
+}
+
 XLWorkbook XLDocument::workbook() const { return m_workbook; }
 
 /**
@@ -1046,8 +1061,7 @@ XLRelationships XLDocument::sheetRelationships(uint16_t sheetXmlNo)
         // ===== Create the sheet relationships file within the archive
         m_archive.addEntry(
             relsFilename,
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"standalone=\"yes\"?>");    // empty XML file, class constructor will do the rest
-        m_contentTypes.addOverride("/" + relsFilename, XLContentType::Relationships);    // add content types entry
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");    // empty XML file, class constructor will do the rest
     }
     constexpr const bool DO_NOT_THROW = true;
     XLXmlData*           xmlData      = getXmlData(relsFilename, DO_NOT_THROW);
@@ -1072,8 +1086,7 @@ XLRelationships XLDocument::drawingRelationships(const std::string& drawingPath)
 
     if (!m_archive.hasEntry(relsFilename)) {
         // ===== Create the drawing relationships file within the archive
-        m_archive.addEntry(relsFilename, "<?xml version=\"1.0\" encoding=\"UTF-8\"standalone=\"yes\"?>");
-        m_contentTypes.addOverride("/" + relsFilename, XLContentType::Relationships);
+        m_archive.addEntry(relsFilename, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     }
 
     constexpr const bool DO_NOT_THROW = true;
@@ -1196,7 +1209,7 @@ XLTables XLDocument::sheetTables(uint16_t sheetXmlNo)
         // ===== Create the sheet tables file within the archive
         m_archive.addEntry(
             tablesFilename,
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"standalone=\"yes\"?>");       // empty XML file, class constructor will do the rest
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");       // empty XML file, class constructor will do the rest
         m_contentTypes.addOverride("/" + tablesFilename, XLContentType::Table);    // add content types entry
     }
     constexpr const bool DO_NOT_THROW = true;

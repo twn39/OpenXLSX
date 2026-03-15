@@ -215,6 +215,11 @@ namespace OpenXLSX
         XLCustomProperties& customProperties();
 
         /**
+         * @brief Get the next available table ID (unique workbook-wide).
+         */
+        uint32_t nextTableId() const;
+
+        /**
          * @brief Get the underlying workbook object, as a const object.
          * @return A const pointer to the XLWorkbook object.
          */

@@ -24,12 +24,16 @@ namespace
     XMLNode sheetsNode(const XMLDocument& doc) { return doc.document_element().child("sheets"); }
 
     /**
-     * @brief Node order for XLWorkbook XML
+     * @brief Node order for XLWorkbook XML. Strictly follows OOXML sequence with common extensions.
+     * Reference: ECMA-376 Part 1, Section 18.2.27
+     * Note: mc:AlternateContent often appears before workbookProtection in modern Excel files.
      */
     const std::vector<std::string_view> XLWorkbookNodeOrder = {
         "fileVersion",
         "fileSharing",
         "workbookPr",
+        "mc:AlternateContent",
+        "xr:revisionPtr",
         "workbookProtection",
         "bookViews",
         "sheets",
@@ -155,7 +159,28 @@ size_t XLDefinedNames::count() const
 
 // ========== XLWorkbook Member Functions
 
-XLWorkbook::XLWorkbook(XLXmlData* xmlData) : XLXmlFile(xmlData) {}
+XLWorkbook::XLWorkbook(XLXmlData* xmlData) : XLXmlFile(xmlData) 
+{
+    // Clean up author-specific metadata from the internal template (AlternateContent with absPath)
+    auto root = xmlDocument().document_element();
+    auto altContent = root.child("mc:AlternateContent");
+    if (!altContent.empty()) {
+        auto choice = altContent.child("mc:Choice");
+        if (!choice.empty()) {
+            auto absPath = choice.child("x15ac:absPath");
+            // If it contains the author's path, remove the whole AlternateContent block
+            if (!absPath.empty() && std::string_view(absPath.attribute("url").value()).find("Troldal") != std::string_view::npos) {
+                root.remove_child(altContent);
+            }
+        }
+    }
+
+    // Also remove the revision pointer which is tied to the author's original save state
+    auto revPtr = root.child("xr:revisionPtr");
+    if (!revPtr.empty()) {
+        root.remove_child(revPtr);
+    }
+}
 
 XLWorkbook::~XLWorkbook() = default;
 
@@ -595,6 +620,13 @@ void XLWorkbook::updateSheetReferences(std::string_view oldName, std::string_vie
     }
 }
 
+void XLWorkbook::updateWorksheetDimensions()
+{
+    for (const auto& name : worksheetNames()) {
+        worksheet(name).updateDimension();
+    }
+}
+
 void XLWorkbook::setFullCalculationOnLoad()
 {
     auto root = xmlDocument().document_element();
@@ -621,14 +653,14 @@ void XLWorkbook::protect(bool lockStructure, bool lockWindows, std::string_view 
         protectNode = appendAndGetNode(root, "workbookProtection", XLWorkbookNodeOrder);
     }
 
-    auto setAttr = [&](const char* name, auto val) {
-        auto attr = protectNode.attribute(name);
-        if (attr.empty()) attr = protectNode.append_attribute(name);
-        attr.set_value(val);
+    auto setAttr = [&](const char* name, std::string_view val) {
+        auto attr = protectNode.attribute(std::string(name).c_str());
+        if (attr.empty()) attr = protectNode.append_attribute(std::string(name).c_str());
+        attr.set_value(std::string(val).c_str());
     };
 
-    setAttr("lockStructure", lockStructure ? 1 : 0);
-    setAttr("lockWindows", lockWindows ? 1 : 0);
+    setAttr("lockStructure", lockStructure ? "true" : "false");
+    setAttr("lockWindows", lockWindows ? "true" : "false");
     
     if (!password.empty()) {
         setAttr("workbookPassword", ExcelPasswordHashAsString(std::string(password)));

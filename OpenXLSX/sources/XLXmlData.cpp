@@ -39,8 +39,15 @@ std::string XLXmlData::getRawData(XLXmlSavingDeclaration savingDeclaration) cons
     XMLDocument* doc = const_cast<XMLDocument*>(getXmlDocument());
 
     // ===== 2024-07-08: ensure that the default encoding UTF-8 is explicitly written to the XML document with a custom saving declaration
-    XMLNode saveDeclaration = doc->first_child();
-    if (saveDeclaration.empty() or saveDeclaration.type() != pugi::node_declaration) {    // if saving declaration node does not exist
+    XMLNode saveDeclaration;
+    for (auto node : doc->children()) {
+        if (node.type() == pugi::node_declaration) {
+            saveDeclaration = node;
+            break;
+        }
+    }
+
+    if (saveDeclaration.empty()) {    // if saving declaration node does not exist
         doc->prepend_child(pugi::node_pcdata).set_value("\n");                            // prepend a line break
         saveDeclaration = doc->prepend_child(pugi::node_declaration);                     // prepend a saving declaration
     }
@@ -53,15 +60,17 @@ std::string XLXmlData::getRawData(XLXmlSavingDeclaration savingDeclaration) cons
         XMLAttribute attrEncoding = saveDeclaration.attribute("encoding");
         if (attrEncoding.empty()) attrEncoding = saveDeclaration.append_attribute("encoding");
         XMLAttribute attrStandalone = saveDeclaration.attribute("standalone");
-        if (attrStandalone.empty() and savingDeclaration.standalone_as_bool())    // only if standalone is set in passed savingDeclaration
-            attrStandalone = saveDeclaration.append_attribute("standalone");     // then make sure it exists
+        if (savingDeclaration.standalone_as_bool()) {
+            if (attrStandalone.empty()) attrStandalone = saveDeclaration.append_attribute("standalone");
+            attrStandalone.set_value("yes");
+        }
+        else if (!attrStandalone.empty()) {
+            saveDeclaration.remove_attribute(attrStandalone);
+        }
 
         // ===== Set saving declaration attribute values (potentially overwriting existing values)
         attrVersion  = savingDeclaration.version().c_str();     // version="1.0" is XML default
         attrEncoding = savingDeclaration.encoding().c_str();    // encoding="UTF-8" is XML default
-
-        if (not attrStandalone.empty())    // only save standalone attribute if previously existing or newly set to standalone="yes"
-            attrStandalone = savingDeclaration.standalone().c_str();    // standalone="no" is XML default
     }
 
     std::ostringstream ostr;

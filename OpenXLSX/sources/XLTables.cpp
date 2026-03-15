@@ -4,6 +4,7 @@
 #include <vector>
 
 // ===== OpenXLSX Includes ===== //
+#include "XLDocument.hpp"
 #include "XLTables.hpp"
 #include "XLUtilities.hpp"
 
@@ -33,8 +34,22 @@ XLTables::XLTables(XLXmlData* xmlData) : XLXmlFile(xmlData)
         xmlDocument().remove_children();
         root = xmlDocument().append_child("table");
         root.append_attribute("xmlns").set_value("http://schemas.openxmlformats.org/spreadsheetml/2006/main");
-        root.append_attribute("id").set_value("1"); // Default ID
+        
+        // Use a unique ID from the document
+        uint32_t tableId = parentDoc().nextTableId();
+        root.append_attribute("id").set_value(std::to_string(tableId).c_str());
+        
+        std::string defaultName = "Table" + std::to_string(tableId);
+        root.append_attribute("name").set_value(defaultName.c_str());
+        root.append_attribute("displayName").set_value(defaultName.c_str());
     }
+
+    // Ensure tableStyleInfo has default attributes in correct order
+    auto info = appendAndGetNode(root, "tableStyleInfo", TableNodeOrder);
+    if (info.attribute("showFirstColumn").empty()) info.append_attribute("showFirstColumn").set_value("false");
+    if (info.attribute("showLastColumn").empty()) info.append_attribute("showLastColumn").set_value("false");
+    if (info.attribute("showRowStripes").empty()) info.append_attribute("showRowStripes").set_value("true");
+    if (info.attribute("showColumnStripes").empty()) info.append_attribute("showColumnStripes").set_value("false");
 }
 
 /**
@@ -55,6 +70,7 @@ void XLTables::setName(std::string_view name)
     }
     auto docNode = xmlDocument().document_element();
     appendAndSetAttribute(docNode, "name", std::string(name));
+    appendAndSetAttribute(docNode, "displayName", std::string(name));
 }
 
 /**
@@ -128,7 +144,7 @@ void XLTables::setShowRowStripes(bool show)
 {
     auto docNode = xmlDocument().document_element();
     auto info = appendAndGetNode(docNode, "tableStyleInfo", TableNodeOrder);
-    appendAndSetAttribute(info, "showRowStripes", show ? "1" : "0");
+    appendAndSetAttribute(info, "showRowStripes", show ? "true" : "false");
 }
 
 /**
@@ -146,7 +162,7 @@ void XLTables::setShowColumnStripes(bool show)
 {
     auto docNode = xmlDocument().document_element();
     auto info = appendAndGetNode(docNode, "tableStyleInfo", TableNodeOrder);
-    appendAndSetAttribute(info, "showColumnStripes", show ? "1" : "0");
+    appendAndSetAttribute(info, "showColumnStripes", show ? "true" : "false");
 }
 
 /**
@@ -164,7 +180,7 @@ void XLTables::setShowFirstColumn(bool show)
 {
     auto docNode = xmlDocument().document_element();
     auto info = appendAndGetNode(docNode, "tableStyleInfo", TableNodeOrder);
-    appendAndSetAttribute(info, "showFirstColumn", show ? "1" : "0");
+    appendAndSetAttribute(info, "showFirstColumn", show ? "true" : "false");
 }
 
 /**
@@ -182,7 +198,7 @@ void XLTables::setShowLastColumn(bool show)
 {
     auto docNode = xmlDocument().document_element();
     auto info = appendAndGetNode(docNode, "tableStyleInfo", TableNodeOrder);
-    appendAndSetAttribute(info, "showLastColumn", show ? "1" : "0");
+    appendAndSetAttribute(info, "showLastColumn", show ? "true" : "false");
 }
 
 /**

@@ -949,12 +949,9 @@ std::string XLConditionalFormats::summary() const
  */
 XLWorksheet::XLWorksheet(XLXmlData* xmlData) : XLSheetBase(xmlData)
 {
-    // ===== Read the dimensions of the Sheet and set data members accordingly.
-    if (const std::string dimensions = xmlDocument().document_element().child("dimension").attribute("ref").value();
-        dimensions.find(':') == std::string::npos)
-        xmlDocument().document_element().child("dimension").set_value("A1");
-    else
-        xmlDocument().document_element().child("dimension").set_value(dimensions.substr(dimensions.find(':') + 1).c_str());
+    // The previous implementation was corrupting the dimension node by setting its text value.
+    // Dimensions should be updated on save or manually by the user.
+    // Initialization of columns is kept as it correctly splits grouped column nodes.
 
     // If Column properties are grouped, divide them into properties for individual Columns.
     if (xmlDocument().document_element().child("cols").type() != pugi::node_null) {
@@ -1399,6 +1396,31 @@ void XLWorksheet::updateSheetName(const std::string& oldName, const std::string&
                 XLCell(cell, parentDoc().sharedStrings()).formula() = formula;
             }
         }
+    }
+}
+
+/**
+ * @details Update the dimension (used range) of the worksheet based on current row and column data.
+ */
+void XLWorksheet::updateDimension()
+{
+    uint32_t rows = rowCount();
+    uint16_t cols = columnCount();
+
+    auto rootNode = xmlDocument().document_element();
+    auto dimensionNode = rootNode.child("dimension");
+    if (dimensionNode.empty()) dimensionNode = rootNode.prepend_child("dimension");
+
+    // Remove any text children that might have been added by the corrupted constructor
+    dimensionNode.remove_children();
+
+    if (rows == 0 || cols == 0) {
+        dimensionNode.attribute("ref").set_value("A1");
+    } else {
+        std::string ref = "A1:" + XLCellReference::columnAsString(cols) + std::to_string(rows);
+        auto attr = dimensionNode.attribute("ref");
+        if (attr.empty()) attr = dimensionNode.append_attribute("ref");
+        attr.set_value(ref.c_str());
     }
 }
 
