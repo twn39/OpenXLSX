@@ -211,5 +211,71 @@ TEST_CASE("XLSheet Tests", "[XLSheet]")
         REQUIRE(marginPos < setupPos);
 
         doc2.close();
-    }
-}
+        }
+
+        SECTION("XLSheet Protection")
+        {
+            XLDocument doc;
+            doc.create("./testXLSheet5.xlsx", XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            // 1. Test safety: should not crash and should return defaults (true = allowed) when node doesn't exist
+            REQUIRE_FALSE(wks.sheetProtected());
+            REQUIRE(wks.insertColumnsAllowed());
+            REQUIRE(wks.formatCellsAllowed());
+            REQUIRE(wks.passwordHash().empty());
+
+            // 2. Test basic protection
+            wks.protectSheet(true);
+            REQUIRE(wks.sheetProtected() == true);
+
+            // 3. Test detailed settings
+            wks.allowInsertColumns(true);
+            REQUIRE(wks.insertColumnsAllowed() == true);
+
+            wks.denyInsertRows();
+            REQUIRE(wks.insertRowsAllowed() == false);
+
+            wks.allowFormatCells(true);
+            REQUIRE(wks.formatCellsAllowed() == true);
+
+            wks.denyFormatColumns();
+            REQUIRE(wks.formatColumnsAllowed() == false);
+
+            wks.allowAutoFilter(true);
+            REQUIRE(wks.autoFilterAllowed() == true);
+
+            wks.denySort();
+            REQUIRE(wks.sortAllowed() == false);
+
+            // 4. Test password
+            wks.setPassword("OpenXLSX");
+            REQUIRE(wks.passwordIsSet() == true);
+            REQUIRE(wks.passwordHash() == "a355");
+
+            doc.save();
+
+            // 5. Verify XML structure
+            std::string sheetXml = getRawXml(doc, "xl/worksheets/sheet1.xml");
+            REQUIRE(sheetXml.find("<sheetProtection") != std::string::npos);
+            REQUIRE(sheetXml.find("sheet=\"true\"") != std::string::npos);
+            REQUIRE(sheetXml.find("insertColumns=\"false\"") != std::string::npos); // allow = true -> XML "false" (not protected)
+            REQUIRE(sheetXml.find("insertRows=\"true\"") != std::string::npos);    // allow = false -> XML "true" (protected)
+            REQUIRE(sheetXml.find("formatCells=\"false\"") != std::string::npos);
+            REQUIRE(sheetXml.find("formatColumns=\"true\"") != std::string::npos);
+            REQUIRE(sheetXml.find("autoFilter=\"false\"") != std::string::npos);
+            REQUIRE(sheetXml.find("sort=\"true\"") != std::string::npos);
+            REQUIRE(sheetXml.find("password=\"a355\"") != std::string::npos);
+
+            // 6. Test clear functions
+            wks.clearPassword();
+            REQUIRE_FALSE(wks.passwordIsSet());
+
+            wks.clearSheetProtection();
+            REQUIRE_FALSE(wks.sheetProtected());
+            REQUIRE(wks.insertRowsAllowed()); // Should revert to default (allowed)
+
+            doc.close();
+        }
+
+        }

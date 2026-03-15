@@ -1184,6 +1184,13 @@ namespace OpenXLSX
         bool allowInsertRows(bool set = true);             //   "    :  "
         bool allowDeleteColumns(bool set = true);          //   "    :  "
         bool allowDeleteRows(bool set = true);             //   "    :  "
+        bool allowFormatCells(bool set = true);            //   "    :  "
+        bool allowFormatColumns(bool set = true);          //   "    :  "
+        bool allowFormatRows(bool set = true);             //   "    :  "
+        bool allowInsertHyperlinks(bool set = true);       //   "    :  "
+        bool allowSort(bool set = true);                   //   "    :  "
+        bool allowAutoFilter(bool set = true);             //   "    :  "
+        bool allowPivotTables(bool set = true);            //   "    :  "
         bool allowSelectLockedCells(bool set = true);      // default: allowed in a protected worksheet
         bool allowSelectUnlockedCells(bool set = true);    //   "    :  "
         /**
@@ -1193,6 +1200,13 @@ namespace OpenXLSX
         bool denyInsertRows() { return allowInsertRows(false); }
         bool denyDeleteColumns() { return allowDeleteColumns(false); }
         bool denyDeleteRows() { return allowDeleteRows(false); }
+        bool denyFormatCells() { return allowFormatCells(false); }
+        bool denyFormatColumns() { return allowFormatColumns(false); }
+        bool denyFormatRows() { return allowFormatRows(false); }
+        bool denyInsertHyperlinks() { return allowInsertHyperlinks(false); }
+        bool denySort() { return allowSort(false); }
+        bool denyAutoFilter() { return allowAutoFilter(false); }
+        bool denyPivotTables() { return allowPivotTables(false); }
         bool denySelectLockedCells() { return allowSelectLockedCells(false); }
         bool denySelectUnlockedCells() { return allowSelectUnlockedCells(false); }
 
@@ -1240,6 +1254,13 @@ namespace OpenXLSX
         bool insertRowsAllowed() const;
         bool deleteColumnsAllowed() const;
         bool deleteRowsAllowed() const;
+        bool formatCellsAllowed() const;
+        bool formatColumnsAllowed() const;
+        bool formatRowsAllowed() const;
+        bool insertHyperlinksAllowed() const;
+        bool sortAllowed() const;
+        bool autoFilterAllowed() const;
+        bool pivotTablesAllowed() const;
         bool selectLockedCellsAllowed() const;
         bool selectUnlockedCellsAllowed() const;
 

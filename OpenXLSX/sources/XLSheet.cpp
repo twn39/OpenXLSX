@@ -1687,6 +1687,83 @@ bool XLWorksheet::allowDeleteRows(bool set)
                                      m_nodeOrder)
                .empty() == false;
 }
+bool XLWorksheet::allowFormatCells(bool set)
+{
+    XMLNode sheetNode = xmlDocument().document_element();
+    return appendAndSetNodeAttribute(sheetNode,
+                                     "sheetProtection",
+                                     "formatCells",
+                                     (!set ? "true" : "false"),    // invert allow set(ting) for the protect setting
+                                     /**/ XLKeepAttributes,
+                                     m_nodeOrder)
+               .empty() == false;
+}
+bool XLWorksheet::allowFormatColumns(bool set)
+{
+    XMLNode sheetNode = xmlDocument().document_element();
+    return appendAndSetNodeAttribute(sheetNode,
+                                     "sheetProtection",
+                                     "formatColumns",
+                                     (!set ? "true" : "false"),    // invert allow set(ting) for the protect setting
+                                     /**/ XLKeepAttributes,
+                                     m_nodeOrder)
+               .empty() == false;
+}
+bool XLWorksheet::allowFormatRows(bool set)
+{
+    XMLNode sheetNode = xmlDocument().document_element();
+    return appendAndSetNodeAttribute(sheetNode,
+                                     "sheetProtection",
+                                     "formatRows",
+                                     (!set ? "true" : "false"),    // invert allow set(ting) for the protect setting
+                                     /**/ XLKeepAttributes,
+                                     m_nodeOrder)
+               .empty() == false;
+}
+bool XLWorksheet::allowInsertHyperlinks(bool set)
+{
+    XMLNode sheetNode = xmlDocument().document_element();
+    return appendAndSetNodeAttribute(sheetNode,
+                                     "sheetProtection",
+                                     "insertHyperlinks",
+                                     (!set ? "true" : "false"),    // invert allow set(ting) for the protect setting
+                                     /**/ XLKeepAttributes,
+                                     m_nodeOrder)
+               .empty() == false;
+}
+bool XLWorksheet::allowSort(bool set)
+{
+    XMLNode sheetNode = xmlDocument().document_element();
+    return appendAndSetNodeAttribute(sheetNode,
+                                     "sheetProtection",
+                                     "sort",
+                                     (!set ? "true" : "false"),    // invert allow set(ting) for the protect setting
+                                     /**/ XLKeepAttributes,
+                                     m_nodeOrder)
+               .empty() == false;
+}
+bool XLWorksheet::allowAutoFilter(bool set)
+{
+    XMLNode sheetNode = xmlDocument().document_element();
+    return appendAndSetNodeAttribute(sheetNode,
+                                     "sheetProtection",
+                                     "autoFilter",
+                                     (!set ? "true" : "false"),    // invert allow set(ting) for the protect setting
+                                     /**/ XLKeepAttributes,
+                                     m_nodeOrder)
+               .empty() == false;
+}
+bool XLWorksheet::allowPivotTables(bool set)
+{
+    XMLNode sheetNode = xmlDocument().document_element();
+    return appendAndSetNodeAttribute(sheetNode,
+                                     "sheetProtection",
+                                     "pivotTables",
+                                     (!set ? "true" : "false"),    // invert allow set(ting) for the protect setting
+                                     /**/ XLKeepAttributes,
+                                     m_nodeOrder)
+               .empty() == false;
+}
 bool XLWorksheet::allowSelectLockedCells(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
@@ -1744,11 +1821,23 @@ bool XLWorksheet::clearSheetProtection() { return xmlDocument().document_element
  * @details
  */
 bool XLWorksheet::sheetProtected() const
-{ return xmlDocument().document_element().child("sheetProtection").attribute("sheet").as_bool(false); }
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return false;
+    return node.attribute("sheet").as_bool(false);
+}
 bool XLWorksheet::objectsProtected() const
-{ return xmlDocument().document_element().child("sheetProtection").attribute("objects").as_bool(false); }
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return false;
+    return node.attribute("objects").as_bool(false);
+}
 bool XLWorksheet::scenariosProtected() const
-{ return xmlDocument().document_element().child("sheetProtection").attribute("scenarios").as_bool(false); }
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return false;
+    return node.attribute("scenarios").as_bool(false);
+}
 
 /**
  * @details the following settings are inverted to get from "protected" meaning in OOXML to "allowed" meaning in the OpenXLSX API
@@ -1756,22 +1845,92 @@ bool XLWorksheet::scenariosProtected() const
  * @details selectLockedCells, selectUnlockedCells are allowed by default
  */
 bool XLWorksheet::insertColumnsAllowed() const
-{ return not xmlDocument().document_element().child("sheetProtection").attribute("insertColumns").as_bool(true); }
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return true;
+    return not node.attribute("insertColumns").as_bool(true);
+}
 bool XLWorksheet::insertRowsAllowed() const
-{ return not xmlDocument().document_element().child("sheetProtection").attribute("insertRows").as_bool(true); }
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return true;
+    return not node.attribute("insertRows").as_bool(true);
+}
 bool XLWorksheet::deleteColumnsAllowed() const
-{ return not xmlDocument().document_element().child("sheetProtection").attribute("deleteColumns").as_bool(true); }
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return true;
+    return not node.attribute("deleteColumns").as_bool(true);
+}
 bool XLWorksheet::deleteRowsAllowed() const
-{ return not xmlDocument().document_element().child("sheetProtection").attribute("deleteRows").as_bool(true); }
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return true;
+    return not node.attribute("deleteRows").as_bool(true);
+}
+bool XLWorksheet::formatCellsAllowed() const
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return true;
+    return not node.attribute("formatCells").as_bool(true);
+}
+bool XLWorksheet::formatColumnsAllowed() const
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return true;
+    return not node.attribute("formatColumns").as_bool(true);
+}
+bool XLWorksheet::formatRowsAllowed() const
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return true;
+    return not node.attribute("formatRows").as_bool(true);
+}
+bool XLWorksheet::insertHyperlinksAllowed() const
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return true;
+    return not node.attribute("insertHyperlinks").as_bool(true);
+}
+bool XLWorksheet::sortAllowed() const
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return true;
+    return not node.attribute("sort").as_bool(true);
+}
+bool XLWorksheet::autoFilterAllowed() const
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return true;
+    return not node.attribute("autoFilter").as_bool(true);
+}
+bool XLWorksheet::pivotTablesAllowed() const
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return true;
+    return not node.attribute("pivotTables").as_bool(true);
+}
 bool XLWorksheet::selectLockedCellsAllowed() const
-{ return not xmlDocument().document_element().child("sheetProtection").attribute("selectLockedCells").as_bool(false); }
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return true;
+    return not node.attribute("selectLockedCells").as_bool(false);
+}
 bool XLWorksheet::selectUnlockedCellsAllowed() const
-{ return not xmlDocument().document_element().child("sheetProtection").attribute("selectUnlockedCells").as_bool(false); }
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return true;
+    return not node.attribute("selectUnlockedCells").as_bool(false);
+}
 /**
  * @details
  */
 std::string XLWorksheet::passwordHash() const
-{ return xmlDocument().document_element().child("sheetProtection").attribute("password").value(); }
+{
+    auto node = xmlDocument().document_element().child("sheetProtection");
+    if (node.empty()) return "";
+    return node.attribute("password").value();
+}
 
 /**
  * @details
@@ -1788,9 +1947,14 @@ std::string XLWorksheet::sheetProtectionSummary() const
            " protected"s + ", scenarios are"s + (scenariosProtected() ? ""s : " not"s) + " protected"s + ", insertColumns is"s +
            (insertColumnsAllowed() ? ""s : " not"s) + " allowed"s + ", insertRows is"s + (insertRowsAllowed() ? ""s : " not"s) +
            " allowed"s + ", deleteColumns is"s + (deleteColumnsAllowed() ? ""s : " not"s) + " allowed"s + ", deleteRows is"s +
-           (deleteRowsAllowed() ? ""s : " not"s) + " allowed"s + ", selectLockedCells is"s + (selectLockedCellsAllowed() ? ""s : " not"s) +
-           " allowed"s + ", selectUnlockedCells is"s + (selectUnlockedCellsAllowed() ? ""s : " not"s) + " allowed"s + ", password is"s +
-           (passwordIsSet() ? ""s : " not"s) + "set"s + (passwordIsSet() ? (", passwordHash is "s + passwordHash()) : ""s);
+           (deleteRowsAllowed() ? ""s : " not"s) + " allowed"s + ", formatCells is"s + (formatCellsAllowed() ? ""s : " not"s) +
+           " allowed"s + ", formatColumns is"s + (formatColumnsAllowed() ? ""s : " not"s) + " allowed"s + ", formatRows is"s +
+           (formatRowsAllowed() ? ""s : " not"s) + " allowed"s + ", insertHyperlinks is"s + (insertHyperlinksAllowed() ? ""s : " not"s) +
+           " allowed"s + ", sort is"s + (sortAllowed() ? ""s : " not"s) + " allowed"s + ", autoFilter is"s + (autoFilterAllowed() ? ""s : " not"s) +
+           " allowed"s + ", pivotTables is"s + (pivotTablesAllowed() ? ""s : " not"s) + " allowed"s + ", selectLockedCells is"s +
+           (selectLockedCellsAllowed() ? ""s : " not"s) + " allowed"s + ", selectUnlockedCells is"s + (selectUnlockedCellsAllowed() ? ""s : " not"s) +
+           " allowed"s + ", password is"s + (passwordIsSet() ? ""s : " not"s) + "set"s +
+           (passwordIsSet() ? (", passwordHash is "s + passwordHash()) : ""s);
 }
 
 /**
