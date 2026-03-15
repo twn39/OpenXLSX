@@ -160,6 +160,12 @@ namespace OpenXLSX
          */
         bool hasEntry(const std::string& entryName) const;
 
+        /**
+         * @brief Get a list of all entry names in the archive.
+         * @return A vector of strings containing the names of all entries.
+         */
+        std::vector<std::string> entryNames() const;
+
     private:
         struct LibZipApp;
         std::shared_ptr<LibZipApp> m_archive; /**< */

@@ -393,6 +393,27 @@ namespace OpenXLSX
          */
         XLRelationships drawingRelationships(const std::string& drawingPath);
 
+        /**
+         * @brief Get the underlying zip archive
+         * @return A reference to the zip archive object
+         */
+        IZipArchive& archive() { return m_archive; }
+        const IZipArchive& archive() const { return m_archive; }
+
+        /**
+         * @brief Get the App properties object
+         * @return A reference to the App properties object
+         */
+        XLAppProperties& appProperties() { return m_appProperties; }
+        const XLAppProperties& appProperties() const { return m_appProperties; }
+
+        /**
+         * @brief Get the Core properties object
+         * @return A reference to the Core properties object
+         */
+        XLProperties& coreProperties() { return m_coreProperties; }
+        const XLProperties& coreProperties() const { return m_coreProperties; }
+
     public:
         /**
          * @brief validate whether sheetName is a valid Excel worksheet name

@@ -141,20 +141,6 @@ namespace OpenXLSX
          */
         XLXmlFile& operator=(XLXmlFile&& other) noexcept = default;
 
-    protected:    // ===== PROTECTED MEMBER FUNCTIONS
-        /**
-         * @brief Provide the XML data represented by the object.
-         * @param xmlData A std::string with the XML data.
-         */
-        void setXmlData(const std::string& xmlData);
-
-        /**
-         * @brief This function returns the relationship ID (the ID used in the XLRelationships objects) for the object.
-         * @return A std::string with the ID. Not all spreadsheet objects may have a relationship ID. In those cases an empty string is
-         * returned.
-         */
-        std::string relationshipID() const;
-
         /**
          * @brief This function provides access to the parent XLDocument object.
          * @return A reference to the parent XLDocument object.
@@ -184,6 +170,20 @@ namespace OpenXLSX
          * @return A std::string with the path. Empty string if m_xmlData is nullptr
          */
         std::string getXmlPath() const;
+
+    protected:    // ===== PROTECTED MEMBER FUNCTIONS
+        /**
+         * @brief Provide the XML data represented by the object.
+         * @param xmlData A std::string with the XML data.
+         */
+        void setXmlData(const std::string& xmlData);
+
+        /**
+         * @brief This function returns the relationship ID (the ID used in the XLRelationships objects) for the object.
+         * @return A std::string with the ID. Not all spreadsheet objects may have a relationship ID. In those cases an empty string is
+         * returned.
+         */
+        std::string relationshipID() const;
 
     protected:                         // ===== PROTECTED MEMBER VARIABLES
         XLXmlData* m_xmlData{nullptr}; /**< The underlying XML data object. */

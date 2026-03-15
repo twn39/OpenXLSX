@@ -59,11 +59,12 @@ using namespace OpenXLSX;
 struct XLZipArchive::LibZipApp {
     zip_t* archive = nullptr;
     std::string currentPath;
+    bool isModified = false; // Track if we explicitly want to save
 
     LibZipApp() = default;
     ~LibZipApp() {
         if (archive) {
-            zip_discard(archive);
+            zip_discard(archive); // Discard any unsaved changes safely
             archive = nullptr;
         }
     }
@@ -90,6 +91,7 @@ void XLZipArchive::open(const std::string& fileName) {
     if (isOpen()) close();
 
     if (!m_archive) m_archive = std::make_shared<LibZipApp>();
+    m_archive->isModified = false; // Reset modification flag on open
 
     int err = 0;
 #if defined(_WIN32)
@@ -128,10 +130,16 @@ void XLZipArchive::close() {
     if (isOpen()) {
         zip_t* ptr = m_archive->archive;
         m_archive->archive = nullptr;
-        if (zip_close(ptr) < 0) {
-            std::string msg = zip_strerror(ptr);
+        // If save() was called, we should commit changes. 
+        // Otherwise, we discard to prevent silent corruption on read-only operations.
+        if (m_archive->isModified) {
+            if (zip_close(ptr) < 0) {
+                std::string msg = zip_strerror(ptr);
+                zip_discard(ptr);
+                throw XLInternalError("Failed to close zip archive: " + msg);
+            }
+        } else {
             zip_discard(ptr);
-            throw XLInternalError("Failed to close zip archive: " + msg);
         }
     }
 }
@@ -141,11 +149,13 @@ void XLZipArchive::save(const std::string& path) {
 
     if (path.empty() || path == m_archive->currentPath) {
         std::string current = m_archive->currentPath;
+        m_archive->isModified = true; // Mark as modified before closing to trigger commit
         close();
         open(current);
     } else {
         std::string current = m_archive->currentPath;
-        close();
+        m_archive->isModified = true; // Mark as modified
+        close(); // Commits changes to the original file
         if (std::filesystem::exists(std::filesystem::u8path(current))) {
             std::filesystem::copy_file(std::filesystem::u8path(current), std::filesystem::u8path(path), std::filesystem::copy_options::overwrite_existing);
         }
@@ -223,4 +233,16 @@ std::string XLZipArchive::getEntry(const std::string& name) const {
 bool XLZipArchive::hasEntry(const std::string& entryName) const {
     if (!isOpen()) return false;
     return zip_name_locate(m_archive->archive, entryName.c_str(), 0) >= 0;
+}
+
+std::vector<std::string> XLZipArchive::entryNames() const {
+    if (!isOpen()) return {};
+
+    std::vector<std::string> result;
+    zip_int64_t numEntries = zip_get_num_entries(m_archive->archive, 0);
+    for (zip_int64_t i = 0; i < numEntries; ++i) {
+        result.emplace_back(zip_get_name(m_archive->archive, i, 0));
+    }
+
+    return result;
 }

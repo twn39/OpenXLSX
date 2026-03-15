@@ -57,6 +57,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace OpenXLSX
 {
@@ -158,6 +159,8 @@ namespace OpenXLSX
 
         inline bool hasEntry(const std::string& entryName) const { return m_zipArchive->hasEntry(entryName); }
 
+        inline std::vector<std::string> entryNames() const { return m_zipArchive->entryNames(); }
+
     private:
         /**
          * @brief
@@ -220,6 +223,8 @@ namespace OpenXLSX
             inline virtual std::string getEntry(const std::string& name) const = 0;
 
             inline virtual bool hasEntry(const std::string& entryName) const = 0;
+
+            inline virtual std::vector<std::string> entryNames() const = 0;
         };
 
         /**
@@ -290,6 +295,8 @@ namespace OpenXLSX
             inline std::string getEntry(const std::string& name) const override { return ZipType.getEntry(name); }
 
             inline bool hasEntry(const std::string& entryName) const override { return ZipType.hasEntry(entryName); }
+
+            inline std::vector<std::string> entryNames() const override { return ZipType.entryNames(); }
 
         private:
             mutable T ZipType;
