@@ -353,4 +353,69 @@ testTestDoc:    // Wait, I'll just use the doc directly.
         }
         std::filesystem::remove(filename);
     }
+
+    SECTION("Verify Table Structure in OOXML")
+    {
+        std::string filename = "ooxml_table_test.xlsx";
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            // Fill some data
+            wks.cell("A1").value() = "Col1";
+            wks.cell("B1").value() = "Col2";
+            wks.cell("A2").value() = 1;
+            wks.cell("B2").value() = 2;
+
+            auto& table = wks.tables();
+            table.setName("TestTable");
+            table.setRangeReference("A1:B2");
+            table.appendColumn("Col1");
+            table.appendColumn("Col2");
+            table.setStyleName("TableStyleMedium2");
+            table.setShowRowStripes(true);
+
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLDocumentTest testDoc;
+            testDoc.open(filename);
+
+            // 1. Verify sheet1.xml contains tableParts
+            std::string sheetXml = testDoc.getRawXml("xl/worksheets/sheet1.xml");
+            REQUIRE(sheetXml.find("<tableParts") != std::string::npos);
+            REQUIRE(sheetXml.find("count=\"1\"") != std::string::npos);
+            REQUIRE(sheetXml.find("<tablePart") != std::string::npos);
+            REQUIRE(sheetXml.find("r:id=\"rId1\"") != std::string::npos);
+
+            // 2. Verify sheet1.xml.rels contains the table relationship
+            std::string relsXml = testDoc.getRawXml("xl/worksheets/_rels/sheet1.xml.rels");
+            REQUIRE(relsXml.find("Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/table\"") != std::string::npos);
+            REQUIRE(relsXml.find("Target=\"../tables/table1.xml\"") != std::string::npos);
+
+            // 3. Verify table1.xml content
+            std::string tableXml = testDoc.getRawXml("xl/tables/table1.xml");
+            REQUIRE(tableXml.find("xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"") != std::string::npos);
+            REQUIRE(tableXml.find("name=\"TestTable\"") != std::string::npos);
+            REQUIRE(tableXml.find("ref=\"A1:B2\"") != std::string::npos);
+            REQUIRE(tableXml.find("<autoFilter") != std::string::npos);
+            REQUIRE(tableXml.find("ref=\"A1:B2\"") != std::string::npos);
+            REQUIRE(tableXml.find("<tableColumns") != std::string::npos);
+            REQUIRE(tableXml.find("count=\"2\"") != std::string::npos);
+            REQUIRE(tableXml.find("<tableColumn") != std::string::npos);
+            REQUIRE(tableXml.find("id=\"1\"") != std::string::npos);
+            REQUIRE(tableXml.find("name=\"Col1\"") != std::string::npos);
+            REQUIRE(tableXml.find("id=\"2\"") != std::string::npos);
+            REQUIRE(tableXml.find("name=\"Col2\"") != std::string::npos);
+            REQUIRE(tableXml.find("<tableStyleInfo") != std::string::npos);
+            REQUIRE(tableXml.find("name=\"TableStyleMedium2\"") != std::string::npos);
+            REQUIRE(tableXml.find("showRowStripes=\"1\"") != std::string::npos);
+
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
 }
