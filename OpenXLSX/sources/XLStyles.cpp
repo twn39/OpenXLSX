@@ -35,382 +35,236 @@ namespace    // anonymous namespace for module local functions
         XLStylesInvalid          = 255
     };
 
-    XLStylesEntryType XLStylesEntryTypeFromString(std::string_view name)
-    {
-        if (name == "numFmts") return XLStylesNumberFormats;
-        if (name == "fonts") return XLStylesFonts;
-        if (name == "fills") return XLStylesFills;
-        if (name == "borders") return XLStylesBorders;
-        if (name == "cellStyleXfs") return XLStylesCellStyleFormats;
-        if (name == "cellXfs") return XLStylesCellFormats;
-        if (name == "cellStyles") return XLStylesCellStyles;
-        if (name == "colors") return XLStylesColors;
-        if (name == "dxfs") return XLStylesDiffCellFormats;
-        if (name == "tableStyles") return XLStylesTableStyles;
-        if (name == "extLst") return XLStylesExtLst;
-        return XLStylesEntryType::XLStylesInvalid;
-    }
 
-    const char* XLStylesEntryTypeToString(XLStylesEntryType entryType)
-    {
-        switch (entryType) {
-            case XLStylesNumberFormats:
-                return "numFmts";
-            case XLStylesFonts:
-                return "fonts";
-            case XLStylesFills:
-                return "fills";
-            case XLStylesBorders:
-                return "borders";
-            case XLStylesCellStyleFormats:
-                return "cellStyleXfs";
-            case XLStylesCellFormats:
-                return "cellXfs";
-            case XLStylesCellStyles:
-                return "cellStyles";
-            case XLStylesColors:
-                return "colors";
-            case XLStylesDiffCellFormats:
-                return "dxfs";
-            case XLStylesTableStyles:
-                return "tableStyles";
-            case XLStylesExtLst:
-                return "extLst";
-            case XLStylesInvalid:
-                [[fallthrough]];
-            default:
-                return "(invalid)";
+    template<typename E>
+    struct EnumStringMap {
+        std::string_view str;
+        E val;
+    };
+
+    template<typename E, size_t N>
+    constexpr E EnumFromString(std::string_view str, const EnumStringMap<E> (&mapping)[N], E invalidVal) {
+        for (const auto& kv : mapping) {
+            if (kv.str == str) return kv.val;
         }
+        return invalidVal;
     }
 
-    XLUnderlineStyle XLUnderlineStyleFromString(std::string_view underline)
-    {
-        if (underline == "" or underline == "none") return XLUnderlineNone;
-        if (underline == "single") return XLUnderlineSingle;
-        if (underline == "double") return XLUnderlineDouble;
-        return XLUnderlineInvalid;
-    }
-
-    const char* XLUnderlineStyleToString(XLUnderlineStyle underline)
-    {
-        switch (underline) {
-            case XLUnderlineNone:
-                return "none";
-            case XLUnderlineSingle:
-                return "single";
-            case XLUnderlineDouble:
-                return "double";
-            case XLUnderlineInvalid:
-                [[fallthrough]];
-            default:
-                return "(invalid)";
+    template<typename E, size_t N>
+    constexpr const char* EnumToString(E val, const EnumStringMap<E> (&mapping)[N], const char* invalidStr) {
+        for (const auto& kv : mapping) {
+            if (kv.val == val) return kv.str.data();
         }
+        return invalidStr;
     }
 
-    XLFontSchemeStyle XLFontSchemeStyleFromString(std::string_view fontScheme)
+    constexpr EnumStringMap<XLStylesEntryType> XLStylesEntryTypeMap[] = {
+        {"numFmts", XLStylesNumberFormats},
+        {"fonts", XLStylesFonts},
+        {"fills", XLStylesFills},
+        {"borders", XLStylesBorders},
+        {"cellStyleXfs", XLStylesCellStyleFormats},
+        {"cellXfs", XLStylesCellFormats},
+        {"cellStyles", XLStylesCellStyles},
+        {"colors", XLStylesColors},
+        {"dxfs", XLStylesDiffCellFormats},
+        {"tableStyles", XLStylesTableStyles},
+        {"extLst", XLStylesExtLst},
+    };
+
+    XLStylesEntryType XLStylesEntryTypeFromString(std::string_view str)
     {
-        if (fontScheme == "" or fontScheme == "none") return XLFontSchemeNone;
-        if (fontScheme == "major") return XLFontSchemeMajor;
-        if (fontScheme == "minor") return XLFontSchemeMinor;
-        return XLFontSchemeInvalid;
+        return EnumFromString(str, XLStylesEntryTypeMap, XLStylesEntryType::XLStylesInvalid);
     }
 
-    const char* XLFontSchemeStyleToString(XLFontSchemeStyle fontScheme)
+    const char* XLStylesEntryTypeToString(XLStylesEntryType val)
     {
-        switch (fontScheme) {
-            case XLFontSchemeNone:
-                return "none";
-            case XLFontSchemeMajor:
-                return "major";
-            case XLFontSchemeMinor:
-                return "minor";
-            case XLFontSchemeInvalid:
-                [[fallthrough]];
-            default:
-                return "(invalid)";
-        }
+        return EnumToString(val, XLStylesEntryTypeMap, "(invalid)");
     }
 
-    XLVerticalAlignRunStyle XLVerticalAlignRunStyleFromString(std::string_view vertAlign)
+    constexpr EnumStringMap<XLUnderlineStyle> XLUnderlineStyleMap[] = {
+        {"", XLUnderlineNone},
+        {"single", XLUnderlineSingle},
+        {"double", XLUnderlineDouble},
+        {"none", XLUnderlineNone},
+    };
+
+    XLUnderlineStyle XLUnderlineStyleFromString(std::string_view str)
     {
-        if (vertAlign == "" or vertAlign == "baseline") return XLBaseline;
-        if (vertAlign == "subscript") return XLSubscript;
-        if (vertAlign == "superscript") return XLSuperscript;
-        return XLVerticalAlignRunInvalid;
+        return EnumFromString(str, XLUnderlineStyleMap, XLUnderlineInvalid);
     }
 
-    const char* XLVerticalAlignRunStyleToString(XLVerticalAlignRunStyle vertAlign)
+    const char* XLUnderlineStyleToString(XLUnderlineStyle val)
     {
-        switch (vertAlign) {
-            case XLBaseline:
-                return "baseline";
-            case XLSubscript:
-                return "subscript";
-            case XLSuperscript:
-                return "superscript";
-            case XLVerticalAlignRunInvalid:
-                [[fallthrough]];
-            default:
-                return "(invalid)";
-        }
+        return EnumToString(val, XLUnderlineStyleMap, "(invalid)");
     }
 
-    XLFillType XLFillTypeFromString(std::string_view fillType)
+    constexpr EnumStringMap<XLFontSchemeStyle> XLFontSchemeStyleMap[] = {
+        {"", XLFontSchemeNone},
+        {"major", XLFontSchemeMajor},
+        {"minor", XLFontSchemeMinor},
+        {"none", XLFontSchemeNone},
+    };
+
+    XLFontSchemeStyle XLFontSchemeStyleFromString(std::string_view str)
     {
-        if (fillType == "gradientFill") return XLGradientFill;
-        if (fillType == "patternFill") return XLPatternFill;
-        return XLFillTypeInvalid;
+        return EnumFromString(str, XLFontSchemeStyleMap, XLFontSchemeInvalid);
     }
 
-    const char* XLFillTypeToString(XLFillType fillType)
+    const char* XLFontSchemeStyleToString(XLFontSchemeStyle val)
     {
-        switch (fillType) {
-            case XLGradientFill:
-                return "gradientFill";
-            case XLPatternFill:
-                return "patternFill";
-            case XLFillTypeInvalid:
-                [[fallthrough]];
-            default:
-                return "(invalid)";
-        }
+        return EnumToString(val, XLFontSchemeStyleMap, "(invalid)");
     }
 
-    XLGradientType XLGradientTypeFromString(std::string_view gradientType)
+    constexpr EnumStringMap<XLVerticalAlignRunStyle> XLVerticalAlignRunStyleMap[] = {
+        {"", XLBaseline},
+        {"subscript", XLSubscript},
+        {"superscript", XLSuperscript},
+        {"baseline", XLBaseline},
+    };
+
+    XLVerticalAlignRunStyle XLVerticalAlignRunStyleFromString(std::string_view str)
     {
-        if (gradientType == "linear") return XLGradientLinear;
-        if (gradientType == "path") return XLGradientPath;
-        return XLGradientTypeInvalid;
-    }
-    const char* XLGradientTypeToString(XLGradientType gradientType)
-    {
-        switch (gradientType) {
-            case XLGradientLinear:
-                return "linear";
-            case XLGradientPath:
-                return "path";
-            case XLGradientTypeInvalid:
-                [[fallthrough]];
-            default:
-                return "(invalid)";
-        }
+        return EnumFromString(str, XLVerticalAlignRunStyleMap, XLVerticalAlignRunInvalid);
     }
 
-    XLPatternType XLPatternTypeFromString(std::string_view patternType)
+    const char* XLVerticalAlignRunStyleToString(XLVerticalAlignRunStyle val)
     {
-        if (patternType == "" or patternType == "none") return XLPatternNone;
-        if (patternType == "solid") return XLPatternSolid;
-        if (patternType == "mediumGray") return XLPatternMediumGray;
-        if (patternType == "darkGray") return XLPatternDarkGray;
-        if (patternType == "lightGray") return XLPatternLightGray;
-        if (patternType == "darkHorizontal") return XLPatternDarkHorizontal;
-        if (patternType == "darkVertical") return XLPatternDarkVertical;
-        if (patternType == "darkDown") return XLPatternDarkDown;
-        if (patternType == "darkUp") return XLPatternDarkUp;
-        if (patternType == "darkGrid") return XLPatternDarkGrid;
-        if (patternType == "darkTrellis") return XLPatternDarkTrellis;
-        if (patternType == "lightHorizontal") return XLPatternLightHorizontal;
-        if (patternType == "lightVertical") return XLPatternLightVertical;
-        if (patternType == "lightDown") return XLPatternLightDown;
-        if (patternType == "lightUp") return XLPatternLightUp;
-        if (patternType == "lightGrid") return XLPatternLightGrid;
-        if (patternType == "lightTrellis") return XLPatternLightTrellis;
-        if (patternType == "gray125") return XLPatternGray125;
-        if (patternType == "gray0625") return XLPatternGray0625;
-        return XLPatternTypeInvalid;
+        return EnumToString(val, XLVerticalAlignRunStyleMap, "(invalid)");
     }
 
-    const char* XLPatternTypeToString(XLPatternType patternType)
+    constexpr EnumStringMap<XLFillType> XLFillTypeMap[] = {
+        {"gradientFill", XLGradientFill},
+        {"patternFill", XLPatternFill},
+    };
+
+    XLFillType XLFillTypeFromString(std::string_view str)
     {
-        switch (patternType) {
-            case XLPatternNone:
-                return "none";
-            case XLPatternSolid:
-                return "solid";
-            case XLPatternMediumGray:
-                return "mediumGray";
-            case XLPatternDarkGray:
-                return "darkGray";
-            case XLPatternLightGray:
-                return "lightGray";
-            case XLPatternDarkHorizontal:
-                return "darkHorizontal";
-            case XLPatternDarkVertical:
-                return "darkVertical";
-            case XLPatternDarkDown:
-                return "darkDown";
-            case XLPatternDarkUp:
-                return "darkUp";
-            case XLPatternDarkGrid:
-                return "darkGrid";
-            case XLPatternDarkTrellis:
-                return "darkTrellis";
-            case XLPatternLightHorizontal:
-                return "lightHorizontal";
-            case XLPatternLightVertical:
-                return "lightVertical";
-            case XLPatternLightDown:
-                return "lightDown";
-            case XLPatternLightUp:
-                return "lightUp";
-            case XLPatternLightGrid:
-                return "lightGrid";
-            case XLPatternLightTrellis:
-                return "lightTrellis";
-            case XLPatternGray125:
-                return "gray125";
-            case XLPatternGray0625:
-                return "gray0625";
-            case XLPatternTypeInvalid:
-                [[fallthrough]];
-            default:
-                return "(invalid)";
-        }
+        return EnumFromString(str, XLFillTypeMap, XLFillTypeInvalid);
     }
 
-#ifdef __GNUC__    // conditionally enable GCC specific pragmas to suppress unused function warning
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wunused-function"
-#endif    // __GNUC__
-    XLLineType XLLineTypeFromString(std::string_view lineType)
+    const char* XLFillTypeToString(XLFillType val)
     {
-        if (lineType == "left") return XLLineLeft;
-        if (lineType == "right") return XLLineRight;
-        if (lineType == "top") return XLLineTop;
-        if (lineType == "bottom") return XLLineBottom;
-        if (lineType == "diagonal") return XLLineDiagonal;
-        if (lineType == "vertical") return XLLineVertical;
-        if (lineType == "horizontal") return XLLineHorizontal;
-        return XLLineInvalid;
-    }
-#ifdef __GNUC__    // conditionally enable GCC specific pragmas to suppress unused function warning
-#    pragma GCC diagnostic pop
-#endif    // __GNUC__
-
-    const char* XLLineTypeToString(XLLineType lineType)
-    {
-        switch (lineType) {
-            case XLLineLeft:
-                return "left";
-            case XLLineRight:
-                return "right";
-            case XLLineTop:
-                return "top";
-            case XLLineBottom:
-                return "bottom";
-            case XLLineDiagonal:
-                return "diagonal";
-            case XLLineVertical:
-                return "vertical";
-            case XLLineHorizontal:
-                return "horizontal";
-            case XLLineInvalid:
-                [[fallthrough]];
-            default:
-                return "(invalid)";
-        }
+        return EnumToString(val, XLFillTypeMap, "(invalid)");
     }
 
-    XLLineStyle XLLineStyleFromString(std::string_view style)
+    constexpr EnumStringMap<XLGradientType> XLGradientTypeMap[] = {
+        {"linear", XLGradientLinear},
+        {"path", XLGradientPath},
+    };
+
+    XLGradientType XLGradientTypeFromString(std::string_view str)
     {
-        if (style == "") return XLLineStyleNone;
-        if (style == "thin") return XLLineStyleThin;
-        if (style == "medium") return XLLineStyleMedium;
-        if (style == "dashed") return XLLineStyleDashed;
-        if (style == "dotted") return XLLineStyleDotted;
-        if (style == "thick") return XLLineStyleThick;
-        if (style == "double") return XLLineStyleDouble;
-        if (style == "hair") return XLLineStyleHair;
-        if (style == "mediumDashed") return XLLineStyleMediumDashed;
-        if (style == "dashDot") return XLLineStyleDashDot;
-        if (style == "mediumDashDot") return XLLineStyleMediumDashDot;
-        if (style == "dashDotDot") return XLLineStyleDashDotDot;
-        if (style == "mediumDashDotDot") return XLLineStyleMediumDashDotDot;
-        if (style == "slantDashDot") return XLLineStyleSlantDashDot;
-        return XLLineStyleInvalid;
+        return EnumFromString(str, XLGradientTypeMap, XLGradientTypeInvalid);
     }
 
-    const char* XLLineStyleToString(XLLineStyle style)
+    const char* XLGradientTypeToString(XLGradientType val)
     {
-        switch (style) {
-            case XLLineStyleNone:
-                return "";
-            case XLLineStyleThin:
-                return "thin";
-            case XLLineStyleMedium:
-                return "medium";
-            case XLLineStyleDashed:
-                return "dashed";
-            case XLLineStyleDotted:
-                return "dotted";
-            case XLLineStyleThick:
-                return "thick";
-            case XLLineStyleDouble:
-                return "double";
-            case XLLineStyleHair:
-                return "hair";
-            case XLLineStyleMediumDashed:
-                return "mediumDashed";
-            case XLLineStyleDashDot:
-                return "dashDot";
-            case XLLineStyleMediumDashDot:
-                return "mediumDashDot";
-            case XLLineStyleDashDotDot:
-                return "dashDotDot";
-            case XLLineStyleMediumDashDotDot:
-                return "mediumDashDotDot";
-            case XLLineStyleSlantDashDot:
-                return "slantDashDot";
-            case XLLineStyleInvalid:
-                [[fallthrough]];
-            default:
-                return "(invalid)";
-        }
+        return EnumToString(val, XLGradientTypeMap, "(invalid)");
     }
 
-    XLAlignmentStyle XLAlignmentStyleFromString(std::string_view alignment)
+    constexpr EnumStringMap<XLPatternType> XLPatternTypeMap[] = {
+        {"", XLPatternNone},
+        {"solid", XLPatternSolid},
+        {"mediumGray", XLPatternMediumGray},
+        {"darkGray", XLPatternDarkGray},
+        {"lightGray", XLPatternLightGray},
+        {"darkHorizontal", XLPatternDarkHorizontal},
+        {"darkVertical", XLPatternDarkVertical},
+        {"darkDown", XLPatternDarkDown},
+        {"darkUp", XLPatternDarkUp},
+        {"darkGrid", XLPatternDarkGrid},
+        {"darkTrellis", XLPatternDarkTrellis},
+        {"lightHorizontal", XLPatternLightHorizontal},
+        {"lightVertical", XLPatternLightVertical},
+        {"lightDown", XLPatternLightDown},
+        {"lightUp", XLPatternLightUp},
+        {"lightGrid", XLPatternLightGrid},
+        {"lightTrellis", XLPatternLightTrellis},
+        {"gray125", XLPatternGray125},
+        {"gray0625", XLPatternGray0625},
+        {"none", XLPatternNone},
+    };
+
+    XLPatternType XLPatternTypeFromString(std::string_view str)
     {
-        if (alignment == "" or alignment == "general") return XLAlignGeneral;
-        if (alignment == "left") return XLAlignLeft;
-        if (alignment == "right") return XLAlignRight;
-        if (alignment == "center") return XLAlignCenter;
-        if (alignment == "top") return XLAlignTop;
-        if (alignment == "bottom") return XLAlignBottom;
-        if (alignment == "fill") return XLAlignFill;
-        if (alignment == "justify") return XLAlignJustify;
-        if (alignment == "centerContinuous") return XLAlignCenterContinuous;
-        if (alignment == "distributed") return XLAlignDistributed;
-        return XLAlignInvalid;
+        return EnumFromString(str, XLPatternTypeMap, XLPatternTypeInvalid);
     }
 
-    const char* XLAlignmentStyleToString(XLAlignmentStyle alignment)
+    const char* XLPatternTypeToString(XLPatternType val)
     {
-        switch (alignment) {
-            case XLAlignGeneral:
-                return "";
-            case XLAlignLeft:
-                return "left";
-            case XLAlignRight:
-                return "right";
-            case XLAlignCenter:
-                return "center";
-            case XLAlignTop:
-                return "top";
-            case XLAlignBottom:
-                return "bottom";
-            case XLAlignFill:
-                return "fill";
-            case XLAlignJustify:
-                return "justify";
-            case XLAlignCenterContinuous:
-                return "centerContinuous";
-            case XLAlignDistributed:
-                return "distributed";
-            case XLAlignInvalid:
-                [[fallthrough]];
-            default:
-                return "(unknown)";
-        }
+        return EnumToString(val, XLPatternTypeMap, "(invalid)");
+    }
+
+    [[maybe_unused]] constexpr EnumStringMap<XLLineType> XLLineTypeMap[] = {
+        {"left", XLLineLeft},
+        {"right", XLLineRight},
+        {"top", XLLineTop},
+        {"bottom", XLLineBottom},
+        {"diagonal", XLLineDiagonal},
+        {"vertical", XLLineVertical},
+        {"horizontal", XLLineHorizontal},
+    };
+
+    [[maybe_unused]] XLLineType XLLineTypeFromString(std::string_view str)
+    {
+        return EnumFromString(str, XLLineTypeMap, XLLineInvalid);
+    }
+
+    const char* XLLineTypeToString(XLLineType val)
+    {
+        return EnumToString(val, XLLineTypeMap, "(invalid)");
+    }
+
+    constexpr EnumStringMap<XLLineStyle> XLLineStyleMap[] = {
+        {"", XLLineStyleNone},
+        {"thin", XLLineStyleThin},
+        {"medium", XLLineStyleMedium},
+        {"dashed", XLLineStyleDashed},
+        {"dotted", XLLineStyleDotted},
+        {"thick", XLLineStyleThick},
+        {"double", XLLineStyleDouble},
+        {"hair", XLLineStyleHair},
+        {"mediumDashed", XLLineStyleMediumDashed},
+        {"dashDot", XLLineStyleDashDot},
+        {"mediumDashDot", XLLineStyleMediumDashDot},
+        {"dashDotDot", XLLineStyleDashDotDot},
+        {"mediumDashDotDot", XLLineStyleMediumDashDotDot},
+        {"slantDashDot", XLLineStyleSlantDashDot},
+    };
+
+    XLLineStyle XLLineStyleFromString(std::string_view str)
+    {
+        return EnumFromString(str, XLLineStyleMap, XLLineStyleInvalid);
+    }
+
+    const char* XLLineStyleToString(XLLineStyle val)
+    {
+        return EnumToString(val, XLLineStyleMap, "(invalid)");
+    }
+
+    constexpr EnumStringMap<XLAlignmentStyle> XLAlignmentStyleMap[] = {
+        {"", XLAlignGeneral},
+        {"left", XLAlignLeft},
+        {"right", XLAlignRight},
+        {"center", XLAlignCenter},
+        {"top", XLAlignTop},
+        {"bottom", XLAlignBottom},
+        {"fill", XLAlignFill},
+        {"justify", XLAlignJustify},
+        {"centerContinuous", XLAlignCenterContinuous},
+        {"distributed", XLAlignDistributed},
+        {"general", XLAlignGeneral},
+    };
+
+    XLAlignmentStyle XLAlignmentStyleFromString(std::string_view str)
+    {
+        return EnumFromString(str, XLAlignmentStyleMap, XLAlignInvalid);
+    }
+
+    const char* XLAlignmentStyleToString(XLAlignmentStyle val)
+    {
+        return EnumToString(val, XLAlignmentStyleMap, "(unknown)");
     }
 
     const char* XLReadingOrderToString(uint32_t readingOrder)
