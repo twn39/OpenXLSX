@@ -877,9 +877,11 @@ XLStyleIndex XLFonts::create(XLFont copyFrom, std::string styleEntriesPrefix)
     XLFont newFont(newNode);
     if (copyFrom.m_fontNode->empty()) {    // if no template is given
         // ===== Create a font with default values
-        // TODO: implement font defaults
-        // newFont.setProperty(defaultValue);
-        // ...
+        newFont.setFontName(OpenXLSX::XLDefaultFontName);
+        newFont.setFontSize(OpenXLSX::XLDefaultFontSize);
+        newFont.setFontColor(XLColor(OpenXLSX::XLDefaultFontColor));
+        newFont.setFontFamily(OpenXLSX::XLDefaultFontFamily);
+        newFont.setFontCharset(OpenXLSX::XLDefaultFontCharset);
     }
     else
         copyXMLNode(newNode, *copyFrom.m_fontNode);    // will use copyFrom as template, does nothing if copyFrom is empty
@@ -1108,9 +1110,8 @@ XLStyleIndex XLGradientStops::create(XLGradientStop copyFrom, std::string styleE
     XLGradientStop newStop(newNode);
     if (copyFrom.m_stopNode->empty()) {    // if no template is given
         // ===== Create a stop node with default values
-        // TODO: implement stop defaults
-        // newStop.setProperty(defaultValue);
-        // ...
+        newStop.setPosition(0.0);
+        newStop.color().setRgb(XLColor(OpenXLSX::XLDefaultPatternFgColor));
     }
     else
         copyXMLNode(newNode, *copyFrom.m_stopNode);    // will use copyFrom as template, does nothing if copyFrom is empty
@@ -1426,9 +1427,7 @@ XLStyleIndex XLFills::create(XLFill copyFrom, std::string styleEntriesPrefix)
     XLFill newFill(newNode);
     if (copyFrom.m_fillNode->empty()) {    // if no template is given
         // ===== Create a fill with default values
-        // TODO: implement fill defaults
-        // newFill.setProperty(defaultValue);
-        // ...
+        newFill.setPatternType(OpenXLSX::XLDefaultPatternType);
     }
     else
         copyXMLNode(newNode, *copyFrom.m_fillNode);    // will use copyFrom as template, does nothing if copyFrom is empty
@@ -1707,9 +1706,11 @@ XLStyleIndex XLBorders::create(XLBorder copyFrom, std::string styleEntriesPrefix
     XLBorder newBorder(newNode);
     if (copyFrom.m_borderNode->empty()) {    // if no template is given
         // ===== Create a border with default values
-        // TODO: implement border defaults
-        // newBorder.setProperty(defaultValue);
-        // ...
+        newBorder.setLeft(OpenXLSX::XLLineStyleNone, XLColor(OpenXLSX::XLDefaultFontColor));
+        newBorder.setRight(OpenXLSX::XLLineStyleNone, XLColor(OpenXLSX::XLDefaultFontColor));
+        newBorder.setTop(OpenXLSX::XLLineStyleNone, XLColor(OpenXLSX::XLDefaultFontColor));
+        newBorder.setBottom(OpenXLSX::XLLineStyleNone, XLColor(OpenXLSX::XLDefaultFontColor));
+        newBorder.setDiagonal(OpenXLSX::XLLineStyleNone, XLColor(OpenXLSX::XLDefaultFontColor));
     }
     else
         copyXMLNode(newNode, *copyFrom.m_borderNode);    // will use copyFrom as template, does nothing if copyFrom is empty
