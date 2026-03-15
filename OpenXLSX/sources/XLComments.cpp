@@ -60,6 +60,48 @@ namespace
     /**
      * @details TODO: write doxygen headers for functions in this module
      */
+    /**
+     * @details Helper function to parse rich text from a comment node.
+     */
+    XLRichText parseRichText(XMLNode const& commentNode)
+    {
+        XLRichText result;
+        XMLNode    textNode = commentNode.child("text");
+        if (textNode.empty()) return result;
+
+        XMLNode element = textNode.first_child_of_type(pugi::node_element);
+        while (!element.empty()) {
+            if (std::string(element.name()) == "t") { result.addRun(XLRichTextRun(element.text().get())); }
+            else if (std::string(element.name()) == "r") {
+                XLRichTextRun run;
+                XMLNode       tNode = element.child("t");
+                if (!tNode.empty()) run.setText(tNode.text().get());
+
+                XMLNode rPrNode = element.child("rPr");
+                if (!rPrNode.empty()) {
+                    if (!rPrNode.child("b").empty()) run.setBold(true);
+                    if (!rPrNode.child("i").empty()) run.setItalic(true);
+                    if (!rPrNode.child("u").empty()) run.setUnderline(true);
+                    if (!rPrNode.child("strike").empty()) run.setStrikethrough(true);
+
+                    XMLNode rFontNode = rPrNode.child("rFont");
+                    if (!rFontNode.empty()) run.setFontName(rFontNode.attribute("val").value());
+
+                    XMLNode szNode = rPrNode.child("sz");
+                    if (!szNode.empty()) run.setFontSize(szNode.attribute("val").as_uint());
+
+                    XMLNode colorNode = rPrNode.child("color");
+                    if (!colorNode.empty()) {
+                        if (colorNode.attribute("rgb")) run.setFontColor(XLColor(colorNode.attribute("rgb").value()));
+                    }
+                }
+                result.addRun(run);
+            }
+            element = element.next_sibling_of_type(pugi::node_element);
+        }
+        return result;
+    }
+
     std::string getCommentString(XMLNode const& commentNode)
     {
         std::string result{};
@@ -111,6 +153,7 @@ bool XLComment::valid() const { return not m_commentNode.empty(); }
  */
 std::string XLComment::ref() const { return m_commentNode.attribute("ref").value(); }
 std::string XLComment::text() const { return getCommentString(m_commentNode); }
+XLRichText  XLComment::richText() const { return parseRichText(m_commentNode); }
 uint16_t    XLComment::authorId() const { return static_cast<uint16_t>(m_commentNode.attribute("authorId").as_uint()); }
 
 /**
@@ -118,10 +161,51 @@ uint16_t    XLComment::authorId() const { return static_cast<uint16_t>(m_comment
  */
 bool XLComment::setText(std::string newText)
 {
-    m_commentNode.remove_children();                                             // clear previous text
-    XMLNode tNode = m_commentNode.prepend_child("text").prepend_child("t");      // insert <text><t/></text> nodes
-    tNode.append_attribute("xml:space").set_value("preserve");                   // set <t> node attribute xml:space
-    return tNode.prepend_child(pugi::node_pcdata).set_value(newText.c_str());    // finally, insert <t> node_pcdata value
+    m_commentNode.remove_child("text");
+    XMLNode tNode = m_commentNode.append_child("text").append_child("t");
+    tNode.append_attribute("xml:space").set_value("preserve");
+    return tNode.text().set(newText.c_str());
+}
+
+bool XLComment::setRichText(const XLRichText& richText)
+{
+    m_commentNode.remove_child("text");
+    XMLNode textNode = m_commentNode.append_child("text");
+
+    for (const auto& run : richText.runs()) {
+        XMLNode rNode = textNode.append_child("r");
+
+        // Add properties if any are set
+        if (run.fontName() || run.fontSize() || run.fontColor() || run.bold() || run.italic() || run.underline() || run.strikethrough()) {
+            XMLNode rPrNode = rNode.append_child("rPr");
+            if (run.fontName()) {
+                XMLNode rFontNode = rPrNode.append_child("rFont");
+                rFontNode.append_attribute("val").set_value(run.fontName()->c_str());
+            }
+            if (run.fontSize()) {
+                XMLNode szNode = rPrNode.append_child("sz");
+                szNode.append_attribute("val").set_value(*run.fontSize());
+            }
+            if (run.fontColor()) {
+                XMLNode colorNode = rPrNode.append_child("color");
+                colorNode.append_attribute("rgb").set_value(run.fontColor()->hex().c_str());
+            }
+            if (run.bold() && *run.bold()) { rPrNode.append_child("b"); }
+            if (run.italic() && *run.italic()) { rPrNode.append_child("i"); }
+            if (run.underline() && *run.underline()) { rPrNode.append_child("u"); }
+            if (run.strikethrough() && *run.strikethrough()) { rPrNode.append_child("strike"); }
+        }
+
+        // Add text
+        XMLNode tNode = rNode.append_child("t");
+        tNode.text().set(run.text().c_str());
+
+        // Handle space preservation
+        if (!run.text().empty() && (run.text().front() == ' ' || run.text().back() == ' ')) {
+            tNode.append_attribute("xml:space").set_value("preserve");
+        }
+    }
+    return true;
 }
 bool XLComment::setAuthorId(uint16_t newAuthorId)
 { return appendAndSetAttribute(m_commentNode, "authorId", std::to_string(newAuthorId)).empty() == false; }
@@ -570,6 +654,118 @@ bool XLComments::set(std::string const& cellRef, std::string const& commentText,
     }
     else
         throw XLException("XLComments::set: can not set (format) any comments when VML Drawing object is invalid");
+
+    return true;
+}
+
+/**
+ * @details
+ */
+bool XLComments::setRichText(std::string const& cellRef, const XLRichText& richText, uint16_t authorId_)
+{
+    XLCellReference destRef(cellRef);
+    uint32_t        destRow           = destRef.row();
+    uint16_t        destCol           = destRef.column();
+    bool            newCommentCreated = false;
+
+    using namespace std::literals::string_literals;
+    XMLNode comment = m_commentList.first_child_of_type(pugi::node_element);
+    while (not comment.empty()) {
+        if (comment.name() == "comment"s) {
+            XLCellReference ref(comment.attribute("ref").value());
+            if (ref.row() > destRow or (ref.row() == destRow and ref.column() >= destCol)) break;
+        }
+        comment = comment.next_sibling_of_type(pugi::node_element);
+    }
+
+    if (comment.empty()) {
+        comment = m_commentList.last_child_of_type(pugi::node_element);
+        if (comment.empty()) {
+            comment = m_commentList.prepend_child("comment");
+            m_commentList.insert_child_before(pugi::node_pcdata, comment).set_value("\n\t\t");
+        }
+        else {
+            comment = m_commentList.insert_child_after("comment", comment);
+            copyLeadingWhitespaces(m_commentList, comment.previous_sibling(), comment);
+        }
+        newCommentCreated = true;
+    }
+    else {
+        XLCellReference ref(comment.attribute("ref").value());
+        if (ref.row() != destRow or ref.column() != destCol) {
+            comment = m_commentList.insert_child_before("comment", comment);
+            copyLeadingWhitespaces(m_commentList, comment, comment.next_sibling());
+            newCommentCreated = true;
+        }
+        else
+            comment.remove_children();
+    }
+
+    if (newCommentCreated) {
+        m_hintNode  = XMLNode{};
+        m_hintIndex = 0;
+    }
+
+    if (comment.attribute("ref").empty()) comment.append_attribute("ref").set_value(destRef.address().c_str());
+    appendAndSetAttribute(comment, "authorId", std::to_string(authorId_));
+
+    // Delegate to XLComment to set rich text
+    XLComment(comment).setRichText(richText);
+
+    // Reuse the VML logic from the plain text set() method (simplified here for brevity, 
+    // in a real refactor this should be a private helper)
+    if (m_vmlDrawing->valid()) {
+        XLShape cShape{};
+        bool    newShapeNeeded = newCommentCreated;
+        if (!newCommentCreated) {
+            try {
+                cShape = shape(cellRef);
+            }
+            catch (XLException const& e) {
+                newShapeNeeded = true;
+            }
+        }
+        if (newShapeNeeded) cShape = m_vmlDrawing->createShape();
+
+        cShape.setFillColor("#ffffc0");
+        cShape.setStroked(true);
+        cShape.setAllowInCell(false);
+        XLShapeStyle shapeStyle{};
+        cShape.setStyle(shapeStyle);
+
+        XLShapeClientData clientData = cShape.clientData();
+        clientData.setObjectType("Note");
+        clientData.setMoveWithCells();
+        clientData.setSizeWithCells();
+
+        {
+            constexpr const uint16_t leftColOffset = 1;
+            constexpr const uint16_t widthCols     = 4;
+            constexpr const uint16_t topRowOffset  = 1;
+            constexpr const uint16_t heightRows    = 6;
+
+            uint16_t anchorLeftCol  = (destCol - 1) + leftColOffset;
+            uint16_t anchorRightCol = anchorLeftCol + widthCols;
+            uint32_t anchorTopRow    = (destRow - 1) + topRowOffset;
+            uint32_t anchorBottomRow = anchorTopRow + heightRows;
+
+            clientData.setAnchor(std::to_string(anchorLeftCol) + ",10," + std::to_string(anchorTopRow) + ",5," +
+                                 std::to_string(anchorRightCol) + ",10," + std::to_string(anchorBottomRow) + ",5");
+        }
+        clientData.setAutoFill(true);
+        clientData.setTextVAlign(XLShapeTextVAlign::Top);
+        clientData.setTextHAlign(XLShapeTextHAlign::Left);
+        clientData.setRow(destRow - 1);
+        clientData.setColumn(destCol - 1);
+
+        XMLNode shapeNode = cShape.m_shapeNode;
+        XMLNode textbox   = shapeNode.child("v:textbox");
+        if (textbox.empty()) textbox = shapeNode.prepend_child("v:textbox");
+        appendAndSetAttribute(textbox, "style", "mso-direction-alt:auto;mso-fit-shape-to-text:t");
+        
+        if (shapeNode.attribute("o:insetmode").empty()) shapeNode.append_attribute("o:insetmode").set_value("auto");
+        if (shapeNode.child("v:path").empty()) shapeNode.append_child("v:path").append_attribute("o:connecttype").set_value("rect");
+    }
 
     return true;
 }

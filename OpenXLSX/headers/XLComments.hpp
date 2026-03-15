@@ -55,6 +55,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 // #include "XLDocument.hpp"
 #include "XLDrawing.hpp"    // XLVmlDrawing
 #include "XLException.hpp"
+#include "XLRichText.hpp"
 #include "XLXmlData.hpp"
 #include "XLXmlFile.hpp"
 
@@ -123,12 +124,14 @@ namespace OpenXLSX
          */
         std::string ref() const;    // the cell reference of the comment
         std::string text() const;
+        XLRichText  richText() const;
         uint16_t    authorId() const;
 
         /**
          * @brief Setter functions
          */
         bool setText(std::string newText);
+        bool setRichText(const XLRichText& richText);
         bool setAuthorId(uint16_t newAuthorId);
 
         // /**
@@ -243,6 +246,15 @@ namespace OpenXLSX
          * @return true upon success, false on failure
          */
         bool set(std::string const& cellRef, std::string const& comment, uint16_t authorId_ = 0);
+
+        /**
+         * @brief set the rich text comment for the referenced cell
+         * @param cellRef the cell address to set
+         * @param richText set this rich text as comment for the cell
+         * @param authorId_ set this author (underscore to avoid conflict with function name)
+         * @return true upon success, false on failure
+         */
+        bool setRichText(std::string const& cellRef, const XLRichText& richText, uint16_t authorId_ = 0);
 
         /**
          * @brief get the XLShape object for this comment

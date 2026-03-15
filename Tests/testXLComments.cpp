@@ -3,6 +3,33 @@
 
 using namespace OpenXLSX;
 
+namespace
+{
+    // Hack to access protected member without inheritance (since XLDocument is final)
+    template<typename Tag, typename Tag::type M>
+    struct Rob
+    {
+        friend typename Tag::type get_impl(Tag) { return M; }
+    };
+
+    struct XLDocument_extractXmlFromArchive
+    {
+        typedef std::string (XLDocument::*type)(const std::string&);
+    };
+
+    template struct Rob<XLDocument_extractXmlFromArchive, &XLDocument::extractXmlFromArchive>;
+
+    // Prototype declaration for the friend function
+    std::string (XLDocument::*get_impl(XLDocument_extractXmlFromArchive))(const std::string&);
+
+    // Function to call the protected member
+    std::string getRawXml(XLDocument& doc, const std::string& path)
+    {
+        static auto fn = get_impl(XLDocument_extractXmlFromArchive());
+        return (doc.*fn)(path);
+    }
+}    // namespace
+
 TEST_CASE("XLComments Tests", "[XLComments]")
 {
     SECTION("Basic Comment Operations")
@@ -70,5 +97,50 @@ TEST_CASE("XLComments Tests", "[XLComments]")
         REQUIRE(shape.style().visible() == false);
 
         doc.close();
+    }
+
+    SECTION("Rich Text Comment Operations")
+    {
+        XLDocument doc;
+        doc.create("./testXLCommentsRichText.xlsx", XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
+
+        XLRichText rt;
+        XLRichTextRun r1("Bold"); r1.setBold(true);
+        XLRichTextRun r2(" Red"); r2.setFontColor(XLColor(255, 0, 0));
+        rt.addRun(r1);
+        rt.addRun(r2);
+
+        wks.comments().setRichText("A1", rt);
+        
+        REQUIRE(wks.comments().count() == 1);
+        REQUIRE(wks.comments().get("A1") == "Bold Red");
+
+        doc.save();
+        
+        // Verify XML structure
+        std::string commentsXml = getRawXml(doc, "xl/comments1.xml");
+        REQUIRE(commentsXml.find("<r>") != std::string::npos);
+        REQUIRE(commentsXml.find("<rPr>") != std::string::npos);
+        REQUIRE(commentsXml.find("<b />") != std::string::npos);
+        REQUIRE(commentsXml.find("<t>Bold</t>") != std::string::npos);
+        REQUIRE(commentsXml.find("<color rgb=\"ffff0000\" />") != std::string::npos);
+        REQUIRE(commentsXml.find("<t xml:space=\"preserve\"> Red</t>") != std::string::npos);
+
+        doc.close();
+
+        // Re-open and verify formatting
+        XLDocument doc2;
+        doc2.open("./testXLCommentsRichText.xlsx");
+        auto wks2 = doc2.workbook().worksheet("Sheet1");
+        
+        auto rt2 = wks2.comments().get(0).richText();
+        REQUIRE(rt2.runs().size() == 2);
+        REQUIRE(rt2.runs()[0].text() == "Bold");
+        REQUIRE(rt2.runs()[0].bold() == true);
+        REQUIRE(rt2.runs()[1].text() == " Red");
+        REQUIRE(rt2.runs()[1].fontColor()->hex() == "ffff0000");
+
+        doc2.close();
     }
 }
