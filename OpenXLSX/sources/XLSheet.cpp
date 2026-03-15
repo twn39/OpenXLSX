@@ -4,6 +4,7 @@
 #include <cstring>      // std::strlen
 #include <limits>       // std::numeric_limits
 #include <map>          // std::multimap
+#include <fmt/format.h>
 #include <pugixml.hpp>
 
 // ===== OpenXLSX Includes ===== //
@@ -541,15 +542,22 @@ bool XLCfRule::setEqualAverage(bool set)
  */
 std::string XLCfRule::summary() const
 {
-    using namespace std::literals::string_literals;
     XLStyleIndex dxfIndex = dxfId();
-    return "formula is "s + formula() + ", type is "s + XLCfTypeToString(type()) + ", dxfId is "s +
-           (dxfIndex == XLInvalidStyleIndex ? "(invalid)"s : std::to_string(dxfId())) + ", priority is "s + std::to_string(priority()) +
-           ", stopIfTrue: "s + (stopIfTrue() ? "true"s : "false"s) + ", aboveAverage: "s + (aboveAverage() ? "true"s : "false"s) +
-           ", percent: "s + (percent() ? "true"s : "false"s) + ", bottom: "s + (bottom() ? "true"s : "false"s) + ", operator is "s +
-           XLCfOperatorToString(Operator()) + ", text is \""s + text() + "\""s + ", timePeriod is "s +
-           XLCfTimePeriodToString(timePeriod()) + ", rank is "s + std::to_string(rank()) + ", stdDev is "s + std::to_string(stdDev()) +
-           ", equalAverage: "s + (equalAverage() ? "true"s : "false"s);
+    return fmt::format("formula is {}, type is {}, dxfId is {}, priority is {}, stopIfTrue: {}, aboveAverage: {}, percent: {}, bottom: {}, operator is {}, text is \"{}\", timePeriod is {}, rank is {}, stdDev is {}, equalAverage: {}",
+                       formula(),
+                       XLCfTypeToString(type()),
+                       dxfIndex == XLInvalidStyleIndex ? "(invalid)" : std::to_string(dxfId()),
+                       priority(),
+                       stopIfTrue() ? "true" : "false",
+                       aboveAverage() ? "true" : "false",
+                       percent() ? "true" : "false",
+                       bottom() ? "true" : "false",
+                       XLCfOperatorToString(Operator()),
+                       text(),
+                       XLCfTimePeriodToString(timePeriod()),
+                       rank(),
+                       stdDev(),
+                       equalAverage() ? "true" : "false");
 }
 
 // ========== XLCfRules member functions, parent of XLCfRule
@@ -756,13 +764,11 @@ size_t XLCfRules::create([[maybe_unused]] XLCfRule copyFrom, std::string cfRuleP
  */
 std::string XLCfRules::summary() const
 {
-    using namespace std::literals::string_literals;
     size_t rulesCount = count();
     if (rulesCount == 0) return "(no cfRule entries)";
     std::string result = "";
     for (size_t idx = 0; idx < rulesCount; ++idx) {
-        using namespace std::literals::string_literals;
-        result += "cfRule["s + std::to_string(idx) + "] "s + cfRuleByIndex(idx).summary();
+        result += fmt::format("cfRule[{}] {}", idx, cfRuleByIndex(idx).summary());
         if (idx + 1 < rulesCount) result += ", ";
     }
     return result;
@@ -821,8 +827,7 @@ bool XLConditionalFormat::setExtLst(XLUnsupportedElement const& newExtLst)
  */
 std::string XLConditionalFormat::summary() const
 {
-    using namespace std::literals::string_literals;
-    return "sqref is "s + sqref() + ", cfRules: "s + cfRules().summary();
+    return fmt::format("sqref is {}, cfRules: {}", sqref(), cfRules().summary());
 }
 
 // ========== XLConditionalFormats member functions, parent of XLConditionalFormat
@@ -924,13 +929,11 @@ size_t XLConditionalFormats::create([[maybe_unused]] XLConditionalFormat copyFro
  */
 std::string XLConditionalFormats::summary() const
 {
-    using namespace std::literals::string_literals;
     size_t conditionalFormatsCount = count();
     if (conditionalFormatsCount == 0) return "(no conditionalFormatting entries)";
     std::string result = "";
     for (size_t idx = 0; idx < conditionalFormatsCount; ++idx) {
-        using namespace std::literals::string_literals;
-        result += "conditionalFormatting["s + std::to_string(idx) + "] "s + conditionalFormatByIndex(idx).summary();
+        result += fmt::format("conditionalFormatting[{}] {}", idx, conditionalFormatByIndex(idx).summary());
         if (idx + 1 < conditionalFormatsCount) result += ", ";
     }
     return result;
@@ -1897,19 +1900,25 @@ bool XLWorksheet::passwordIsSet() const { return passwordHash().length() > 0; }
  */
 std::string XLWorksheet::sheetProtectionSummary() const
 {
-    using namespace std::literals::string_literals;
-    return "sheet is"s + (sheetProtected() ? ""s : " not"s) + " protected"s + ", objects are"s + (objectsProtected() ? ""s : " not"s) +
-           " protected"s + ", scenarios are"s + (scenariosProtected() ? ""s : " not"s) + " protected"s + ", insertColumns is"s +
-           (insertColumnsAllowed() ? ""s : " not"s) + " allowed"s + ", insertRows is"s + (insertRowsAllowed() ? ""s : " not"s) +
-           " allowed"s + ", deleteColumns is"s + (deleteColumnsAllowed() ? ""s : " not"s) + " allowed"s + ", deleteRows is"s +
-           (deleteRowsAllowed() ? ""s : " not"s) + " allowed"s + ", formatCells is"s + (formatCellsAllowed() ? ""s : " not"s) +
-           " allowed"s + ", formatColumns is"s + (formatColumnsAllowed() ? ""s : " not"s) + " allowed"s + ", formatRows is"s +
-           (formatRowsAllowed() ? ""s : " not"s) + " allowed"s + ", insertHyperlinks is"s + (insertHyperlinksAllowed() ? ""s : " not"s) +
-           " allowed"s + ", sort is"s + (sortAllowed() ? ""s : " not"s) + " allowed"s + ", autoFilter is"s + (autoFilterAllowed() ? ""s : " not"s) +
-           " allowed"s + ", pivotTables is"s + (pivotTablesAllowed() ? ""s : " not"s) + " allowed"s + ", selectLockedCells is"s +
-           (selectLockedCellsAllowed() ? ""s : " not"s) + " allowed"s + ", selectUnlockedCells is"s + (selectUnlockedCellsAllowed() ? ""s : " not"s) +
-           " allowed"s + ", password is"s + (passwordIsSet() ? ""s : " not"s) + "set"s +
-           (passwordIsSet() ? (", passwordHash is "s + passwordHash()) : ""s);
+    return fmt::format("sheet is{} protected, objects are{} protected, scenarios are{} protected, insertColumns is{} allowed, insertRows is{} allowed, deleteColumns is{} allowed, deleteRows is{} allowed, formatCells is{} allowed, formatColumns is{} allowed, formatRows is{} allowed, insertHyperlinks is{} allowed, sort is{} allowed, autoFilter is{} allowed, pivotTables is{} allowed, selectLockedCells is{} allowed, selectUnlockedCells is{} allowed, password is{}set{}",
+                       sheetProtected() ? "" : " not",
+                       objectsProtected() ? "" : " not",
+                       scenariosProtected() ? "" : " not",
+                       insertColumnsAllowed() ? "" : " not",
+                       insertRowsAllowed() ? "" : " not",
+                       deleteColumnsAllowed() ? "" : " not",
+                       deleteRowsAllowed() ? "" : " not",
+                       formatCellsAllowed() ? "" : " not",
+                       formatColumnsAllowed() ? "" : " not",
+                       formatRowsAllowed() ? "" : " not",
+                       insertHyperlinksAllowed() ? "" : " not",
+                       sortAllowed() ? "" : " not",
+                       autoFilterAllowed() ? "" : " not",
+                       pivotTablesAllowed() ? "" : " not",
+                       selectLockedCellsAllowed() ? "" : " not",
+                       selectUnlockedCellsAllowed() ? "" : " not",
+                       passwordIsSet() ? "" : " not ",
+                       passwordIsSet() ? fmt::format(", passwordHash is {}", passwordHash()) : "");
 }
 
 /**

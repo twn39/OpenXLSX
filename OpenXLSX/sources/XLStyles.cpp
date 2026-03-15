@@ -1,7 +1,8 @@
 // ===== External Includes ===== //
-#include <cstdint>     // uint32_t
+#include <cstdint>
+#include <gsl/gsl>
+#include <string_view>     // uint32_t
 #include <fmt/format.h>
-#include <iostream>    // std::cout, std::cerr
 #include <memory>      // std::make_unique
 #include <pugixml.hpp>
 #include <stdexcept>    // std::invalid_argument
@@ -34,7 +35,7 @@ namespace    // anonymous namespace for module local functions
         XLStylesInvalid          = 255
     };
 
-    XLStylesEntryType XLStylesEntryTypeFromString(std::string name)
+    XLStylesEntryType XLStylesEntryTypeFromString(std::string_view name)
     {
         if (name == "numFmts") return XLStylesNumberFormats;
         if (name == "fonts") return XLStylesFonts;
@@ -50,7 +51,7 @@ namespace    // anonymous namespace for module local functions
         return XLStylesEntryType::XLStylesInvalid;
     }
 
-    std::string XLStylesEntryTypeToString(XLStylesEntryType entryType)
+    const char* XLStylesEntryTypeToString(XLStylesEntryType entryType)
     {
         switch (entryType) {
             case XLStylesNumberFormats:
@@ -82,16 +83,15 @@ namespace    // anonymous namespace for module local functions
         }
     }
 
-    XLUnderlineStyle XLUnderlineStyleFromString(std::string underline)
+    XLUnderlineStyle XLUnderlineStyleFromString(std::string_view underline)
     {
         if (underline == "" or underline == "none") return XLUnderlineNone;
         if (underline == "single") return XLUnderlineSingle;
         if (underline == "double") return XLUnderlineDouble;
-        std::cerr << __func__ << ": invalid underline style " << underline << std::endl;
         return XLUnderlineInvalid;
     }
 
-    std::string XLUnderlineStyleToString(XLUnderlineStyle underline)
+    const char* XLUnderlineStyleToString(XLUnderlineStyle underline)
     {
         switch (underline) {
             case XLUnderlineNone:
@@ -107,16 +107,15 @@ namespace    // anonymous namespace for module local functions
         }
     }
 
-    XLFontSchemeStyle XLFontSchemeStyleFromString(std::string fontScheme)
+    XLFontSchemeStyle XLFontSchemeStyleFromString(std::string_view fontScheme)
     {
         if (fontScheme == "" or fontScheme == "none") return XLFontSchemeNone;
         if (fontScheme == "major") return XLFontSchemeMajor;
         if (fontScheme == "minor") return XLFontSchemeMinor;
-        std::cerr << __func__ << ": invalid font scheme " << fontScheme << std::endl;
         return XLFontSchemeInvalid;
     }
 
-    std::string XLFontSchemeStyleToString(XLFontSchemeStyle fontScheme)
+    const char* XLFontSchemeStyleToString(XLFontSchemeStyle fontScheme)
     {
         switch (fontScheme) {
             case XLFontSchemeNone:
@@ -132,16 +131,15 @@ namespace    // anonymous namespace for module local functions
         }
     }
 
-    XLVerticalAlignRunStyle XLVerticalAlignRunStyleFromString(std::string vertAlign)
+    XLVerticalAlignRunStyle XLVerticalAlignRunStyleFromString(std::string_view vertAlign)
     {
         if (vertAlign == "" or vertAlign == "baseline") return XLBaseline;
         if (vertAlign == "subscript") return XLSubscript;
         if (vertAlign == "superscript") return XLSuperscript;
-        std::cerr << __func__ << ": invalid font vertical align run style " << vertAlign << std::endl;
         return XLVerticalAlignRunInvalid;
     }
 
-    std::string XLVerticalAlignRunStyleToString(XLVerticalAlignRunStyle vertAlign)
+    const char* XLVerticalAlignRunStyleToString(XLVerticalAlignRunStyle vertAlign)
     {
         switch (vertAlign) {
             case XLBaseline:
@@ -157,16 +155,14 @@ namespace    // anonymous namespace for module local functions
         }
     }
 
-    XLFillType XLFillTypeFromString(std::string fillType)
+    XLFillType XLFillTypeFromString(std::string_view fillType)
     {
         if (fillType == "gradientFill") return XLGradientFill;
         if (fillType == "patternFill") return XLPatternFill;
-        if (fillType != "")    // suppress error message for empty fillType (= no node exists yet)
-            std::cerr << __func__ << ": invalid fillType \"" << fillType << "\"" << std::endl;
         return XLFillTypeInvalid;
     }
 
-    std::string XLFillTypeToString(XLFillType fillType)
+    const char* XLFillTypeToString(XLFillType fillType)
     {
         switch (fillType) {
             case XLGradientFill:
@@ -180,14 +176,13 @@ namespace    // anonymous namespace for module local functions
         }
     }
 
-    XLGradientType XLGradientTypeFromString(std::string gradientType)
+    XLGradientType XLGradientTypeFromString(std::string_view gradientType)
     {
         if (gradientType == "linear") return XLGradientLinear;
         if (gradientType == "path") return XLGradientPath;
-        std::cerr << __func__ << ": invalid gradient type " << gradientType << std::endl;
         return XLGradientTypeInvalid;
     }
-    std::string XLGradientTypeToString(XLGradientType gradientType)
+    const char* XLGradientTypeToString(XLGradientType gradientType)
     {
         switch (gradientType) {
             case XLGradientLinear:
@@ -201,7 +196,7 @@ namespace    // anonymous namespace for module local functions
         }
     }
 
-    XLPatternType XLPatternTypeFromString(std::string patternType)
+    XLPatternType XLPatternTypeFromString(std::string_view patternType)
     {
         if (patternType == "" or patternType == "none") return XLPatternNone;
         if (patternType == "solid") return XLPatternSolid;
@@ -222,11 +217,10 @@ namespace    // anonymous namespace for module local functions
         if (patternType == "lightTrellis") return XLPatternLightTrellis;
         if (patternType == "gray125") return XLPatternGray125;
         if (patternType == "gray0625") return XLPatternGray0625;
-        std::cerr << __func__ << ": invalid patternType " << patternType << std::endl;
         return XLPatternTypeInvalid;
     }
 
-    std::string XLPatternTypeToString(XLPatternType patternType)
+    const char* XLPatternTypeToString(XLPatternType patternType)
     {
         switch (patternType) {
             case XLPatternNone:
@@ -278,7 +272,7 @@ namespace    // anonymous namespace for module local functions
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wunused-function"
 #endif    // __GNUC__
-    XLLineType XLLineTypeFromString(std::string lineType)
+    XLLineType XLLineTypeFromString(std::string_view lineType)
     {
         if (lineType == "left") return XLLineLeft;
         if (lineType == "right") return XLLineRight;
@@ -287,14 +281,13 @@ namespace    // anonymous namespace for module local functions
         if (lineType == "diagonal") return XLLineDiagonal;
         if (lineType == "vertical") return XLLineVertical;
         if (lineType == "horizontal") return XLLineHorizontal;
-        std::cerr << __func__ << ": invalid line type" << lineType << std::endl;
         return XLLineInvalid;
     }
 #ifdef __GNUC__    // conditionally enable GCC specific pragmas to suppress unused function warning
 #    pragma GCC diagnostic pop
 #endif    // __GNUC__
 
-    std::string XLLineTypeToString(XLLineType lineType)
+    const char* XLLineTypeToString(XLLineType lineType)
     {
         switch (lineType) {
             case XLLineLeft:
@@ -318,7 +311,7 @@ namespace    // anonymous namespace for module local functions
         }
     }
 
-    XLLineStyle XLLineStyleFromString(std::string style)
+    XLLineStyle XLLineStyleFromString(std::string_view style)
     {
         if (style == "") return XLLineStyleNone;
         if (style == "thin") return XLLineStyleThin;
@@ -334,11 +327,10 @@ namespace    // anonymous namespace for module local functions
         if (style == "dashDotDot") return XLLineStyleDashDotDot;
         if (style == "mediumDashDotDot") return XLLineStyleMediumDashDotDot;
         if (style == "slantDashDot") return XLLineStyleSlantDashDot;
-        std::cerr << __func__ << ": invalid line style " << style << std::endl;
         return XLLineStyleInvalid;
     }
 
-    std::string XLLineStyleToString(XLLineStyle style)
+    const char* XLLineStyleToString(XLLineStyle style)
     {
         switch (style) {
             case XLLineStyleNone:
@@ -376,7 +368,7 @@ namespace    // anonymous namespace for module local functions
         }
     }
 
-    XLAlignmentStyle XLAlignmentStyleFromString(std::string alignment)
+    XLAlignmentStyle XLAlignmentStyleFromString(std::string_view alignment)
     {
         if (alignment == "" or alignment == "general") return XLAlignGeneral;
         if (alignment == "left") return XLAlignLeft;
@@ -388,11 +380,10 @@ namespace    // anonymous namespace for module local functions
         if (alignment == "justify") return XLAlignJustify;
         if (alignment == "centerContinuous") return XLAlignCenterContinuous;
         if (alignment == "distributed") return XLAlignDistributed;
-        std::cerr << __func__ << ": invalid alignment style " << alignment << std::endl;
         return XLAlignInvalid;
     }
 
-    std::string XLAlignmentStyleToString(XLAlignmentStyle alignment)
+    const char* XLAlignmentStyleToString(XLAlignmentStyle alignment)
     {
         switch (alignment) {
             case XLAlignGeneral:
@@ -422,7 +413,7 @@ namespace    // anonymous namespace for module local functions
         }
     }
 
-    std::string XLReadingOrderToString(uint32_t readingOrder)
+    const char* XLReadingOrderToString(uint32_t readingOrder)
     {
         switch (readingOrder) {
             case XLReadingOrderContextual:
@@ -533,8 +524,7 @@ bool XLNumberFormat::setFormatCode(std::string newFormatCode)
  */
 std::string XLNumberFormat::summary() const
 {
-    using namespace std::literals::string_literals;
-    return "numFmtId="s + std::to_string(numberFormatId()) + ", formatCode="s + formatCode();
+    return fmt::format("numFmtId={}, formatCode={}", numberFormatId(), formatCode());
 }
 
 // ===== XLNumberFormats, parent of XLNumberFormat
@@ -599,10 +589,7 @@ size_t XLNumberFormats::count() const { return m_numberFormats.size(); }
  */
 XLNumberFormat XLNumberFormats::numberFormatByIndex(XLStyleIndex index) const
 {
-    if (index >= m_numberFormats.size()) {
-        using namespace std::literals::string_literals;
-        throw XLException("XLNumberFormats::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
-    }
+    Expects(index < m_numberFormats.size());
     return m_numberFormats.at(index);
 }
 
@@ -622,10 +609,7 @@ XLNumberFormat XLNumberFormats::numberFormatById(uint32_t numberFormatId) const
  */
 uint32_t XLNumberFormats::numberFormatIdFromIndex(XLStyleIndex index) const
 {
-    if (index >= m_numberFormats.size()) {
-        using namespace std::literals::string_literals;
-        throw XLException("XLNumberFormats::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
-    }
+    Expects(index < m_numberFormats.size());
     return m_numberFormats[index].numberFormatId();
 }
 
@@ -768,12 +752,12 @@ bool XLFont::setItalic(bool set) { return appendAndSetNodeAttribute(*m_fontNode,
 bool XLFont::setStrikethrough(bool set)
 { return appendAndSetNodeAttribute(*m_fontNode, "strike", "val", (set ? "true" : "false")).empty() == false; }
 bool XLFont::setUnderline(XLUnderlineStyle style)
-{ return appendAndSetNodeAttribute(*m_fontNode, "u", "val", XLUnderlineStyleToString(style).c_str()).empty() == false; }
+{ return appendAndSetNodeAttribute(*m_fontNode, "u", "val", XLUnderlineStyleToString(style)).empty() == false; }
 bool XLFont::setScheme(XLFontSchemeStyle newScheme)
-{ return appendAndSetNodeAttribute(*m_fontNode, "scheme", "val", XLFontSchemeStyleToString(newScheme).c_str()).empty() == false; }
+{ return appendAndSetNodeAttribute(*m_fontNode, "scheme", "val", XLFontSchemeStyleToString(newScheme)).empty() == false; }
 bool XLFont::setVertAlign(XLVerticalAlignRunStyle newVertAlign)
 {
-    return appendAndSetNodeAttribute(*m_fontNode, "vertAlign", "val", XLVerticalAlignRunStyleToString(newVertAlign).c_str()).empty() ==
+    return appendAndSetNodeAttribute(*m_fontNode, "vertAlign", "val", XLVerticalAlignRunStyleToString(newVertAlign)).empty() ==
            false;
 }
 bool XLFont::setOutline(bool set)
@@ -790,15 +774,22 @@ bool XLFont::setExtend(bool set)
  */
 std::string XLFont::summary() const
 {
-    using namespace std::literals::string_literals;
-    return "font name is "s + fontName() + ", charset: "s + std::to_string(fontCharset()) + ", font family: "s +
-           std::to_string(fontFamily()) + ", size: "s + std::to_string(fontSize()) + ", color: "s + fontColor().hex() +
-           (bold() ? ", +bold"s : ""s) + (italic() ? ", +italic"s : ""s) + (strikethrough() ? ", +strikethrough"s : ""s) +
-           (underline() != XLUnderlineNone ? ", underline: "s + XLUnderlineStyleToString(underline()) : ""s) +
-           (scheme() != XLFontSchemeNone ? ", scheme: "s + XLFontSchemeStyleToString(scheme()) : ""s) +
-           (vertAlign() != XLBaseline ? ", vertAlign: "s + XLVerticalAlignRunStyleToString(vertAlign()) : ""s) +
-           (outline() ? ", +outline"s : ""s) + (shadow() ? ", +shadow"s : ""s) + (condense() ? ", +condense"s : ""s) +
-           (extend() ? ", +extend"s : ""s);
+    return fmt::format("font name is {}, charset: {}, font family: {}, size: {}, color: {}{}{}{}{}{}{}{}{}{}{}",
+                       fontName(),
+                       fontCharset(),
+                       fontFamily(),
+                       fontSize(),
+                       fontColor().hex(),
+                       bold() ? ", +bold" : "",
+                       italic() ? ", +italic" : "",
+                       strikethrough() ? ", +strikethrough" : "",
+                       underline() != XLUnderlineNone ? fmt::format(", underline: {}", XLUnderlineStyleToString(underline())) : "",
+                       scheme() != XLFontSchemeNone ? fmt::format(", scheme: {}", XLFontSchemeStyleToString(scheme())) : "",
+                       vertAlign() != XLBaseline ? fmt::format(", vertAlign: {}", XLVerticalAlignRunStyleToString(vertAlign())) : "",
+                       outline() ? ", +outline" : "",
+                       shadow() ? ", +shadow" : "",
+                       condense() ? ", +condense" : "",
+                       extend() ? ", +extend" : "");
 }
 
 // ===== XLFonts, parent of XLFont
@@ -857,11 +848,7 @@ size_t XLFonts::count() const { return m_fonts.size(); }
  */
 XLFont XLFonts::fontByIndex(XLStyleIndex index) const
 {
-    if (index >= m_fonts.size()) {
-        using namespace std::literals::string_literals;
-        throw XLException("XLFonts::"s + __func__ + ": attempted to access index "s + std::to_string(index) + " with count "s +
-                          std::to_string(m_fonts.size()));
-    }
+    Expects(index < m_fonts.size());
     return m_fonts.at(index);
 }
 
@@ -969,9 +956,12 @@ bool XLDataBarColor::setTheme(uint32_t newTheme)
  */
 std::string XLDataBarColor::summary() const
 {
-    using namespace std::literals::string_literals;
-    return "rgb is "s + rgb().hex() + ", tint is "s + formatDoubleAsString(tint()) + (automatic() ? ", +automatic"s : ""s) +
-           (indexed() ? (", index is "s + std::to_string(indexed())) : "") + (theme() ? (", theme is "s + std::to_string(theme())) : "");
+    return fmt::format("rgb is {}, tint is {}{}{}{}",
+                       rgb().hex(),
+                       formatDoubleAsString(tint()),
+                       automatic() ? ", +automatic" : "",
+                       indexed() ? fmt::format(", index is {}", indexed()) : "",
+                       theme() ? fmt::format(", theme is {}", theme()) : "");
 }
 
 /**
@@ -1024,8 +1014,7 @@ bool XLGradientStop::setPosition(double newPosition)
  */
 std::string XLGradientStop::summary() const
 {
-    using namespace std::literals::string_literals;
-    return "stop position is "s + formatDoubleAsString(position()) + ", " + color().summary();
+    return fmt::format("stop position is {}, {}", formatDoubleAsString(position()), color().summary());
 }
 
 // ===== XLGradientStops, parent of XLGradientStop
@@ -1090,11 +1079,7 @@ size_t XLGradientStops::count() const { return m_gradientStops.size(); }
  */
 XLGradientStop XLGradientStops::stopByIndex(XLStyleIndex index) const
 {
-    if (index >= m_gradientStops.size()) {
-        using namespace std::literals::string_literals;
-        throw XLException("XLGradientStops::"s + __func__ + ": attempted to access index "s + std::to_string(index) + " with count "s +
-                          std::to_string(m_gradientStops.size()));
-    }
+    Expects(index < m_gradientStops.size());
     return m_gradientStops.at(index);
 }
 
@@ -1189,7 +1174,7 @@ bool XLFill::setFillType(XLFillType newFillType, bool force)
 
     // ===== Delete all fill node children and insert a new node for the newFillType
     m_fillNode->remove_children();
-    return (m_fillNode->append_child(XLFillTypeToString(newFillType).c_str()).empty() == false);
+    return (m_fillNode->append_child(XLFillTypeToString(newFillType)).empty() == false);
 }
 
 /**
@@ -1332,20 +1317,27 @@ bool XLFill::setBackgroundColor(XLColor newBgColor)
  */
 std::string XLFill::summary()
 {
-    using namespace std::literals::string_literals;
     switch (fillType()) {
         case XLGradientFill:
-            return "fill type is "s + XLFillTypeToString(fillType()) + ", gradient type is "s + XLGradientTypeToString(gradientType()) +
-                   ", degree is: "s + formatDoubleAsString(degree()) + ", left is: "s + formatDoubleAsString(left()) + ", right is: "s +
-                   formatDoubleAsString(right()) + ", top is: "s + formatDoubleAsString(top()) + ", bottom is: "s +
-                   formatDoubleAsString(bottom()) + ", stops: "s + stops().summary();
+            return fmt::format("fill type is {}, gradient type is {}, degree is: {}, left is: {}, right is: {}, top is: {}, bottom is: {}, stops: {}",
+                               XLFillTypeToString(fillType()),
+                               XLGradientTypeToString(gradientType()),
+                               formatDoubleAsString(degree()),
+                               formatDoubleAsString(left()),
+                               formatDoubleAsString(right()),
+                               formatDoubleAsString(top()),
+                               formatDoubleAsString(bottom()),
+                               stops().summary());
         case XLPatternFill:
-            return "fill type is "s + XLFillTypeToString(fillType()) + ", pattern type is "s + XLPatternTypeToString(patternType()) +
-                   ", fgcolor is: "s + color().hex() + ", bgcolor: "s + backgroundColor().hex();
+            return fmt::format("fill type is {}, pattern type is {}, fgcolor is: {}, bgcolor: {}",
+                               XLFillTypeToString(fillType()),
+                               XLPatternTypeToString(patternType()),
+                               color().hex(),
+                               backgroundColor().hex());
         case XLFillTypeInvalid:
             [[fallthrough]];
         default:
-            return "fill type is invalid!"s;
+            return "fill type is invalid!";
     }
 }
 
@@ -1405,11 +1397,7 @@ size_t XLFills::count() const { return m_fills.size(); }
  */
 XLFill XLFills::fillByIndex(XLStyleIndex index) const
 {
-    if (index >= m_fills.size()) {
-        using namespace std::literals::string_literals;
-        throw XLException("XLFills::"s + __func__ + ": attempted to access index "s + std::to_string(index) + " with count "s +
-                          std::to_string(m_fills.size()));
-    }
+    Expects(index < m_fills.size());
     return m_fills.at(index);
 }
 
@@ -1522,14 +1510,12 @@ XLDataBarColor XLLine::color() const
  */
 std::string XLLine::summary() const
 {
-    using namespace std::literals::string_literals;
-    return "line style is "s + XLLineStyleToString(style()) + ", "s + color().summary();
+    return fmt::format("line style is {}, {}", XLLineStyleToString(style()), color().summary());
     // double tint = colorTint();
-    // std::string tintSummary = "colorTint is "s + (tint == 0.0 ? "(none)"s : std::to_string(tint));
+    // std::string tintSummary = fmt::format("colorTint is {}", (tint == 0.0 ? "(none)" : std::to_string(tint)));
     // size_t tintDecimalPos = tintSummary.find_last_of('.');
     // if (tintDecimalPos != std::string::npos) tintSummary = tintSummary.substr(0, tintDecimalPos + 3); // truncate colorTint double output
-    // 2 digits after the decimal separator return "line style is "s + XLLineStyleToString(style()) + ", color is "s + color().hex() + ", "s
-    // + tintSummary;
+    // 2 digits after the decimal separator return fmt::format("line style is {}, color is {}, {}", XLLineStyleToString(style()), color().hex(), tintSummary);
 }
 
 /**
@@ -1621,13 +1607,19 @@ bool XLBorder::setHorizontal(XLLineStyle lineStyle, XLColor lineColor, double li
  */
 std::string XLBorder::summary() const
 {
-    using namespace std::literals::string_literals;
-    std::string lineInfo{};
-    lineInfo += ", left: "s + left().summary() + ", right: " + right().summary() + ", top: "s + top().summary() +
-                ", bottom: " + bottom().summary() + ", diagonal: "s + diagonal().summary() + ", vertical: "s + vertical().summary() +
-                ", horizontal: "s + horizontal().summary();
-    return "diagonalUp: "s + (diagonalUp() ? "true"s : "false"s) + ", diagonalDown: "s + (diagonalDown() ? "true"s : "false"s) +
-           ", outline: "s + (outline() ? "true"s : "false"s) + lineInfo;
+    std::string lineInfo = fmt::format(", left: {}, right: {}, top: {}, bottom: {}, diagonal: {}, vertical: {}, horizontal: {}",
+                                       left().summary(),
+                                       right().summary(),
+                                       top().summary(),
+                                       bottom().summary(),
+                                       diagonal().summary(),
+                                       vertical().summary(),
+                                       horizontal().summary());
+    return fmt::format("diagonalUp: {}, diagonalDown: {}, outline: {}{}",
+                       diagonalUp() ? "true" : "false",
+                       diagonalDown() ? "true" : "false",
+                       outline() ? "true" : "false",
+                       lineInfo);
 }
 
 // ===== XLBorders, parent of XLBorder
@@ -1686,11 +1678,7 @@ size_t XLBorders::count() const { return m_borders.size(); }
  */
 XLBorder XLBorders::borderByIndex(XLStyleIndex index) const
 {
-    if (index >= m_borders.size()) {
-        using namespace std::literals::string_literals;
-        throw XLException("XLBorders::"s + __func__ + ": attempted to access index "s + std::to_string(index) + " with count "s +
-                          std::to_string(m_borders.size()));
-    }
+    Expects(index < m_borders.size());
     return m_borders.at(index);
 }
 
@@ -1764,7 +1752,7 @@ XLAlignmentStyle XLAlignment::vertical() const { return XLAlignmentStyleFromStri
 /**
  * @details Returns the text rotation
  */
-uint16_t XLAlignment::textRotation() const { return static_cast<uint16_t>(m_alignmentNode->attribute("textRotation").as_uint()); }
+uint16_t XLAlignment::textRotation() const { return gsl::narrow_cast<uint16_t>(m_alignmentNode->attribute("textRotation").as_uint()); }
 
 /**
  * @details check if text wrapping is enabled
@@ -1800,9 +1788,9 @@ uint32_t XLAlignment::readingOrder() const { return m_alignmentNode->attribute("
  * @details Setter functions
  */
 bool XLAlignment::setHorizontal(XLAlignmentStyle newStyle)
-{ return appendAndSetAttribute(*m_alignmentNode, "horizontal", XLAlignmentStyleToString(newStyle).c_str()).empty() == false; }
+{ return appendAndSetAttribute(*m_alignmentNode, "horizontal", XLAlignmentStyleToString(newStyle)).empty() == false; }
 bool XLAlignment::setVertical(XLAlignmentStyle newStyle)
-{ return appendAndSetAttribute(*m_alignmentNode, "vertical", XLAlignmentStyleToString(newStyle).c_str()).empty() == false; }
+{ return appendAndSetAttribute(*m_alignmentNode, "vertical", XLAlignmentStyleToString(newStyle)).empty() == false; }
 bool XLAlignment::setTextRotation(uint16_t newRotation)
 { return appendAndSetAttribute(*m_alignmentNode, "textRotation", std::to_string(newRotation)).empty() == false; }
 bool XLAlignment::setWrapText(bool set)
@@ -1823,12 +1811,16 @@ bool XLAlignment::setReadingOrder(uint32_t newReadingOrder)
  */
 std::string XLAlignment::summary() const
 {
-    using namespace std::literals::string_literals;
-    return "alignment horizontal="s + XLAlignmentStyleToString(horizontal()) + ", vertical="s + XLAlignmentStyleToString(vertical()) +
-           ", textRotation="s + std::to_string(textRotation()) + ", wrapText="s + (wrapText() ? "true" : "false") + ", indent="s +
-           std::to_string(indent()) + ", relativeIndent="s + std::to_string(relativeIndent()) + ", justifyLastLine="s +
-           (justifyLastLine() ? "true" : "false") + ", shrinkToFit="s + (shrinkToFit() ? "true" : "false") + ", readingOrder="s +
-           XLReadingOrderToString(readingOrder());
+    return fmt::format("alignment horizontal={}, vertical={}, textRotation={}, wrapText={}, indent={}, relativeIndent={}, justifyLastLine={}, shrinkToFit={}, readingOrder={}",
+                       XLAlignmentStyleToString(horizontal()),
+                       XLAlignmentStyleToString(vertical()),
+                       textRotation(),
+                       wrapText() ? "true" : "false",
+                       indent(),
+                       relativeIndent(),
+                       justifyLastLine() ? "true" : "false",
+                       shrinkToFit() ? "true" : "false",
+                       XLReadingOrderToString(readingOrder()));
 }
 
 /**
@@ -1994,15 +1986,23 @@ bool XLCellFormat::setExtLst(XLUnsupportedElement const& newExtLst)
  */
 std::string XLCellFormat::summary() const
 {
-    using namespace std::literals::string_literals;
-    return "numberFormatId="s + std::to_string(numberFormatId()) + ", fontIndex="s + std::to_string(fontIndex()) + ", fillIndex="s +
-           std::to_string(fillIndex()) + ", borderIndex="s + std::to_string(borderIndex()) +
-           (m_permitXfId ? (", xfId: "s + std::to_string(xfId())) : ""s) + ", applyNumberFormat: "s +
-           (applyNumberFormat() ? "true"s : "false"s) + ", applyFont: "s + (applyFont() ? "true"s : "false"s) + ", applyFill: "s +
-           (applyFill() ? "true"s : "false"s) + ", applyBorder: "s + (applyBorder() ? "true"s : "false"s) + ", applyAlignment: "s +
-           (applyAlignment() ? "true"s : "false"s) + ", applyProtection: "s + (applyProtection() ? "true"s : "false"s) +
-           ", quotePrefix: "s + (quotePrefix() ? "true"s : "false"s) + ", pivotButton: "s + (pivotButton() ? "true"s : "false"s) +
-           ", locked: "s + (locked() ? "true"s : "false"s) + ", hidden: "s + (hidden() ? "true"s : "false"s) + ", " + alignment().summary();
+    return fmt::format("numberFormatId={}, fontIndex={}, fillIndex={}, borderIndex={}{}, applyNumberFormat: {}, applyFont: {}, applyFill: {}, applyBorder: {}, applyAlignment: {}, applyProtection: {}, quotePrefix: {}, pivotButton: {}, locked: {}, hidden: {}, {}",
+                       numberFormatId(),
+                       fontIndex(),
+                       fillIndex(),
+                       borderIndex(),
+                       m_permitXfId ? fmt::format(", xfId: {}", xfId()) : "",
+                       applyNumberFormat() ? "true" : "false",
+                       applyFont() ? "true" : "false",
+                       applyFill() ? "true" : "false",
+                       applyBorder() ? "true" : "false",
+                       applyAlignment() ? "true" : "false",
+                       applyProtection() ? "true" : "false",
+                       quotePrefix() ? "true" : "false",
+                       pivotButton() ? "true" : "false",
+                       locked() ? "true" : "false",
+                       hidden() ? "true" : "false",
+                       alignment().summary());
 }
 
 // ===== XLCellFormats, one parent of XLCellFormat (the other being XLCellFormats)
@@ -2072,11 +2072,7 @@ size_t XLCellFormats::count() const { return m_cellFormats.size(); }
  */
 XLCellFormat XLCellFormats::cellFormatByIndex(XLStyleIndex index) const
 {
-    if (index >= m_cellFormats.size()) {
-        using namespace std::literals::string_literals;
-        throw XLException("XLCellFormats::"s + __func__ + ": attempted to access index "s + std::to_string(index) + " with count "s +
-                          std::to_string(m_cellFormats.size()));
-    }
+    Expects(index < m_cellFormats.size());
     return m_cellFormats.at(index);
 }
 
@@ -2196,11 +2192,14 @@ bool XLCellStyle::setExtLst(XLUnsupportedElement const& newExtLst)
  */
 std::string XLCellStyle::summary() const
 {
-    using namespace std::literals::string_literals;
     uint32_t iLevel = outlineStyle();
-    return "name="s + name() + ", xfId="s + std::to_string(xfId()) + ", builtinId="s + std::to_string(builtinId()) +
-           (iLevel != XLInvalidUInt32 ? ", iLevel="s + std::to_string(outlineStyle()) : ""s) + (hidden() ? ", hidden=true"s : ""s) +
-           (customBuiltin() ? ", customBuiltin=true"s : ""s);
+    return fmt::format("name={}, xfId={}, builtinId={}{}{}{}",
+                       name(),
+                       xfId(),
+                       builtinId(),
+                       iLevel != XLInvalidUInt32 ? fmt::format(", iLevel={}", outlineStyle()) : "",
+                       hidden() ? ", hidden=true" : "",
+                       customBuiltin() ? ", customBuiltin=true" : "");
 }
 
 // ===== XLCellStyles, parent of XLCellStyle
@@ -2265,11 +2264,7 @@ size_t XLCellStyles::count() const { return m_cellStyles.size(); }
  */
 XLCellStyle XLCellStyles::cellStyleByIndex(XLStyleIndex index) const
 {
-    if (index >= m_cellStyles.size()) {
-        using namespace std::literals::string_literals;
-        throw XLException("XLCellStyles::"s + __func__ + ": attempted to access index "s + std::to_string(index) + " with count "s +
-                          std::to_string(m_cellStyles.size()));
-    }
+    Expects(index < m_cellStyles.size());
     return m_cellStyles.at(index);
 }
 
@@ -2391,7 +2386,6 @@ bool XLDiffCellFormat::setExtLst(XLUnsupportedElement const& newExtLst)
  */
 std::string XLDiffCellFormat::summary() const
 {
-    using namespace std::literals::string_literals;
     return "";    // TODO: write this
 }
 
@@ -2457,11 +2451,7 @@ size_t XLDiffCellFormats::count() const { return m_diffCellFormats.size(); }
  */
 XLDiffCellFormat XLDiffCellFormats::diffCellFormatByIndex(XLStyleIndex index) const
 {
-    if (index >= m_diffCellFormats.size()) {
-        using namespace std::literals::string_literals;
-        throw XLException("XLDiffCellFormats::"s + __func__ + ": attempted to access index "s + std::to_string(index) + " with count "s +
-                          std::to_string(m_diffCellFormats.size()));
-    }
+    Expects(index < m_diffCellFormats.size());
     return m_diffCellFormats.at(index);
 }
 
@@ -2563,7 +2553,7 @@ XLStyles::XLStyles(XLXmlData* xmlData, bool suppressWarnings, std::string styles
                 [[fallthrough]];
             case XLStylesExtLst:
                 if (!m_suppressWarnings)
-                    std::cout << "XLStyles: Ignoring currently unsupported <" << XLStylesEntryTypeToString(e) + "> node" << std::endl;
+                    std::cout << "XLStyles: Ignoring currently unsupported <" << std::string(XLStylesEntryTypeToString(e)) + "> node" << std::endl;
                 break;
             case XLStylesInvalid:
                 [[fallthrough]];
@@ -2577,17 +2567,17 @@ XLStyles::XLStyles(XLXmlData* xmlData, bool suppressWarnings, std::string styles
 
     // ===== Fallbacks: create root style nodes (in reverse order, using prepend_child)
     if (!m_diffCellFormats) {
-        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesDiffCellFormats).c_str());
+        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesDiffCellFormats));
         wrapNode(doc.document_element(), node, stylesPrefix);
         m_diffCellFormats = std::make_unique<XLDiffCellFormats>(node);
     }
     if (!m_cellStyles) {
-        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesCellStyles).c_str());
+        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesCellStyles));
         wrapNode(doc.document_element(), node, stylesPrefix);
         m_cellStyles = std::make_unique<XLCellStyles>(node);
     }
     if (!m_cellFormats) {
-        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesCellFormats).c_str());
+        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesCellFormats));
         wrapNode(doc.document_element(), node, stylesPrefix);
         m_cellFormats = std::make_unique<XLCellFormats>(node, XLPermitXfID);
     }
@@ -2602,27 +2592,27 @@ XLStyles::XLStyles(XLXmlData* xmlData, bool suppressWarnings, std::string styles
     }
 
     if (!m_cellStyleFormats) {
-        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesCellStyleFormats).c_str());
+        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesCellStyleFormats));
         wrapNode(doc.document_element(), node, stylesPrefix);
         m_cellStyleFormats = std::make_unique<XLCellFormats>(node);
     }
     if (!m_borders) {
-        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesBorders).c_str());
+        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesBorders));
         wrapNode(doc.document_element(), node, stylesPrefix);
         m_borders = std::make_unique<XLBorders>(node);
     }
     if (!m_fills) {
-        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesFills).c_str());
+        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesFills));
         wrapNode(doc.document_element(), node, stylesPrefix);
         m_fills = std::make_unique<XLFills>(node);
     }
     if (!m_fonts) {
-        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesFonts).c_str());
+        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesFonts));
         wrapNode(doc.document_element(), node, stylesPrefix);
         m_fonts = std::make_unique<XLFonts>(node);
     }
     if (!m_numberFormats) {
-        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesNumberFormats).c_str());
+        node = doc.document_element().prepend_child(XLStylesEntryTypeToString(XLStylesNumberFormats));
         wrapNode(doc.document_element(), node, stylesPrefix);
         m_numberFormats = std::make_unique<XLNumberFormats>(node);
     }
