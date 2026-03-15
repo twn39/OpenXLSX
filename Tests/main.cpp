@@ -1,7 +1,3 @@
-//
-// Created by Troldal on 2019-01-10.
-//
-
 #ifndef OPENXLSX_TESTMAIN_H
 #define OPENXLSX_TESTMAIN_H
 

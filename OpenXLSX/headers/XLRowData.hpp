@@ -1,7 +1,3 @@
-//
-// Created by Kenneth Balslev on 24/08/2020.
-//
-
 #ifndef OPENXLSX_XLROWDATA_HPP
 #define OPENXLSX_XLROWDATA_HPP
 

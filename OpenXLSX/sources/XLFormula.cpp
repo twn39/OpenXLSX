@@ -1,7 +1,3 @@
-//
-// Created by Kenneth Balslev on 27/08/2021.
-//
-
 // ===== External Includes ===== //
 #include <cassert>
 #include <pugixml.hpp>

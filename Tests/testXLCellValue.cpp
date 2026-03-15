@@ -1,7 +1,3 @@
-//
-// Created by Troldal on 2019-01-12.
-//
-
 #include <OpenXLSX.hpp>
 #include <catch2/catch_all.hpp>
 #include <fstream>

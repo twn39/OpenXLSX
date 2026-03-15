@@ -1,7 +1,3 @@
-//
-// Created by Kenneth Balslev on 19/08/2020.
-//
-
 // ===== External Includes ===== //
 #include <cassert>
 #include <cstring>

@@ -1,7 +1,3 @@
-//
-// Created by Kenneth Balslev on 15/08/2021.
-//
-
 #ifndef OPENXLSX_XLCONSTANTS_HPP
 #define OPENXLSX_XLCONSTANTS_HPP
 
