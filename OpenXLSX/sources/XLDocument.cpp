@@ -377,20 +377,33 @@ namespace
 
 }    // namespace
 
+/**
+ * @details Initializes a new document with the provided ZIP archive.
+ */
 XLDocument::XLDocument(const IZipArchive& zipArchive) : m_xmlSavingDeclaration{}, m_archive(zipArchive) {}
 
 /**
- * @details An alternative constructor, taking a std::string with the path to the .xlsx package as an argument.
+ * @details Constructor taking a non-owning string_view to the .xlsx path to reduce heap allocations during initialization.
  */
-XLDocument::XLDocument(const std::string& docPath, const IZipArchive& zipArchive) : m_xmlSavingDeclaration{}, m_archive(zipArchive)
-{ open(docPath); }
+XLDocument::XLDocument(std::string_view docPath, const IZipArchive& zipArchive) : m_xmlSavingDeclaration{}, m_archive(zipArchive)
+{
+    open(docPath);
+}
 
 /**
- * @details The destructor calls the closeDocument method before the object is destroyed.
+ * @details Legacy constructor for std::string compatibility, forwarding to the string_view implementation.
+ */
+XLDocument::XLDocument(const std::string& docPath, const IZipArchive& zipArchive) : m_xmlSavingDeclaration{}, m_archive(zipArchive)
+{
+    open(std::string_view(docPath));
+}
+
+/**
+ * @details Ensures the document package is safely closed and resources are released upon destruction.
  */
 XLDocument::~XLDocument()
 {
-    if (isOpen()) close();    // 2024-05-31 prevent double-close if document has been manually closed before
+    if (isOpen()) close();
 }
 
 /**
@@ -404,17 +417,14 @@ void XLDocument::showWarnings() { m_suppressWarnings = false; }
 void XLDocument::suppressWarnings() { m_suppressWarnings = true; }
 
 /**
- * @details The openDocument method opens the .xlsx package in the following manner:
- * - Check if a document is already open. If yes, close it.
- * - Create a temporary folder for the contents of the .xlsx package
- * - Unzip the contents of the package to the temporary folder.
- * - load the contents into the data structure for manipulation.
+ * @details Opens the .xlsx package by loading the ZIP archive and initializing the internal document structure.
+ * This includes reading [Content_Types].xml, document relationships, and core workbook data.
  */
-void XLDocument::open(const std::string& fileName)
+void XLDocument::open(std::string_view fileName)
 {
     // Check if a document is already open. If yes, close it.
-    if (m_archive.isOpen()) close();    // TBD: consider throwing if a file is already open.
-    m_filePath = fileName;
+    if (m_archive.isOpen()) close();
+    m_filePath = std::string(fileName);
     m_archive.open(m_filePath);
 
     // ===== Add and open the Relationships and [Content_Types] files for the document level.
@@ -440,10 +450,10 @@ void XLDocument::open(const std::string& fileName)
     size_t pos = workbookPath.find_last_of('/');
     if (pos == std::string::npos) {
         using namespace std::literals::string_literals;
-        throw XLInputError(std::string("workbook path from "s + relsFilename + " has no folder name: "s) + workbookPath);
+        throw XLInputError("workbook path from "s + relsFilename + " has no folder name: "s + workbookPath);
     }
-    std::string workbookRelsFilename = std::string("xl/_rels/") + workbookPath.substr(pos + 1) + std::string(".rels");
-    m_data.emplace_back(this, workbookRelsFilename);    // m_data.emplace_back(this, "xl/_rels/workbook.xml.rels");
+    std::string workbookRelsFilename = "xl/_rels/" + workbookPath.substr(pos + 1) + ".rels";
+    m_data.emplace_back(this, workbookRelsFilename);
     m_wbkRelationships = XLRelationships(getXmlData(workbookRelsFilename), workbookRelsFilename);
 
     // ===== Create xl/styles.xml if missing
@@ -575,7 +585,7 @@ namespace
      * @param path Check for existence of this
      * @return true if path exists as a file or directory
      */
-    bool pathExists(const std::string& path) { return std::filesystem::exists(std::filesystem::u8path(path)); }
+    bool pathExists(std::string_view path) { return std::filesystem::exists(std::filesystem::u8path(path)); }
 #ifdef __GNUC__    // conditionally enable GCC specific pragmas to suppress unused function warning
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wunused-function"
@@ -585,12 +595,12 @@ namespace
      * @param fileName The path to check for existence (as a file)
      * @return true if fileName exists and is a file, otherwise false
      */
-    bool fileExists(const std::string& fileName)
+    bool fileExists(std::string_view fileName)
     {
         return std::filesystem::exists(std::filesystem::u8path(fileName)) &&
                !std::filesystem::is_directory(std::filesystem::u8path(fileName));
     }
-    bool isDirectory(const std::string& fileName)
+    bool isDirectory(std::string_view fileName)
     {
         return std::filesystem::exists(std::filesystem::u8path(fileName)) &&
                std::filesystem::is_directory(std::filesystem::u8path(fileName));
@@ -601,22 +611,17 @@ namespace
 }    // anonymous namespace
 
 /**
- * @details Create a new document. This is done by saving the data in XLTemplate.h in binary format.
+ * @details Initializes a new, empty .xlsx package by writing a template archive to the specified path.
  */
-void XLDocument::create(const std::string& fileName, bool forceOverwrite)
+void XLDocument::create(std::string_view fileName, bool forceOverwrite)
 {
-    // 2024-07-26: prevent silent overwriting of existing files
     if (!forceOverwrite and pathExists(fileName)) {
         using namespace std::literals::string_literals;
-        throw XLException("XLDocument::create: refusing to overwrite existing file "s + fileName);
+        throw XLException("XLDocument::create: refusing to overwrite existing file "s + std::string(fileName));
     }
 
-    // ===== Create a temporary output file stream.
     std::ofstream outfile(std::filesystem::u8path(fileName), std::ios::binary);
-
-    // ===== Stream the binary data for an empty workbook to the output file.
-    // ===== Casting, in particular reinterpret_cast, is discouraged, but in this case it is unfortunately unavoidable.
-    outfile.write(reinterpret_cast<const char*>(templateData), templateSize);    // NOLINT
+    outfile.write(reinterpret_cast<const char*>(templateData), templateSize);
     outfile.close();
 
     open(fileName);
@@ -624,28 +629,21 @@ void XLDocument::create(const std::string& fileName, bool forceOverwrite)
 
 /**
  * @details Legacy function to create a new document
- * @deprecated use instead XLDocument::create(const std::string& fileName, bool forceOverwrite)
- * @warning This deprecated function overwrites an existing file without prompt
  */
-void XLDocument::create(const std::string& fileName) { create(fileName, XLForceOverwrite); }
+void XLDocument::create(const std::string& fileName) { create(std::string_view(fileName), XLForceOverwrite); }
 
 /**
- * @details The document is closed by deleting the temporary folder structure.
+ * @details Closes the document, releases the ZIP archive, and resets all internal document state.
  */
 void XLDocument::close()
 {
     if (m_archive.isValid()) m_archive.close();
-    // m_suppressWarnings shall remain in the configured setting
-
     m_filePath.clear();
-
     m_xmlSavingDeclaration = XLXmlSavingDeclaration("1.0", "UTF-8", false);
-
     m_data.clear();
-    m_sharedStringCache.clear();            // 2024-12-18 BUGFIX: clear shared strings cache - addresses issue #283
-    m_sharedStringIndex.clear();            // Clear hash index as well
-    m_sharedStrings = XLSharedStrings();    //
-
+    m_sharedStringCache.clear();
+    m_sharedStringIndex.clear();
+    m_sharedStrings = XLSharedStrings();
     m_docRelationships = XLRelationships();
     m_wbkRelationships = XLRelationships();
     m_contentTypes     = XLContentTypes();
@@ -655,51 +653,34 @@ void XLDocument::close()
     m_styles           = XLStyles();
     m_workbook         = XLWorkbook();
     m_sharedFormulas.clear();
-    // m_archive          = IZipArchive(); // keep IZipArchive class intact throughout close/open
 }
 
 /**
- * @details Save the document with the same name. The existing file will be overwritten.
+ * @details Persists all document changes back to the original file path.
  */
 void XLDocument::save() { saveAs(m_filePath, XLForceOverwrite); }
 
 /**
- * @details Save the document with a new name. If present, the 'calcChain.xml file will be ignored. The reason for this
- * is that changes to the document may invalidate the calcChain.xml file. Deleting will force Excel to re-create the
- * file. This will happen automatically, without the user noticing.
+ * @details Persists the current document state to a new file location.
  */
-void XLDocument::saveAs(const std::string& fileName, bool forceOverwrite)
+void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
 {
-    // 2024-07-26: prevent silent overwriting of existing files
     if (!forceOverwrite and pathExists(fileName)) {
         using namespace std::literals::string_literals;
-        throw XLException("XLDocument::saveAs: refusing to overwrite existing file "s + fileName);
+        throw XLException("XLDocument::saveAs: refusing to overwrite existing file "s + std::string(fileName));
     }
 
-    m_filePath = fileName;
-
-    // ===== Update worksheet dimensions before saving
+    m_filePath = std::string(fileName);
     workbook().updateWorksheetDimensions();
-
-    // ===== Delete the calcChain.xml file in order to force re-calculation of the sheet
-    // TODO: Is this the best way to do it? Maybe there is a flag that can be set, that forces re-calculalion.
     execCommand(XLCommand(XLCommandType::ResetCalcChain));
 
-    // ===== Add ContentTypes and Relationships to archive
     m_archive.addEntry("[Content_Types].xml", m_contentTypes.xmlData(m_xmlSavingDeclaration));
     m_archive.addEntry("_rels/.rels", m_docRelationships.xmlData(m_xmlSavingDeclaration));
-    // Workbook relationships path might vary, but OpenXLSX usually uses xl/_rels/workbook.xml.rels
-    // m_wbkRelationships path is stored when opening. We should ideally use that.
-    // In OpenXLSX it is usually xl/_rels/workbook.xml.rels
     if (m_wbkRelationships.valid()) {
-        // Find the folder and filename for workbook
-        // This is a bit of a hack, but matches how it's handled in OpenXLSX
         m_archive.addEntry("xl/_rels/workbook.xml.rels", m_wbkRelationships.xmlData(m_xmlSavingDeclaration));
     }
 
-    // ===== Add all xml items to archive and save the archive.
     for (auto& item : m_data) {
-        // Skip files already handled
         if (item.getXmlPath() == "[Content_Types].xml" or item.getXmlPath() == "_rels/.rels" ||
             item.getXmlPath() == "xl/_rels/workbook.xml.rels")
             continue;
@@ -717,13 +698,11 @@ void XLDocument::saveAs(const std::string& fileName, bool forceOverwrite)
 
 /**
  * @details Legacy function to save the document with a new name
- * @deprecated use instead void XLDocument::saveAs(const std::string& fileName, bool forceOverwrite)
- * @warning This deprecated function overwrites an existing file without prompt
  */
-void XLDocument::saveAs(const std::string& fileName) { saveAs(fileName, XLForceOverwrite); }
+void XLDocument::saveAs(const std::string& fileName) { saveAs(std::string_view(fileName), XLForceOverwrite); }
 
 /**
- * @details
+ * @details Extracts and returns the filename from the document's full path.
  */
 std::string XLDocument::name() const
 {
@@ -831,7 +810,7 @@ std::string XLDocument::property(XLProperty prop) const
  * @return true if string adheres to format & version numbers could be extracted
  * @return false in case of failure
  */
-bool getAppVersion(const std::string& versionString, int& majorVersion, int& minorVersion)
+bool getAppVersion(std::string_view versionString, int& majorVersion, int& minorVersion)
 {
     // ===== const expressions for hardcoded version limits
     constexpr int minMajorV = 0, maxMajorV = 99;      // allowed value range for major version number
@@ -841,12 +820,12 @@ bool getAppVersion(const std::string& versionString, int& majorVersion, int& min
     const size_t dotPos = versionString.find_first_of('.');
 
     // early failure if string is only blanks or does not contain a dot
-    if (begin == std::string::npos or dotPos == std::string::npos) return false;
+    if (begin == std::string_view::npos or dotPos == std::string_view::npos) return false;
 
     const size_t end = versionString.find_last_not_of(" \t");
-    if (begin != std::string::npos and dotPos != std::string::npos) {
-        const std::string strMajorVersion = versionString.substr(begin, dotPos - begin);
-        const std::string strMinorVersion = versionString.substr(dotPos + 1, end - dotPos);
+    if (begin != std::string_view::npos and dotPos != std::string_view::npos) {
+        const std::string strMajorVersion = std::string(versionString.substr(begin, dotPos - begin));
+        const std::string strMinorVersion = std::string(versionString.substr(dotPos + 1, end - dotPos));
         try {
             size_t pos;
             majorVersion = std::stoi(strMajorVersion, &pos);
@@ -867,116 +846,96 @@ bool getAppVersion(const std::string& versionString, int& majorVersion, int& min
 
 /**
  * @details Set the value for a property.
- *
- * If the property is a datetime, it must be in the W3CDTF format, i.e. YYYY-MM-DDTHH:MM:SSZ. Also, the time should
- * be GMT. Creating a time point in this format can be done as follows:
- * ```cpp
- * #include <iostream>
- * #include <iomanip>
- * #include <ctime>
- * #include <sstream>
- *
- * // other stuff here
- *
- * std::time_t t = std::time(nullptr);
- * std::tm tm = *std::gmtime(&t);
- *
- * std::stringstream ss;
- * ss << std::put_time(&tm, "%FT%TZ");
- * auto datetime = ss.str();
- *
- * // datetime now is a string with the datetime in the right format.
- *
- * ```
  */
-void XLDocument::setProperty(XLProperty prop, const std::string& value)    // NOLINT
+void XLDocument::setProperty(XLProperty prop, std::string_view value)
 {
+    const std::string valStr(value);
     switch (prop) {
         case XLProperty::Application:
-            m_appProperties.setProperty("Application", value);
+            m_appProperties.setProperty("Application", valStr);
             break;
         case XLProperty::AppVersion: {
             int minorVersion, majorVersion;
             // ===== Check for the format "XX.XXXX", with X being a number.
-            if (!getAppVersion(value, majorVersion, minorVersion)) throw XLPropertyError("Invalid property value: " + std::string(value));
+            if (!getAppVersion(value, majorVersion, minorVersion)) throw XLPropertyError("Invalid property value: " + valStr);
             m_appProperties.setProperty("AppVersion", fmt::format("{}.{}", majorVersion, minorVersion));
             break;
         }
 
         case XLProperty::Category:
-            m_coreProperties.setCategory(value);
+            m_coreProperties.setCategory(valStr);
             break;
         case XLProperty::Company:
-            m_appProperties.setProperty("Company", value);
+            m_appProperties.setProperty("Company", valStr);
             break;
         case XLProperty::CreationDate:
-            m_coreProperties.setProperty("dcterms:created", value);
+            m_coreProperties.setProperty("dcterms:created", valStr);
             break;
         case XLProperty::Creator:
-            m_coreProperties.setCreator(value);
+            m_coreProperties.setCreator(valStr);
             break;
         case XLProperty::Description:
-            m_coreProperties.setDescription(value);
+            m_coreProperties.setDescription(valStr);
             break;
         case XLProperty::DocSecurity:
             if (value == "0" or value == "1" or value == "2" or value == "4" or value == "8")
-                m_appProperties.setProperty("DocSecurity", value);
+                m_appProperties.setProperty("DocSecurity", valStr);
             else
                 throw XLPropertyError("Invalid property value");
             break;
 
         case XLProperty::HyperlinkBase:
-            m_appProperties.setProperty("HyperlinkBase", value);
+            m_appProperties.setProperty("HyperlinkBase", valStr);
             break;
         case XLProperty::HyperlinksChanged:
             if (value == "true" or value == "false")
-                m_appProperties.setProperty("HyperlinksChanged", value);
+                m_appProperties.setProperty("HyperlinksChanged", valStr);
             else
                 throw XLPropertyError("Invalid property value");
 
             break;
 
         case XLProperty::Keywords:
-            m_coreProperties.setKeywords(value);
+            m_coreProperties.setKeywords(valStr);
             break;
         case XLProperty::LastModifiedBy:
-            m_coreProperties.setLastModifiedBy(value);
+            m_coreProperties.setLastModifiedBy(valStr);
             break;
         case XLProperty::LastPrinted:
-            m_coreProperties.setLastPrinted(value);
+            m_coreProperties.setLastPrinted(valStr);
             break;
         case XLProperty::LinksUpToDate:
             if (value == "true" or value == "false")
-                m_appProperties.setProperty("LinksUpToDate", value);
+                m_appProperties.setProperty("LinksUpToDate", valStr);
             else
                 throw XLPropertyError("Invalid property value");
             break;
 
         case XLProperty::Manager:
-            m_appProperties.setProperty("Manager", value);
+            m_appProperties.setProperty("Manager", valStr);
             break;
         case XLProperty::ModificationDate:
-            m_coreProperties.setProperty("dcterms:modified", value);
+            m_coreProperties.setProperty("dcterms:modified", valStr);
             break;
         case XLProperty::ScaleCrop:
             if (value == "true" or value == "false")
-                m_appProperties.setProperty("ScaleCrop", value);
+                m_appProperties.setProperty("ScaleCrop", valStr);
             else
                 throw XLPropertyError("Invalid property value");
             break;
 
         case XLProperty::SharedDoc:
             if (value == "true" or value == "false")
-                m_appProperties.setProperty("SharedDoc", value);
+                m_appProperties.setProperty("SharedDoc", valStr);
             else
                 throw XLPropertyError("Invalid property value");
             break;
 
         case XLProperty::Subject:
-            m_coreProperties.setSubject(value);
+            m_coreProperties.setSubject(valStr);
             break;
         case XLProperty::Title:
-            m_coreProperties.setTitle(value);
+            m_coreProperties.setTitle(valStr);
             break;
     }
 }
@@ -1058,46 +1017,39 @@ XLRelationships XLDocument::sheetRelationships(uint16_t sheetXmlNo)
     std::string relsFilename = "xl/worksheets/_rels/sheet"s + std::to_string(sheetXmlNo) + ".xml.rels"s;
 
     if (!m_archive.hasEntry(relsFilename)) {
-        // ===== Create the sheet relationships file within the archive
-        m_archive.addEntry(
-            relsFilename,
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");    // empty XML file, class constructor will do the rest
-    }
-    constexpr const bool DO_NOT_THROW = true;
-    XLXmlData*           xmlData      = getXmlData(relsFilename, DO_NOT_THROW);
-    if (xmlData == nullptr)    // if not yet managed: add the sheet relationships file to the managed files
-        xmlData = &m_data.emplace_back(this, relsFilename, "", XLContentType::Relationships);
-
-    return XLRelationships(xmlData, relsFilename);
-}
-
-/**
- * @details return an XLRelationships item for a drawing - create the underlying XML and add it to the archive if needed
- */
-XLRelationships XLDocument::drawingRelationships(const std::string& drawingPath)
-{
-    using namespace std::literals::string_literals;
-
-    // Find the folder and filename
-    size_t      lastSlash    = drawingPath.find_last_of('/');
-    std::string folder       = drawingPath.substr(0, lastSlash);
-    std::string filename     = drawingPath.substr(lastSlash + 1);
-    std::string relsFilename = folder + "/_rels/"s + filename + ".rels"s;
-
-    if (!m_archive.hasEntry(relsFilename)) {
-        // ===== Create the drawing relationships file within the archive
         m_archive.addEntry(relsFilename, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     }
-
-    constexpr const bool DO_NOT_THROW = true;
-    XLXmlData*           xmlData      = getXmlData(relsFilename, DO_NOT_THROW);
+    constexpr bool DO_NOT_THROW = true;
+    XLXmlData*     xmlData      = getXmlData(relsFilename, DO_NOT_THROW);
     if (xmlData == nullptr) xmlData = &m_data.emplace_back(this, relsFilename, "", XLContentType::Relationships);
 
     return XLRelationships(xmlData, relsFilename);
 }
 
 /**
- * @details return an XLDrawing item for sheet with sheetXmlNo - create the underlying XML and add it to the archive if needed
+ * @details return an XLRelationships item for a drawing
+ */
+XLRelationships XLDocument::drawingRelationships(std::string_view drawingPath)
+{
+    using namespace std::literals::string_literals;
+    size_t      lastSlash    = drawingPath.find_last_of('/');
+    std::string folder       = std::string(drawingPath.substr(0, lastSlash));
+    std::string filename     = std::string(drawingPath.substr(lastSlash + 1));
+    std::string relsFilename = folder + "/_rels/"s + filename + ".rels"s;
+
+    if (!m_archive.hasEntry(relsFilename)) {
+        m_archive.addEntry(relsFilename, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+    }
+
+    constexpr bool DO_NOT_THROW = true;
+    XLXmlData*     xmlData      = getXmlData(relsFilename, DO_NOT_THROW);
+    if (xmlData == nullptr) xmlData = &m_data.emplace_back(this, relsFilename, "", XLContentType::Relationships);
+
+    return XLRelationships(xmlData, relsFilename);
+}
+
+/**
+ * @details return an XLDrawing item for sheet with sheetXmlNo
  */
 XLDrawing XLDocument::sheetDrawing(uint16_t sheetXmlNo)
 {
@@ -1105,22 +1057,18 @@ XLDrawing XLDocument::sheetDrawing(uint16_t sheetXmlNo)
     std::string drawingFilename = "xl/drawings/drawing"s + std::to_string(sheetXmlNo) + ".xml"s;
 
     if (!m_archive.hasEntry(drawingFilename)) {
-        // ===== Create the sheet drawing file within the archive
-        m_archive.addEntry(
-            drawingFilename,
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"standalone=\"yes\"?>");          // empty XML file, class constructor will do the rest
-        m_contentTypes.addOverride("/" + drawingFilename, XLContentType::Drawing);    // add content types entry
+        m_archive.addEntry(drawingFilename, "<?xml version=\"1.0\" encoding=\"UTF-8\"standalone=\"yes\"?>");
+        m_contentTypes.addOverride("/" + drawingFilename, XLContentType::Drawing);
     }
-    constexpr const bool DO_NOT_THROW = true;
-    XLXmlData*           xmlData      = getXmlData(drawingFilename, DO_NOT_THROW);
-    if (xmlData == nullptr)    // if not yet managed: add the sheet drawing file to the managed files
-        xmlData = &m_data.emplace_back(this, drawingFilename, "", XLContentType::Drawing);
+    constexpr bool DO_NOT_THROW = true;
+    XLXmlData*     xmlData      = getXmlData(drawingFilename, DO_NOT_THROW);
+    if (xmlData == nullptr) xmlData = &m_data.emplace_back(this, drawingFilename, "", XLContentType::Drawing);
 
     return XLDrawing(xmlData);
 }
 
 /**
- * @details return an XLVmlDrawing item for sheet with sheetXmlNo - create the underlying XML and add it to the archive if needed
+ * @details return an XLVmlDrawing item for sheet with sheetXmlNo
  */
 XLVmlDrawing XLDocument::sheetVmlDrawing(uint16_t sheetXmlNo)
 {
@@ -1128,16 +1076,12 @@ XLVmlDrawing XLDocument::sheetVmlDrawing(uint16_t sheetXmlNo)
     std::string vmlDrawingFilename = "xl/drawings/vmlDrawing"s + std::to_string(sheetXmlNo) + ".vml"s;
 
     if (!m_archive.hasEntry(vmlDrawingFilename)) {
-        // ===== Create the sheet drawing file within the archive
-        m_archive.addEntry(
-            vmlDrawingFilename,
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"standalone=\"yes\"?>");    // empty XML file, class constructor will do the rest
-        m_contentTypes.addOverride("/" + vmlDrawingFilename, XLContentType::VMLDrawing);    // add content types entry
+        m_archive.addEntry(vmlDrawingFilename, "<?xml version=\"1.0\" encoding=\"UTF-8\"standalone=\"yes\"?>");
+        m_contentTypes.addOverride("/" + vmlDrawingFilename, XLContentType::VMLDrawing);
     }
-    constexpr const bool DO_NOT_THROW = true;
-    XLXmlData*           xmlData      = getXmlData(vmlDrawingFilename, DO_NOT_THROW);
-    if (xmlData == nullptr)    // if not yet managed: add the sheet drawing file to the managed files
-        xmlData = &m_data.emplace_back(this, vmlDrawingFilename, "", XLContentType::VMLDrawing);
+    constexpr bool DO_NOT_THROW = true;
+    XLXmlData*     xmlData      = getXmlData(vmlDrawingFilename, DO_NOT_THROW);
+    if (xmlData == nullptr) xmlData = &m_data.emplace_back(this, vmlDrawingFilename, "", XLContentType::VMLDrawing);
 
     return XLVmlDrawing(xmlData);
 }
@@ -1145,21 +1089,20 @@ XLVmlDrawing XLDocument::sheetVmlDrawing(uint16_t sheetXmlNo)
 /**
  * @details Add an image to the document archive (xl/media/)
  */
-std::string XLDocument::addImage(const std::string& name, const std::string& data)
+std::string XLDocument::addImage(std::string_view name, std::string_view data)
 {
     using namespace std::literals::string_literals;
-    std::string internalPath = "xl/media/"s + name;
+    std::string internalPath = "xl/media/"s + std::string(name);
     if (!m_archive.hasEntry(internalPath)) {
-        m_archive.addEntry(internalPath, data);
+        m_archive.addEntry(internalPath, std::string(data));
 
-        // Add ContentTypes for common image extensions if missing
         size_t dotPos = name.find_last_of('.');
-        if (dotPos != std::string::npos) {
-            std::string ext = name.substr(dotPos + 1);
+        if (dotPos != std::string_view::npos) {
+            std::string_view ext = name.substr(dotPos + 1);
             if (ext == "png")
                 m_contentTypes.addDefault("png", "image/png");
             else if (ext == "jpg" or ext == "jpeg")
-                m_contentTypes.addDefault(ext, "image/jpeg");
+                m_contentTypes.addDefault(std::string(ext), "image/jpeg");
         }
     }
     return internalPath;
@@ -1168,14 +1111,14 @@ std::string XLDocument::addImage(const std::string& name, const std::string& dat
 /**
  * @details Get an image from the document archive (xl/media/)
  */
-std::string XLDocument::getImage(const std::string& path) const
+std::string XLDocument::getImage(std::string_view path) const
 {
-    if (m_archive.hasEntry(path)) { return m_archive.getEntry(path); }
+    if (m_archive.hasEntry(std::string(path))) { return m_archive.getEntry(std::string(path)); }
     return "";
 }
 
 /**
- * @details return an XLComments item for sheet with sheetXmlNo - create the underlying XML and add it to the archive if needed
+ * @details return an XLComments item for sheet with sheetXmlNo
  */
 XLComments XLDocument::sheetComments(uint16_t sheetXmlNo)
 {
@@ -1183,22 +1126,18 @@ XLComments XLDocument::sheetComments(uint16_t sheetXmlNo)
     std::string commentsFilename = "xl/comments"s + std::to_string(sheetXmlNo) + ".xml"s;
 
     if (!m_archive.hasEntry(commentsFilename)) {
-        // ===== Create the sheet comments file within the archive
-        m_archive.addEntry(
-            commentsFilename,
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"standalone=\"yes\"?>");    // empty XML file, class constructor will do the rest
-        m_contentTypes.addOverride("/" + commentsFilename, XLContentType::Comments);    // add content types entry
+        m_archive.addEntry(commentsFilename, "<?xml version=\"1.0\" encoding=\"UTF-8\"standalone=\"yes\"?>");
+        m_contentTypes.addOverride("/" + commentsFilename, XLContentType::Comments);
     }
-    constexpr const bool DO_NOT_THROW = true;
-    XLXmlData*           xmlData      = getXmlData(commentsFilename, DO_NOT_THROW);
-    if (xmlData == nullptr)    // if not yet managed: add the sheet comments file to the managed files
-        xmlData = &m_data.emplace_back(this, commentsFilename, "", XLContentType::Comments);
+    constexpr bool DO_NOT_THROW = true;
+    XLXmlData*     xmlData      = getXmlData(commentsFilename, DO_NOT_THROW);
+    if (xmlData == nullptr) xmlData = &m_data.emplace_back(this, commentsFilename, "", XLContentType::Comments);
 
     return XLComments(xmlData);
 }
 
 /**
- * @details return an XLTables item for sheet with sheetXmlNo - create the underlying XML and add it to the archive if needed
+ * @details return an XLTables item for sheet with sheetXmlNo
  */
 XLTables XLDocument::sheetTables(uint16_t sheetXmlNo)
 {
@@ -1206,16 +1145,12 @@ XLTables XLDocument::sheetTables(uint16_t sheetXmlNo)
     std::string tablesFilename = "xl/tables/table"s + std::to_string(sheetXmlNo) + ".xml"s;
 
     if (!m_archive.hasEntry(tablesFilename)) {
-        // ===== Create the sheet tables file within the archive
-        m_archive.addEntry(
-            tablesFilename,
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");       // empty XML file, class constructor will do the rest
-        m_contentTypes.addOverride("/" + tablesFilename, XLContentType::Table);    // add content types entry
+        m_archive.addEntry(tablesFilename, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        m_contentTypes.addOverride("/" + tablesFilename, XLContentType::Table);
     }
-    constexpr const bool DO_NOT_THROW = true;
-    XLXmlData*           xmlData      = getXmlData(tablesFilename, DO_NOT_THROW);
-    if (xmlData == nullptr)    // if not yet managed: add the sheet tables file to the managed files
-        xmlData = &m_data.emplace_back(this, tablesFilename, "", XLContentType::Table);
+    constexpr bool DO_NOT_THROW = true;
+    XLXmlData*     xmlData      = getXmlData(tablesFilename, DO_NOT_THROW);
+    if (xmlData == nullptr) xmlData = &m_data.emplace_back(this, tablesFilename, "", XLContentType::Table);
 
     return XLTables(xmlData);
 }
@@ -1229,50 +1164,41 @@ XLTables XLDocument::sheetTables(uint16_t sheetXmlNo)
  *     Begin or end with an apostrophe ('), but they can be used in between text or numbers in a name.
  *     Be named "History". This is a reserved word Excel uses internally.
  */
-constexpr const bool THROW_ON_INVALID = true;
-bool                 XLDocument::validateSheetName(std::string sheetName, bool throwOnInvalid)
+constexpr bool THROW_ON_INVALID = true;
+bool           XLDocument::validateSheetName(std::string_view sheetName, bool throwOnInvalid)
 {
     using namespace std::literals::string_literals;
-    bool valid = true;
+    auto reportError = [sheetName, throwOnInvalid](std::string_view err) {
+        if (throwOnInvalid)
+            throw XLInputError("Sheet name \""s + std::string(sheetName) + "\" violates naming rules: sheet name can not "s + std::string(err));
+        return false;
+    };
 
-    try {
-        if (sheetName.length() > 31) throw "contain more than 31 characters"s;
+    if (sheetName.length() > 31) return reportError("contain more than 31 characters");
 
-        size_t pos = 0;
-        while (sheetName[pos] == ' ' or sheetName[pos] == '\t') ++pos;    // aborts on sheetName[ sheetName.length() ], guaranteed to be \0
-        if (pos == sheetName.length()) throw "be blank"s;
+    size_t pos = 0;
+    while (pos < sheetName.length() && (sheetName[pos] == ' ' || sheetName[pos] == '\t')) ++pos;
+    if (pos == sheetName.length()) return reportError("be blank");
 
-        if (sheetName.front() == '\'' or sheetName.back() == '\'') throw "begin or end with an apostrophe (')"s;
+    if (!sheetName.empty() && (sheetName.front() == '\'' || sheetName.back() == '\''))
+        return reportError("begin or end with an apostrophe (')");
 
-        if (sheetName == "History") throw "be named \"History\" (Excel reserves this word for internal use)"s;
+    if (sheetName == "History") return reportError("be named \"History\" (Excel reserves this word for internal use)");
 
-        for (pos = 0; pos < sheetName.length(); ++pos) {
-            switch (sheetName[pos]) {
-                // test for disallowed characters:
-                case '/':
-                    [[fallthrough]];
-                case '\\':
-                    [[fallthrough]];
-                case '?':
-                    [[fallthrough]];
-                case '*':
-                    [[fallthrough]];
-                case ':':
-                    [[fallthrough]];
-                case '[':
-                    [[fallthrough]];
-                case ']':
-                    throw "contain any of the following characters: / \\ ? * : [ ]"s;
-                default:;    // no-op
-            }
+    for (char c : sheetName) {
+        switch (c) {
+            case '/':
+            case '\\':
+            case '?':
+            case '*':
+            case ':':
+            case '[':
+            case ']':
+                return reportError("contain any of the following characters: / \\ ? * : [ ]");
+            default:;
         }
-        // if execution gets here, sheetName is valid
     }
-    catch (std::string const& err) {
-        if (throwOnInvalid) throw XLInputError("Sheet name \""s + sheetName + "\" violates naming rules: sheet name can not "s + err);
-        valid = false;
-    }
-    return valid;
+    return true;
 }
 
 /**
@@ -1553,57 +1479,38 @@ void XLDocument::setSavingDeclaration(XLXmlSavingDeclaration const& savingDeclar
  */
 void XLDocument::cleanupSharedStrings()
 {
-    size_t               oldStringCount = m_sharedStringCache.size();
-    std::vector<int32_t> indexMap(oldStringCount, -1);    // indexMap[ oldIndex ] :== newIndex, -1 = not yet assigned
-    int32_t              newStringCount =
-        1;    // reserve index 0 for empty string, count here +1 for each unique shared string index that is in use in the worksheet
+    const size_t         oldStringCount = m_sharedStringCache.size();
+    std::vector<int32_t> indexMap(oldStringCount, -1);
+    int32_t              newStringCount = 1;
 
-    unsigned int worksheetCount = m_workbook.worksheetCount();
-    for (unsigned int wIndex = 1; wIndex <= worksheetCount; ++wIndex) {
-        XLWorksheet wks       = m_workbook.worksheet(static_cast<uint16_t>(wIndex));
+    for (uint16_t wIndex = 1; wIndex <= m_workbook.worksheetCount(); ++wIndex) {
+        XLWorksheet wks       = m_workbook.worksheet(wIndex);
         XLCellRange cellRange = wks.range();
-        for (XLCellIterator cellIt = cellRange.begin(); cellIt != cellRange.end(); ++cellIt) {
-            if (!cellIt.cellExists()) continue;    // prevent cell creation by access for non-existing cells
-
-            // ===== Cell exists: check for shared strings & update index as needed
-            XLCell& cell = *cellIt;
+        for (auto& cell : cellRange) {
             if (cell.value().type() == XLValueType::String) {
                 XLCellValueProxy val = cell.value();
-                int32_t          si  = val.stringIndex();
-                if (si < 0) continue;                                                 // not a shared string index
-                if (indexMap[static_cast<size_t>(si)] == -1) {                        // shared string was not yet flagged as "in use"
-                    if (m_sharedStringCache[static_cast<size_t>(si)].length() > 0)    // if shared string is not empty
-                        indexMap[static_cast<size_t>(si)] = newStringCount++;    // add this shared string to the end of the new cache being
-                                                                                 // rewritten and increment the counter
-                    else                                                         // else
-                        indexMap[static_cast<size_t>(si)] =
-                            0;    // assign the hardcoded index 0 reserved for the empty string in newStringCache
+                const int32_t    si  = val.stringIndex();
+                if (si < 0) continue;
+                if (indexMap[static_cast<size_t>(si)] == -1) {
+                    if (!m_sharedStringCache[static_cast<size_t>(si)].empty())
+                        indexMap[static_cast<size_t>(si)] = newStringCount++;
+                    else
+                        indexMap[static_cast<size_t>(si)] = 0;
                 }
-                if (indexMap[static_cast<size_t>(si)] != si)                  // if the index changed
-                    val.setStringIndex(indexMap[static_cast<size_t>(si)]);    // then update it for the cell
+                if (indexMap[static_cast<size_t>(si)] != si) val.setStringIndex(indexMap[static_cast<size_t>(si)]);
             }
         }
     }
 
-    // ===== After all cells have been reindexed, newStringCount is now the exact amount of remaining strings,
-    //        and indexMap now contains the mapping to applied for reindexing.
-
-    // ===== Create a new shared strings cache.
-    std::vector<std::string> newStringCache(static_cast<size_t>(newStringCount));    // store the re-indexed strings here
-    // NOTE: newStringCache is vector because m_sharedStringCache may eventually be changed from std::deque to something else (std::map) for
-    // performance
-
-    newStringCache[0] = "";    // store empty string in first position
-    for (size_t oldIdx = 0; oldIdx < oldStringCount;
-         ++oldIdx) {                                          // "steal" all std::strings that are still in use from existing string cache
-        if (int32_t newIdx = indexMap[oldIdx]; newIdx > 0)    // if string is still in use
-            newStringCache[static_cast<size_t>(newIdx)] =
-                std::move(m_sharedStringCache[oldIdx]);    // NOTE: std::move invalidates the shared string cache -> not thread safe
+    std::vector<std::string> newStringCache(static_cast<size_t>(newStringCount));
+    newStringCache[0] = "";
+    for (size_t oldIdx = 0; oldIdx < oldStringCount; ++oldIdx) {
+        if (const int32_t newIdx = indexMap[oldIdx]; newIdx > 0) newStringCache[static_cast<size_t>(newIdx)] = std::move(m_sharedStringCache[oldIdx]);
     }
-    m_sharedStringCache.clear();    // TBD: is this safe with strings that were std::move assigned to newStringCache?
-    // refill m_sharedStringCache cache from newStringCache
+
+    m_sharedStringCache.clear();
     std::move(newStringCache.begin(), newStringCache.end(), std::back_inserter(m_sharedStringCache));
-    if (static_cast<int32_t>(newStringCache.size()) != m_sharedStrings.rewriteXmlFromCache())
+    if (static_cast<int32_t>(m_sharedStringCache.size()) != m_sharedStrings.rewriteXmlFromCache())
         throw XLInternalError("XLDocument::cleanupSharedStrings: failed to rewrite shared string table - document would be corrupted");
 }
 
@@ -1614,30 +1521,28 @@ void XLDocument::cleanupSharedStrings()
 /**
  * @details
  */
-std::string XLDocument::extractXmlFromArchive(const std::string& path)
-{ return (m_archive.hasEntry(path) ? m_archive.getEntry(path) : ""); }
+std::string XLDocument::extractXmlFromArchive(std::string_view path)
+{
+    return m_archive.hasEntry(std::string(path)) ? m_archive.getEntry(std::string(path)) : "";
+}
 
 /**
  * @details
  */
-XLXmlData* XLDocument::getXmlData(const std::string& path, bool doNotThrow)
+XLXmlData* XLDocument::getXmlData(std::string_view path, bool doNotThrow)
 {
-    // avoid duplication of code: use const_cast to invoke the const function overload and return a non-const value
     return const_cast<XLXmlData*>(const_cast<XLDocument const*>(this)->getXmlData(path, doNotThrow));
 }
 
 /**
  * @details
  */
-const XLXmlData* XLDocument::getXmlData(const std::string& path, bool doNotThrow) const
+const XLXmlData* XLDocument::getXmlData(std::string_view path, bool doNotThrow) const
 {
-    std::list<XLXmlData>::iterator result =
-        std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& item) { return item.getXmlPath() == path; });
+    auto result = std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& item) { return item.getXmlPath() == path; });
     if (result == m_data.end()) {
-        if (doNotThrow)
-            return nullptr;    // use with caution
-        else
-            throw XLInternalError("Path " + path + " does not exist in zip archive.");
+        if (doNotThrow) return nullptr;
+        throw XLInternalError("Path " + std::string(path) + " does not exist in zip archive.");
     }
     return &*result;
 }
@@ -1645,27 +1550,21 @@ const XLXmlData* XLDocument::getXmlData(const std::string& path, bool doNotThrow
 /**
  * @details
  */
-bool XLDocument::hasXmlData(const std::string& path) const
+bool XLDocument::hasXmlData(std::string_view path) const
 {
     return std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& item) { return item.getXmlPath() == path; }) != m_data.end();
 }
 
 namespace OpenXLSX
 {
-    //----------------------------------------------------------------------------------------------------------------------
-    //           Global utility functions
-    //----------------------------------------------------------------------------------------------------------------------
-
     /**
      * @brief Return a hexadecimal digit as character that is the equivalent of value
-     * @param value The number to convert, must be 0 <= value <= 15
-     * @return 0 if value > 15, otherwise the hex digit equivalent to value, as a character
      */
-    char hexDigit(unsigned int value)
+    [[nodiscard]] constexpr char hexDigit(unsigned int value)
     {
         if (value > 0xf) return 0;
-        if (value < 0xa) return static_cast<char>(value + '0');    // return value as number digit
-        return static_cast<char>((value - 0xa) + 'a');             // return value as letter digit
+        if (value < 0xa) return static_cast<char>(value + '0');
+        return static_cast<char>((value - 0xa) + 'a');
     }
 
     /**
@@ -1674,15 +1573,11 @@ namespace OpenXLSX
     std::string BinaryAsHexString(gsl::span<const std::byte> data)
     {
         if (data.empty()) return "";
-
-        // ===== Allocate memory for string assembly - each byte takes two hex digits = 2 characters in string
         std::string strAssemble(data.size() * 2, 0);
-
-        // ===== assemble a string of hex digits
-        for (size_t pos = 0; pos < data.size() * 2; ++pos) {
-            auto valueByte     = static_cast<uint8_t>(data[pos / 2]);
-            int  valueHalfByte = (valueByte & (pos & 1 ? 0x0f : 0xf0)) >> (pos & 1 ? 0 : 4);
-            strAssemble[pos]   = hexDigit(static_cast<unsigned int>(valueHalfByte));    // convert each half-byte into a hex digit
+        for (size_t i = 0; i < data.size(); ++i) {
+            auto valueByte          = static_cast<uint8_t>(data[i]);
+            strAssemble[i * 2]     = hexDigit(valueByte >> 4);
+            strAssemble[i * 2 + 1] = hexDigit(valueByte & 0x0f);
         }
         return strAssemble;
     }
@@ -1690,10 +1585,10 @@ namespace OpenXLSX
     /**
      * @details apply the XLSX password hashing algorithm to password
      */
-    uint16_t ExcelPasswordHash(std::string password)
+    uint16_t ExcelPasswordHash(std::string_view password)
     {
-        uint16_t wPasswordHash = 0;
-        uint16_t cchPassword   = static_cast<uint16_t>(password.length());
+        uint16_t       wPasswordHash = 0;
+        const uint16_t cchPassword   = gsl::narrow_cast<uint16_t>(password.length());
 
         for (uint16_t pos = 0; pos < cchPassword; ++pos) {
             uint32_t byteHash = static_cast<uint32_t>(password[pos]) << ((pos + 1) % 15);
@@ -1701,63 +1596,50 @@ namespace OpenXLSX
             wPasswordHash ^= static_cast<uint16_t>(byteHash);
         }
         wPasswordHash ^= cchPassword ^ 0xce4b;
-        // wPasswordHash ^= (0x8000 | ('N' << 8) | 'K'); // 'N' = 0x4e, 'K' = 0x4b, 0x8000 | 0x4e000 | 0x004b == 0xce4b, XOR'ed above
-
         return wPasswordHash;
     }
 
     /**
      * @details same as ExcelPasswordHash but return the result as a hex string
      */
-    std::string ExcelPasswordHashAsString(std::string password)
+    std::string ExcelPasswordHashAsString(std::string_view password)
     {
-        uint16_t pw = ExcelPasswordHash(password);
-        uint8_t  hashData[2];
-        hashData[0] = pw >> 8;      // MSB first
-        hashData[1] = pw & 0xff;    // LSB second
-        return BinaryAsHexString(gsl::make_span(reinterpret_cast<const std::byte*>(hashData), 2));
+        const uint16_t pw = ExcelPasswordHash(password);
+        const std::array<std::byte, 2> hashData { static_cast<std::byte>(pw >> 8), static_cast<std::byte>(pw & 0xff) };
+        return BinaryAsHexString(gsl::make_span(hashData.data(), 2));
     }
 
     /**
-     * @brief local function: split a path into a vector of strings each containing a subdirectory (or finally: a filename) - ignore leading
-     * and trailing slashes
-     * @param path split this path by '/' characters
-     * @param eliminateDots if true (default), will ignore "." entries and will pop a subdirectory from the vector for each ".." entry
-     * @return a vector of non-empty subdirectories
-     * @throw XLInternalError upon invalid path - e.g. containing "//" or trying to escape via ".." beyond the context of path
+     * @brief local function: split a path into a vector of strings
      */
-    constexpr const bool     DISASSEMBLE_PATH_ELIMINATE_DOTS = true;    // helper constants for code readability
-    std::vector<std::string> disassemblePath(std::string const& path, bool eliminateDots = DISASSEMBLE_PATH_ELIMINATE_DOTS)
+    std::vector<std::string> disassemblePath(std::string_view path, bool eliminateDots = true)
     {
         std::vector<std::string> result;
-        size_t                   startpos = (path[0] == '/' ? 1 : 0);    // skip a leading slash
+        size_t                   startpos = (!path.empty() && path.front() == '/' ? 1 : 0);
         size_t                   pos;
         do {
             pos = path.find('/', startpos);
             if (pos == startpos)
-                throw XLInternalError("eliminateDotAndDotDotFromPath: path must not contain two subsequent forward slashes");
-            else {
-                std::string dirEntry = path.substr(startpos, pos - startpos);    // get folder name
-                if (dirEntry.length() > 0) {
-                    if (eliminateDots) {
-                        // handle . and .. folders
-                        if (dirEntry == ".") {}    // no-op
-                        else if (dirEntry == "..") {
-                            if (result.size() > 0)
-                                result.pop_back();    // remove previous folder from result
-                            else
-                                throw std::string("eliminateDotAndDotDotFromPath: no remaining directory to exit with ..");
-                        }
+                throw XLInternalError("path must not contain two subsequent forward slashes");
+            
+            std::string_view dirEntry = path.substr(startpos, pos - startpos);
+            if (!dirEntry.empty()) {
+                if (eliminateDots) {
+                    if (dirEntry == ".") {}
+                    else if (dirEntry == "..") {
+                        if (!result.empty())
+                            result.pop_back();
                         else
-                            result.push_back(dirEntry);
+                            throw XLInternalError("no remaining directory to exit with ..");
                     }
                     else
-                        result.push_back(dirEntry);
+                        result.emplace_back(dirEntry);
                 }
-                startpos = pos + 1;
+                else
+                    result.emplace_back(dirEntry);
             }
-        }
-        while (pos != std::string::npos);
+            startpos = pos + 1;
+        } while (pos != std::string_view::npos);
 
         return result;
     }
@@ -1765,22 +1647,19 @@ namespace OpenXLSX
     /**
      * @details
      */
-    std::string getPathARelativeToPathB(std::string const& pathA, std::string const& pathB)
+    std::string getPathARelativeToPathB(std::string_view pathA, std::string_view pathB)
     {
         size_t startpos = 0;
-        while (pathA[startpos] == pathB[startpos]) ++startpos;             // find position where pathA and pathB differ
-        while (startpos > 0 and pathA[startpos - 1] != '/') --startpos;    // then iterate back to last slash before that position
+        while (startpos < pathA.length() && startpos < pathB.length() && pathA[startpos] == pathB[startpos]) ++startpos;
+        while (startpos > 0 and pathA[startpos - 1] != '/') --startpos;
         if (startpos == 0) throw XLInternalError("getPathARelativeToPathB: pathA and pathB have no common beginning");
 
-        std::vector<std::string> dirEntriesB =
-            disassemblePath(pathB.substr(startpos));    // disassemble unique part of pathB into a vector of strings
-        if (dirEntriesB.size() > 0 and pathB.back() != '/')
-            dirEntriesB.pop_back();    // a filename in pathB isn't needed for the relative path generation
+        std::vector<std::string> dirEntriesB = disassemblePath(pathB.substr(startpos));
+        if (!dirEntriesB.empty() && (!pathB.empty() && pathB.back() != '/')) dirEntriesB.pop_back();
 
-        std::string result("");                                                 // assemble result:
-        for (auto it = dirEntriesB.rbegin(); it != dirEntriesB.rend(); ++it)    // for each subdirectory unique to pathB
-            result += "../";                                                    // add one ../ to escape it
-        result += pathA.substr(startpos);                                       // finally, append unique part of pathA
+        std::string result;
+        for (size_t i = 0; i < dirEntriesB.size(); ++i) result += "../";
+        result += std::string(pathA.substr(startpos));
 
         return result;
     }
@@ -1788,20 +1667,22 @@ namespace OpenXLSX
     /**
      * @details
      */
-    std::string eliminateDotAndDotDotFromPath(const std::string& path)
+    std::string eliminateDotAndDotDotFromPath(std::string_view path)
     {
-        std::vector<std::string> dirEntries = disassemblePath(path);    // disassemble path into a vector of strings with subdirectory names
+        if (path.empty()) return "";
+        std::vector<std::string> dirEntries = disassemblePath(path);
 
-        // assemble path from dirEntries
-        std::string result = path.front() == '/' ? "/" : "";
-        if (dirEntries.size() > 0) {
-            auto it = dirEntries.begin();
-            result += *it;
-            while (++it != dirEntries.end()) { result += "/" + *it; }    // concatenate dirnames
+        std::string result = (!path.empty() && path.front() == '/') ? "/" : "";
+        if (!dirEntries.empty()) {
+            result += dirEntries[0];
+            for (size_t i = 1; i < dirEntries.size(); ++i) {
+                result += "/";
+                result += dirEntries[i];
+            }
         }
 
-        // in return value: avoid appending a trailing slash if a path was already reduced to "/"
-        return ((result.length() > 1 or result.front() != '/') and path.back() == '/') ? result + "/" : result;
+        if (((result.length() > 1 or result.front() != '/') && (!path.empty() && path.back() == '/'))) result += "/";
+        return result;
     }
 
 }    // namespace OpenXLSX

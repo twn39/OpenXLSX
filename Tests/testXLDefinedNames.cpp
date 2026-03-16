@@ -14,13 +14,13 @@ namespace
 
     struct XLDocument_extractXmlFromArchive
     {
-        typedef std::string (XLDocument::*type)(const std::string&);
+        typedef std::string (XLDocument::*type)(std::string_view);
     };
 
     template struct Rob<XLDocument_extractXmlFromArchive, &XLDocument::extractXmlFromArchive>;
 
     // Prototype declaration for the friend function
-    std::string (XLDocument::* get_impl(XLDocument_extractXmlFromArchive))(const std::string&);
+    std::string (XLDocument::* get_impl(XLDocument_extractXmlFromArchive))(std::string_view);
 
     // Function to call the protected member
     std::string getRawXml(XLDocument& doc, const std::string& path)

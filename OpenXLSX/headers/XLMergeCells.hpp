@@ -29,14 +29,16 @@ namespace OpenXLSX
 
     /**
      * @brief Manages merged cell ranges in a worksheet.
-     * @details This class handles the <mergeCells> element. It maintains a numerical cache of ranges
-     * to avoid expensive XML parsing and string manipulation during overlap checks and lookups.
+     * @details This class handles the <mergeCells> element. 
+     * Rationale: Excel's string-based range lookups (e.g., "A1:C3") are O(N) and expensive for frequent checks.
+     * This class maintains a numerical coordinate cache to enable O(1) cell-in-merge tests and O(M) overlap detection,
+     * significantly improving performance for spreadsheets with many merged areas.
      */
     class OPENXLSX_EXPORT XLMergeCells
     {
     public:
         /**
-         * @brief Numerical representation of a cell range for fast overlap checks.
+         * @brief Internal numerical bounds representation for constant-time coordinate tests.
          */
         struct XLRect
         {
@@ -45,9 +47,16 @@ namespace OpenXLSX
             uint32_t bottom;
             uint16_t right;
 
+            /**
+             * @brief Determine if a cell coordinate is within the merged region.
+             */
             [[nodiscard]] bool contains(uint32_t row, uint16_t col) const noexcept
             { return row >= top && row <= bottom && col >= left && col <= right; }
 
+            /**
+             * @brief Detect spatial intersection between two regions to prevent overlapping merges, 
+             * which are illegal in the OOXML schema.
+             */
             [[nodiscard]] bool overlaps(const XLRect& other) const noexcept
             { return top <= other.bottom && bottom >= other.top && left <= other.right && right >= other.left; }
         };

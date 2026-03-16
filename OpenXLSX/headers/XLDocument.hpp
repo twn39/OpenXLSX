@@ -13,6 +13,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include <string_view>
 #include <unordered_map>    // O(1) shared string lookup
 
 // ===== OpenXLSX Includes ===== //
@@ -82,396 +83,227 @@ namespace OpenXLSX
         //---------- Public Member Functions
     public:
         /**
-         * @brief Constructor. The default constructor with no arguments.
+         * @brief Default constructor. Initializes an empty document package with a default ZIP archive.
          */
         explicit XLDocument(const IZipArchive& zipArchive = XLZipArchive());
 
         /**
-         * @brief Constructor. An alternative constructor, taking the path to the .xlsx file as an argument.
-         * @param docPath A std::string with the path to the .xlsx file.
-         * @param zipArchive
+         * @brief Path-based constructor. Loads an existing document or sets the target path for a new one.
+         * @param docPath Non-owning view to the file path to reduce heap allocations during initialization.
+         */
+        explicit XLDocument(std::string_view docPath, const IZipArchive& zipArchive = XLZipArchive());
+
+        /**
+         * @brief Legacy string constructor to resolve ambiguity with IZipArchive's template constructor.
          */
         explicit XLDocument(const std::string& docPath, const IZipArchive& zipArchive = XLZipArchive());
 
-        /**
-         * @brief Copy constructor
-         * @param other The object to copy
-         * @note Copy constructor explicitly deleted.
-         */
         XLDocument(const XLDocument& other) = delete;
-
-        /**
-         * @brief
-         * @param other
-         */
         XLDocument(XLDocument&& other) noexcept = default;
-
-        /**
-         * @brief Destructor
-         */
         ~XLDocument();
-
-        /**
-         * @brief
-         * @param other
-         * @return
-         */
         XLDocument& operator=(const XLDocument& other) = delete;
-
-        /**
-         * @brief
-         * @param other
-         * @return
-         */
         XLDocument& operator=(XLDocument&& other) noexcept = default;
 
-        /**
-         * @brief ensure that warnings are shown (default setting)
-         */
         void showWarnings();
-
-        /**
-         * @brief ensure that warnings are suppressed where this parameter is supported (currently only XLStyles)
-         */
         void suppressWarnings();
 
         /**
-         * @brief Open the .xlsx file with the given path
-         * @param fileName The path of the .xlsx file to open
+         * @brief Initialize a new .xlsx package. Overwrites if requested to prevent unintended data loss.
+         * @param fileName Target path for the new package.
          */
-        void open(const std::string& fileName);
+        void create(std::string_view fileName, bool forceOverwrite = XLForceOverwrite);
 
         /**
-         * @brief Create a new .xlsx file with the given name.
-         * @param fileName The path of the new .xlsx file.
-         * @param forceOverwrite If not true (XLForceOverwrite) and fileName exists, create will throw an exception
-         * @throw XLException (OpenXLSX failed checks)
-         * @throw ZipRuntimeError (libzip failed archive / file access)
-         */
-        void create(const std::string& fileName, bool forceOverwrite);
-
-        /**
-         * @brief Create a new .xlsx file with the given name. Legacy interface, invokes create( fileName, XLForceOverwrite )
-         * @param fileName The path of the new .xlsx file.
-         * @deprecated use instead void create(const std::string& fileName, bool forceOverwrite)
-         * @warning Overwriting an existing file is retained as legacy behavior, but can lead to data loss!
+         * @brief Create a new .xlsx file with the given name. Legacy interface.
+         * @deprecated Use instead void create(std::string_view fileName, bool forceOverwrite)
          */
         [[deprecated]] void create(const std::string& fileName);
 
         /**
-         * @brief Close the current document
+         * @brief Close the document and release underlying ZIP resources.
          */
         void close();
 
         /**
-         * @brief Save the current document using the current filename, overwriting the existing file.
-         * @throw XLException (OpenXLSX failed checks)
-         * @throw ZipRuntimeError (libzip failed archive / file access)
+         * @brief Persistence to the current filename.
          */
         void save();
 
         /**
-         * @brief Save the document with a new name. If a file exists with that name, it will be overwritten.
-         * @param fileName The path of the file
-         * @param forceOverwrite If not true (XLForceOverwrite) and fileName exists, saveAs will throw an exception
-         * @throw XLException (OpenXLSX failed checks)
-         * @throw ZipRuntimeError (libzip failed archive / file access)
+         * @brief Persistence to a new location, ensuring existing files aren't overwritten without explicit intent.
          */
-        void saveAs(const std::string& fileName, bool forceOverwrite);
+        void saveAs(std::string_view fileName, bool forceOverwrite = XLForceOverwrite);
 
         /**
-         * @brief Save the document with a new name. Legacy interface, invokes saveAs( fileName, XLForceOverwrite )
-         * @param fileName The path of the file
-         * @deprecated use instead void saveAs(const std::string& fileName, bool forceOverwrite)
-         * @warning Overwriting an existing file is retained as legacy behavior, but can lead to data loss!
+         * @brief Save the document with a new name. Legacy interface.
+         * @deprecated Use instead void saveAs(std::string_view fileName, bool forceOverwrite)
          */
         [[deprecated]] void saveAs(const std::string& fileName);
 
         /**
-         * @brief Get the filename of the current document, e.g. "spreadsheet.xlsx".
-         * @return A std::string with the filename.
-         * @note 2024-06-03: function can't return as reference to const because filename as a substr of m_filePath can be a temporary
-         * @note 2024-07-28: Removed const from return type
+         * @brief Access filename to uniquely identify the document in the package.
+         * @return The current document's filename. [[nodiscard]] is used to prevent state-querying errors.
          */
-        std::string name() const;
+        [[nodiscard]] std::string name() const;
 
         /**
-         * @brief Get the full path of the current document, e.g. "drive/blah/spreadsheet.xlsx"
-         * @return A std::string with the path.
+         * @brief Access the full filesystem path of the current document.
+         * @return The current document's full path. [[nodiscard]] is used to prevent state-querying errors.
          */
-        const std::string& path() const;
+        [[nodiscard]] const std::string& path() const;
 
         /**
-         * @brief Get the content types object
-         * @return a reference to the XLContentTypes object
+         * @brief Provides access to the [Content_Types].xml file, which defines the package structure.
          */
-        XLContentTypes& contentTypes();
+        [[nodiscard]] XLContentTypes& contentTypes();
 
         /**
-         * @brief Get the workbook relationships object
-
-         * @return a reference to the XLCustomProperties object
+         * @brief Provides access to custom properties (metadata) that can be set for the document.
          */
-        XLCustomProperties& customProperties();
+        [[nodiscard]] XLCustomProperties& customProperties();
 
         /**
-         * @brief Get the next available table ID (unique workbook-wide).
+         * @brief Get the next available table ID (unique workbook-wide). [[nodiscard]] is used to prevent state-querying errors.
          */
-        uint32_t nextTableId() const;
+        [[nodiscard]] uint32_t nextTableId() const;
 
         /**
-         * @brief Get the underlying workbook object, as a const object.
-         * @return A const pointer to the XLWorkbook object.
+         * @brief Get the underlying workbook object, containing worksheets and data. [[nodiscard]] is used to prevent state-querying errors.
          */
-        XLWorkbook workbook() const;
+        [[nodiscard]] XLWorkbook workbook() const;
 
         /**
-         * @brief Get the requested document property.
-         * @param prop The name of the property to get.
-         * @return The property as a string
+         * @brief Get the requested document property (metadata). [[nodiscard]] is used to prevent state-querying errors.
          */
-        std::string property(XLProperty prop) const;
+        [[nodiscard]] std::string property(XLProperty prop) const;
 
         /**
-         * @brief Set a property
+         * @brief Set a metadata property for the document.
          * @param prop The property to set.
-         * @param value The getValue of the property, as a string
+         * @param value A non-owning view to the value string to reduce heap allocations.
          */
-        void setProperty(XLProperty prop, const std::string& value);
+        void setProperty(XLProperty prop, std::string_view value);
 
         /**
-         * @brief Delete the property from the document
-         * @param theProperty The property to delete from the document
+         * @brief Remove the specified property from the document metadata.
          */
         void deleteProperty(XLProperty theProperty);
 
         /**
-         * @brief
-         * @return
+         * @return True if the document archive is valid and open. [[nodiscard]] is used to prevent state-querying errors.
          */
-        explicit operator bool() const;
+        [[nodiscard]] explicit operator bool() const;
 
         /**
-         * @brief
-         * @return
+         * @return True if the document is currently open for editing. [[nodiscard]] is used to prevent state-querying errors.
          */
-        bool isOpen() const;
+        [[nodiscard]] bool isOpen() const;
 
         /**
-         * @brief return a handle on the workbook's styles
-         * @return a reference to m_styles
+         * @brief Provides access to the styles (formatting) used in the document. [[nodiscard]] is used to prevent state-querying errors.
          */
-        XLStyles& styles();
+        [[nodiscard]] XLStyles& styles();
 
         /**
-         * @brief determine whether a worksheet relationships file exists for sheetXmlNo
-         * @param sheetXmlNo check for this sheet number # (xl/worksheets/_reals/sheet#.xml.rels)
-         * @return true if relationships file exists
+         * @brief Check for the presence of specific XML elements for a given sheet number.
+         * [[nodiscard]] is used to prevent state-querying errors.
          */
-        bool hasSheetRelationships(uint16_t sheetXmlNo) const;
+        [[nodiscard]] bool hasSheetRelationships(uint16_t sheetXmlNo) const;
+        [[nodiscard]] bool hasSheetVmlDrawing(uint16_t sheetXmlNo) const;
+        [[nodiscard]] bool hasSheetComments(uint16_t sheetXmlNo) const;
+        [[nodiscard]] bool hasSheetDrawing(uint16_t sheetXmlNo) const;
+        [[nodiscard]] bool hasSheetTables(uint16_t sheetXmlNo) const;
 
-        /**
-         * @brief determine whether a worksheet vml drawing file exists for sheetXmlNo
-         * @param sheetXmlNo check for this sheet number # (xl/drawings/vmlDrawing#.xml)
-         * @return true if vml drawing file exists
-         */
-        bool hasSheetVmlDrawing(uint16_t sheetXmlNo) const;
-
-        /**
-         * @brief determine whether a worksheet comments file exists for sheetXmlNo
-         * @param sheetXmlNo check for this sheet number # (xl/comments#.xml)
-         * @return true if comments file exists
-         */
-        bool hasSheetComments(uint16_t sheetXmlNo) const;
-
-        /**
-         * @brief determine whether a worksheet drawing file exists for sheetXmlNo
-         * @param sheetXmlNo check for this sheet number # (xl/drawings/drawing#.xml)
-         * @return true if drawing file exists
-         */
-        bool hasSheetDrawing(uint16_t sheetXmlNo) const;
-
-        /**
-         * @brief determine whether a worksheet table(s) file exists for sheetXmlNo
-         * @param sheetXmlNo check for this sheet number # (xl/tables/table#.xml)
-         * @return true if table(s) file exists
-         */
-        bool hasSheetTables(uint16_t sheetXmlNo) const;
-
-        /**
-         * @brief fetch the worksheet relationships for sheetXmlNo, create the file if it does not exist
-         * @param sheetXmlNo fetch for this sheet #
-         * @return an XLRelationships object initialized with the sheet relationships
-         */
         XLRelationships sheetRelationships(uint16_t sheetXmlNo);
-
-        /**
-         * @brief fetch the worksheet drawing for sheetXmlNo, create the file if it does not exist
-         * @param sheetXmlNo fetch for this sheet #
-         * @return an XLDrawing object initialized with the sheet drawing
-         */
-        XLDrawing sheetDrawing(uint16_t sheetXmlNo);
-
-        /**
-         * @brief fetch the worksheet VML drawing for sheetXmlNo, create the file if it does not exist
-         * @param sheetXmlNo fetch for this sheet #
-         * @return an XLVmlDrawing object initialized with the sheet drawing
-         */
-        XLVmlDrawing sheetVmlDrawing(uint16_t sheetXmlNo);
+        XLDrawing       sheetDrawing(uint16_t sheetXmlNo);
+        XLVmlDrawing    sheetVmlDrawing(uint16_t sheetXmlNo);
+        XLComments      sheetComments(uint16_t sheetXmlNo);
+        XLTables        sheetTables(uint16_t sheetXmlNo);
 
         /**
          * @brief Add an image to the document archive (xl/media/)
-         * @param name The name of the image file (e.g. "image1.png")
-         * @param data The binary data of the image
-         * @return The path to the image in the archive
+         * @param name Filename in the archive.
+         * @param data Raw image data as a non-owning view to reduce heap allocations.
+         * @return The path to the image in the archive.
          */
-        std::string addImage(const std::string& name, const std::string& data);
+        std::string addImage(std::string_view name, std::string_view data);
 
         /**
-         * @brief Get image data from the document archive (xl/media/)
-         * @param path The path to the image in the archive (e.g. "xl/media/image1.png")
-         * @return The binary data of the image
+         * @brief Fetch raw image data from the document archive (xl/media/).
+         * [[nodiscard]] is used to prevent state-querying errors.
          */
-        std::string getImage(const std::string& path) const;
+        [[nodiscard]] std::string getImage(std::string_view path) const;
+
+        XLRelationships drawingRelationships(std::string_view drawingPath);
 
         /**
-         * @brief fetch the worksheet comments for sheetXmlNo, create the file if it does not exist
-         * @param sheetXmlNo fetch for this sheet #
-         * @return an XLComments object initialized with the sheet comments
+         * @brief Access the low-level ZIP archive for advanced package manipulation.
+         * [[nodiscard]] is used to prevent state-querying errors.
          */
-        XLComments sheetComments(uint16_t sheetXmlNo);
+        [[nodiscard]] IZipArchive&       archive() { return m_archive; }
+        [[nodiscard]] const IZipArchive& archive() const { return m_archive; }
 
         /**
-         * @brief fetch the worksheet tables for sheetXmlNo, create the file if it does not exist
-         * @param sheetXmlNo fetch for this sheet #
-         * @return an XLTables object initialized with the sheet tables
+         * @brief Access application-specific properties (metadata).
+         * [[nodiscard]] is used to prevent state-querying errors.
          */
-        XLTables sheetTables(uint16_t sheetXmlNo);
+        [[nodiscard]] XLAppProperties&       appProperties() { return m_appProperties; }
+        [[nodiscard]] const XLAppProperties& appProperties() const { return m_appProperties; }
 
         /**
-         * @brief fetch the drawing relationships for a drawing file, create the file if it does not exist
-         * @param drawingPath The path to the drawing file (e.g. "xl/drawings/drawing1.xml")
-         * @return an XLRelationships object initialized with the drawing relationships
+         * @brief Access core document metadata properties.
+         * [[nodiscard]] is used to prevent state-querying errors.
          */
-        XLRelationships drawingRelationships(const std::string& drawingPath);
+        [[nodiscard]] XLProperties&       coreProperties() { return m_coreProperties; }
+        [[nodiscard]] const XLProperties& coreProperties() const { return m_coreProperties; }
 
         /**
-         * @brief Get the underlying zip archive
-         * @return A reference to the zip archive object
+         * @brief Ensure worksheet names adhere to Excel's naming rules.
          */
-        IZipArchive&       archive() { return m_archive; }
-        const IZipArchive& archive() const { return m_archive; }
+        bool validateSheetName(std::string_view sheetName, bool throwOnInvalid = false);
 
-        /**
-         * @brief Get the App properties object
-         * @return A reference to the App properties object
-         */
-        XLAppProperties&       appProperties() { return m_appProperties; }
-        const XLAppProperties& appProperties() const { return m_appProperties; }
-
-        /**
-         * @brief Get the Core properties object
-         * @return A reference to the Core properties object
-         */
-        XLProperties&       coreProperties() { return m_coreProperties; }
-        const XLProperties& coreProperties() const { return m_coreProperties; }
-
-    public:
-        /**
-         * @brief validate whether sheetName is a valid Excel worksheet name
-         * @param sheetName the desired name
-         * @param throwOnInvalid (default: false) if true, invalid sheetName will throw exception
-         * @return true if sheetName can be used, otherwise false
-         */
-        bool validateSheetName(std::string sheetName, bool throwOnInvalid = false);
-
-        /**
-         * @brief
-         * @param command
-         * @return for XLCommandType::SetSheetActive: execution success, otherwise always true
-         */
         bool execCommand(const XLCommand& command);
 
         /**
-         * @brief
-         * @param query
-         * @return
+         * @brief Execute a state-querying operation without modifying the document.
+         * [[nodiscard]] is used to prevent state-querying errors.
          */
-        XLQuery execQuery(const XLQuery& query) const;
+        [[nodiscard]] XLQuery execQuery(const XLQuery& query) const;
+        XLQuery               execQuery(const XLQuery& query);
 
-        /**
-         * @brief
-         * @param query
-         * @return
-         */
-        XLQuery execQuery(const XLQuery& query);
-
-        /**
-         * @brief configure an alternative XML saving declaration to be used with pugixml
-         * @param savingDeclaration An XLXmlSavingDeclaration object with the configuration to use
-         * @return
-         */
         void setSavingDeclaration(XLXmlSavingDeclaration const& savingDeclaration);
 
         /**
-         * @brief
-         * @return
+         * @brief Access the workbook's central string storage to optimize file size.
+         * [[nodiscard]] is used to prevent state-querying errors.
          */
-        const XLSharedStrings& sharedStrings() const { return m_sharedStrings; }
+        [[nodiscard]] const XLSharedStrings& sharedStrings() const { return m_sharedStrings; }
 
         /**
-         * @brief rewrite the shared strings cache (and update all cells referencing an index from the shared strings), dropping unused
-         * strings
-         * @note potentially time-intensive (on documents with many strings or many cells referring shared strings)
+         * @brief Rewrite the shared strings table to remove unused entries and optimize the package.
          */
         void cleanupSharedStrings();
 
-        //----------------------------------------------------------------------------------------------------------------------
-        //           Protected Member Functions
-        //----------------------------------------------------------------------------------------------------------------------
-
     protected:
         /**
-         * @brief Get an XML file from the .xlsx archive.
-         * @param path The relative path of the file.
-         * @return A std::string with the content of the file
+         * @brief Retrieve raw XML content from the package archive.
+         * [[nodiscard]] is used to prevent state-querying errors.
          */
-        std::string extractXmlFromArchive(const std::string& path);
+        [[nodiscard]] std::string extractXmlFromArchive(std::string_view path);
 
         /**
-         * @brief fetch the XLXmlData object as stored in m_data, throw XLInternalError if path is not found
-         * @param path The relative path of the file.
-         * @param doNotThrow if true, will return a nullptr if path is not found
-         * @return a pointer to the XLXmlData object stored in m_data (or nullptr, see doNotThrow)
+         * @brief Provides access to cached XML document data to minimize file I/O.
+         * [[nodiscard]] is used to prevent state-querying errors.
          */
-        XLXmlData* getXmlData(const std::string& path, bool doNotThrow = false);
-
-        /**
-         * @brief const overload of getXmlData
-         * @param path
-         * @param doNotThrow
-         * @return
-         */
-        const XLXmlData* getXmlData(const std::string& path, bool doNotThrow = false) const;
-
-        /**
-         * @brief
-         * @param path
-         * @return
-         */
-        bool hasXmlData(const std::string& path) const;
-
-        //----------------------------------------------------------------------------------------------------------------------
-        //           Private Member Variables
-        //----------------------------------------------------------------------------------------------------------------------
+        [[nodiscard]] XLXmlData*       getXmlData(std::string_view path, bool doNotThrow = false);
+        [[nodiscard]] const XLXmlData* getXmlData(std::string_view path, bool doNotThrow = false) const;
+        [[nodiscard]] bool             hasXmlData(std::string_view path) const;
 
     private:
-        bool m_suppressWarnings{true}; /**< If true, will suppress output of warnings where supported */
+        bool        m_suppressWarnings{true};
+        std::string m_filePath{};
 
-        std::string m_filePath{}; /**< The path to the original file*/
-
-        XLXmlSavingDeclaration
-            m_xmlSavingDeclaration; /**< The xml saving declaration that will be passed to pugixml before generating the XML output data*/
+        XLXmlSavingDeclaration m_xmlSavingDeclaration;
 
         struct SharedFormula
         {
@@ -480,64 +312,30 @@ namespace OpenXLSX
             uint16_t    baseCol;
         };
 
-        mutable std::list<XLXmlData>                     m_data{};              /**<  */
-        mutable std::deque<std::string>                  m_sharedStringCache{}; /**<  */
-        mutable std::unordered_map<std::string, int32_t> m_sharedStringIndex{}; /**< O(1) string -> index lookup */
-        mutable XLSharedStrings                          m_sharedStrings{};     /**<  */
+        mutable std::list<XLXmlData>                     m_data{};
+        mutable std::deque<std::string>                  m_sharedStringCache{};
+        mutable std::unordered_map<std::string, int32_t> m_sharedStringIndex{};
+        mutable XLSharedStrings                          m_sharedStrings{};
         mutable std::map<const XMLDocument*, std::unordered_map<uint32_t, SharedFormula>>
-            m_sharedFormulas{}; /**< Cache for shared formulas, scoped by worksheet document */
+            m_sharedFormulas{};
 
-        XLRelationships    m_docRelationships{}; /**< A pointer to the document relationships object*/
-        XLRelationships    m_wbkRelationships{}; /**< A pointer to the document relationships object*/
-        XLContentTypes     m_contentTypes{};     /**< A pointer to the content types object*/
-        XLAppProperties    m_appProperties{};    /**< A pointer to the App properties object */
-        XLProperties       m_coreProperties{};   /**< A pointer to the Core properties object*/
-        XLCustomProperties m_customProperties{}; /**< A pointer to the Custom properties object */
-        XLStyles           m_styles{};           /**< A pointer to the document styles object*/
-        XLWorkbook         m_workbook{};         /**< A pointer to the workbook object */
-        IZipArchive        m_archive{};          /**<  */
+        XLRelationships    m_docRelationships{};
+        XLRelationships    m_wbkRelationships{};
+        XLContentTypes     m_contentTypes{};
+        XLAppProperties    m_appProperties{};
+        XLProperties       m_coreProperties{};
+        XLCustomProperties m_customProperties{};
+        XLStyles           m_styles{};
+        XLWorkbook         m_workbook{};
+        IZipArchive        m_archive{};
     };
 
-    //----------------------------------------------------------------------------------------------------------------------
-    //           Global utility functions
-    //----------------------------------------------------------------------------------------------------------------------
+    [[nodiscard]] OPENXLSX_EXPORT std::string BinaryAsHexString(gsl::span<const std::byte> data);
+    [[nodiscard]] OPENXLSX_EXPORT uint16_t    ExcelPasswordHash(std::string_view password);
+    [[nodiscard]] OPENXLSX_EXPORT std::string ExcelPasswordHashAsString(std::string_view password);
 
-    /**
-     * @brief Get a hexadecimal representation of bytes in a span
-     * @param data A span of bytes to format
-     * @return A string with the base-16 representation of the data bytes
-     */
-    OPENXLSX_EXPORT std::string BinaryAsHexString(gsl::span<const std::byte> data);
-
-    /**
-     * @brief Calculate the two-byte XLSX password hash for password
-     * @param password the string to hash
-     * @return the two byte value calculated according to the XLSX password hashing algorithm
-     */
-    OPENXLSX_EXPORT uint16_t ExcelPasswordHash(std::string password);
-    /**
-     * @brief Same as ExcelPasswordHash but format the output as a 4-digit hexadecimal string
-     * @param password the string to hash
-     * @return a string that can be stored in OOXML as a password hash
-     */
-    OPENXLSX_EXPORT std::string ExcelPasswordHashAsString(std::string password);
-
-    /**
-     * @brief eliminate from pathA leading subdirectories shared with pathB and find a path from pathB to pathA destination
-     * @param pathA return a relative path to here
-     * @param pathB escape this path via "../" until the common branch with pathA is reached
-     * @return a string that leads via a relative path from pathA to pathB
-     * @throw XLInternalError if pathA and pathB have no common leading (sub)directory
-     */
-    std::string getPathARelativeToPathB(std::string const& pathA, std::string const& pathB);
-
-    /**
-     * @brief eliminate from path any . and .. subdirectories by ignoring them (.) or escaping to the parent directory (..)
-     * @param path the path to normalize in this way
-     * @return a normalized path (no longer contains . or .. entries)
-     * @throw XLInternalError upon invalid path - e.g. containing "//" or trying to escape via ".." beyond the context of path
-     */
-    std::string eliminateDotAndDotDotFromPath(const std::string& path);
+    [[nodiscard]] std::string getPathARelativeToPathB(std::string_view pathA, std::string_view pathB);
+    [[nodiscard]] std::string eliminateDotAndDotDotFromPath(std::string_view path);
 
 }    // namespace OpenXLSX
 
