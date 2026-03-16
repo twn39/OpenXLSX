@@ -1,4 +1,5 @@
 // ===== External Includes ===== //
+#include <charconv>
 #include <cstdint>    // uint32_t
 #include <cstring>    // strlen
 #include <gsl/gsl>
@@ -77,72 +78,42 @@ namespace
      * @note 2024-08-31: Included a "dumb" fallback solution in relationship tests to support
      *          previously unknown relationship domains, e.g. type="http://purl.oclc.org/ooxml/officeDocument/relationships/worksheet"
      */
-    XLRelationshipType GetRelationshipTypeFromString(const std::string& typeString)
+    XLRelationshipType GetRelationshipTypeFromString(std::string_view typeString)
     {
-        // TODO 2024-08-09: support dumb applications that implemented relationship Type in different case (e.g. vmldrawing instead of
-        // vmlDrawing)
-        //                  easy approach: convert typestring and comparison string to all lower characters
-        size_t comparePos = 0;    // start by comparing full relationship type strings
-        do {
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/extended-properties")
-                return XLRelationshipType::ExtendedProperties;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/custom-properties")
-                return XLRelationshipType::CustomProperties;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/officeDocument")
-                return XLRelationshipType::Workbook;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/worksheet")
-                return XLRelationshipType::Worksheet;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/styles")
-                return XLRelationshipType::Styles;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/sharedStrings")
-                return XLRelationshipType::SharedStrings;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/calcChain")
-                return XLRelationshipType::CalculationChain;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/externalLink")
-                return XLRelationshipType::ExternalLink;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/theme")
-                return XLRelationshipType::Theme;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/chartsheet")
-                return XLRelationshipType::Chartsheet;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/drawing")
-                return XLRelationshipType::Drawing;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/image")
-                return XLRelationshipType::Image;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/chart")
-                return XLRelationshipType::Chart;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/externalLinkPath")
-                return XLRelationshipType::ExternalLinkPath;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/printerSettings")
-                return XLRelationshipType::PrinterSettings;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/vmlDrawing")
-                return XLRelationshipType::VMLDrawing;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/ctrlProp")
-                return XLRelationshipType::ControlProperties;
-            if (typeString.substr(comparePos) ==
-                (comparePos ? "" : relationshipDomainOpenXml2006CoreProps) + "/relationships/metadata/core-properties")
-                return XLRelationshipType::CoreProperties;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainMicrosoft2006) + "/relationships/vbaProject")
-                return XLRelationshipType::VBAProject;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainMicrosoft2011) + "/relationships/chartStyle")
-                return XLRelationshipType::ChartStyle;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainMicrosoft2011) + "/relationships/chartColorStyle")
-                return XLRelationshipType::ChartColorStyle;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/comments")
-                return XLRelationshipType::Comments;
-            if (typeString.substr(comparePos) == (comparePos ? "" : relationshipDomainOpenXml2006) + "/relationships/table")
-                return XLRelationshipType::Table;
+        auto matches = [typeString](std::string_view domain, const char* path) -> bool {
+            if (typeString == std::string(domain) + path) return true;
+            if (typeString.length() > 15) { // length of "/relationships/"
+                auto pos = typeString.find("/relationships/");
+                if (pos != std::string_view::npos) return typeString.substr(pos) == path;
+            }
+            return false;
+        };
 
-            // ===== relationship could not be identified
-            if (comparePos == 0)    // If fallback solution has not yet been tried
-                comparePos = typeString.find(
-                    "/relationships/");    // attempt to find the relationships section of the type string, regardless of domain
-            else                           // If fallback solution was tried & unsuccessful
-                comparePos = 0;            // trigger loop exit
-        }
-        while (comparePos > 0 and comparePos != std::string::npos);
-        // ===== loop exits if comparePos is not within typeString (= fallback solution failed or not possible)
+        if (matches(relationshipDomainOpenXml2006, "/relationships/extended-properties")) return XLRelationshipType::ExtendedProperties;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/custom-properties")) return XLRelationshipType::CustomProperties;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/officeDocument")) return XLRelationshipType::Workbook;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/worksheet")) return XLRelationshipType::Worksheet;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/styles")) return XLRelationshipType::Styles;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/sharedStrings")) return XLRelationshipType::SharedStrings;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/calcChain")) return XLRelationshipType::CalculationChain;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/externalLink")) return XLRelationshipType::ExternalLink;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/theme")) return XLRelationshipType::Theme;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/chartsheet")) return XLRelationshipType::Chartsheet;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/drawing")) return XLRelationshipType::Drawing;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/image")) return XLRelationshipType::Image;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/chart")) return XLRelationshipType::Chart;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/externalLinkPath")) return XLRelationshipType::ExternalLinkPath;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/printerSettings")) return XLRelationshipType::PrinterSettings;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/vmlDrawing")) return XLRelationshipType::VMLDrawing;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/ctrlProp")) return XLRelationshipType::ControlProperties;
+        if (matches(relationshipDomainOpenXml2006CoreProps, "/relationships/metadata/core-properties")) return XLRelationshipType::CoreProperties;
+        if (matches(relationshipDomainMicrosoft2006, "/relationships/vbaProject")) return XLRelationshipType::VBAProject;
+        if (matches(relationshipDomainMicrosoft2011, "/relationships/chartStyle")) return XLRelationshipType::ChartStyle;
+        if (matches(relationshipDomainMicrosoft2011, "/relationships/chartColorStyle")) return XLRelationshipType::ChartColorStyle;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/comments")) return XLRelationshipType::Comments;
+        if (matches(relationshipDomainOpenXml2006, "/relationships/table")) return XLRelationshipType::Table;
 
-        return XLRelationshipType::Unknown;    // default: relationship could not be identified
+        return XLRelationshipType::Unknown;
     }
 
 }    //    namespace
@@ -220,22 +191,18 @@ namespace
             if (!RandomizerInitialized) InitRandom();
             return Rand64();
         }
-        using namespace std::literals::string_literals;
-        // ===== workaround for pugi::xml_node currently not having an iterator for node_element only
+        
         XMLNode  relationship = relationshipsNode.first_child_of_type(pugi::node_element);
-        uint64_t newId        = 1;    // default
-        while (not relationship.empty()) {
-            uint64_t id;
-            try {
-                id = static_cast<uint64_t>(std::stoi(std::string(relationship.attribute("Id").value()).substr(3)));
+        uint64_t newId        = 1;
+        while (!relationship.empty()) {
+            std::string_view idVal = relationship.attribute("Id").value();
+            if (idVal.length() > 3) { // skip "rId"
+                uint64_t id;
+                auto [ptr, ec] = std::from_chars(idVal.data() + 3, idVal.data() + idVal.size(), id);
+                if (ec == std::errc()) {
+                    if (id >= newId) newId = id + 1;
+                }
             }
-            catch (std::invalid_argument const& e) {    // expected stoi exception
-                throw XLInputError("GetNewRelsID could not convert attribute Id to uint32_t ("s + e.what() + ")"s);
-            }
-            catch (...) {    // catch all other errors during conversion of attribute to uint32_t
-                throw XLInputError("GetNewRelsID could not convert attribute Id to uint32_t"s);
-            }
-            if (id >= newId) newId = id + 1;
             relationship = relationship.next_sibling_of_type(pugi::node_element);
         }
         return newId;
@@ -243,9 +210,6 @@ namespace
 
     /**
      * @brief Get a string representation of GetNewRelsID
-     * @param relationshipsNode pass-through parameter to GetNewRelsID
-     * @return A std::string that can be used as relationship ID
-     * @note The format of the returned value will be a base-16 number if RandomIDs is true, otherwise a base-10 number
      */
     std::string GetNewRelsIDString(XMLNode relationshipsNode)
     {
@@ -255,49 +219,30 @@ namespace
     }
 }    // anonymous namespace
 
-XLRelationshipItem::XLRelationshipItem() : m_relationshipNode(std::make_unique<XMLNode>()) {}
-
 /**
  * @details Constructor. Initializes the member variables for the new XLRelationshipItem object.
  */
-XLRelationshipItem::XLRelationshipItem(const XMLNode& node) : m_relationshipNode(std::make_unique<XMLNode>(node)) {}
-
-XLRelationshipItem::~XLRelationshipItem() = default;
-
-XLRelationshipItem::XLRelationshipItem(const XLRelationshipItem& other)
-    : m_relationshipNode(std::make_unique<XMLNode>(*other.m_relationshipNode))
-{}
-
-XLRelationshipItem& XLRelationshipItem::operator=(const XLRelationshipItem& other)
-{
-    if (&other != this) *m_relationshipNode = *other.m_relationshipNode;
-    return *this;
-}
+XLRelationshipItem::XLRelationshipItem(const XMLNode& node) : m_relationshipNode(node) {}
 
 /**
- * @details Returns the m_relationshipType member variable by getValue.
+ * @details Returns the XLRelationshipType by parsing the Type attribute.
  */
-XLRelationshipType XLRelationshipItem::type() const { return GetRelationshipTypeFromString(m_relationshipNode->attribute("Type").value()); }
+XLRelationshipType XLRelationshipItem::type() const { return GetRelationshipTypeFromString(m_relationshipNode.attribute("Type").value()); }
 
 /**
- * @details Returns the m_relationshipTarget member variable by getValue.
+ * @details Returns the Target attribute value.
  */
-std::string XLRelationshipItem::target() const
-{
-    // 2024-12-15 Returned to old behavior: do not strip leading slashes as this loses info about path being absolute.
-    //            Instead, treat absolute vs. relative path distinction in caller
-    return m_relationshipNode->attribute("Target").value();
-}
+std::string XLRelationshipItem::target() const { return m_relationshipNode.attribute("Target").value(); }
 
 /**
- * @details Returns the m_relationshipId member variable by getValue.
+ * @details Returns the Id attribute value.
  */
-std::string XLRelationshipItem::id() const { return m_relationshipNode->attribute("Id").value(); }
+std::string XLRelationshipItem::id() const { return m_relationshipNode.attribute("Id").value(); }
 
 /**
- * @details Returns the m_relationshipNode->empty() status
+ * @details Returns the emptiness status of the underlying XML node.
  */
-bool XLRelationshipItem::empty() const { return m_relationshipNode->empty(); }
+bool XLRelationshipItem::empty() const { return m_relationshipNode.empty(); }
 
 /**
  * @details Creates a XLRelationships object, which will read the XML file with the given path
@@ -332,121 +277,106 @@ XLRelationships::XLRelationships(XLXmlData* xmlData, std::string pathTo) : XLXml
 XLRelationships::~XLRelationships() = default;
 
 /**
- * @details Returns the XLRelationshipItem with the given ID, by looking it up in the m_relationships map.
+ * @details Returns the XLRelationshipItem with the given ID.
  */
-XLRelationshipItem XLRelationships::relationshipById(const std::string& id) const
-{ return XLRelationshipItem(xmlDocument().document_element().find_child_by_attribute("Id", id.c_str())); }
+XLRelationshipItem XLRelationships::relationshipById(std::string_view id) const
+{ return XLRelationshipItem(xmlDocument().document_element().find_child_by_attribute("Id", std::string(id).c_str())); }
 
 /**
- * @details Returns the XLRelationshipItem with the requested target, by iterating through the items.
- * @note 2024-07-24: perform a match that is agnostic to relative vs. absolute (leading slash) paths
+ * @details Returns the XLRelationshipItem with the requested target.
+ * Performance: Normalizes paths before comparison to ensure consistency between relative and absolute references.
  */
-XLRelationshipItem XLRelationships::relationshipByTarget(const std::string& target, bool throwIfNotFound) const
+XLRelationshipItem XLRelationships::relationshipByTarget(std::string_view target, bool throwIfNotFound) const
 {
-    // turn relative path into an absolute and resolve . and .. entries
-    std::string absoluteTarget = eliminateDotAndDotDotFromPath(target[0] == '/' ? target : m_path + target);
+    // Rationale: Convert to absolute path and normalize to resolve . and .. entries for consistent comparison.
+    std::string absoluteTarget = eliminateDotAndDotDotFromPath(!target.empty() && target.front() == '/' ? target : m_path + std::string(target));
 
     XMLNode relationshipNode = xmlDocument().document_element().first_child_of_type(pugi::node_element);
-    while (not relationshipNode.empty()) {
+    while (!relationshipNode.empty()) {
         std::string relationTarget = relationshipNode.attribute("Target").value();
-        if (relationTarget[0] != '/') relationTarget = m_path + relationTarget;    // turn relative path into an absolute
-        relationTarget = eliminateDotAndDotDotFromPath(relationTarget);            // and resolve . and .. entries, if any
+        if (relationTarget.empty() || relationTarget.front() != '/') relationTarget = m_path + relationTarget;
+        relationTarget = eliminateDotAndDotDotFromPath(relationTarget);
 
-        // ===== Attempt to match absoluteTarget & relationTarget
-        if (absoluteTarget == relationTarget) return XLRelationshipItem(relationshipNode);    // found!
+        if (absoluteTarget == relationTarget) return XLRelationshipItem(relationshipNode);
         relationshipNode = relationshipNode.next_sibling_of_type(pugi::node_element);
     }
 
     if (throwIfNotFound) {
         using namespace std::literals::string_literals;
-        throw XLException("XLRelationships::"s + __func__ + ": relationship with target \""s + target + "\" (absolute: \""s +
-                          absoluteTarget + "\" does not exist!"s);
+        throw XLException("XLRelationships::"s + __func__ + ": relationship with target \""s + std::string(target) + "\" (absolute: \""s +
+                          absoluteTarget + "\") does not exist!"s);
     }
-    return XLRelationshipItem();    // fail with an empty XLRelationshipItem return value -> can be tested for ::empty()
+    return XLRelationshipItem();
 }
 
 /**
- * @details Returns a const reference to the internal datastructure (std::vector)
+ * @details Returns a vector of all relationship items. 
+ * Rationale: Prefer returning by value for this collection as it's typically small and used for iteration.
  */
 std::vector<XLRelationshipItem> XLRelationships::relationships() const
 {
-    // ===== workaround for pugi::xml_node currently not having an iterator for node_element only
-    auto    result = std::vector<XLRelationshipItem>();
-    XMLNode item   = xmlDocument().document_element().first_child_of_type(pugi::node_element);
-    while (not item.empty()) {
-        result.emplace_back(XLRelationshipItem(item));
+    std::vector<XLRelationshipItem> result;
+    XMLNode item = xmlDocument().document_element().first_child_of_type(pugi::node_element);
+    while (!item.empty()) {
+        result.emplace_back(item);
         item = item.next_sibling_of_type(pugi::node_element);
     }
-    // ===== if a node_element iterator can be implemented for pugi::xml_node, the below code can be used again
-    // for (const auto& item : xmlDocument().document_element().children()) result.emplace_back(XLRelationshipItem(item));
-
     return result;
 }
 
-void XLRelationships::deleteRelationship(const std::string& relID)
-{ xmlDocument().document_element().remove_child(xmlDocument().document_element().find_child_by_attribute("Id", relID.c_str())); }
+void XLRelationships::deleteRelationship(std::string_view relID)
+{ xmlDocument().document_element().remove_child(xmlDocument().document_element().find_child_by_attribute("Id", std::string(relID).c_str())); }
 
 void XLRelationships::deleteRelationship(const XLRelationshipItem& item) { deleteRelationship(item.id()); }
 
 /**
- * @details Adds a new relationship by creating new XML node in the .rels file and creating a new XLRelationshipItem
- * based on the newly created node.
- * @note 2024-07-22: added more intelligent whitespace support
+ * @details Adds a new relationship. Handles whitespace preservation to maintain consistent XML formatting.
  */
-XLRelationshipItem XLRelationships::addRelationship(XLRelationshipType type, const std::string& target, bool isExternal)
+XLRelationshipItem XLRelationships::addRelationship(XLRelationshipType type, std::string_view target, bool isExternal)
 {
     const std::string typeString = OpenXLSX_XLRelationships::GetStringFromType(type);
-    // const std::string id         = "rId" + std::to_string(GetNewRelsID(xmlDocument().document_element()));
-    const std::string id = GetNewRelsIDString(
-        xmlDocument().document_element());    // 2024-07-24: wrapper for relationship IDs with support for 64 bit random IDs
+    const std::string id = GetNewRelsIDString(xmlDocument().document_element());
 
-    XMLNode lastRelationship = xmlDocument().document_element().last_child_of_type(pugi::node_element);    // see if there's a last element
-    XMLNode node{};                                                                                        // scope declaration
+    XMLNode lastRelationship = xmlDocument().document_element().last_child_of_type(pugi::node_element);
+    XMLNode node{};
 
-    // Create new node in the .rels file
     if (lastRelationship.empty())
         node = xmlDocument().document_element().prepend_child("Relationship");
-    else {    // if last element found
-        // ===== Insert node after previous relationship
+    else {
         node = xmlDocument().document_element().insert_child_after("Relationship", lastRelationship);
 
-        // ===== Using whitespace nodes prior to lastRelationship as a template, insert whitespaces between lastRelationship and the new
-        // node
-        XMLNode copyWhitespaceFrom = lastRelationship;    // start looking for whitespace nodes before previous relationship
-        XMLNode insertBefore       = node;                // start inserting the same whitespace nodes before new relationship
-        while (copyWhitespaceFrom.previous_sibling().type() == pugi::node_pcdata) {    // empty node returns pugi::node_null
-            // Advance to previous "template" whitespace node, ensured to exist in while-condition
+        // Preserve formatting by copying preceding whitespace
+        XMLNode copyWhitespaceFrom = lastRelationship;
+        XMLNode insertBefore       = node;
+        while (copyWhitespaceFrom.previous_sibling().type() == pugi::node_pcdata) {
             copyWhitespaceFrom = copyWhitespaceFrom.previous_sibling();
-            // ===== Insert a whitespace node
             insertBefore = xmlDocument().document_element().insert_child_before(pugi::node_pcdata, insertBefore);
-            insertBefore.set_value(copyWhitespaceFrom.value());    // copy the whitespace node value in sequence
+            insertBefore.set_value(copyWhitespaceFrom.value());
         }
     }
     node.append_attribute("Id").set_value(id.c_str());
     node.append_attribute("Type").set_value(typeString.c_str());
-    node.append_attribute("Target").set_value(target.c_str());
+    node.append_attribute("Target").set_value(std::string(target).c_str());
 
-    if (isExternal or type == XLRelationshipType::ExternalLinkPath) { node.append_attribute("TargetMode").set_value("External"); }
+    if (isExternal || type == XLRelationshipType::ExternalLinkPath) { node.append_attribute("TargetMode").set_value("External"); }
 
     return XLRelationshipItem(node);
 }
 
 /**
- * @details check whether relationshipByTarget finds an XLRelationshipItem or returns an empty one
- * @note 2024-07-24: let relationshipByTarget perform the find with a match that is agnostic to a potential leading slash
+ * @details Determine if a target path already exists in the relationships.
  */
-bool XLRelationships::targetExists(const std::string& target) const
+bool XLRelationships::targetExists(std::string_view target) const
 {
-    constexpr const bool DO_NOT_THROW = false;                        // const for code readability
-    return not relationshipByTarget(target, DO_NOT_THROW).empty();    // target exists if relationshipByTarget.empty() returns false
-    // return xmlDocument().document_element().find_child_by_attribute("Target", target.c_str()) != nullptr;
+    constexpr bool DO_NOT_THROW = false;
+    return !relationshipByTarget(target, DO_NOT_THROW).empty();
 }
 
 /**
- * @details
+ * @details Determine if a relationship ID already exists.
  */
-bool XLRelationships::idExists(const std::string& id) const
-{ return xmlDocument().document_element().find_child_by_attribute("Id", id.c_str()) != nullptr; }
+bool XLRelationships::idExists(std::string_view id) const
+{ return !xmlDocument().document_element().find_child_by_attribute("Id", std::string(id).c_str()).empty(); }
 
 /**
  * @details Print the underlying XML using pugixml::xml_node::print

@@ -104,73 +104,47 @@ namespace OpenXLSX
     {
     public:    // ---------- Public Member Functions ---------- //
         /**
-         * @brief
+         * @brief Default constructor. Creates an empty/invalid relationship item.
          */
-        XLRelationshipItem();
+        XLRelationshipItem() = default;
 
         /**
          * @brief Constructor. New items should only be created through an XLRelationship object.
-         * @param node An XMLNode object with the relationship item. If no input is provided, a null node is used.
+         * @param node An XMLNode object with the relationship item.
          */
         explicit XLRelationshipItem(const XMLNode& node);
 
         /**
-         * @brief Copy Constructor.
-         * @param other Object to be copied.
+         * @brief Rule of Zero: Default special member functions for value-based XMLNode storage.
          */
-        XLRelationshipItem(const XLRelationshipItem& other);
-
-        /**
-         * @brief Move Constructor.
-         * @param other Object to be moved.
-         */
+        ~XLRelationshipItem() = default;
+        XLRelationshipItem(const XLRelationshipItem& other) = default;
         XLRelationshipItem(XLRelationshipItem&& other) noexcept = default;
-
-        /**
-         * @brief
-         */
-        ~XLRelationshipItem();
-
-        /**
-         * @brief Copy assignment operator.
-         * @param other Right hand side of assignment operation.
-         * @return A reference to the lhs object.
-         */
-        XLRelationshipItem& operator=(const XLRelationshipItem& other);
-
-        /**
-         * @brief Move assignment operator.
-         * @param other Right hand side of assignment operation.
-         * @return A reference to lhs object.
-         */
+        XLRelationshipItem& operator=(const XLRelationshipItem& other) = default;
         XLRelationshipItem& operator=(XLRelationshipItem&& other) noexcept = default;
 
         /**
          * @brief Get the type of the current relationship item.
-         * @return An XLRelationshipType enum object, corresponding to the type.
          */
-        XLRelationshipType type() const;
+        [[nodiscard]] XLRelationshipType type() const;
 
         /**
-         * @brief Get the target, i.e. the path to the XML file the relationship item refers to.
-         * @return An XMLAttribute object containing the Target getValue.
+         * @brief Get the target, i.e. the internal package path or external URI this relationship points to.
          */
-        std::string target() const;
+        [[nodiscard]] std::string target() const;
 
         /**
-         * @brief Get the id of the relationship item.
-         * @return An XMLAttribute object containing the Id getValue.
+         * @brief Get the unique relationship identifier (e.g., "rId1").
          */
-        std::string id() const;
+        [[nodiscard]] std::string id() const;
 
         /**
-         * @brief Test if relationship item is empty (== m_relationshipNode->empty())
-         * @return true if this is an empty relationship item
+         * @brief Determine if this item is empty or invalid.
          */
-        bool empty() const;
+        [[nodiscard]] bool empty() const;
 
-    private:                                         // ---------- Private Member Variables ---------- //
-        std::unique_ptr<XMLNode> m_relationshipNode; /**< An XMLNode object with the relationship item */
+    private:                                 // ---------- Private Member Variables ---------- //
+        XMLNode m_relationshipNode; /**< The underlying XML element for this relationship. Held by value to avoid heap allocations. */
     };
 
     // ================================================================================
@@ -229,59 +203,49 @@ namespace OpenXLSX
 
         /**
          * @brief Look up a relationship item by ID.
-         * @param id The ID string of the relationship item to retrieve.
-         * @return An XLRelationshipItem object.
+         * @param id The unique identifier (e.g. "rId1").
          */
-        XLRelationshipItem relationshipById(const std::string& id) const;
+        [[nodiscard]] XLRelationshipItem relationshipById(std::string_view id) const;
 
         /**
-         * @brief Look up a relationship item by Target.
-         * @param target The Target string of the relationship item to retrieve.
-         * @param throwIfNotFound Throw an XLException when target is not found, default: true
-         *                        when false, XLRelationshipItem::empty() can be tested on the return value
-         * @return An XLRelationshipItem object.
+         * @brief Look up a relationship item by Target path.
+         * @param target The Target URI or package path.
+         * @param throwIfNotFound If true, missing targets trigger an exception; otherwise returns an empty item.
          */
-        XLRelationshipItem relationshipByTarget(const std::string& target, bool throwIfNotFound = true) const;
+        [[nodiscard]] XLRelationshipItem relationshipByTarget(std::string_view target, bool throwIfNotFound = true) const;
 
         /**
-         * @brief Get the std::map with the relationship items, ordered by ID.
-         * @return A const reference to the std::map with relationship items.
+         * @brief Get all relationship items in this file.
          */
-        std::vector<XLRelationshipItem> relationships() const;
+        [[nodiscard]] std::vector<XLRelationshipItem> relationships() const;
 
         /**
-         * @brief
-         * @param relID
+         * @brief Remove a relationship by its ID.
          */
-        void deleteRelationship(const std::string& relID);
+        void deleteRelationship(std::string_view relID);
 
         /**
-         * @brief Delete an item from the Relationships register
-         * @param item The XLRelationshipItem object to delete.
+         * @brief Remove a relationship by item reference.
          */
         void deleteRelationship(const XLRelationshipItem& item);
 
         /**
-         * @brief Add a new relationship item to the XLRelationships object.
-         * @param type The type of the new relationship item.
-         * @param target The target (or path) of the XML file for the relationship item.
-         * @param isExternal If true, TargetMode="External" will be added.
+         * @brief Create and append a new relationship to the collection.
+         * @param type OOXML relationship type (schema URI).
+         * @param target Internal path or external URI.
+         * @param isExternal Marking this relationship as 'External' avoids path normalization issues.
          */
-        XLRelationshipItem addRelationship(XLRelationshipType type, const std::string& target, bool isExternal = false);
+        XLRelationshipItem addRelationship(XLRelationshipType type, std::string_view target, bool isExternal = false);
 
         /**
-         * @brief Check if a XLRelationshipItem with the given Target string exists.
-         * @param target The Target string to look up.
-         * @return true if the XLRelationshipItem exists; otherwise false.
+         * @brief Determine if a specific target path is already registered.
          */
-        bool targetExists(const std::string& target) const;
+        [[nodiscard]] bool targetExists(std::string_view target) const;
 
         /**
-         * @brief Check if a XLRelationshipItem with the given Id string exists.
-         * @param id The Id string to look up.
-         * @return true if the XLRelationshipItem exists; otherwise false.
+         * @brief Determine if a specific relationship ID is already in use.
          */
-        bool idExists(const std::string& id) const;
+        [[nodiscard]] bool idExists(std::string_view id) const;
 
         /**
          * @brief print the XML contents of the relationships document using the underlying XMLNode print function
