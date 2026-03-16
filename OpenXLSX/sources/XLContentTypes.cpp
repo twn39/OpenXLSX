@@ -273,6 +273,23 @@ void XLContentTypes::addOverride(const std::string& path, XLContentType type)
 /**
  * @details
  */
+void XLContentTypes::updateOverride(const std::string& path, XLContentType type)
+{
+    const std::string typeString   = GetStringFromType(type);
+    std::string       internalPath = path;
+    if (internalPath[0] != '/') internalPath.insert(0, "/");
+
+    XMLNode node = xmlDocument().document_element().find_child_by_attribute("Override", "PartName", internalPath.c_str());
+    if (!node.empty()) {
+        node.attribute("ContentType").set_value(typeString.c_str());
+    } else {
+        addOverride(path, type);
+    }
+}
+
+/**
+ * @details
+ */
 void XLContentTypes::deleteOverride(const std::string& path)
 { xmlDocument().document_element().remove_child(xmlDocument().document_element().find_child_by_attribute("PartName", path.c_str())); }
 

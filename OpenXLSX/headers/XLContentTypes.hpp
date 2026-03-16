@@ -204,6 +204,13 @@ namespace OpenXLSX
         void addOverride(const std::string& path, XLContentType type);
 
         /**
+         * @brief Update an existing override key/getValue pair or add if it does not exist.
+         * @param path The key
+         * @param type The getValue
+         */
+        void updateOverride(const std::string& path, XLContentType type);
+
+        /**
          * @brief
          * @param path
          */

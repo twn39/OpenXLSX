@@ -242,6 +242,29 @@ void XLDocument::open(std::string_view fileName)
         }
     }
 
+    // ===== Cache unhandled archive entries (e.g., vbaProject.bin, ctrlProps)
+    for (const auto& entryName : m_archive.entryNames()) {
+        bool handled = false;
+        // Ignore known directories or trailing slashes (e.g. xl/media/)
+        if (!entryName.empty() && entryName.back() == '/') {
+            handled = true;
+        } else {
+            for (const auto& item : m_data) {
+                if (item.getXmlPath() == entryName) {
+                    handled = true;
+                    break;
+                }
+            }
+        }
+        
+        if (!handled && entryName != "docProps/core.xml" && entryName != "docProps/app.xml" && entryName != "docProps/custom.xml") {
+            // Wait, we need to extract from m_archive since the zip saveAs copies the original zip file, 
+            // but if saveAs is called without the original zip (e.g. memory manipulation), it might not?
+            // Actually XLZipArchive::save(path) handles this. So we just cache them so they can be explicitly added back if needed.
+            m_unhandledEntries[entryName] = m_archive.getEntry(entryName);
+        }
+    }
+
     // ===== Read shared strings table.
     XMLDocument* sharedStrings = getXmlData("xl/sharedStrings.xml")->getXmlDocument();
     if (not sharedStrings->document_element().attribute("uniqueCount").empty())
@@ -425,6 +448,12 @@ void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
     workbook().updateWorksheetDimensions();
     execCommand(XLCommand(XLCommandType::ResetCalcChain));
 
+    if (m_filePath.size() >= 5 && m_filePath.substr(m_filePath.size() - 5) == ".xlsm") {
+        m_contentTypes.updateOverride("/xl/workbook.xml", XLContentType::WorkbookMacroEnabled);
+    } else if (m_filePath.size() >= 5 && m_filePath.substr(m_filePath.size() - 5) == ".xlsx") {
+        m_contentTypes.updateOverride("/xl/workbook.xml", XLContentType::Workbook);
+    }
+
     m_archive.addEntry("[Content_Types].xml", m_contentTypes.xmlData(m_xmlSavingDeclaration));
     m_archive.addEntry("_rels/.rels", m_docRelationships.xmlData(m_xmlSavingDeclaration));
     if (m_wbkRelationships.valid()) {
@@ -444,6 +473,13 @@ void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
             item.getXmlPath(),
             item.getRawData(XLXmlSavingDeclaration(m_xmlSavingDeclaration.version(), m_xmlSavingDeclaration.encoding(), xmlIsStandalone)));
     }
+
+    for (const auto& entry : m_unhandledEntries) {
+        if (std::none_of(m_data.begin(), m_data.end(), [&](const XLXmlData& item) { return item.getXmlPath() == entry.first; })) {
+            m_archive.addEntry(entry.first, entry.second);
+        }
+    }
+
     m_archive.save(m_filePath);
 }
 

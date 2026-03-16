@@ -27,6 +27,40 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         doc.close();
     }
 
+    SECTION("Custom Number Formats")
+    {
+        XLDocument doc;
+        doc.create("./testXLStylesCustomNumFmt.xlsx", XLForceOverwrite);
+        auto styles = doc.styles();
+
+        size_t initialCount = styles.numberFormats().count();
+
+        // Add a new custom number format
+        uint32_t nf1 = styles.createNumberFormat("YYYY-MM-DD");
+        REQUIRE(nf1 >= 164); // Excel custom formats typically start at 164
+
+        // Add another one
+        uint32_t nf2 = styles.createNumberFormat("0.000%");
+        REQUIRE(nf2 == nf1 + 1);
+
+        // Add a duplicate to test deduplication
+        uint32_t nf3 = styles.createNumberFormat("YYYY-MM-DD");
+        REQUIRE(nf3 == nf1);
+        
+        REQUIRE(styles.numberFormats().count() == initialCount + 2);
+
+        doc.save();
+        doc.close();
+        
+        // Open it again to verify persistence
+        XLDocument doc2;
+        doc2.open("./testXLStylesCustomNumFmt.xlsx");
+        REQUIRE(doc2.styles().numberFormats().count() == initialCount + 2);
+        doc2.close();
+
+        std::filesystem::remove("./testXLStylesCustomNumFmt.xlsx");
+    }
+
     SECTION("Fonts")
     {
         XLDocument doc;

@@ -125,4 +125,45 @@ TEST_CASE("XLDocument Tests", "[XLDocument]")
 
         std::remove(utf8File.c_str());
     }
+
+    SECTION("Macro Preservation (.xlsm)")
+    {
+        std::string xlsmFile1 = "./testMacro1.xlsm";
+        std::string xlsmFile2 = "./testMacro2.xlsm";
+
+        {
+            XLDocument doc;
+            doc.create(xlsmFile1, XLForceOverwrite);
+            // Manually inject vbaProject.bin into the underlying archive
+            doc.archive().addEntry("xl/vbaProject.bin", "dummy macro content");
+            doc.contentTypes().addOverride("/xl/vbaProject.bin", XLContentType::VBAProject);
+            doc.save();
+            doc.close();
+        }
+
+        // Open it and save it again
+        {
+            XLDocument doc;
+            doc.open(xlsmFile1);
+            // Verify our unhandled entry tracker caught it
+            doc.saveAs(xlsmFile2, XLForceOverwrite);
+            doc.close();
+        }
+
+        // Verify the second file has vbaProject.bin
+        {
+            XLZipArchive archive;
+            archive.open(xlsmFile2);
+            REQUIRE(archive.hasEntry("xl/vbaProject.bin"));
+            REQUIRE(archive.getEntry("xl/vbaProject.bin") == "dummy macro content");
+            
+            // Also verify it's registered in [Content_Types].xml
+            std::string contentTypes = archive.getEntry("[Content_Types].xml");
+            REQUIRE(contentTypes.find("application/vnd.ms-office.vbaProject") != std::string::npos);
+            REQUIRE(contentTypes.find("macroEnabled") != std::string::npos);
+            archive.close();
+        }
+        std::remove(xlsmFile1.c_str());
+        std::remove(xlsmFile2.c_str());
+    }
 }

@@ -468,6 +468,47 @@ uint32_t XLNumberFormats::numberFormatIdFromIndex(XLStyleIndex index) const
 }
 
 /**
+ * @details Create a new custom number format with a unique ID and format code
+ */
+uint32_t XLNumberFormats::createNumberFormat(const std::string& formatCode)
+{
+    uint32_t maxId = 163;
+    for (const auto& fmt : m_numberFormats) {
+        if (fmt.formatCode() == formatCode) {
+            return fmt.numberFormatId();
+        }
+        if (fmt.numberFormatId() > maxId) {
+            maxId = fmt.numberFormatId();
+        }
+    }
+    
+    uint32_t newId = maxId + 1;
+    
+    XMLNode newNode{};
+    XMLNode lastStyle = m_numberFormatsNode->last_child_of_type(pugi::node_element);
+    if (lastStyle.empty())
+        newNode = m_numberFormatsNode->prepend_child("numFmt");
+    else
+        newNode = m_numberFormatsNode->insert_child_after("numFmt", lastStyle);
+        
+    newNode.append_attribute("numFmtId").set_value(newId);
+    newNode.append_attribute("formatCode").set_value(formatCode.c_str());
+    
+    // Add to our tracked vector
+    m_numberFormats.emplace_back(newNode);
+    
+    // Update count attribute on <numFmts>
+    auto countAttr = m_numberFormatsNode->attribute("count");
+    if (countAttr.empty()) {
+        m_numberFormatsNode->append_attribute("count").set_value(m_numberFormats.size());
+    } else {
+        countAttr.set_value(m_numberFormats.size());
+    }
+    
+    return newId;
+}
+
+/**
  * @details append a new XLNumberFormat to m_numberFormats and m_numberFormatsNode, based on copyFrom
  */
 XLStyleIndex XLNumberFormats::create(XLNumberFormat copyFrom, std::string styleEntriesPrefix)
@@ -2537,6 +2578,14 @@ XLStyles& XLStyles::operator=(const XLStyles& other)
         *this         = std::move(temp);    // move-assign & invalidate temp
     }
     return *this;
+}
+
+/**
+ * @details Create a new custom number format with a unique ID and format code
+ */
+uint32_t XLStyles::createNumberFormat(const std::string& formatCode)
+{
+    return m_numberFormats->createNumberFormat(formatCode);
 }
 
 /**

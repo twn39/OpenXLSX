@@ -387,4 +387,57 @@ TEST_CASE("XLSheet Tests", "[XLSheet]")
             doc.close();
         }
 
+        SECTION("XLSheet Views and Page Breaks")
+        {
+            XLDocument doc;
+            doc.create("./testXLSheet6.xlsx", XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            // Test Zoom
+            REQUIRE(wks.zoom() == 100); // Default
+            wks.setZoom(150);
+            REQUIRE(wks.zoom() == 150);
+
+            // Test Page Breaks
+            wks.insertRowBreak(5);
+            wks.insertRowBreak(10);
+            
+            doc.save();
+            doc.close();
+
+            // Re-open and verify
+            XLDocument doc2;
+            doc2.open("./testXLSheet6.xlsx");
+            auto wks2 = doc2.workbook().worksheet("Sheet1");
+
+            REQUIRE(wks2.zoom() == 150);
+
+            // Verify XML structure
+            std::string sheetXml = getRawXml(doc2, "xl/worksheets/sheet1.xml");
+            
+            // Zoom
+            REQUIRE(sheetXml.find("zoomScale=\"150\"") != std::string::npos);
+            REQUIRE(sheetXml.find("zoomScaleNormal=\"150\"") != std::string::npos);
+
+            // Page Breaks
+            REQUIRE(sheetXml.find("<rowBreaks") != std::string::npos);
+            REQUIRE(sheetXml.find("count=\"2\"") != std::string::npos);
+            REQUIRE(sheetXml.find("manualBreakCount=\"2\"") != std::string::npos);
+            REQUIRE(sheetXml.find("<brk id=\"5\"") != std::string::npos);
+            REQUIRE(sheetXml.find("<brk id=\"10\"") != std::string::npos);
+
+            // Test Removal
+            wks2.removeRowBreak(5);
+            doc2.save();
+            doc2.close();
+
+            XLDocument doc3;
+            doc3.open("./testXLSheet6.xlsx");
+            std::string sheetXml3 = getRawXml(doc3, "xl/worksheets/sheet1.xml");
+            REQUIRE(sheetXml3.find("count=\"1\"") != std::string::npos);
+            REQUIRE(sheetXml3.find("id=\"5\"") == std::string::npos);
+            REQUIRE(sheetXml3.find("id=\"10\"") != std::string::npos);
+            doc3.close();
         }
+
+}

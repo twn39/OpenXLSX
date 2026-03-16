@@ -2434,6 +2434,94 @@ void XLWorksheet::clearPanes()
     while (auto selection = sheetView.child("selection")) { sheetView.remove_child(selection); }
 }
 
+void XLWorksheet::setZoom(uint16_t scale)
+{
+    using namespace std::literals::string_literals;
+
+    if (scale < 10 || scale > 400) {
+        throw XLInputError("XLWorksheet::setZoom: scale must be between 10 and 400");
+    }
+
+    auto docElement = xmlDocument().document_element();
+    auto sheetViews = docElement.child("sheetViews");
+    if (sheetViews.empty()) { sheetViews = appendAndGetNode(docElement, "sheetViews", m_nodeOrder); }
+    
+    auto sheetView = sheetViews.child("sheetView");
+    if (sheetView.empty()) {
+        sheetView = sheetViews.append_child("sheetView");
+        sheetView.append_attribute("workbookViewId").set_value(0);
+    }
+
+    appendAndSetAttribute(sheetView, "zoomScale", std::to_string(scale));
+    appendAndSetAttribute(sheetView, "zoomScaleNormal", std::to_string(scale));
+}
+
+uint16_t XLWorksheet::zoom() const
+{
+    auto docElement = xmlDocument().document_element();
+    auto sheetViews = docElement.child("sheetViews");
+    if (sheetViews.empty()) return 100;
+    
+    auto sheetView = sheetViews.child("sheetView");
+    if (sheetView.empty()) return 100;
+
+    auto zoomAttr = sheetView.attribute("zoomScale");
+    if (zoomAttr.empty()) return 100;
+
+    return static_cast<uint16_t>(zoomAttr.as_uint());
+}
+
+void XLWorksheet::insertRowBreak(uint32_t row)
+{
+    auto docElement = xmlDocument().document_element();
+    auto rowBreaks = docElement.child("rowBreaks");
+    if (rowBreaks.empty()) {
+        rowBreaks = appendAndGetNode(docElement, "rowBreaks", m_nodeOrder);
+        rowBreaks.append_attribute("count").set_value(0);
+        rowBreaks.append_attribute("manualBreakCount").set_value(0);
+    }
+
+    // Check if break already exists
+    for (auto brk : rowBreaks.children("brk")) {
+        if (brk.attribute("id").as_uint() == row) return; // Already exists
+    }
+
+    auto brk = rowBreaks.append_child("brk");
+    brk.append_attribute("id").set_value(row);
+    brk.append_attribute("max").set_value(16383);
+    brk.append_attribute("man").set_value("1");
+
+    uint32_t count = rowBreaks.attribute("count").as_uint(0) + 1;
+    rowBreaks.attribute("count").set_value(count);
+    
+    uint32_t manualCount = rowBreaks.attribute("manualBreakCount").as_uint(0) + 1;
+    rowBreaks.attribute("manualBreakCount").set_value(manualCount);
+}
+
+void XLWorksheet::removeRowBreak(uint32_t row)
+{
+    auto docElement = xmlDocument().document_element();
+    auto rowBreaks = docElement.child("rowBreaks");
+    if (rowBreaks.empty()) return;
+
+    for (auto brk : rowBreaks.children("brk")) {
+        if (brk.attribute("id").as_uint() == row) {
+            rowBreaks.remove_child(brk);
+            
+            uint32_t count = rowBreaks.attribute("count").as_uint(1) - 1;
+            rowBreaks.attribute("count").set_value(count);
+            
+            uint32_t manualCount = rowBreaks.attribute("manualBreakCount").as_uint(1) - 1;
+            rowBreaks.attribute("manualBreakCount").set_value(manualCount);
+            
+            if (count == 0) {
+                docElement.remove_child(rowBreaks);
+            }
+            break;
+        }
+    }
+}
+
 std::string XLWorksheet::makeInternalLocation(std::string_view sheetName, std::string_view cellRef)
 {
     std::string result;

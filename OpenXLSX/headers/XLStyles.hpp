@@ -333,6 +333,13 @@ namespace OpenXLSX
         uint32_t numberFormatIdFromIndex(XLStyleIndex index) const;
 
         /**
+         * @brief Create a new custom number format with a unique ID.
+         * @param formatCode The explicit format code string
+         * @return The unique number format ID (numFmtId)
+         */
+        uint32_t createNumberFormat(const std::string& formatCode);
+
+        /**
          * @brief Append a new XLNumberFormat, based on copyFrom, and return its index in numFmts node
          * @param copyFrom Can provide an XLNumberFormat to use as template for the new style
          * @param styleEntriesPrefix Prefix the newly created cell style XMLNode with this pugi::node_pcdata text
@@ -2227,6 +2234,13 @@ namespace OpenXLSX
          * @return
          */
         XLStyles& operator=(const XLStyles& other);
+
+        /**
+         * @brief Create a new custom number format with a unique ID and format code
+         * @param formatCode The explicit format code string
+         * @return The unique number format ID (numFmtId)
+         */
+        uint32_t createNumberFormat(const std::string& formatCode);
 
         /**
          * @brief Get the number formats object

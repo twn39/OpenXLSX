@@ -1419,6 +1419,30 @@ namespace OpenXLSX
         void clearPanes();
 
         /**
+         * @brief Set the zoom scale of the worksheet.
+         * @param scale Zoom scale as a percentage (e.g., 100 for 100%). Valid range is typically 10 to 400.
+         */
+        void setZoom(uint16_t scale);
+
+        /**
+         * @brief Get the current zoom scale of the worksheet.
+         * @return Zoom scale as a percentage (e.g., 100 for 100%).
+         */
+        [[nodiscard]] uint16_t zoom() const;
+
+        /**
+         * @brief Insert a manual row break at the specified row.
+         * @param row The row number where the break should be inserted (1-based).
+         */
+        void insertRowBreak(uint32_t row);
+
+        /**
+         * @brief Remove a manual row break at the specified row.
+         * @param row The row number from which the break should be removed (1-based).
+         */
+        void removeRowBreak(uint32_t row);
+
+        /**
          * @brief Helper method to create an internal location string.
          * @param sheetName The name of the target sheet.
          * @param cellRef The target cell reference.

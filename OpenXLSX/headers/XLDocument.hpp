@@ -330,6 +330,7 @@ namespace OpenXLSX
         mutable XLSharedStrings                          m_sharedStrings{};
         mutable std::map<const XMLDocument*, std::unordered_map<uint32_t, SharedFormula>>
             m_sharedFormulas{};
+        std::map<std::string, std::string> m_unhandledEntries{};
 
         XLRelationships    m_docRelationships{};
         XLRelationships    m_wbkRelationships{};
