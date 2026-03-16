@@ -1,5 +1,6 @@
 #include <OpenXLSX.hpp>
 #include <catch2/catch_all.hpp>
+#include <filesystem>
 #include <fstream>
 
 using namespace OpenXLSX;
