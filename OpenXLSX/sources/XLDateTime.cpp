@@ -11,8 +11,9 @@
 namespace
 {
     /**
-     * @brief Checks if a year is a leap year according to Excel's logic.
-     * @details Excel treats 1900 as a leap year for historical reasons.
+     * @brief Determines if a year should be treated as a leap year.
+     * @details This function implements the standard Gregorian rules, but explicitly
+     * includes 1900 to ensure compatibility with Excel's historical bug.
      */
     [[nodiscard]] constexpr bool isLeapYear(int year) noexcept
     {
@@ -21,7 +22,9 @@ namespace
     }
 
     /**
-     * @brief Returns the number of days in a given month.
+     * @brief Provides the day count for a specific month.
+     * @details Uses a lookup table for efficiency, with a special case for February 
+     * in leap years.
      */
     [[nodiscard]] constexpr int daysInMonth(int month, int year) noexcept
     {
@@ -32,14 +35,12 @@ namespace
     }
 
     /**
-     * @brief Calculates the day of the week from an Excel serial number.
-     * @details In Excel, 1 is Sunday, 7 is Saturday.
-     * However, the historical 1900 leap year bug affects this calculation.
+     * @brief Map Excel serial numbers to days of the week.
+     * @details Excel uses a 1-7 range (Sunday-Saturday) and inherits the 1900 leap bug 
+     * for its epoch starting point.
      */
     [[nodiscard]] int dayOfWeek(double serial) noexcept
     {
-        // Excel's 1900-01-01 (serial 1.0) was a Sunday (tm_wday = 0).
-        // Standard formula for Excel day of week.
         const auto day = gsl::narrow_cast<int32_t>(serial) % 7;
         return (day == 0 ? 6 : day - 1);
     }
@@ -51,37 +52,48 @@ namespace OpenXLSX
 
     XLDateTime::XLDateTime(double serial) : m_serial(serial)
     {
-        if (serial < 1.0) { throw XLDateTimeError("Excel date/time serial number is invalid (must be >= 1.0)"); }
+        if (serial < 1.0) {
+            throw XLDateTimeError("Excel date/time serial number is invalid (must be >= 1.0)");
+        }
     }
 
+    /**
+     * @details Converts a standard tm struct to an Excel serial number.
+     * The conversion process starts from the 1900 epoch and accounts for every 
+     * full year and month before adding the current day and fractional time.
+     */
     XLDateTime::XLDateTime(const std::tm& timepoint)
     {
         if (timepoint.tm_year < 0) throw XLDateTimeError("Invalid year. Must be >= 0.");
         if (timepoint.tm_mon < 0 || timepoint.tm_mon > 11) throw XLDateTimeError("Invalid month. Must be 0-11.");
-
+        
         int days = daysInMonth(timepoint.tm_mon + 1, timepoint.tm_year + 1900);
-        if (timepoint.tm_mday <= 0 || timepoint.tm_mday > days) { throw XLDateTimeError("Invalid day for the given month."); }
+        if (timepoint.tm_mday <= 0 || timepoint.tm_mday > days) {
+            throw XLDateTimeError("Invalid day for the given month.");
+        }
 
-        // Initialize to 1.0 because 1900-01-01 is 1.0 in Excel.
         m_serial = 1.0;
 
-        // Years past 1900.
-        for (int i = 0; i < timepoint.tm_year; ++i) { m_serial += (isLeapYear(1900 + i) ? 366 : 365); }
+        for (int i = 0; i < timepoint.tm_year; ++i) {
+            m_serial += (isLeapYear(1900 + i) ? 366 : 365);
+        }
 
-        // Full months of the current year.
-        for (int i = 0; i < timepoint.tm_mon; ++i) { m_serial += daysInMonth(i + 1, timepoint.tm_year + 1900); }
+        for (int i = 0; i < timepoint.tm_mon; ++i) {
+            m_serial += daysInMonth(i + 1, timepoint.tm_year + 1900);
+        }
 
-        // Current day. Subtract 1 because we already started at 1.0 (the first day).
         m_serial += timepoint.tm_mday - 1;
 
-        // Fractions of the day.
         const int32_t seconds = timepoint.tm_hour * 3600 + timepoint.tm_min * 60 + timepoint.tm_sec;
         m_serial += seconds / 86400.0;
     }
 
+    /**
+     * @details Unix-to-Excel conversion uses a fixed offset of 25569 days 
+     * (the difference between the two epochs).
+     */
     XLDateTime::XLDateTime(time_t unixtime)
     {
-        // 25569 days between 1970-01-01 and 1899-12-30.
         m_serial = (static_cast<double>(unixtime) / 86400.0) + 25569.0;
     }
 
@@ -131,17 +143,23 @@ namespace OpenXLSX
 
     double XLDateTime::serial() const { return m_serial; }
 
+    /**
+     * @details Decomposition of the Excel serial number.
+     * The process handles the 1900 bug by treating 1900 as a leap year, ensuring 
+     * that all subsequent dates are correctly aligned with Excel's calendar. 
+     * Time components are extracted through fractional remainders, with an 
+     * overflow check to handle precision rounding issues that could push 
+     * a timestamp into the next second or day.
+     */
     std::tm XLDateTime::tm() const
     {
         std::tm result{};
         result.tm_isdst = -1;
         double serial   = m_serial;
 
-        // Years since 1900.
         int year = 0;
         while (serial > 1.0) {
             const int days = (isLeapYear(year + 1900) ? 366 : 365);
-            // If the remaining serial is not enough to complete this year, stop.
             if (static_cast<double>(days) + 1.0 > serial) break;
             serial -= days;
             ++year;
@@ -149,7 +167,6 @@ namespace OpenXLSX
         result.tm_year = year;
         result.tm_wday = dayOfWeek(m_serial);
 
-        // Months.
         int month = 0;
         while (month < 11) {
             int days = daysInMonth(month + 1, 1900 + year);
@@ -159,17 +176,15 @@ namespace OpenXLSX
         }
         result.tm_mon = month;
 
-        // Day of month.
         result.tm_mday = gsl::narrow_cast<int>(serial);
         serial -= result.tm_mday;
 
-        // Day of year.
-        // We need to re-calculate this based on the month and day.
         int yday = result.tm_mday - 1;
-        for (int i = 0; i < month; ++i) { yday += daysInMonth(i + 1, 1900 + year); }
+        for (int i = 0; i < month; ++i) {
+            yday += daysInMonth(i + 1, 1900 + year);
+        }
         result.tm_yday = yday;
 
-        // Time components.
         result.tm_hour = gsl::narrow_cast<int>(serial * 24);
         serial -= (result.tm_hour / 24.0);
 
@@ -178,7 +193,8 @@ namespace OpenXLSX
 
         result.tm_sec = gsl::narrow_cast<int>(std::lround(serial * 86400));
 
-        // Handle rounding overflows.
+        // Pass rounded overflows back up the date hierarchy to prevent 
+        // "60 seconds" or "24 hours" timestamps.
         if (result.tm_sec >= 60) {
             result.tm_sec -= 60;
             if (++result.tm_min >= 60) {

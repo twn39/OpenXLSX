@@ -447,7 +447,8 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             auto& custom = doc.customProperties();
             custom.setProperty("StringProp", "Value");
             custom.setProperty("IntProp", 123);
-            custom.setProperty("DateProp", XLDateTime::fromString("2021-01-01 10:00:00"));
+            // 2024-03-12 12:00:00
+            custom.setProperty("DateProp", XLDateTime(45363.5));
 
             doc.save();
             doc.close();
@@ -488,9 +489,9 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             REQUIRE(customXml.find("name=\"IntProp\"") != std::string::npos);
             REQUIRE(customXml.find("<vt:i4>123</vt:i4>") != std::string::npos);
 
-            // Date property (vt:filetime)
+            // Date property (vt:filetime) - 2024-03-12 12:00:00
             REQUIRE(customXml.find("name=\"DateProp\"") != std::string::npos);
-            REQUIRE(customXml.find("<vt:filetime>2021-01-01T10:00:00Z</vt:filetime>") != std::string::npos);
+            REQUIRE(customXml.find("<vt:filetime>2024-03-12T12:00:00Z</vt:filetime>") != std::string::npos);
 
             testDoc.close();
         }
