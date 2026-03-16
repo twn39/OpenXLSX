@@ -115,9 +115,85 @@ TEST_CASE("XLSheet Tests", "[XLSheet]")
         REQUIRE(wks.autoFilter().empty());
 
         doc.save();
-    }
+        }
 
-    SECTION("XLSheet Page Setup")
+        SECTION("XLSheet Panes (Freeze & Split)")
+        {
+            XLDocument doc;
+            doc.create("./testXLSheetPanes.xlsx", XLForceOverwrite);
+
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            // 1. Freeze first row
+            wks.freezePanes(0, 1);
+            REQUIRE(wks.hasPanes());
+            std::ostringstream ss1;
+            wks.xmlDocument().document_element().print(ss1);
+            std::string xml = ss1.str();
+            REQUIRE(xml.find("ySplit=\"1\"") != std::string::npos);
+            REQUIRE(xml.find("state=\"frozen\"") != std::string::npos);
+            REQUIRE(xml.find("topLeftCell=\"A2\"") != std::string::npos);
+            REQUIRE(xml.find("<selection pane=\"bottomLeft\"") != std::string::npos);
+
+            // 2. Freeze first column
+            wks.freezePanes(1, 0);
+            REQUIRE(wks.hasPanes());
+            std::ostringstream ss2;
+            wks.xmlDocument().document_element().print(ss2);
+            xml = ss2.str();
+            REQUIRE(xml.find("xSplit=\"1\"") != std::string::npos);
+            REQUIRE(xml.find("state=\"frozen\"") != std::string::npos);
+            REQUIRE(xml.find("activePane=\"topRight\"") != std::string::npos);
+            REQUIRE(xml.find("<selection pane=\"topRight\"") != std::string::npos);
+
+            // 3. Freeze first row and first column
+            wks.freezePanes(1, 1);
+            REQUIRE(wks.hasPanes());
+            std::ostringstream ss3;
+            wks.xmlDocument().document_element().print(ss3);
+            xml = ss3.str();
+            REQUIRE(xml.find("xSplit=\"1\"") != std::string::npos);
+            REQUIRE(xml.find("ySplit=\"1\"") != std::string::npos);
+            REQUIRE(xml.find("state=\"frozen\"") != std::string::npos);
+            REQUIRE(xml.find("activePane=\"bottomRight\"") != std::string::npos);
+            REQUIRE(xml.find("<selection pane=\"topRight\"") != std::string::npos);
+            REQUIRE(xml.find("<selection pane=\"bottomLeft\"") != std::string::npos);
+            REQUIRE(xml.find("<selection pane=\"bottomRight\"") != std::string::npos);
+
+            // 4. Split panes
+            wks.splitPanes(1000, 2000, "C3", XLPane::BottomRight);
+            REQUIRE(wks.hasPanes());
+            std::ostringstream ss4;
+            wks.xmlDocument().document_element().print(ss4);
+            xml = ss4.str();
+            REQUIRE(xml.find("xSplit=\"1000\"") != std::string::npos);
+            REQUIRE(xml.find("ySplit=\"2000\"") != std::string::npos);
+            REQUIRE(xml.find("state=\"split\"") != std::string::npos);
+            REQUIRE(xml.find("activePane=\"bottomRight\"") != std::string::npos);
+
+            // 5. Clear panes
+            wks.clearPanes();
+            REQUIRE_FALSE(wks.hasPanes());
+            std::ostringstream ss5;
+            wks.xmlDocument().document_element().print(ss5);
+            xml = ss5.str();
+            REQUIRE(xml.find("<pane") == std::string::npos);
+            REQUIRE(xml.find("<selection") == std::string::npos);
+
+            // 6. Freeze using string cell reference overload
+            wks.freezePanes("B2");
+            REQUIRE(wks.hasPanes());
+            std::ostringstream ss6;
+            wks.xmlDocument().document_element().print(ss6);
+            xml = ss6.str();
+            REQUIRE(xml.find("xSplit=\"1\"") != std::string::npos);
+            REQUIRE(xml.find("ySplit=\"1\"") != std::string::npos);
+            REQUIRE(xml.find("state=\"frozen\"") != std::string::npos);
+            REQUIRE(xml.find("activePane=\"bottomRight\"") != std::string::npos);
+            doc.save();
+        }
+        SECTION("XLSheet Column Formatting")
+
     {
         XLDocument doc;
         doc.create("./testXLSheet4.xlsx", XLForceOverwrite);

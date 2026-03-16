@@ -261,6 +261,73 @@ namespace OpenXLSX
                 return "(invalid)";
         }
     }
+
+    /**
+     * @brief
+     * @param state
+     * @return
+     */
+    std::string XLPaneStateToString(XLPaneState state)
+    {
+        switch (state) {
+            case XLPaneState::Split:
+                return "split";
+            case XLPaneState::Frozen:
+                return "frozen";
+            case XLPaneState::FrozenSplit:
+                return "frozenSplit";
+            default:
+                return "split";
+        }
+    }
+
+    /**
+     * @brief
+     * @param stateString
+     * @return
+     */
+    XLPaneState XLPaneStateFromString(std::string const& stateString)
+    {
+        if (stateString == "split") return XLPaneState::Split;
+        if (stateString == "frozen") return XLPaneState::Frozen;
+        if (stateString == "frozenSplit") return XLPaneState::FrozenSplit;
+        return XLPaneState::Split;
+    }
+
+    /**
+     * @brief
+     * @param pane
+     * @return
+     */
+    std::string XLPaneToString(XLPane pane)
+    {
+        switch (pane) {
+            case XLPane::BottomRight:
+                return "bottomRight";
+            case XLPane::TopRight:
+                return "topRight";
+            case XLPane::BottomLeft:
+                return "bottomLeft";
+            case XLPane::TopLeft:
+                return "topLeft";
+            default:
+                return "bottomRight";
+        }
+    }
+
+    /**
+     * @brief
+     * @param paneString
+     * @return
+     */
+    XLPane XLPaneFromString(std::string const& paneString)
+    {
+        if (paneString == "bottomRight") return XLPane::BottomRight;
+        if (paneString == "topRight") return XLPane::TopRight;
+        if (paneString == "bottomLeft") return XLPane::BottomLeft;
+        if (paneString == "topLeft") return XLPane::TopLeft;
+        return XLPane::BottomRight;
+    }
 }    // namespace OpenXLSX
 
 // ========== XLSheet Member Functions
@@ -2235,6 +2302,105 @@ void XLWorksheet::removeHyperlink(std::string_view cellRef)
 
     // Clean up <hyperlinks> node if empty
     if (hyperlinksNode.first_child().empty()) { docElement.remove_child(hyperlinksNode); }
+}
+
+bool XLWorksheet::hasPanes() const
+{
+    auto sheetViews = xmlDocument().document_element().child("sheetViews");
+    if (sheetViews.empty()) return false;
+    auto sheetView = sheetViews.child("sheetView");
+    if (sheetView.empty()) return false;
+    return !sheetView.child("pane").empty();
+}
+
+XMLNode XLWorksheet::prepareSheetViewForPanes()
+{
+    auto docElement = xmlDocument().document_element();
+    auto sheetViews = docElement.child("sheetViews");
+    if (sheetViews.empty()) { sheetViews = appendAndGetNode(docElement, "sheetViews", m_nodeOrder); }
+    
+    auto sheetView = sheetViews.child("sheetView");
+    if (sheetView.empty()) {
+        sheetView = sheetViews.append_child("sheetView");
+        sheetView.append_attribute("workbookViewId").set_value(0);
+    }
+
+    // Clear existing settings
+    sheetView.remove_child("pane");
+    while (auto selection = sheetView.child("selection")) { sheetView.remove_child(selection); }
+    
+    return sheetView;
+}
+
+void XLWorksheet::freezePanes(uint16_t column, uint32_t row)
+{
+    XMLNode sheetView = prepareSheetViewForPanes();
+
+    if (column == 0 && row == 0) return;
+
+    auto pane = appendAndGetNode(sheetView, "pane", XLSheetViewNodeOrder);
+    if (column > 0) pane.append_attribute("xSplit").set_value(column);
+    if (row > 0) pane.append_attribute("ySplit").set_value(row);
+
+    const std::string address = XLCellReference(row + 1, static_cast<uint16_t>(column + 1)).address();
+    pane.append_attribute("topLeftCell").set_value(address.c_str());
+    pane.append_attribute("state").set_value("frozen");
+
+    const char* activePaneStr = (column > 0 && row > 0) ? "bottomRight" : (column > 0 ? "topRight" : "bottomLeft");
+    pane.append_attribute("activePane").set_value(activePaneStr);
+
+    if (column > 0 && row > 0) {
+        auto sel1 = sheetView.insert_child_after("selection", pane);
+        sel1.append_attribute("pane").set_value("topRight");
+        auto sel2 = sheetView.insert_child_after("selection", sel1);
+        sel2.append_attribute("pane").set_value("bottomLeft");
+        auto sel3 = sheetView.insert_child_after("selection", sel2);
+        sel3.append_attribute("pane").set_value("bottomRight");
+        sel3.append_attribute("activeCell").set_value(address.c_str());
+        sel3.append_attribute("sqref").set_value(address.c_str());
+    }
+    else {
+        auto sel = sheetView.insert_child_after("selection", pane);
+        sel.append_attribute("pane").set_value(activePaneStr);
+        sel.append_attribute("activeCell").set_value(address.c_str());
+        sel.append_attribute("sqref").set_value(address.c_str());
+    }
+}
+
+void XLWorksheet::freezePanes(std::string_view cellRef)
+{
+    XLCellReference ref(std::string{cellRef});
+    freezePanes(static_cast<uint16_t>(ref.column() - 1), ref.row() - 1);
+}
+
+void XLWorksheet::splitPanes(double xSplit, double ySplit, std::string_view topLeftCell, XLPane activePane)
+{
+    XMLNode sheetView = prepareSheetViewForPanes();
+
+    if (xSplit == 0 && ySplit == 0) return;
+
+    auto pane = appendAndGetNode(sheetView, "pane", XLSheetViewNodeOrder);
+    if (xSplit > 0) pane.append_attribute("xSplit").set_value(xSplit);
+    if (ySplit > 0) pane.append_attribute("ySplit").set_value(ySplit);
+
+    if (!topLeftCell.empty()) pane.append_attribute("topLeftCell").set_value(std::string(topLeftCell).c_str());
+    pane.append_attribute("activePane").set_value(XLPaneToString(activePane).c_str());
+    pane.append_attribute("state").set_value("split");
+
+    auto sel = sheetView.insert_child_after("selection", pane);
+    sel.append_attribute("pane").set_value(XLPaneToString(activePane).c_str());
+}
+
+void XLWorksheet::clearPanes()
+{
+    auto docElement = xmlDocument().document_element();
+    auto sheetViews = docElement.child("sheetViews");
+    if (sheetViews.empty()) return;
+    auto sheetView = sheetViews.child("sheetView");
+    if (sheetView.empty()) return;
+
+    sheetView.remove_child("pane");
+    while (auto selection = sheetView.child("selection")) { sheetView.remove_child(selection); }
 }
 
 std::string XLWorksheet::makeInternalLocation(std::string_view sheetName, std::string_view cellRef)

@@ -43,6 +43,16 @@ namespace OpenXLSX
      */
     enum class XLSheetState : uint8_t { Visible, Hidden, VeryHidden };
 
+    /**
+     * @brief The XLPaneState is an enumeration of the possible states of a pane, e.g. Frozen or Split.
+     */
+    enum class XLPaneState : uint8_t { Split, Frozen, FrozenSplit };
+
+    /**
+     * @brief The XLPane is an enumeration of the possible pane identifiers.
+     */
+    enum class XLPane : uint8_t { BottomRight, TopRight, BottomLeft, TopLeft };
+
     constexpr const uint16_t XLPriorityNotSet = 0;    // readability constant for XLCfRule::priority()
 
     enum class XLCfType : uint8_t {
@@ -137,6 +147,12 @@ namespace OpenXLSX
         "tableParts",
         "extLst"};    // END: const std::vector< std::string_view > XLWorksheetNodeOrder
 
+    const std::vector<std::string_view> XLSheetViewNodeOrder = {    // worksheet XML <sheetView> child sequence
+        "pane",
+        "selection",
+        "pivotSelection",
+        "extLst"};    // END: const std::vector< std::string_view > XLSheetViewNodeOrder
+
     // ================================================================================
     // Converter functions between OpenXLSX class specific enum class types and OOXML values
     // ================================================================================
@@ -146,6 +162,11 @@ namespace OpenXLSX
     OPENXLSX_EXPORT std::string    XLCfOperatorToString(XLCfOperator cfOperator);
     OPENXLSX_EXPORT XLCfTimePeriod XLCfTimePeriodFromString(std::string const& timePeriodString);
     OPENXLSX_EXPORT std::string XLCfTimePeriodToString(XLCfTimePeriod cfTimePeriod);
+
+    OPENXLSX_EXPORT std::string XLPaneStateToString(XLPaneState state);
+    OPENXLSX_EXPORT XLPaneState XLPaneStateFromString(std::string const& stateString);
+    OPENXLSX_EXPORT std::string XLPaneToString(XLPane pane);
+    OPENXLSX_EXPORT XLPane      XLPaneFromString(std::string const& paneString);
 
     /**
      * @brief The XLSheetBase class is the base class for the XLWorksheet and XLChartsheet classes. However,
@@ -1347,6 +1368,39 @@ namespace OpenXLSX
         void removeHyperlink(std::string_view cellRef);
 
         /**
+         * @brief Check if the worksheet has frozen or split panes.
+         * @return true if panes exist.
+         */
+        [[nodiscard]] bool hasPanes() const;
+
+        /**
+         * @brief Freeze the panes at the given coordinates.
+         * @param column The column number to freeze (1-based, 0 if no vertical split).
+         * @param row The row number to freeze (1-based, 0 if no horizontal split).
+         */
+        void freezePanes(uint16_t column, uint32_t row);
+
+        /**
+         * @brief Freeze the panes based on the top-left cell of the bottom-right pane.
+         * @param cellRef The cell reference (e.g., "B2" freezes first row and first column).
+         */
+        void freezePanes(std::string_view cellRef);
+
+        /**
+         * @brief Split the panes at the given pixel coordinates.
+         * @param xSplit The horizontal split position in 1/20th of a point.
+         * @param ySplit The vertical split position in 1/20th of a point.
+         * @param topLeftCell The cell address of the top-left cell in the bottom-right pane.
+         * @param activePane The pane that is active.
+         */
+        void splitPanes(double xSplit, double ySplit, std::string_view topLeftCell = "", XLPane activePane = XLPane::BottomRight);
+
+        /**
+         * @brief Clear all panes (frozen or split) from the worksheet.
+         */
+        void clearPanes();
+
+        /**
          * @brief Helper method to create an internal location string.
          * @param sheetName The name of the target sheet.
          * @param cellRef The target cell reference.
@@ -1400,6 +1454,12 @@ namespace OpenXLSX
          * @brief
          */
         bool setActive_impl();
+
+        /**
+         * @brief Helper to prepare the sheetView node for pane operations by creating it if missing and clearing existing panes.
+         * @return The sheetView node.
+         */
+        XMLNode prepareSheetViewForPanes();
 
     private:                                                                    // ---------- Private Member Variables ---------- //
         XLRelationships                                    m_relationships{};   /**< class handling the worksheet relationships */
