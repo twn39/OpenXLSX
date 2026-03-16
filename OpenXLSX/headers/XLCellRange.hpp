@@ -1,11 +1,11 @@
 #ifndef OPENXLSX_XLCELLRANGE_HPP
 #define OPENXLSX_XLCELLRANGE_HPP
 
-#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
+#ifdef _MSC_VER
 #    pragma warning(push)
 #    pragma warning(disable : 4251)
 #    pragma warning(disable : 4275)
-#endif    // _MSC_VER
+#endif
 
 // ===== External Includes ===== //
 #include <memory>
@@ -20,130 +20,72 @@
 namespace OpenXLSX
 {
     /**
-     * @brief This class encapsulates the concept of a cell range, i.e. a square area
-     * (or subset) of cells in a spreadsheet.
+     * @brief Represents a rectangular area of cells within a worksheet.
+     * @details This class provides a high-level interface for bulk operations on cells, 
+     * such as clearing values, setting formats, or iterating over a subset of the worksheet.
+     * It maintains a cache of column styles to ensure efficient cell creation during iteration.
      */
     class OPENXLSX_EXPORT XLCellRange
     {
         friend class XLCellIterator;
 
-        //----------------------------------------------------------------------------------------------------------------------
-        //           Public Member Functions
-        //----------------------------------------------------------------------------------------------------------------------
-
     public:
         /**
-         * @brief Default constructor for variable declaration
+         * @brief Constructs an uninitialized range.
          */
         XLCellRange();
 
         /**
-         * @brief
-         * @param dataNode
-         * @param topLeft
-         * @param bottomRight
-         * @param sharedStrings
+         * @param dataNode The XML node containing sheet data.
+         * @param topLeft Top-left boundary of the range.
+         * @param bottomRight Bottom-right boundary of the range.
+         * @param sharedStrings Reference to the workbook's shared strings table.
+         * @throws XLInputError if topLeft is not truly to the top-left of bottomRight.
          */
         explicit XLCellRange(const XMLNode&         dataNode,
                              const XLCellReference& topLeft,
                              const XLCellReference& bottomRight,
                              const XLSharedStrings& sharedStrings);
 
-        /**
-         * @brief Copy constructor
-         * @param other The range object to be copied.
-         * @note This implements the default copy constructor, i.e. memberwise copying.
-         */
-        XLCellRange(const XLCellRange& other);
+        ~XLCellRange() = default;
+        XLCellRange(const XLCellRange& other) = default;
+        XLCellRange(XLCellRange&& other) noexcept = default;
+        XLCellRange& operator=(const XLCellRange& other) = default;
+        XLCellRange& operator=(XLCellRange&& other) noexcept = default;
 
         /**
-         * @brief Move constructor
-         * @param other The range object to be moved.
-         * @note This implements the default move constructor, i.e. memberwise move.
-         */
-        XLCellRange(XLCellRange&& other) noexcept;
-
-        /**
-         * @brief Destructor [default]
-         * @note This implements the default destructor.
-         */
-        ~XLCellRange();
-
-        /**
-         * @brief The copy assignment operator [default]
-         * @param other The range object to be copied and assigned.
-         * @return A reference to the new object.
-         * @throws A std::range_error if the source range and destination range are of different size and shape.
-         * @note This implements the default copy assignment operator.
-         */
-        XLCellRange& operator=(const XLCellRange& other);
-
-        /**
-         * @brief The move assignment operator [default].
-         * @param other The range object to be moved and assigned.
-         * @return A reference to the new object.
-         * @note This implements the default move assignment operator.
-         */
-        XLCellRange& operator=(XLCellRange&& other) noexcept;
-
-        /**
-         * @brief populate the m_columnStyles
-         * @return a const XLCellReference
+         * @brief Scans the worksheet for column-level styles and caches them.
+         * @details This is called automatically during construction to ensure XLCellIterator 
+         * can apply default styles to newly created cells without repeated XML lookups.
          */
         void fetchColumnStyles();
 
-        /**
-         * @brief get the top left cell
-         * @return a const XLCellReference
-         */
-        const XLCellReference topLeft() const;
+        [[nodiscard]] XLCellReference topLeft() const;
+        [[nodiscard]] XLCellReference bottomRight() const;
 
         /**
-         * @brief get the bottom right cell
-         * @return a const XLCellReference
+         * @return The range reference string (e.g., "A1:C3"), or an empty string if uninitialized.
          */
-        const XLCellReference bottomRight() const;
+        [[nodiscard]] std::string address() const;
+
+        [[nodiscard]] uint32_t numRows() const;
+        [[nodiscard]] uint16_t numColumns() const;
+
+        [[nodiscard]] XLCellIterator begin() const;
+        [[nodiscard]] XLCellIterator end() const;
 
         /**
-         * @brief get the string reference that corresponds to the represented cell range
-         * @return a std::string range reference, e.g. "A2:Z5"
+         * @brief Returns true if the range is uninitialized or points to an invalid worksheet node.
          */
-        std::string address() const;
+        [[nodiscard]] bool empty() const;
 
         /**
-         * @brief Get the number of rows in the range.
-         * @return The number of rows.
-         */
-        uint32_t numRows() const;
-
-        /**
-         * @brief Get the number of columns in the range.
-         * @return The number of columns.
-         */
-        uint16_t numColumns() const;
-
-        /**
-         * @brief
-         * @return
-         */
-        XLCellIterator begin() const;
-
-        /**
-         * @brief
-         * @return
-         */
-        XLCellIterator end() const;
-
-        /**
-         * @brief
+         * @brief Clears the values of all cells within the range.
          */
         void clear();
 
         /**
-         * @brief Templated assignment operator - assign value to a range of cells
-         * @tparam T The type of the value argument.
-         * @param value The value.
-         * @return A reference to the assigned-to object.
+         * @brief Assigns a single value to every cell in the range.
          */
         template<typename T,
                  typename = std::enable_if_t<
@@ -152,33 +94,34 @@ namespace OpenXLSX
                      std::is_same_v<std::decay_t<T>, char*> or std::is_same_v<T, XLDateTime>>>
         XLCellRange& operator=(T value)
         {
-            // forward implementation to templated XLCellValue& XLCellValue::operator=(T value)
             for (auto it = begin(); it != end(); ++it) it->value() = value;
             return *this;
         }
 
         /**
-         * @brief Set cell format for a range of cells
-         * @param cellFormatIndex The style to set, corresponding to the nidex of XLStyles::cellStyles()
-         * @returns true on success, false on failure
+         * @brief Applies a cell format (style) to all cells in the range.
+         * @param cellFormatIndex The index in the workbook's style sheet.
+         * @return true on success.
          */
         bool setFormat(XLStyleIndex cellFormatIndex);
 
-        //----------------------------------------------------------------------------------------------------------------------
-        //           Private Member Variables
-        //----------------------------------------------------------------------------------------------------------------------
+        /**
+         * @brief Calculates the intersection area between this range and another.
+         * @return A new range representing the common area, or an empty range if they don't overlap.
+         */
+        [[nodiscard]] XLCellRange intersect(const XLCellRange& other) const;
 
     private:
-        std::unique_ptr<XMLNode>  m_dataNode;      /**< */
-        XLCellReference           m_topLeft;       /**< reference to the first cell in the range */
-        XLCellReference           m_bottomRight;   /**< reference to the last cell in the range */
-        XLSharedStringsRef        m_sharedStrings; /**< reference to the document shared strings table */
-        std::vector<XLStyleIndex> m_columnStyles;  /**< quick access to column styles in the range - populated by fetchColumnStyles() */
+        XMLNode                   m_dataNode;
+        XLCellReference           m_topLeft;
+        XLCellReference           m_bottomRight;
+        XLSharedStringsRef        m_sharedStrings;
+        std::vector<XLStyleIndex> m_columnStyles; /**< Cached column-level styles for fast cell creation. */
     };
 }    // namespace OpenXLSX
 
-#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
+#ifdef _MSC_VER
 #    pragma warning(pop)
-#endif    // _MSC_VER
+#endif
 
 #endif    // OPENXLSX_XLCELLRANGE_HPP

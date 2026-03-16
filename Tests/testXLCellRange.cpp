@@ -169,4 +169,33 @@ TEST_CASE("XLCellRange Tests", "[XLCellRange]")
 
         REQUIRE(std::distance(it1, it3) == 9);
     }
+
+    SECTION("Intersection")
+    {
+        auto rng1 = wks.range(XLCellReference("B2"), XLCellReference("D4"));    // B2:D4
+        auto rng2 = wks.range(XLCellReference("C3"), XLCellReference("E5"));    // C3:E5
+
+        auto intersect = rng1.intersect(rng2);
+        REQUIRE(intersect.address() == "C3:D4");
+        REQUIRE(intersect.numRows() == 2);
+        REQUIRE(intersect.numColumns() == 2);
+        REQUIRE_FALSE(intersect.empty());
+
+        // Identical ranges
+        auto rngIdentical = rng1.intersect(rng1);
+        REQUIRE(rngIdentical.address() == "B2:D4");
+        REQUIRE_FALSE(rngIdentical.empty());
+
+        // Adjacent ranges (No intersection)
+        auto rngAdjacent = wks.range(XLCellReference("E2"), XLCellReference("F4"));
+        auto noIntersect = rng1.intersect(rngAdjacent);
+        REQUIRE(noIntersect.empty());
+        REQUIRE(noIntersect.numRows() == 0);
+        REQUIRE(noIntersect.numColumns() == 0);
+        REQUIRE(noIntersect.address() == "");
+
+        // No intersection at all
+        auto rngFar = wks.range(XLCellReference("Z10"), XLCellReference("AA20"));
+        REQUIRE(rng1.intersect(rngFar).empty());
+    }
 }

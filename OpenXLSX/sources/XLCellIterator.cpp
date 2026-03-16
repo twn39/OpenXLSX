@@ -90,7 +90,7 @@ namespace OpenXLSX
  * @details
  */
 XLCellIterator::XLCellIterator(const XLCellRange& cellRange, XLIteratorLocation loc, std::vector<XLStyleIndex> const* colStyles)
-    : m_dataNode(*cellRange.m_dataNode),
+    : m_dataNode(cellRange.m_dataNode),
       m_topLeft(cellRange.m_topLeft),
       m_bottomRight(cellRange.m_bottomRight),
       m_sharedStrings(cellRange.m_sharedStrings),

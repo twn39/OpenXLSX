@@ -653,4 +653,65 @@ testTestDoc:    // Wait, I'll just use the doc directly.
         }
         std::filesystem::remove(filename);
     }
+
+    SECTION("Verify Range Style Inheritance and XML Integrity")
+    {
+        std::string filename = "ooxml_range_test.xlsx";
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            // 1. Create a custom style to get an index != 0
+            auto styles = doc.styles();
+            auto newFontIndex = styles.fonts().create();
+            styles.fonts()[newFontIndex].setFontName("Arial Black");
+            
+            auto newXfIndex = styles.cellFormats().create();
+            styles.cellFormats()[newXfIndex].setFontIndex(newFontIndex);
+            
+            XLStyleIndex customStyleIndex = newXfIndex;
+
+            // Ensure our style index is indeed not 0
+            REQUIRE(customStyleIndex > 0);
+
+            // 2. Set column style using our custom style
+            wks.column(2).setFormat(customStyleIndex);
+
+            // 3. Create a range and iterate to fill values
+            // The iterator should pick up customStyleIndex for column 2 and 
+            // explicitly set it on cell B2 because it's not the default 0.
+            auto rng = wks.range(XLCellReference("B2"), XLCellReference("B2"));
+            for (auto& cell : rng) {
+                cell.value() = "Inherited";
+            }
+
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLDocumentTest testDoc;
+            testDoc.open(filename);
+
+            std::string sheetXml = testDoc.getRawXml("xl/worksheets/sheet1.xml");
+
+            // Verify column definition exists with correct style
+            REQUIRE(sheetXml.find("<col min=\"2\" max=\"2\"") != std::string::npos);
+            
+            size_t colStylePos = sheetXml.find("style=\"");
+            REQUIRE(colStylePos != std::string::npos);
+            
+            // Extract the style index string until the closing quote
+            size_t styleEndPos = sheetXml.find("\"", colStylePos + 7);
+            std::string styleStr = sheetXml.substr(colStylePos + 7, styleEndPos - (colStylePos + 7));
+            
+            // Verify cell B2 exists and explicitly inherited the non-default style
+            std::string expectedCell = "<c r=\"B2\" s=\"" + styleStr + "\"";
+            REQUIRE(sheetXml.find(expectedCell) != std::string::npos);
+
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
 }
