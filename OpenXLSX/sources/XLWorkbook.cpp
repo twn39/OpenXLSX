@@ -1,10 +1,10 @@
 // ===== External Includes ===== //
 #include <algorithm>
+#include <fmt/format.h>
+#include <gsl/gsl>
 #include <iterator>
 #include <pugixml.hpp>
 #include <vector>
-#include <fmt/format.h>
-#include <gsl/gsl>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLDocument.hpp"
@@ -29,28 +29,12 @@ namespace
      * Note: mc:AlternateContent often appears before workbookProtection in modern Excel files.
      */
     const std::vector<std::string_view> XLWorkbookNodeOrder = {
-        "fileVersion",
-        "fileSharing",
-        "workbookPr",
-        "mc:AlternateContent",
-        "xr:revisionPtr",
-        "workbookProtection",
-        "bookViews",
-        "sheets",
-        "functionGroups",
-        "externalReferences",
-        "definedNames",
-        "calcPr",
-        "oleSize",
-        "customWorkbookViews",
-        "pivotCaches",
-        "smartTagPr",
-        "smartTagTypes",
-        "webPublishing",
-        "fileRecoveryPr",
-        "webPublishObjects",
-        "extLst"
-    };
+        "fileVersion",    "fileSharing",         "workbookPr",     "mc:AlternateContent",
+        "xr:revisionPtr", "workbookProtection",  "bookViews",      "sheets",
+        "functionGroups", "externalReferences",  "definedNames",   "calcPr",
+        "oleSize",        "customWorkbookViews", "pivotCaches",    "smartTagPr",
+        "smartTagTypes",  "webPublishing",       "fileRecoveryPr", "webPublishObjects",
+        "extLst"};
 }    // namespace
 
 // ========== XLDefinedName Member Functions
@@ -150,8 +134,8 @@ std::vector<XLDefinedName> XLDefinedNames::all() const
 
 bool XLDefinedNames::exists(std::string_view name, std::optional<uint32_t> localSheetId) const { return get(name, localSheetId).valid(); }
 
-size_t XLDefinedNames::count() const 
-{ 
+size_t XLDefinedNames::count() const
+{
     size_t c = 0;
     for (auto node [[maybe_unused]] : m_node.children("definedName")) ++c;
     return c;
@@ -159,34 +143,12 @@ size_t XLDefinedNames::count() const
 
 // ========== XLWorkbook Member Functions
 
-XLWorkbook::XLWorkbook(XLXmlData* xmlData) : XLXmlFile(xmlData) 
-{
-    // Clean up author-specific metadata from the internal template (AlternateContent with absPath)
-    auto root = xmlDocument().document_element();
-    auto altContent = root.child("mc:AlternateContent");
-    if (!altContent.empty()) {
-        auto choice = altContent.child("mc:Choice");
-        if (!choice.empty()) {
-            auto absPath = choice.child("x15ac:absPath");
-            // If it contains the author's path, remove the whole AlternateContent block
-            if (!absPath.empty() && std::string_view(absPath.attribute("url").value()).find("Troldal") != std::string_view::npos) {
-                root.remove_child(altContent);
-            }
-        }
-    }
-
-    // Also remove the revision pointer which is tied to the author's original save state
-    auto revPtr = root.child("xr:revisionPtr");
-    if (!revPtr.empty()) {
-        root.remove_child(revPtr);
-    }
-}
-
+XLWorkbook::XLWorkbook(XLXmlData* xmlData) : XLXmlFile(xmlData) {}
 XLWorkbook::~XLWorkbook() = default;
 
 XLSheet XLWorkbook::sheet(std::string_view sheetName)
 {
-    auto snNode = sheetsNode(xmlDocument());
+    auto snNode    = sheetsNode(xmlDocument());
     auto sheetNode = snNode.find_child_by_attribute("name", std::string(sheetName).c_str());
     if (sheetNode.empty()) throw XLInputError(fmt::format("Sheet \"{}\" does not exist", sheetName));
 
@@ -225,26 +187,21 @@ XLChartsheet XLWorkbook::chartsheet(uint16_t index) { return sheet(index).get<XL
 
 XLDefinedNames XLWorkbook::definedNames()
 {
-    auto rootNode = xmlDocument().document_element();
+    auto    rootNode = xmlDocument().document_element();
     XMLNode dnNode   = rootNode.child("definedNames");
     if (dnNode.empty()) { dnNode = appendAndGetNode(rootNode, "definedNames", XLWorkbookNodeOrder); }
     return XLDefinedNames(dnNode);
 }
 
-void XLWorkbook::deleteNamedRanges()
-{
-    xmlDocument().document_element().child("definedNames").remove_children();
-}
+void XLWorkbook::deleteNamedRanges() { xmlDocument().document_element().child("definedNames").remove_children(); }
 
 void XLWorkbook::deleteSheet(std::string_view sheetName)
 {
     auto sheetNode = sheetsNode(xmlDocument()).find_child_by_attribute("name", std::string(sheetName).c_str());
-    if (sheetNode.empty()) {
-        throw XLException(fmt::format("XLWorkbook::deleteSheet: workbook has no sheet with name \"{}\"", sheetName));
-    }
+    if (sheetNode.empty()) { throw XLException(fmt::format("XLWorkbook::deleteSheet: workbook has no sheet with name \"{}\"", sheetName)); }
 
     std::string sheetID = sheetNode.attribute("r:id").value();
-    
+
     XLQuery sheetTypeQuery(XLQueryType::QuerySheetType);
     sheetTypeQuery.setParam("sheetID", sheetID);
     const auto sheetType = parentDoc().execQuery(sheetTypeQuery).result<XLContentType>();
@@ -262,7 +219,7 @@ void XLWorkbook::deleteSheet(std::string_view sheetName)
 
     parentDoc().execCommand(
         XLCommand(XLCommandType::DeleteSheet).setParam("sheetID", sheetID).setParam("sheetName", std::string(sheetName)));
-    
+
     // Delete non-element nodes after the sheet (whitespaces)
     XMLNode nonElementNode = sheetNode.next_sibling();
     while (not nonElementNode.empty() and nonElementNode.type() != pugi::node_element) {
@@ -289,10 +246,9 @@ void XLWorkbook::addWorksheet(std::string_view sheetName)
 }
 
 void XLWorkbook::cloneSheet(std::string_view existingName, std::string_view newName)
-{ 
-    parentDoc().execCommand(XLCommand(XLCommandType::CloneSheet)
-        .setParam("sheetID", sheetID(existingName))
-        .setParam("cloneName", std::string(newName))); 
+{
+    parentDoc().execCommand(
+        XLCommand(XLCommandType::CloneSheet).setParam("sheetID", sheetID(existingName)).setParam("cloneName", std::string(newName)));
 }
 
 uint16_t XLWorkbook::createInternalSheetID()
@@ -308,30 +264,30 @@ uint16_t XLWorkbook::createInternalSheetID()
 }
 
 std::string XLWorkbook::sheetID(std::string_view sheetName)
-{ 
+{
     auto node = xmlDocument().document_element().child("sheets").find_child_by_attribute("name", std::string(sheetName).c_str());
     if (node.empty()) return "";
-    return node.attribute("r:id").value(); 
+    return node.attribute("r:id").value();
 }
 
 std::string XLWorkbook::sheetName(std::string_view sheetID) const
-{ 
+{
     auto node = xmlDocument().document_element().child("sheets").find_child_by_attribute("r:id", std::string(sheetID).c_str());
     if (node.empty()) return "";
-    return node.attribute("name").value(); 
+    return node.attribute("name").value();
 }
 
 std::string XLWorkbook::sheetVisibility(std::string_view sheetID) const
-{ 
+{
     auto node = xmlDocument().document_element().child("sheets").find_child_by_attribute("r:id", std::string(sheetID).c_str());
     if (node.empty()) return "";
-    return node.attribute("state").value(); 
+    return node.attribute("state").value();
 }
 
 void XLWorkbook::prepareSheetMetadata(std::string_view sheetName, uint16_t internalID)
 {
-    auto node = sheetsNode(xmlDocument()).append_child("sheet");
-    std::string sheetPath = fmt::format("/xl/worksheets/sheet{}.xml", internalID);
+    auto        node                 = sheetsNode(xmlDocument()).append_child("sheet");
+    std::string sheetPath            = fmt::format("/xl/worksheets/sheet{}.xml", internalID);
     node.append_attribute("name")    = std::string(sheetName).c_str();
     node.append_attribute("sheetId") = internalID;
 
@@ -344,7 +300,7 @@ void XLWorkbook::setSheetName(std::string_view sheetRID, std::string_view newNam
 {
     auto sheetNode = xmlDocument().document_element().child("sheets").find_child_by_attribute("r:id", std::string(sheetRID).c_str());
     if (sheetNode.empty()) return;
-    
+
     auto sheetNameAttr = sheetNode.attribute("name");
     updateSheetReferences(sheetNameAttr.value(), newName);
     sheetNameAttr.set_value(std::string(newName).c_str());
@@ -352,8 +308,8 @@ void XLWorkbook::setSheetName(std::string_view sheetRID, std::string_view newNam
 
 void XLWorkbook::setSheetVisibility(std::string_view sheetRID, std::string_view state)
 {
-    int visibleSheets = 0;
-    XMLNode item = xmlDocument().document_element().child("sheets").first_child_of_type(pugi::node_element);
+    int     visibleSheets = 0;
+    XMLNode item          = xmlDocument().document_element().child("sheets").first_child_of_type(pugi::node_element);
     while (not item.empty()) {
         if (std::string_view(item.attribute("r:id").value()) != sheetRID) {
             if (isVisible(item)) ++visibleSheets;
@@ -364,15 +320,15 @@ void XLWorkbook::setSheetVisibility(std::string_view sheetRID, std::string_view 
     bool hideSheet = not isVisibleState(state);
     if (hideSheet and visibleSheets == 0) throw XLSheetError("At least one sheet must be visible.");
 
-    auto sheetNode = xmlDocument().document_element().child("sheets").find_child_by_attribute("r:id", std::string(sheetRID).c_str());
+    auto sheetNode      = xmlDocument().document_element().child("sheets").find_child_by_attribute("r:id", std::string(sheetRID).c_str());
     auto stateAttribute = sheetNode.attribute("state");
     if (stateAttribute.empty()) stateAttribute = sheetNode.prepend_attribute("state");
     stateAttribute.set_value(std::string(state).c_str());
 
-    std::string name = sheetNode.attribute("name").value();
-    auto index = indexOfSheet(name) - 1;
+    std::string name  = sheetNode.attribute("name").value();
+    auto        index = indexOfSheet(name) - 1;
 
-    XMLNode workbookView = xmlDocument().document_element().child("bookViews").first_child_of_type(pugi::node_element);
+    XMLNode workbookView       = xmlDocument().document_element().child("bookViews").first_child_of_type(pugi::node_element);
     auto    activeTabAttribute = workbookView.attribute("activeTab");
     if (activeTabAttribute.empty()) {
         activeTabAttribute = workbookView.append_attribute("activeTab");
@@ -402,9 +358,9 @@ void XLWorkbook::setSheetIndex(std::string_view sheetName, unsigned int index)
     XMLNode      existingSheet{};
     std::string  activeSheet_rId{};
 
-    unsigned int curIdx = 0;
+    unsigned int curIdx   = 0;
     XMLNode      curSheet = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element);
-    
+
     std::vector<std::string> originalSheetRIds;
 
     while (not curSheet.empty()) {
@@ -413,9 +369,7 @@ void XLWorkbook::setSheetIndex(std::string_view sheetName, unsigned int index)
             sheetToMoveIndex = curIdx;
             sheetToMove      = curSheet;
         }
-        if (curIdx == index - 1) {
-            existingSheet = curSheet;
-        }
+        if (curIdx == index - 1) { existingSheet = curSheet; }
         curSheet = curSheet.next_sibling_of_type(pugi::node_element);
         ++curIdx;
     }
@@ -438,7 +392,7 @@ void XLWorkbook::setSheetIndex(std::string_view sheetName, unsigned int index)
     }
 
     // Update defined names with worksheet scopes
-    std::vector<uint32_t> oldToNew(originalSheetRIds.size());
+    std::vector<uint32_t>    oldToNew(originalSheetRIds.size());
     std::vector<std::string> newSheetRIds;
     curSheet = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element);
     while (!curSheet.empty()) {
@@ -446,8 +400,8 @@ void XLWorkbook::setSheetIndex(std::string_view sheetName, unsigned int index)
         curSheet = curSheet.next_sibling_of_type(pugi::node_element);
     }
 
-    for(size_t oldI = 0; oldI < originalSheetRIds.size(); ++oldI) {
-        for(size_t newI = 0; newI < newSheetRIds.size(); ++newI) {
+    for (size_t oldI = 0; oldI < originalSheetRIds.size(); ++oldI) {
+        for (size_t newI = 0; newI < newSheetRIds.size(); ++newI) {
             if (originalSheetRIds[oldI] == newSheetRIds[newI]) {
                 oldToNew[oldI] = static_cast<uint32_t>(newI);
                 break;
@@ -460,9 +414,7 @@ void XLWorkbook::setSheetIndex(std::string_view sheetName, unsigned int index)
         auto attr = definedName.attribute("localSheetId");
         if (!attr.empty()) {
             uint32_t oldId = attr.as_uint();
-            if (oldId < oldToNew.size()) {
-                attr.set_value(oldToNew[oldId]);
-            }
+            if (oldId < oldToNew.size()) { attr.set_value(oldToNew[oldId]); }
         }
         definedName = definedName.next_sibling_of_type(pugi::node_element);
     }
@@ -513,30 +465,28 @@ unsigned int XLWorkbook::sheetCount() const
     return count;
 }
 
-unsigned int XLWorkbook::worksheetCount() const 
-{ 
+unsigned int XLWorkbook::worksheetCount() const
+{
     unsigned int count = 0;
     for (XMLNode item = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not item.empty();
          item         = item.next_sibling_of_type(pugi::node_element))
     {
         XLQuery query(XLQueryType::QuerySheetType);
         query.setParam("sheetID", std::string(item.attribute("r:id").value()));
-        if (parentDoc().execQuery(query).result<XLContentType>() == XLContentType::Worksheet)
-            ++count;
+        if (parentDoc().execQuery(query).result<XLContentType>() == XLContentType::Worksheet) ++count;
     }
     return count;
 }
 
-unsigned int XLWorkbook::chartsheetCount() const 
-{ 
+unsigned int XLWorkbook::chartsheetCount() const
+{
     unsigned int count = 0;
     for (XMLNode item = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not item.empty();
          item         = item.next_sibling_of_type(pugi::node_element))
     {
         XLQuery query(XLQueryType::QuerySheetType);
         query.setParam("sheetID", std::string(item.attribute("r:id").value()));
-        if (parentDoc().execQuery(query).result<XLContentType>() == XLContentType::Chartsheet)
-            ++count;
+        if (parentDoc().execQuery(query).result<XLContentType>() == XLContentType::Chartsheet) ++count;
     }
     return count;
 }
@@ -578,10 +528,8 @@ std::vector<std::string> XLWorkbook::chartsheetNames() const
     return results;
 }
 
-bool XLWorkbook::sheetExists(std::string_view sheetName) const 
-{ 
-    return !sheetsNode(xmlDocument()).find_child_by_attribute("name", std::string(sheetName).c_str()).empty();
-}
+bool XLWorkbook::sheetExists(std::string_view sheetName) const
+{ return !sheetsNode(xmlDocument()).find_child_by_attribute("name", std::string(sheetName).c_str()).empty(); }
 
 bool XLWorkbook::worksheetExists(std::string_view sheetName) const
 {
@@ -622,18 +570,14 @@ void XLWorkbook::updateSheetReferences(std::string_view oldName, std::string_vie
 
 void XLWorkbook::updateWorksheetDimensions()
 {
-    for (const auto& name : worksheetNames()) {
-        worksheet(name).updateDimension();
-    }
+    for (const auto& name : worksheetNames()) { worksheet(name).updateDimension(); }
 }
 
 void XLWorkbook::setFullCalculationOnLoad()
 {
-    auto root = xmlDocument().document_element();
+    auto    root   = xmlDocument().document_element();
     XMLNode calcPr = root.child("calcPr");
-    if (calcPr.empty()) {
-        calcPr = appendAndGetNode(root, "calcPr", XLWorkbookNodeOrder);
-    }
+    if (calcPr.empty()) { calcPr = appendAndGetNode(root, "calcPr", XLWorkbookNodeOrder); }
 
     auto setAttr = [&](const char* name, bool val) {
         auto attr = calcPr.attribute(name);
@@ -647,11 +591,9 @@ void XLWorkbook::setFullCalculationOnLoad()
 
 void XLWorkbook::protect(bool lockStructure, bool lockWindows, std::string_view password)
 {
-    auto root = xmlDocument().document_element();
+    auto    root        = xmlDocument().document_element();
     XMLNode protectNode = root.child("workbookProtection");
-    if (protectNode.empty()) {
-        protectNode = appendAndGetNode(root, "workbookProtection", XLWorkbookNodeOrder);
-    }
+    if (protectNode.empty()) { protectNode = appendAndGetNode(root, "workbookProtection", XLWorkbookNodeOrder); }
 
     auto setAttr = [&](const char* name, std::string_view val) {
         auto attr = protectNode.attribute(std::string(name).c_str());
@@ -661,23 +603,16 @@ void XLWorkbook::protect(bool lockStructure, bool lockWindows, std::string_view 
 
     setAttr("lockStructure", lockStructure ? "true" : "false");
     setAttr("lockWindows", lockWindows ? "true" : "false");
-    
-    if (!password.empty()) {
-        setAttr("workbookPassword", ExcelPasswordHashAsString(std::string(password)));
-    } else {
+
+    if (!password.empty()) { setAttr("workbookPassword", ExcelPasswordHashAsString(std::string(password))); }
+    else {
         protectNode.remove_attribute("workbookPassword");
     }
 }
 
-void XLWorkbook::unprotect()
-{
-    xmlDocument().document_element().remove_child("workbookProtection");
-}
+void XLWorkbook::unprotect() { xmlDocument().document_element().remove_child("workbookProtection"); }
 
-bool XLWorkbook::isProtected() const
-{
-    return !xmlDocument().document_element().child("workbookProtection").empty();
-}
+bool XLWorkbook::isProtected() const { return !xmlDocument().document_element().child("workbookProtection").empty(); }
 
 void XLWorkbook::print(std::basic_ostream<char>& ostr) const { xmlDocument().document_element().print(ostr); }
 
@@ -688,8 +623,8 @@ bool XLWorkbook::sheetIsActive(std::string_view sheetRID) const
     if (activeTabAttribute.empty()) return false;
 
     int32_t activeTabIndex = activeTabAttribute.as_int();
-    int32_t index = 0;
-    XMLNode item = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element);
+    int32_t index          = 0;
+    XMLNode item           = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element);
     while (not item.empty()) {
         if (std::string_view(item.attribute("r:id").value()) == sheetRID) return index == activeTabIndex;
         ++index;
@@ -711,16 +646,15 @@ bool XLWorkbook::setSheetActive(std::string_view sheetRID)
         ++index;
         item = item.next_sibling_of_type(pugi::node_element);
     }
-    
+
     if (item.empty() or !isVisible(item)) return false;
 
-    if ((activeTabIndex != -1) and (index != activeTabIndex))
-        sheet(static_cast<uint16_t>(activeTabIndex + 1)).setSelected(false);
+    if ((activeTabIndex != -1) and (index != activeTabIndex)) sheet(static_cast<uint16_t>(activeTabIndex + 1)).setSelected(false);
 
     auto attr = workbookView.attribute("activeTab");
     if (attr.empty()) attr = workbookView.append_attribute("activeTab");
     attr.set_value(index);
-    
+
     return true;
 }
 

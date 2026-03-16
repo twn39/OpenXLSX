@@ -1,30 +1,32 @@
 // ===== External Includes ===== //
-#include <zip.h>
 #include <cstring>
+#include <filesystem>
 #include <stdexcept>
 #include <vector>
-#include <filesystem>
+#include <zip.h>
 
 // ===== OpenXLSX Includes ===== //
-#include "XLZipArchive.hpp"
 #include "XLException.hpp"
+#include "XLZipArchive.hpp"
 
 using namespace OpenXLSX;
 
-struct XLZipArchive::LibZipApp {
-    zip_t* archive = nullptr;
+struct XLZipArchive::LibZipApp
+{
+    zip_t*      archive = nullptr;
     std::string currentPath;
-    bool isModified = false; // Track if we explicitly want to save
+    bool        isModified = false;    // Track if we explicitly want to save
 
     LibZipApp() = default;
-    ~LibZipApp() {
+    ~LibZipApp()
+    {
         if (archive) {
-            zip_discard(archive); // Discard any unsaved changes safely
+            zip_discard(archive);    // Discard any unsaved changes safely
             archive = nullptr;
         }
     }
 
-    LibZipApp(const LibZipApp&) = delete;
+    LibZipApp(const LibZipApp&)            = delete;
     LibZipApp& operator=(const LibZipApp&) = delete;
 };
 
@@ -34,27 +36,24 @@ XLZipArchive::~XLZipArchive() = default;
 
 XLZipArchive::operator bool() const { return isValid() && isOpen(); }
 
-bool XLZipArchive::isValid() const { 
-    return m_archive != nullptr; 
-}
+bool XLZipArchive::isValid() const { return m_archive != nullptr; }
 
-bool XLZipArchive::isOpen() const { 
-    return m_archive && m_archive->archive != nullptr; 
-}
+bool XLZipArchive::isOpen() const { return m_archive && m_archive->archive != nullptr; }
 
-void XLZipArchive::open(const std::string& fileName) {
+void XLZipArchive::open(const std::string& fileName)
+{
     if (isOpen()) close();
 
     if (!m_archive) m_archive = std::make_shared<LibZipApp>();
-    m_archive->isModified = false; // Reset modification flag on open
+    m_archive->isModified = false;    // Reset modification flag on open
 
     int err = 0;
 #if defined(_WIN32)
     zip_error_t zerr;
     zip_error_init(&zerr);
     // Use wide string for Windows to support UTF-8 paths
-    std::wstring wPath  = std::filesystem::u8path(fileName).wstring();
-    zip_source_t* src = zip_source_win32w_create(wPath.c_str(), 0, -1, &zerr);
+    std::wstring  wPath = std::filesystem::u8path(fileName).wstring();
+    zip_source_t* src   = zip_source_win32w_create(wPath.c_str(), 0, -1, &zerr);
     if (!src) {
         std::string msg = zip_error_strerror(&zerr);
         zip_error_fini(&zerr);
@@ -81,11 +80,12 @@ void XLZipArchive::open(const std::string& fileName) {
     m_archive->currentPath = fileName;
 }
 
-void XLZipArchive::close() {
+void XLZipArchive::close()
+{
     if (isOpen()) {
-        zip_t* ptr = m_archive->archive;
+        zip_t* ptr         = m_archive->archive;
         m_archive->archive = nullptr;
-        // If save() was called, we should commit changes. 
+        // If save() was called, we should commit changes.
         // Otherwise, we discard to prevent silent corruption on read-only operations.
         if (m_archive->isModified) {
             if (zip_close(ptr) < 0) {
@@ -93,45 +93,50 @@ void XLZipArchive::close() {
                 zip_discard(ptr);
                 throw XLInternalError("Failed to close zip archive: " + msg);
             }
-        } else {
+        }
+        else {
             zip_discard(ptr);
         }
     }
 }
 
-void XLZipArchive::save(const std::string& path) {
+void XLZipArchive::save(const std::string& path)
+{
     if (!isOpen()) return;
 
     if (path.empty() || path == m_archive->currentPath) {
-        std::string current = m_archive->currentPath;
-        m_archive->isModified = true; // Mark as modified before closing to trigger commit
+        std::string current   = m_archive->currentPath;
+        m_archive->isModified = true;    // Mark as modified before closing to trigger commit
         close();
         open(current);
-    } else {
-        std::string current = m_archive->currentPath;
-        m_archive->isModified = true; // Mark as modified
-        close(); // Commits changes to the original file
+    }
+    else {
+        std::string current   = m_archive->currentPath;
+        m_archive->isModified = true;    // Mark as modified
+        close();                         // Commits changes to the original file
         if (std::filesystem::exists(std::filesystem::u8path(current))) {
-            std::filesystem::copy_file(std::filesystem::u8path(current), std::filesystem::u8path(path), std::filesystem::copy_options::overwrite_existing);
+            std::filesystem::copy_file(std::filesystem::u8path(current),
+                                       std::filesystem::u8path(path),
+                                       std::filesystem::copy_options::overwrite_existing);
         }
         open(current);
     }
 }
 
-void XLZipArchive::addEntry(const std::string& name, const std::string& data) {
+void XLZipArchive::addEntry(const std::string& name, const std::string& data)
+{
     if (!isOpen()) throw XLInternalError("Archive not open");
 
-    void* rawBuffer = malloc(data.size());
+    m_archive->isModified = true;    // Mark as modified
+    void* rawBuffer       = malloc(data.size());
     if (!rawBuffer) throw std::bad_alloc();
-    
+
     // Use RAII to guarantee safety in case of exceptions before zip_source_buffer
     std::unique_ptr<void, decltype(&std::free)> safeBuffer(rawBuffer, std::free);
     memcpy(safeBuffer.get(), data.c_str(), data.size());
 
     zip_source_t* s = zip_source_buffer(m_archive->archive, safeBuffer.get(), static_cast<zip_uint64_t>(data.size()), 1);
-    if (!s) {
-        throw XLInternalError("Failed to create zip source");
-    }
+    if (!s) { throw XLInternalError("Failed to create zip source"); }
     // Release ownership to libzip since zip_source_buffer(..., 1) will free it
     safeBuffer.release();
 
@@ -141,7 +146,8 @@ void XLZipArchive::addEntry(const std::string& name, const std::string& data) {
             zip_source_free(s);
             throw XLInternalError(std::string("Failed to replace entry: ") + zip_strerror(m_archive->archive));
         }
-    } else {
+    }
+    else {
         if (zip_file_add(m_archive->archive, name.c_str(), s, ZIP_FL_ENC_UTF_8) < 0) {
             zip_source_free(s);
             throw XLInternalError(std::string("Failed to add entry: ") + zip_strerror(m_archive->archive));
@@ -149,10 +155,12 @@ void XLZipArchive::addEntry(const std::string& name, const std::string& data) {
     }
 }
 
-void XLZipArchive::deleteEntry(const std::string& entryName) {
+void XLZipArchive::deleteEntry(const std::string& entryName)
+{
     if (!isOpen()) return;
 
-    zip_int64_t idx = zip_name_locate(m_archive->archive, entryName.c_str(), 0);
+    m_archive->isModified = true;    // Mark as modified
+    zip_int64_t idx       = zip_name_locate(m_archive->archive, entryName.c_str(), 0);
     if (idx >= 0) {
         if (zip_delete(m_archive->archive, idx) < 0) {
             throw XLInternalError(std::string("Failed to delete entry: ") + zip_strerror(m_archive->archive));
@@ -160,14 +168,13 @@ void XLZipArchive::deleteEntry(const std::string& entryName) {
     }
 }
 
-std::string XLZipArchive::getEntry(const std::string& name) const {
+std::string XLZipArchive::getEntry(const std::string& name) const
+{
     if (!isOpen()) throw XLInternalError("Archive not open");
 
     zip_stat_t st;
     zip_stat_init(&st);
-    if (zip_stat(m_archive->archive, name.c_str(), 0, &st) < 0) {
-        throw XLInternalError("Entry not found: " + name);
-    }
+    if (zip_stat(m_archive->archive, name.c_str(), 0, &st) < 0) { throw XLInternalError("Entry not found: " + name); }
 
     zip_file_t* f = zip_fopen(m_archive->archive, name.c_str(), 0);
     if (!f) throw XLInternalError("Failed to open entry: " + name);
@@ -185,19 +192,19 @@ std::string XLZipArchive::getEntry(const std::string& name) const {
     return result;
 }
 
-bool XLZipArchive::hasEntry(const std::string& entryName) const {
+bool XLZipArchive::hasEntry(const std::string& entryName) const
+{
     if (!isOpen()) return false;
     return zip_name_locate(m_archive->archive, entryName.c_str(), 0) >= 0;
 }
 
-std::vector<std::string> XLZipArchive::entryNames() const {
+std::vector<std::string> XLZipArchive::entryNames() const
+{
     if (!isOpen()) return {};
 
     std::vector<std::string> result;
-    zip_int64_t numEntries = zip_get_num_entries(m_archive->archive, 0);
-    for (zip_int64_t i = 0; i < numEntries; ++i) {
-        result.emplace_back(zip_get_name(m_archive->archive, i, 0));
-    }
+    zip_int64_t              numEntries = zip_get_num_entries(m_archive->archive, 0);
+    for (zip_int64_t i = 0; i < numEntries; ++i) { result.emplace_back(zip_get_name(m_archive->archive, i, 0)); }
 
     return result;
 }
