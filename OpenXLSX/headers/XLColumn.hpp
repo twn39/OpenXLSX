@@ -82,6 +82,30 @@ namespace OpenXLSX
         void setHidden(bool state);
 
         /**
+         * @brief Get the outline level of the column.
+         * @return The outline level (0-7).
+         */
+        uint8_t outlineLevel() const;
+
+        /**
+         * @brief Set the outline level of the column.
+         * @param level The outline level (0-7).
+         */
+        void setOutlineLevel(uint8_t level);
+
+        /**
+         * @brief Is the column collapsed?
+         * @return true if the column is collapsed.
+         */
+        bool isCollapsed() const;
+
+        /**
+         * @brief Set the column to be collapsed or expanded.
+         * @param state The collapsed state of the column.
+         */
+        void setCollapsed(bool state);
+
+        /**
          * @brief Get the XMLNode object for the column.
          * @return The XMLNode for the column
          */

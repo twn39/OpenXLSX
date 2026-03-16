@@ -192,6 +192,43 @@ TEST_CASE("XLSheet Tests", "[XLSheet]")
             REQUIRE(xml.find("activePane=\"bottomRight\"") != std::string::npos);
             doc.save();
         }
+
+        SECTION("XLSheet Grouping (Outline)")
+        {
+            XLDocument doc;
+            doc.create("./testXLSheetGrouping.xlsx", XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            // Group rows 2-5 (Level 1), not collapsed
+            wks.groupRows(2, 5, 1, false);
+
+            // Group rows 3-4 (Level 2), collapsed
+            wks.groupRows(3, 4, 2, true);
+
+            // Group columns B-D (2-4, Level 1), not collapsed
+            wks.groupColumns(2, 4, 1, false);
+
+            // Check Rows
+            REQUIRE(wks.row(2).outlineLevel() == 1);
+            REQUIRE_FALSE(wks.row(2).isHidden());
+            
+            REQUIRE(wks.row(3).outlineLevel() == 2);
+            REQUIRE(wks.row(3).isHidden());
+            
+            REQUIRE(wks.row(4).outlineLevel() == 2);
+            REQUIRE(wks.row(4).isHidden());
+            
+            REQUIRE(wks.row(5).outlineLevel() == 1);
+            REQUIRE(wks.row(5).isCollapsed() == true); // Because level 2 above it was collapsed
+            
+            // Check Columns
+            REQUIRE(wks.column(2).outlineLevel() == 1);
+            REQUIRE(wks.column(3).outlineLevel() == 1);
+            REQUIRE(wks.column(4).outlineLevel() == 1);
+            
+            doc.save();
+        }
+
         SECTION("XLSheet Column Formatting")
 
     {

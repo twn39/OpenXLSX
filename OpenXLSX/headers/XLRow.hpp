@@ -126,6 +126,30 @@ namespace OpenXLSX
         void setHidden(bool state);
 
         /**
+         * @brief Get the outline level of the row.
+         * @return The outline level (0-7).
+         */
+        uint8_t outlineLevel() const;
+
+        /**
+         * @brief Set the outline level of the row.
+         * @param level The outline level (0-7).
+         */
+        void setOutlineLevel(uint8_t level);
+
+        /**
+         * @brief Is the row collapsed?
+         * @return true if the row is collapsed.
+         */
+        bool isCollapsed() const;
+
+        /**
+         * @brief Set the row to be collapsed or expanded.
+         * @param state The collapsed state of the row.
+         */
+        void setCollapsed(bool state);
+
+        /**
          * @brief
          * @return
          */

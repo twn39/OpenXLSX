@@ -987,6 +987,28 @@ namespace OpenXLSX
         XLColumn column(std::string const& columnRef) const;
 
         /**
+         * @brief Define a grouping (outline) for a contiguous block of rows.
+         *        This provides users with hierarchical data views (e.g. expanding/collapsing details under a summary row).
+         * @param rowFirst The first row of the group.
+         * @param rowLast The last row of the group.
+         * @param outlineLevel The nesting depth of the group (1-7). A value of 0 removes the grouping.
+         * @param collapsed Determines the initial visibility state of the group. If true, the rows within the group
+         *                  are hidden, and the adjacent summary row is marked as collapsed.
+         */
+        void groupRows(uint32_t rowFirst, uint32_t rowLast, uint8_t outlineLevel = 1, bool collapsed = false);
+
+        /**
+         * @brief Define a grouping (outline) for a contiguous block of columns.
+         *        This enables horizontal hierarchical data exploration, often used in wide financial or time-series reports.
+         * @param colFirst The first column of the group.
+         * @param colLast The last column of the group.
+         * @param outlineLevel The nesting depth of the group (1-7). A value of 0 removes the grouping.
+         * @param collapsed Determines the initial visibility state of the group. If true, the columns within the group
+         *                  are hidden, and the adjacent summary column is marked as collapsed.
+         */
+        void groupColumns(uint16_t colFirst, uint16_t colLast, uint8_t outlineLevel = 1, bool collapsed = false);
+
+        /**
          * @brief Set the AutoFilter range for the worksheet.
          * @param range The range to set the AutoFilter for.
          */

@@ -179,6 +179,61 @@ namespace OpenXLSX
     }
 
     /**
+     * @details Get the outline level of the row.
+     * @pre
+     * @post
+     */
+    uint8_t XLRow::outlineLevel() const
+    {
+        return static_cast<uint8_t>(m_rowNode->attribute("outlineLevel").as_uint(0));
+    }
+
+    /**
+     * @details Set the outline level of the row (0-7).
+     * @pre
+     * @post
+     */
+    void XLRow::setOutlineLevel(uint8_t level)
+    {
+        if (level > 7) level = 7;
+        if (level == 0) {
+            m_rowNode->remove_attribute("outlineLevel");
+        } else {
+            if (m_rowNode->attribute("outlineLevel").empty())
+                m_rowNode->append_attribute("outlineLevel") = level;
+            else
+                m_rowNode->attribute("outlineLevel").set_value(level);
+        }
+    }
+
+    /**
+     * @details Determine if the row is collapsed or not.
+     * @pre
+     * @post
+     */
+    bool XLRow::isCollapsed() const
+    {
+        return m_rowNode->attribute("collapsed").as_bool(false);
+    }
+
+    /**
+     * @details Set the collapsed state by setting the 'collapsed' attribute to true or false.
+     * @pre
+     * @post
+     */
+    void XLRow::setCollapsed(bool state)
+    {
+        if (!state) {
+            m_rowNode->remove_attribute("collapsed");
+        } else {
+            if (m_rowNode->attribute("collapsed").empty())
+                m_rowNode->append_attribute("collapsed") = static_cast<int>(state);
+            else
+                m_rowNode->attribute("collapsed").set_value(static_cast<int>(state));
+        }
+    }
+
+    /**
      * @details
      * @pre
      * @post

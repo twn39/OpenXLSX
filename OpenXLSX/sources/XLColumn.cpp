@@ -67,6 +67,51 @@ void XLColumn::setHidden(bool state)    // NOLINT
 }
 
 /**
+ * @details Get the outline level of the column.
+ */
+uint8_t XLColumn::outlineLevel() const
+{
+    return static_cast<uint8_t>(columnNode().attribute("outlineLevel").as_uint(0));
+}
+
+/**
+ * @details Set the outline level of the column.
+ */
+void XLColumn::setOutlineLevel(uint8_t level)
+{
+    if (level > 7) level = 7;
+    if (level == 0) {
+        columnNode().remove_attribute("outlineLevel");
+    } else {
+        auto attr = columnNode().attribute("outlineLevel");
+        if (attr.empty()) attr = columnNode().append_attribute("outlineLevel");
+        attr.set_value(level);
+    }
+}
+
+/**
+ * @details Is the column collapsed?
+ */
+bool XLColumn::isCollapsed() const
+{
+    return columnNode().attribute("collapsed").as_bool(false);
+}
+
+/**
+ * @details Set the column to be collapsed or expanded.
+ */
+void XLColumn::setCollapsed(bool state)
+{
+    if (!state) {
+        columnNode().remove_attribute("collapsed");
+    } else {
+        auto attr = columnNode().attribute("collapsed");
+        if (attr.empty()) attr = columnNode().append_attribute("collapsed");
+        attr.set_value("1");
+    }
+}
+
+/**
  * @details
  */
 XMLNode& XLColumn::columnNode() const { return *m_columnNode; }

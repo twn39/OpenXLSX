@@ -1338,6 +1338,45 @@ XLColumn XLWorksheet::column(uint16_t columnNumber) const
  */
 XLColumn XLWorksheet::column(std::string const& columnRef) const { return column(XLCellReference::columnAsNumber(columnRef)); }
 
+void XLWorksheet::groupRows(uint32_t rowFirst, uint32_t rowLast, uint8_t outlineLevel, bool collapsed)
+{
+    // Apply the requested outline depth to all rows within the specified block.
+    // If the group is initialized as collapsed, the data rows themselves must be hidden.
+    for (uint32_t r = rowFirst; r <= rowLast; ++r) {
+        auto rowObj = row(r);
+        rowObj.setOutlineLevel(outlineLevel);
+        if (collapsed) {
+            rowObj.setHidden(true);
+        }
+    }
+
+    // According to MS Excel UI conventions, collapsing a group requires the adjacent 
+    // summary row (by default, the row immediately below the grouped block) to carry 
+    // the 'collapsed=1' flag, so that it displays the '+' expansion button.
+    if (collapsed && outlineLevel > 0) {
+        auto rowObj = row(rowLast + 1);
+        rowObj.setCollapsed(true);
+    }
+}
+
+void XLWorksheet::groupColumns(uint16_t colFirst, uint16_t colLast, uint8_t outlineLevel, bool collapsed)
+{
+    // Apply the requested outline depth to all columns within the specified block.
+    for (uint16_t c = colFirst; c <= colLast; ++c) {
+        auto colObj = column(c);
+        colObj.setOutlineLevel(outlineLevel);
+        if (collapsed) {
+            colObj.setHidden(true);
+        }
+    }
+
+    // Mark the adjacent summary column with 'collapsed=1' to trigger the '+' UI indicator.
+    if (collapsed && outlineLevel > 0) {
+        auto colObj = column(colLast + 1);
+        colObj.setCollapsed(true);
+    }
+}
+
 /**
  * @details Set the AutoFilter range for the worksheet.
  */
