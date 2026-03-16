@@ -47,16 +47,47 @@ TEST_CASE("XLMergeCells Tests", "[XLMergeCells]")
 
         wks.mergeCells("B2:C3");
 
+        // Test with strings
         REQUIRE(wks.merges().findMergeByCell("B2") == 0);
         REQUIRE(wks.merges().findMergeByCell("C3") == 0);
         REQUIRE(wks.merges().findMergeByCell("B3") == 0);
         REQUIRE(wks.merges().findMergeByCell("C2") == 0);
         REQUIRE(wks.merges().findMergeByCell("A1") == XLMergeNotFound);
 
+        // Test with XLCellReference (Numerical path)
+        REQUIRE(wks.merges().findMergeByCell(XLCellReference(2, 2)) == 0);
+        REQUIRE(wks.merges().findMergeByCell(XLCellReference(3, 3)) == 0);
+        REQUIRE(wks.merges().findMergeByCell(XLCellReference(1, 1)) == XLMergeNotFound);
+
         doc.close();
     }
 
-    SECTION("Overlap Detection")
+    SECTION("Numerical Cache Consistency after Deletion")
+    {
+        XLDocument doc;
+        doc.create("./testXLMergeCacheConsistency.xlsx", XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
+
+        wks.mergeCells("A1:B2");
+        wks.mergeCells("D4:E5");
+        wks.mergeCells("G7:H8");
+
+        REQUIRE(wks.merges().count() == 3);
+        REQUIRE(wks.merges().findMergeByCell("E5") == 1);
+
+        // Delete middle one
+        wks.unmergeCells("D4:E5");
+        REQUIRE(wks.merges().count() == 2);
+
+        // Check that subsequent index shifted correctly in cache
+        REQUIRE(wks.merges().findMerge("G7:H8") == 1);
+        REQUIRE(wks.merges().findMergeByCell("H8") == 1);
+        REQUIRE(wks.merges().findMergeByCell("E5") == XLMergeNotFound);
+
+        doc.close();
+    }
+
+    SECTION("Overlap Detection (Optimized Path)")
     {
         XLDocument doc;
         doc.create("./testXLMergeOverlap.xlsx", XLForceOverwrite);
@@ -64,13 +95,14 @@ TEST_CASE("XLMergeCells Tests", "[XLMergeCells]")
 
         wks.mergeCells("B2:D4");
 
-        // Overlapping cases
+        // Overlapping cases (triggers XLRect::overlaps)
         REQUIRE_THROWS_AS(wks.mergeCells("C3:E5"), XLInputError);    // Partial overlap
         REQUIRE_THROWS_AS(wks.mergeCells("B2:D4"), XLInputError);    // Exact same
-        REQUIRE_THROWS_AS(wks.mergeCells("C3:C3"), XLInputError);    // Inside (though 1x1 is also invalid)
+        REQUIRE_THROWS_AS(wks.mergeCells("A1:E5"), XLInputError);    // Encompassing
 
-        // Non-overlapping
-        REQUIRE_NOTHROW(wks.mergeCells("E5:F6"));
+        // Touch but not overlap
+        REQUIRE_NOTHROW(wks.mergeCells("E2:F4"));    // Right touch
+        REQUIRE_NOTHROW(wks.mergeCells("B5:D6"));    // Bottom touch
 
         doc.close();
     }

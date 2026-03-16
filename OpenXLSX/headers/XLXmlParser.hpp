@@ -93,7 +93,7 @@ namespace OpenXLSX
             const char* name = xml_node::name();
             size_t      pos  = 0;
             while (name[pos] and name[pos] != ':') ++pos;    // find name delimiter
-            if (name[pos] == ':') name_begin = pos + 1;     // if delimiter was found: update name_begin to point behind that position
+            if (name[pos] == ':') name_begin = pos + 1;      // if delimiter was found: update name_begin to point behind that position
         }
 
         /**
@@ -138,7 +138,7 @@ namespace OpenXLSX
         /**
          * @brief for all functions returning xml_node: invoke base class function, but with a return type of XMLNode (OpenXLSX_xml_node)
          */
-        XMLNode parent() { return pugi::xml_node::parent(); }
+        XMLNode parent() const { return pugi::xml_node::parent(); }
         template<typename Predicate>
         XMLNode find_child(Predicate pred) const
         { return pugi::xml_node::find_child(pred); }

@@ -310,12 +310,12 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
             auto styles = doc.styles();
-            
+
             // Create default styles without copying from another template
             styles.fonts().create();
             styles.fills().create();
             styles.borders().create();
-            
+
             doc.save();
             doc.close();
         }
@@ -360,20 +360,20 @@ testTestDoc:    // Wait, I'll just use the doc directly.
         {
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
-            
+
             // Table 1 on Sheet 1
-            auto wks1 = doc.workbook().worksheet("Sheet1");
+            auto wks1               = doc.workbook().worksheet("Sheet1");
             wks1.cell("A1").value() = "H1";
-            auto& table1 = wks1.tables();
+            auto& table1            = wks1.tables();
             table1.setName("TableAlpha");
             table1.setRangeReference("A1:A2");
             table1.appendColumn("H1");
 
             // Table 2 on Sheet 2
             doc.workbook().addWorksheet("Sheet2");
-            auto wks2 = doc.workbook().worksheet("Sheet2");
+            auto wks2               = doc.workbook().worksheet("Sheet2");
             wks2.cell("A1").value() = "H2";
-            auto& table2 = wks2.tables();
+            auto& table2            = wks2.tables();
             table2.setName("TableBeta");
             table2.setRangeReference("A1:A2");
             table2.appendColumn("H2");
@@ -391,14 +391,15 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             // 1. Verify [Content_Types].xml doesn't contain .rels overrides
             std::string ctXml = testDoc.getRawXml("[Content_Types].xml");
             REQUIRE(ctXml.find("PartName=\"/xl/worksheets/_rels/sheet1.xml.rels\"") == std::string::npos);
-            REQUIRE(ctXml.find("ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"") != std::string::npos); // Should be in Default
+            REQUIRE(ctXml.find("ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"") !=
+                    std::string::npos);    // Should be in Default
 
             // 2. Verify Table 1 (ID 1)
             std::string table1Xml = testDoc.getRawXml("xl/tables/table1.xml");
             REQUIRE(table1Xml.find("id=\"1\"") != std::string::npos);
             REQUIRE(table1Xml.find("name=\"TableAlpha\"") != std::string::npos);
             REQUIRE(table1Xml.find("displayName=\"TableAlpha\"") != std::string::npos);
-            
+
             // 3. Verify Table 2 (ID 2 - Global Uniqueness)
             std::string table2Xml = testDoc.getRawXml("xl/tables/table2.xml");
             REQUIRE(table2Xml.find("id=\"2\"") != std::string::npos);
@@ -408,9 +409,9 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             // 4. Verify tableStyleInfo attribute order and boolean format
             // Order: showFirstColumn -> showLastColumn -> showRowStripes -> showColumnStripes
             size_t posFirst = table2Xml.find("showFirstColumn=\"true\"");
-            size_t posLast = table2Xml.find("showLastColumn=\"false\"");
-            size_t posRow = table2Xml.find("showRowStripes=\"false\"");
-            size_t posCol = table2Xml.find("showColumnStripes=\"false\"");
+            size_t posLast  = table2Xml.find("showLastColumn=\"false\"");
+            size_t posRow   = table2Xml.find("showRowStripes=\"false\"");
+            size_t posCol   = table2Xml.find("showColumnStripes=\"false\"");
 
             REQUIRE(posFirst != std::string::npos);
             REQUIRE(posLast != std::string::npos);
@@ -432,7 +433,7 @@ testTestDoc:    // Wait, I'll just use the doc directly.
         {
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
-            
+
             auto& core = doc.coreProperties();
             core.setTitle("OOXML Title");
             core.setCreator("OOXML Creator");
@@ -458,14 +459,17 @@ testTestDoc:    // Wait, I'll just use the doc directly.
 
             // 1. Verify docProps/core.xml
             std::string coreXml = testDoc.getRawXml("docProps/core.xml");
-            REQUIRE(coreXml.find("xmlns:cp=\"http://schemas.openxmlformats.org/package/2006/metadata/core-properties\"") != std::string::npos);
+            REQUIRE(coreXml.find("xmlns:cp=\"http://schemas.openxmlformats.org/package/2006/metadata/core-properties\"") !=
+                    std::string::npos);
             REQUIRE(coreXml.find("<dc:title>OOXML Title</dc:title>") != std::string::npos);
             REQUIRE(coreXml.find("<dc:creator>OOXML Creator</dc:creator>") != std::string::npos);
-            REQUIRE(coreXml.find("<dcterms:created xsi:type=\"dcterms:W3CDTF\">2020-01-01T12:00:00Z</dcterms:created>") != std::string::npos);
+            REQUIRE(coreXml.find("<dcterms:created xsi:type=\"dcterms:W3CDTF\">2020-01-01T12:00:00Z</dcterms:created>") !=
+                    std::string::npos);
 
             // 2. Verify docProps/app.xml
             std::string appXml = testDoc.getRawXml("docProps/app.xml");
-            REQUIRE(appXml.find("xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\"") != std::string::npos);
+            REQUIRE(appXml.find("xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\"") !=
+                    std::string::npos);
             REQUIRE(appXml.find("<Company>OOXML Company</Company>") != std::string::npos);
             REQUIRE(appXml.find("<Application>") != std::string::npos);
             REQUIRE(appXml.find("OpenXLSX") != std::string::npos);
@@ -473,16 +477,17 @@ testTestDoc:    // Wait, I'll just use the doc directly.
 
             // 3. Verify docProps/custom.xml
             std::string customXml = testDoc.getRawXml("docProps/custom.xml");
-            REQUIRE(customXml.find("xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/custom-properties\"") != std::string::npos);
-            
+            REQUIRE(customXml.find("xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/custom-properties\"") !=
+                    std::string::npos);
+
             // String property
             REQUIRE(customXml.find("name=\"StringProp\"") != std::string::npos);
             REQUIRE(customXml.find("<vt:lpwstr>Value</vt:lpwstr>") != std::string::npos);
-            
+
             // Int property
             REQUIRE(customXml.find("name=\"IntProp\"") != std::string::npos);
             REQUIRE(customXml.find("<vt:i4>123</vt:i4>") != std::string::npos);
-            
+
             // Date property (vt:filetime)
             REQUIRE(customXml.find("name=\"DateProp\"") != std::string::npos);
             REQUIRE(customXml.find("<vt:filetime>2021-01-01T10:00:00Z</vt:filetime>") != std::string::npos);
@@ -499,13 +504,13 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
             auto wb = doc.workbook();
-            
+
             // 1. Set workbook protection
             wb.protect(true, true, "OpenXLSX");
-            
+
             // 2. Set some other properties to ensure order is maintained
             wb.setFullCalculationOnLoad();
-            
+
             doc.save();
             doc.close();
         }
@@ -528,11 +533,11 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             REQUIRE(workbookXml.find("fullCalcOnLoad=\"true\"") != std::string::npos);
 
             // 3. Verify Node Ordering: workbookPr -> workbookProtection -> bookViews -> sheets -> calcPr
-            size_t posWorkbookPr = workbookXml.find("<workbookPr");
+            size_t posWorkbookPr      = workbookXml.find("<workbookPr");
             size_t posWorkbookProtect = workbookXml.find("<workbookProtection");
-            size_t posBookViews = workbookXml.find("<bookViews");
-            size_t posSheets = workbookXml.find("<sheets");
-            size_t posCalcPr = workbookXml.find("<calcPr");
+            size_t posBookViews       = workbookXml.find("<bookViews");
+            size_t posSheets          = workbookXml.find("<sheets");
+            size_t posCalcPr          = workbookXml.find("<calcPr");
 
             REQUIRE(posWorkbookPr != std::string::npos);
             REQUIRE(posWorkbookProtect != std::string::npos);
@@ -556,16 +561,16 @@ testTestDoc:    // Wait, I'll just use the doc directly.
         {
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
-            doc.workbook().addWorksheet("DataSheet");  // Index 2, localSheetId 1
-            doc.workbook().addWorksheet("AuditSheet"); // Index 3, localSheetId 2
-            
+            doc.workbook().addWorksheet("DataSheet");     // Index 2, localSheetId 1
+            doc.workbook().addWorksheet("AuditSheet");    // Index 3, localSheetId 2
+
             auto dn = doc.workbook().definedNames();
-            dn.append("LocalName1", "DataSheet!$A$1", 1); // Scoped to DataSheet
-            dn.append("LocalName2", "AuditSheet!$B$2", 2); // Scoped to AuditSheet
-            
+            dn.append("LocalName1", "DataSheet!$A$1", 1);     // Scoped to DataSheet
+            dn.append("LocalName2", "AuditSheet!$B$2", 2);    // Scoped to AuditSheet
+
             // Move AuditSheet to index 1
             doc.workbook().setSheetIndex("AuditSheet", 1);
-            
+
             doc.save();
             doc.close();
         }
@@ -579,12 +584,70 @@ testTestDoc:    // Wait, I'll just use the doc directly.
 
             // After moving AuditSheet (was index 3, localSheetId 2) to index 1:
             // New order: AuditSheet (localSheetId 0), Sheet1 (localSheetId 1), DataSheet (localSheetId 2)
-            
+
             // AuditSheet was localSheetId 2, now it should be 0
             REQUIRE(workbookXml.find("name=\"LocalName2\" localSheetId=\"0\"") != std::string::npos);
-            
+
             // DataSheet was localSheetId 1, now it should be 2
             REQUIRE(workbookXml.find("name=\"LocalName1\" localSheetId=\"2\"") != std::string::npos);
+
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
+
+    SECTION("Verify Merge Cells OOXML structure")
+    {
+        std::string filename = "ooxml_merge_test.xlsx";
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            wks.mergeCells("A1:B2");
+            wks.mergeCells("C3:D4");
+
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLDocumentTest testDoc;
+            testDoc.open(filename);
+
+            std::string sheetXml = testDoc.getRawXml("xl/worksheets/sheet1.xml");
+
+            // 1. Verify mergeCells container and count attribute
+            REQUIRE(sheetXml.find("<mergeCells count=\"2\">") != std::string::npos);
+
+            // 2. Verify individual mergeCell elements
+            REQUIRE(sheetXml.find("<mergeCell ref=\"A1:B2\" />") != std::string::npos);
+            REQUIRE(sheetXml.find("<mergeCell ref=\"C3:D4\" />") != std::string::npos);
+
+            testDoc.close();
+        }
+
+        // Test deletion and empty container cleanup
+        {
+            XLDocument doc;
+            doc.open(filename);
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            wks.unmergeCells("A1:B2");
+            wks.unmergeCells("C3:D4");
+
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLDocumentTest testDoc;
+            testDoc.open(filename);
+
+            std::string sheetXml = testDoc.getRawXml("xl/worksheets/sheet1.xml");
+
+            // 1. Verify mergeCells container is GONE (Excel doesn't allow empty mergeCells tag)
+            REQUIRE(sheetXml.find("<mergeCells") == std::string::npos);
 
             testDoc.close();
         }

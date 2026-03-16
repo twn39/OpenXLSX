@@ -7,315 +7,239 @@
 #include "XLCellReference.hpp"
 #include "XLException.hpp"
 #include "XLMergeCells.hpp"
-#include "XLUtilities.hpp"    // appendAndGetNode
+#include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
 
-/**
- * @details Constructs an uninitialized XLMergeCells object
- */
-XLMergeCells::XLMergeCells() = default;
-
-/**
- * @details Constructs a new XLMergeCells object. Invoked by XLWorksheet::mergeCells / ::unmergeCells
- * @note Unfortunately, there is no easy way to persist the reference cache, this could be optimized - however, references access shouldn't
- *       be much of a performance issue
- */
-XLMergeCells::XLMergeCells(const XMLNode& rootNode, std::vector<std::string_view> const& nodeOrder)
-    : m_rootNode(std::make_unique<XMLNode>(rootNode)),
-      m_nodeOrder(nodeOrder),
-      m_mergeCellsNode()    // std::unique_ptr initializes to nullptr
-{
-    if (m_rootNode->empty()) throw XLInternalError("XLMergeCells constructor: can not construct with an empty XML root node");
-
-    m_mergeCellsNode  = std::make_unique<XMLNode>(m_rootNode->child("mergeCells"));
-    XMLNode mergeNode = m_mergeCellsNode->first_child_of_type(pugi::node_element);
-    while (not mergeNode.empty()) {
-        bool invalidNode = true;
-
-        // ===== For valid mergeCell nodes, add the reference to the reference cache
-        if (std::string(mergeNode.name()) == "mergeCell") {
-            std::string ref = mergeNode.attribute("ref").value();
-            if (ref.length() > 0) {
-                m_referenceCache.emplace_back(ref);
-                invalidNode = false;
-            }
-        }
-
-        // ===== Determine next element mergeNode
-        XMLNode nextNode = mergeNode.next_sibling_of_type(pugi::node_element);
-
-        // ===== In case of an invalid XML element: print an error and remove it from the XML, including whitespaces to the next sibling
-        if (invalidNode) {    // if mergeNode is not named mergeCell or does not have a valid ref attribute: remove it from the XML
-            std::cerr << "XLMergeCells constructor: invalid child element, either name is not mergeCell or reference is invalid:"
-                      << std::endl;
-            mergeNode.print(std::cerr);
-            if (not nextNode.empty()) {
-                // delete whitespaces between mergeNode and nextNode
-                while (mergeNode.next_sibling() != nextNode) m_mergeCellsNode->remove_child(mergeNode.next_sibling());
-            }
-            m_mergeCellsNode->remove_child(mergeNode);
-        }
-
-        // ===== Advance to next element mergeNode
-        mergeNode = nextNode;
-    }
-
-    if (m_referenceCache.size() > 0) {
-        // ===== Ensure initial array count attribute / issue #351
-        XMLAttribute attr = m_mergeCellsNode->attribute("count");
-        if (attr.empty()) attr = m_mergeCellsNode->append_attribute("count");
-        attr.set_value(m_referenceCache.size());
-    }
-    else                // no merges left
-        deleteAll();    // delete mergeCells element & re-initialize m_mergeCellsNode to a default-constructed XMLNode()
-}
-
-/**
- * @details
- */
-XLMergeCells::~XLMergeCells() = default;
-
-/**
- * @details
- */
-XLMergeCells::XLMergeCells(const XLMergeCells& other)
-{
-    m_rootNode       = other.m_rootNode ? std::make_unique<XMLNode>(*other.m_rootNode) : std::unique_ptr<XMLNode>{};
-    m_nodeOrder      = other.m_nodeOrder;
-    m_mergeCellsNode = other.m_mergeCellsNode ? std::make_unique<XMLNode>(*other.m_mergeCellsNode) : std::unique_ptr<XMLNode>{};
-    m_referenceCache = other.m_referenceCache;
-}
-
-/**
- * @details
- */
-XLMergeCells::XLMergeCells(XLMergeCells&& other)
-{
-    m_rootNode       = std::move(other.m_rootNode);
-    m_nodeOrder      = std::move(other.m_nodeOrder);
-    m_mergeCellsNode = std::move(other.m_mergeCellsNode);
-    m_referenceCache = std::move(other.m_referenceCache);
-}
-
-/**
- * @details
- */
-XLMergeCells& XLMergeCells::operator=(const XLMergeCells& other)
-{
-    m_rootNode       = other.m_rootNode ? std::make_unique<XMLNode>(*other.m_rootNode) : std::unique_ptr<XMLNode>{};
-    m_nodeOrder      = other.m_nodeOrder;
-    m_mergeCellsNode = other.m_mergeCellsNode ? std::make_unique<XMLNode>(*other.m_mergeCellsNode) : std::unique_ptr<XMLNode>{};
-    m_referenceCache = other.m_referenceCache;
-    return *this;
-}
-
-/**
- * @details
- */
-XLMergeCells& XLMergeCells::operator=(XLMergeCells&& other)
-{
-    m_rootNode       = std::move(other.m_rootNode);
-    m_nodeOrder      = std::move(other.m_nodeOrder);
-    m_mergeCellsNode = std::move(other.m_mergeCellsNode);
-    m_referenceCache = std::move(other.m_referenceCache);
-    return *this;
-}
-
-/**
- * @details
- */
-bool XLMergeCells::valid() const { return (m_rootNode != nullptr and not m_rootNode->empty()); }
-
 namespace
-{    // anonymous namespace: do not export any symbols from here
+{
     /**
-     * @brief Test if (range) reference overlaps with the cell window defined by topRow, firstCol, bottomRow, lastCol
-     * @return true in case of overlap, false if no overlap
+     * @details
      */
-    bool XLReferenceOverlaps(std::string reference, uint32_t topRow, uint16_t firstCol, uint32_t bottomRow, uint16_t lastCol)
+    XLMergeCells::XLRect parseRange(std::string_view reference)
     {
         using namespace std::literals::string_literals;
 
-        size_t pos = reference.find_first_of(':');       // find split mark between top left and bottom right cell
-        if (pos < 2 or pos + 2 >= reference.length())    // range reference must have at least 2 characters before and after the colon
-            throw XLInputError("XLMergeCells::"s + __func__ + ": not a valid range reference: \""s + reference + "\""s);
-        XLCellReference refTL(reference.substr(0, pos));     // get top left cell reference
-        XLCellReference refBR(reference.substr(pos + 1));    // get bottom right cell reference
+        size_t pos = reference.find_first_of(':');
+        if (pos == std::string_view::npos or pos < 2 or pos + 2 >= reference.length())
+            throw XLInputError("XLMergeCells: not a valid range reference: \""s + std::string(reference) + "\""s);
+
+        XLCellReference refTL(std::string(reference.substr(0, pos)));
+        XLCellReference refBR(std::string(reference.substr(pos + 1)));
 
         uint32_t refTopRow    = refTL.row();
         uint16_t refFirstCol  = refTL.column();
         uint32_t refBottomRow = refBR.row();
         uint16_t refLastCol   = refBR.column();
+
         if (refBottomRow < refTopRow or refLastCol < refFirstCol or (refBottomRow == refTopRow and refLastCol == refFirstCol))
-            throw XLInputError("XLMergeCells::"s + __func__ + ": not a valid range reference: \""s + reference + "\""s);
+            throw XLInputError("XLMergeCells: not a valid range reference: \""s + std::string(reference) + "\""s);
 
-        // std::cout << __func__ << ":" << " reference is " << reference
-        //    << " refTopRow is " << refTopRow << " refBottomRow is " << refBottomRow << " refFirstCol is " << refFirstCol << " refLastCol
-        //    is " << refLastCol
-        //    << " topRow is " << topRow << " bottomRow is " << bottomRow << " firstCol is " << firstCol << " lastCol is " << lastCol
-        //    << std::endl;
-
-        // overlap
-        if (refTopRow <= bottomRow and refBottomRow >= topRow        // vertical overlap
-            and refFirstCol <= lastCol and refLastCol >= firstCol)    // horizontal overlap
-            return true;
-        return false;    // otherwise: no overlap
+        return {refTopRow, refFirstCol, refBottomRow, refLastCol};
     }
-}    // anonymous namespace
+}    // namespace
 
 /**
- * @details Look up a merge index by the reference. If the reference does not exist, the returned index is XLMergeNotFound (-1).
+ * @details
  */
-XLMergeIndex XLMergeCells::findMerge(const std::string& reference) const
-{
-    const auto iter =
-        std::find_if(m_referenceCache.begin(), m_referenceCache.end(), [&](const std::string& ref) { return reference == ref; });
+XLMergeCells::XLMergeCells() = default;
 
-    return iter == m_referenceCache.end() ? XLMergeNotFound : static_cast<XLMergeIndex>(std::distance(m_referenceCache.begin(), iter));
+/**
+ * @details
+ */
+XLMergeCells::XLMergeCells(const XMLNode& rootNode, std::vector<std::string_view> const& nodeOrder)
+    : m_rootNode(rootNode),
+      m_nodeOrder(nodeOrder),
+      m_mergeCellsNode()
+{
+    if (m_rootNode.empty()) throw XLInternalError("XLMergeCells constructor: can not construct with an empty XML root node");
+
+    m_mergeCellsNode  = m_rootNode.child("mergeCells");
+    XMLNode mergeNode = m_mergeCellsNode.first_child_of_type(pugi::node_element);
+    while (not mergeNode.empty()) {
+        bool invalidNode = true;
+
+        if (std::string(mergeNode.name()) == "mergeCell") {
+            std::string_view ref = mergeNode.attribute("ref").value();
+            if (not ref.empty()) {
+                try {
+                    // Populate cache during initialization to avoid repeated XML parsing.
+                    m_mergeCache.push_back({std::string(ref), parseRange(ref)});
+                    invalidNode = false;
+                }
+                catch (const XLInputError&) {
+                    // Skip invalid nodes.
+                }
+            }
+        }
+
+        XMLNode nextNode = mergeNode.next_sibling_of_type(pugi::node_element);
+
+        if (invalidNode) {
+            std::cerr << "XLMergeCells constructor: invalid child element, either name is not mergeCell or reference is invalid:"
+                      << std::endl;
+            mergeNode.print(std::cerr);
+            if (not nextNode.empty()) {
+                // Cleanup whitespace before removing node to keep XML clean.
+                while (mergeNode.next_sibling() != nextNode) m_mergeCellsNode.remove_child(mergeNode.next_sibling());
+            }
+            m_mergeCellsNode.remove_child(mergeNode);
+        }
+
+        mergeNode = nextNode;
+    }
+
+    if (not m_mergeCache.empty()) {
+        XMLAttribute attr = m_mergeCellsNode.attribute("count");
+        if (attr.empty()) attr = m_mergeCellsNode.append_attribute("count");
+        attr.set_value(static_cast<unsigned long long>(m_mergeCache.size()));
+    }
+    else
+        deleteAll();
 }
 
 /**
  * @details
  */
-bool XLMergeCells::mergeExists(const std::string& reference) const { return findMerge(reference) >= 0; }
+bool XLMergeCells::valid() const { return (not m_rootNode.empty()); }
 
 /**
- * @details Find the index of the merge of which cellRef is a part. If no such merge exists, the returned index is XLMergeNotFound (-1).
+ * @details
  */
-XLMergeIndex XLMergeCells::findMergeByCell(const std::string& cellRef) const { return findMergeByCell(XLCellReference(cellRef)); }
+XLMergeIndex XLMergeCells::findMerge(std::string_view reference) const
+{
+    const auto iter =
+        std::find_if(m_mergeCache.begin(), m_mergeCache.end(), [&](const XLMergeEntry& entry) { return reference == entry.reference; });
+
+    return iter == m_mergeCache.end() ? XLMergeNotFound : static_cast<XLMergeIndex>(std::distance(m_mergeCache.begin(), iter));
+}
+
+/**
+ * @details
+ */
+bool XLMergeCells::mergeExists(std::string_view reference) const { return findMerge(reference) >= 0; }
+
+/**
+ * @details
+ */
+XLMergeIndex XLMergeCells::findMergeByCell(std::string_view cellRef) const
+{ return findMergeByCell(XLCellReference(std::string(cellRef))); }
+
 XLMergeIndex XLMergeCells::findMergeByCell(XLCellReference cellRef) const
 {
-    const auto iter =
-        std::find_if(m_referenceCache.begin(),
-                     m_referenceCache.end(),
-                     /**/ [&](const std::string& ref) {    // use XLReferenceOverlaps with a "range" that only contains cellRef
-                         /**/ return XLReferenceOverlaps(ref, cellRef.row(), cellRef.column(), cellRef.row(), cellRef.column());
-                     /**/
-                     });
+    const uint32_t row = cellRef.row();
+    const uint16_t col = cellRef.column();
 
-    return iter == m_referenceCache.end() ? XLMergeNotFound : static_cast<XLMergeIndex>(std::distance(m_referenceCache.begin(), iter));
+    // Use pre-parsed numerical ranges for high performance.
+    const auto iter = std::find_if(m_mergeCache.begin(), m_mergeCache.end(), [row, col](const XLMergeEntry& entry) {
+        return entry.rect.contains(row, col);
+    });
+
+    return iter == m_mergeCache.end() ? XLMergeNotFound : static_cast<XLMergeIndex>(std::distance(m_mergeCache.begin(), iter));
 }
 
 /**
  * @details
  */
-size_t XLMergeCells::count() const { return m_referenceCache.size(); }
+size_t XLMergeCells::count() const { return m_mergeCache.size(); }
 
 /**
  * @details
  */
 const char* XLMergeCells::merge(XLMergeIndex index) const
 {
-    if (index < 0 or static_cast<uint32_t>(index) >= m_referenceCache.size()) {
+    if (index < 0 or static_cast<size_t>(index) >= m_mergeCache.size()) {
         using namespace std::literals::string_literals;
-        throw XLInputError("XLMergeCells::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
+        throw XLInputError("XLMergeCells::merge: index "s + std::to_string(index) + " is out of range"s);
     }
-    return m_referenceCache[static_cast<size_t>(index)].c_str();
+    return m_mergeCache[static_cast<size_t>(index)].reference.c_str();
 }
 
 /**
- * @details Append a mergeCell by creating a new node in the XML file and adding the string to it. The index to the
- * appended merge is returned
- * Before appending a mergeCell entry with reference, check that reference does not overlap with any existing references
+ * @details
  */
 XLMergeIndex XLMergeCells::appendMerge(const std::string& reference)
 {
     using namespace std::literals::string_literals;
 
-    size_t referenceCacheSize = m_referenceCache.size();
-    if (referenceCacheSize >= XLMaxMergeCells)
-        throw XLInputError("XLMergeCells::"s + __func__ + ": exceeded max merge cells count "s + std::to_string(XLMaxMergeCells));
+    if (m_mergeCache.size() >= XLMaxMergeCells)
+        throw XLInputError("XLMergeCells::appendMerge: exceeded max merge cells count "s + std::to_string(XLMaxMergeCells));
 
-    size_t pos = reference.find_first_of(':');       // find split mark between top left and bottom right cell
-    if (pos < 2 or pos + 2 >= reference.length())    // range reference must have at least 2 characters before and after the colon
-        throw XLInputError("XLMergeCells::"s + __func__ + ": not a valid range reference: \""s + reference + "\""s);
-    XLCellReference refTL(reference.substr(0, pos));     // get top left cell reference
-    XLCellReference refBR(reference.substr(pos + 1));    // get bottom right cell reference
+    const XLRect newRect = parseRange(reference);
 
-    uint32_t refTopRow    = refTL.row();
-    uint16_t refFirstCol  = refTL.column();
-    uint32_t refBottomRow = refBR.row();
-    uint16_t refLastCol   = refBR.column();
-    if (refBottomRow < refTopRow or refLastCol < refFirstCol or (refBottomRow == refTopRow and refLastCol == refFirstCol))
-        throw XLInputError("XLMergeCells::"s + __func__ + ": not a valid range reference: \""s + reference + "\""s);
-
-    for (std::string ref : m_referenceCache) {
-        if (XLReferenceOverlaps(ref, refTopRow, refFirstCol, refBottomRow, refLastCol))
-            throw XLInputError("XLMergeCells::"s + __func__ + ": reference \""s +
-                               reference
-                               /**/
-                               + "\" overlaps with existing reference \""s + ref + "\""s);
+    // Guard against overlaps using numerical range comparison.
+    for (const auto& entry : m_mergeCache) {
+        if (entry.rect.overlaps(newRect))
+            throw XLInputError("XLMergeCells::appendMerge: reference \""s + reference + "\" overlaps with existing reference \""s +
+                               entry.reference + "\""s);
     }
-    // if execution gets here: no overlaps
 
-    if (m_mergeCellsNode->empty())    // create mergeCells element if needed
-        m_mergeCellsNode = std::make_unique<XMLNode>(appendAndGetNode(*m_rootNode, "mergeCells", m_nodeOrder));
+    if (m_mergeCellsNode.empty())
+        m_mergeCellsNode = appendAndGetNode(m_rootNode, "mergeCells", m_nodeOrder);
 
-    // append new mergeCell element and set attribute ref
-    XMLNode insertAfter = m_mergeCellsNode->last_child_of_type(pugi::node_element);
+    XMLNode insertAfter = m_mergeCellsNode.last_child_of_type(pugi::node_element);
     XMLNode newMerge{};
     if (insertAfter.empty())
-        newMerge = m_mergeCellsNode->prepend_child("mergeCell");
+        newMerge = m_mergeCellsNode.prepend_child("mergeCell");
     else
-        newMerge = m_mergeCellsNode->insert_child_after("mergeCell", insertAfter);
-    if (newMerge.empty()) throw XLInternalError("XLMergeCells::"s + __func__ + ": failed to insert reference: \""s + reference + "\""s);
+        newMerge = m_mergeCellsNode.insert_child_after("mergeCell", insertAfter);
+
+    if (newMerge.empty()) throw XLInternalError("XLMergeCells::appendMerge: failed to insert reference: \""s + reference + "\""s);
     newMerge.append_attribute("ref").set_value(reference.c_str());
 
-    m_referenceCache.emplace_back(newMerge.attribute("ref").value());    // index of this element = previous referenceCacheSize
+    m_mergeCache.push_back({reference, newRect});
 
-    // ===== Update the array count attribute
-    XMLAttribute attr = m_mergeCellsNode->attribute("count");
-    if (attr.empty()) attr = m_mergeCellsNode->append_attribute("count");
-    attr.set_value(m_referenceCache.size());
+    XMLAttribute attr = m_mergeCellsNode.attribute("count");
+    if (attr.empty()) attr = m_mergeCellsNode.append_attribute("count");
+    attr.set_value(static_cast<unsigned long long>(m_mergeCache.size()));
 
-    return static_cast<XLMergeIndex>(referenceCacheSize);
+    return static_cast<XLMergeIndex>(m_mergeCache.size() - 1);
 }
 
 /**
- * @details Delete the merge at the given index
+ * @details
  */
 void XLMergeCells::deleteMerge(XLMergeIndex index)
 {
     using namespace std::literals::string_literals;
 
-    if (index < 0 or static_cast<uint32_t>(index) >= m_referenceCache.size())
-        throw XLInputError("XLMergeCells::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
+    if (index < 0 or static_cast<size_t>(index) >= m_mergeCache.size())
+        throw XLInputError("XLMergeCells::deleteMerge: index "s + std::to_string(index) + " is out of range"s);
 
     XLMergeIndex curIndex = 0;
-    XMLNode      node     = m_mergeCellsNode->first_child_of_type(pugi::node_element);
+    XMLNode      node     = m_mergeCellsNode.first_child_of_type(pugi::node_element);
     while (curIndex < index and not node.empty()) {
         node = node.next_sibling_of_type(pugi::node_element);
         ++curIndex;
     }
-    if (node.empty())
-        throw XLInternalError("XLMergeCells::"s + __func__ +
-                              ": mismatch between size of mergeCells XML node and internal reference cache"s);
 
-    // ===== node was found: delete preceeding whitespace nodes and the node itself
-    while (node.previous_sibling().type() == pugi::node_pcdata) m_mergeCellsNode->remove_child(node.previous_sibling());
-    m_mergeCellsNode->remove_child(node);
+    if (node.empty()) throw XLInternalError("XLMergeCells::deleteMerge: mismatch between size of mergeCells XML node and internal cache");
 
-    m_referenceCache.erase(m_referenceCache.begin() + curIndex);
+    while (node.previous_sibling().type() == pugi::node_pcdata) m_mergeCellsNode.remove_child(node.previous_sibling());
+    m_mergeCellsNode.remove_child(node);
 
-    if (m_referenceCache.size() > 0) {
-        // ===== Update the array count attribute
-        XMLAttribute attr = m_mergeCellsNode->attribute("count");
-        if (attr.empty()) attr = m_mergeCellsNode->append_attribute("count");
-        attr.set_value(m_referenceCache.size());    // update the array count attribute
+    m_mergeCache.erase(m_mergeCache.begin() + index);
+
+    if (not m_mergeCache.empty()) {
+        XMLAttribute attr = m_mergeCellsNode.attribute("count");
+        if (attr.empty()) attr = m_mergeCellsNode.append_attribute("count");
+        attr.set_value(static_cast<unsigned long long>(m_mergeCache.size()));
     }
-    else                // no merges left
-        deleteAll();    // delete mergeCells element & re-initialize m_mergeCellsNode to a default-constructed XMLNode()
-}
-
-void XLMergeCells::deleteAll()
-{
-    m_referenceCache.clear();
-    m_rootNode->remove_child(*m_mergeCellsNode);
-    m_mergeCellsNode = std::make_unique<XMLNode>(XMLNode());
+    else
+        deleteAll();
 }
 
 /**
- * @details Print the underlying XML using pugixml::xml_node::print
+ * @details
  */
-void XLMergeCells::print(std::basic_ostream<char>& ostr) const { m_mergeCellsNode->print(ostr); }
+void XLMergeCells::deleteAll()
+{
+    m_mergeCache.clear();
+    m_rootNode.remove_child(m_mergeCellsNode);
+    m_mergeCellsNode = XMLNode();
+}
+
+/**
+ * @details
+ */
+void XLMergeCells::print(std::basic_ostream<char>& ostr) const { m_mergeCellsNode.print(ostr); }
