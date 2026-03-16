@@ -108,6 +108,12 @@ namespace OpenXLSX
         void suppressWarnings();
 
         /**
+         * @brief Open an existing .xlsx package.
+         * @param fileName Path to the file to open.
+         */
+        void open(std::string_view fileName);
+
+        /**
          * @brief Initialize a new .xlsx package. Overwrites if requested to prevent unintended data loss.
          * @param fileName Target path for the new package.
          */
