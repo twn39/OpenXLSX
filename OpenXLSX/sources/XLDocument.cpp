@@ -1164,6 +1164,12 @@ XLTables XLDocument::sheetTables(uint16_t sheetXmlNo)
  *     Begin or end with an apostrophe ('), but they can be used in between text or numbers in a name.
  *     Be named "History". This is a reserved word Excel uses internally.
  */
+/**
+ * @details Worksheet names must adhere to strict Excel naming rules to ensure compatibility 
+ * across different spreadsheet applications and prevent OOXML schema violations. 
+ * Key restrictions include length (31 chars), forbidden characters (/ \ ? * : [ ]), 
+ * and the reserved name "History".
+ */
 constexpr bool THROW_ON_INVALID = true;
 bool           XLDocument::validateSheetName(std::string_view sheetName, bool throwOnInvalid)
 {
@@ -1475,7 +1481,11 @@ XLQuery XLDocument::execQuery(const XLQuery& query) { return static_cast<const X
 void XLDocument::setSavingDeclaration(XLXmlSavingDeclaration const& savingDeclaration) { m_xmlSavingDeclaration = savingDeclaration; }
 
 /**
- * @details iterate over all worksheets, all rows, all columns and re-create the shared strings table in that order based on first use
+ * @details Shared String Table (SST) cleanup.
+ * Rationale: Over time, the SST can accumulate unused strings as cells are modified or deleted. 
+ * This method performs a full workbook traversal to identify strings currently in use, 
+ * remaps their indices to a new, compact table, and moves the string data to avoid copies. 
+ * Index 0 is reserved for empty strings by convention.
  */
 void XLDocument::cleanupSharedStrings()
 {
@@ -1610,7 +1620,9 @@ namespace OpenXLSX
     }
 
     /**
-     * @brief local function: split a path into a vector of strings
+     * @details Split a path into its constituent entries (directories and file). 
+     * Rationale: Standard path decomposition used for relative path calculation. 
+     * Uses std::string_view for zero-copy parsing.
      */
     std::vector<std::string> disassemblePath(std::string_view path, bool eliminateDots = true)
     {
@@ -1645,7 +1657,9 @@ namespace OpenXLSX
     }
 
     /**
-     * @details
+     * @details Calculate the relative path from B to A.
+     * Rationale: Resolves internal OOXML relationship paths, which are often stored 
+     * relative to the source part's directory.
      */
     std::string getPathARelativeToPathB(std::string_view pathA, std::string_view pathB)
     {
@@ -1665,7 +1679,8 @@ namespace OpenXLSX
     }
 
     /**
-     * @details
+     * @details Standardize path by resolving '.' and '..' segments.
+     * Rationale: Normalizes paths to ensure consistent internal ZIP archive lookups.
      */
     std::string eliminateDotAndDotDotFromPath(std::string_view path)
     {
