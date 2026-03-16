@@ -99,6 +99,12 @@ The build system includes platform-specific optimizations for `Release` builds (
 <details>
 <summary><b>Detailed Change Log</b></summary>
 
+### 2026-03-16: Architectural Migration & Privacy Cleanup
+- **Modernized File Creation**: Completely abandoned the hardcoded, 7.7KB hex-encoded binary `.xlsx` template. Migrated to dynamic, `constexpr std::string_view` XML string templates (inspired by Excelize), significantly improving code readability and maintainability without sacrificing C++ performance.
+- **Privacy & Metadata Scrubbing**: Removed legacy workaround code that was previously necessary to scrub the original author's local file paths and revision histories embedded within the old binary payload. The new XML templates guarantee a 100% clean and pristine initial state for all generated documents.
+- **Zip Archive Reliability**: Fixed a bug where files dynamically injected into memory during creation were occasionally discarded upon `save()` due to missing internal modification flags in `XLZipArchive`.
+- **Enhanced Validation Compliance**: Embedded strict MS Excel required namespaces and `xl/theme/theme1.xml` to prevent any "file corruption / recovery" warnings when opening programmatically generated files.
+
 ### 2026-03-15: Feature Expansion & Robustness
 - **Implemented Rich Text**: Added `XLRichText` and `XLRichTextRun` for multi-format text segments within cells, including support for font colors and styles.
 - **AutoFilter Support**: New API to set and manage worksheet filters.
