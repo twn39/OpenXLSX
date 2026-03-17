@@ -127,6 +127,7 @@ namespace OpenXLSX
         void setTimeRange(std::string_view min, std::string_view max);
         void setTextLengthRange(int min, int max);
         void setList(const std::vector<std::string>& items);
+        void setReferenceDropList(std::string_view targetSheet, std::string_view range);
 
     private:
         mutable XMLNode m_node;
@@ -194,6 +195,16 @@ namespace OpenXLSX
         // Priority 1/4 New Properties: Precise Deletion and Iterators
         void remove(size_t index);
         void remove(std::string_view sqref);
+
+        // Global properties
+        [[nodiscard]] bool disablePrompts() const;
+        void setDisablePrompts(bool disable);
+        
+        [[nodiscard]] uint32_t xWindow() const;
+        void setXWindow(uint32_t x);
+
+        [[nodiscard]] uint32_t yWindow() const;
+        void setYWindow(uint32_t y);
 
         [[nodiscard]] Iterator begin() const {
             if (!m_sheetNode) return Iterator();

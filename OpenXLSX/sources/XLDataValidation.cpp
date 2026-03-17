@@ -684,6 +684,33 @@ namespace OpenXLSX
         reorderAttributes(m_node);
     }
 
+    void XLDataValidation::setReferenceDropList(std::string_view targetSheet, std::string_view range)
+    {
+        setType(XLDataValidationType::List);
+        setAllowBlank(true);
+
+        std::string sheet(targetSheet);
+        std::string formula;
+
+        if (!sheet.empty()) {
+            // If sheet name contains space or special characters, it must be quoted in Excel formulas.
+            // It's generally safe to always quote it.
+            // We also need to escape existing single quotes by doubling them.
+            std::string escapedSheet = sheet;
+            size_t pos = 0;
+            while ((pos = escapedSheet.find("'", pos)) != std::string::npos) {
+                escapedSheet.replace(pos, 1, "''");
+                pos += 2;
+            }
+            formula = "='" + escapedSheet + "'!" + std::string(range);
+        } else {
+            formula = "=" + std::string(range);
+        }
+
+        setFormula1(formula);
+        reorderAttributes(m_node);
+    }
+
     // XLDataValidations implementation
 
     size_t XLDataValidations::count() const
@@ -817,6 +844,60 @@ namespace OpenXLSX
         if (dvNode.attribute("count").as_ullong() == 0) {
             m_sheetNode.remove_child("dataValidations");
         }
+    }
+
+    bool XLDataValidations::disablePrompts() const
+    {
+        if (!m_sheetNode) return false;
+        auto dvNode = m_sheetNode.child("dataValidations");
+        if (!dvNode) return false;
+        return dvNode.attribute("disablePrompts").as_bool();
+    }
+
+    void XLDataValidations::setDisablePrompts(bool disable)
+    {
+        if (!m_sheetNode) return;
+        auto dvNode = m_sheetNode.child("dataValidations");
+        if (!dvNode) return;
+        
+        dvNode.remove_attribute("disablePrompts");
+        if (disable) {
+            dvNode.append_attribute("disablePrompts") = "1";
+        }
+    }
+
+    uint32_t XLDataValidations::xWindow() const
+    {
+        if (!m_sheetNode) return 0;
+        auto dvNode = m_sheetNode.child("dataValidations");
+        if (!dvNode) return 0;
+        return dvNode.attribute("xWindow").as_uint();
+    }
+
+    void XLDataValidations::setXWindow(uint32_t x)
+    {
+        if (!m_sheetNode) return;
+        auto dvNode = m_sheetNode.child("dataValidations");
+        if (!dvNode) return;
+        dvNode.remove_attribute("xWindow");
+        dvNode.append_attribute("xWindow") = x;
+    }
+
+    uint32_t XLDataValidations::yWindow() const
+    {
+        if (!m_sheetNode) return 0;
+        auto dvNode = m_sheetNode.child("dataValidations");
+        if (!dvNode) return 0;
+        return dvNode.attribute("yWindow").as_uint();
+    }
+
+    void XLDataValidations::setYWindow(uint32_t y)
+    {
+        if (!m_sheetNode) return;
+        auto dvNode = m_sheetNode.child("dataValidations");
+        if (!dvNode) return;
+        dvNode.remove_attribute("yWindow");
+        dvNode.append_attribute("yWindow") = y;
     }
 
 } // namespace OpenXLSX
