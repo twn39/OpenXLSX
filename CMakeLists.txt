@@ -172,3 +172,10 @@ if(OPENXLSX_CREATE_DOCS)
     add_subdirectory(Documentation)
 endif()
 
+#=======================================================================================================================
+# DEMO TABLES EXECUTABLE
+#=======================================================================================================================
+add_executable(demo_tables Tests/demo_tables.cpp)
+target_link_libraries(demo_tables PRIVATE OpenXLSX::OpenXLSX)
+
+

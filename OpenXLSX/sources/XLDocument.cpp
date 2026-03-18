@@ -920,9 +920,9 @@ XLComments XLDocument::sheetComments(uint16_t sheetXmlNo)
 }
 
 /**
- * @details return an XLTables item for sheet with sheetXmlNo
+ * @details return an XLTableCollection item for sheet with sheetXmlNo
  */
-XLTables XLDocument::sheetTables(uint16_t sheetXmlNo)
+XLTableCollection XLDocument::sheetTables(uint16_t sheetXmlNo)
 {
     using namespace std::literals::string_literals;
     std::string tablesFilename = "xl/tables/table"s + std::to_string(sheetXmlNo) + ".xml"s;
@@ -935,7 +935,9 @@ XLTables XLDocument::sheetTables(uint16_t sheetXmlNo)
     XLXmlData*     xmlData      = getXmlData(tablesFilename, DO_NOT_THROW);
     if (xmlData == nullptr) xmlData = &m_data.emplace_back(this, tablesFilename, "", XLContentType::Table);
 
-    return XLTables(xmlData);
+    // This method is used for old compatibility or internal fetch.
+    // For multiple tables, it's better to use XLWorksheet::tables()
+    return XLTableCollection(xmlData->getXmlDocument()->document_element(), nullptr);
 }
 
 /**

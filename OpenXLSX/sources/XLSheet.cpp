@@ -2221,33 +2221,12 @@ XLComments& XLWorksheet::comments()
 }
 
 /**
- * @details fetches XLTables for the sheet - creates & assigns the class if empty
+ * @details fetches XLTableCollection for the sheet - creates & assigns the class if empty
  */
-XLTables& XLWorksheet::tables()
+XLTableCollection& XLWorksheet::tables()
 {
     if (!m_tables.valid()) {
-        std::ignore = relationships();    // create sheet relationships if not existing
-
-        // ===== Trigger parentDoc to create tables XML file and return it
-        uint16_t sheetXmlNo = sheetXmlNumber();
-        // std::cout << "worksheet tables for sheetId " << sheetXmlNo << std::endl;
-        m_tables = parentDoc().sheetTables(sheetXmlNo);    // fetch tables for this worksheet
-        if (!m_tables.valid()) throw XLException("XLWorksheet::tables(): could not create tables XML");
-        std::string tablesRelativePath = getPathARelativeToPathB(m_tables.getXmlPath(), getXmlPath());
-        if (!m_relationships.targetExists(tablesRelativePath)) {
-            auto relItem = m_relationships.addRelationship(XLRelationshipType::Table, tablesRelativePath);
-
-            // Add <tableParts> to worksheet XML
-            auto rootNode   = xmlDocument().document_element();
-            auto tableParts = appendAndGetNode(rootNode, "tableParts", m_nodeOrder);
-            if (tableParts.attribute("count").empty())
-                tableParts.append_attribute("count").set_value(1);
-            else
-                tableParts.attribute("count").set_value(tableParts.attribute("count").as_uint() + 1);
-
-            auto tablePart = tableParts.append_child("tablePart");
-            tablePart.append_attribute("r:id").set_value(relItem.id().c_str());
-        }
+        m_tables = XLTableCollection(xmlDocument().document_element(), this);
     }
 
     return m_tables;

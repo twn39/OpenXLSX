@@ -364,18 +364,14 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             // Table 1 on Sheet 1
             auto wks1               = doc.workbook().worksheet("Sheet1");
             wks1.cell("A1").value() = "H1";
-            auto& table1            = wks1.tables();
-            table1.setName("TableAlpha");
-            table1.setRangeReference("A1:A2");
+            auto table1            = wks1.tables().add("TableAlpha", "A1:A2");
             table1.appendColumn("H1");
 
             // Table 2 on Sheet 2
             doc.workbook().addWorksheet("Sheet2");
             auto wks2               = doc.workbook().worksheet("Sheet2");
             wks2.cell("A1").value() = "H2";
-            auto& table2            = wks2.tables();
-            table2.setName("TableBeta");
-            table2.setRangeReference("A1:A2");
+            auto table2            = wks2.tables().add("TableBeta", "A1:A2");
             table2.appendColumn("H2");
             table2.setShowFirstColumn(true);
             table2.setShowRowStripes(false);
@@ -435,10 +431,8 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             doc.create(filename, XLForceOverwrite);
 
             auto wks = doc.workbook().worksheet("Sheet1");
-            auto& table = wks.tables();
-            table.setName("FeatureTable");
-            table.setRangeReference("A1:B3");
-            
+            auto table = wks.tables().add("FeatureTable", "A1:B3");
+
             // AutoFilter
             auto filter = table.autoFilter();
             filter.filterColumn(1).setCustomFilter("greaterThan", "100");

@@ -820,6 +820,7 @@ namespace OpenXLSX
         friend class XLCell;
         friend class XLRow;
         friend class XLWorkbook;
+        friend class XLTableCollection;
         friend class XLSheetBase<XLWorksheet>;
 
         //----------------------------------------------------------------------------------------------------------------------
@@ -1354,7 +1355,7 @@ namespace OpenXLSX
         /**
          * @brief fetch a reference to the worksheet tables
          */
-        XLTables& tables();
+        XLTableCollection& tables();
 
         /**
          * @brief Add a hyperlink to a cell.
@@ -1517,7 +1518,7 @@ namespace OpenXLSX
         XLDrawing                                          m_drawing{};         /**< class handling the worksheet drawing object */
         XLVmlDrawing                                       m_vmlDrawing{};      /**< class handling the worksheet VML drawing object */
         XLComments                                         m_comments{};        /**< class handling the worksheet comments */
-        XLTables                                           m_tables{};          /**< class handling the worksheet table settings */
+        XLTableCollection                                  m_tables{};          /**< class handling the worksheet table settings */
         inline static const std::vector<std::string_view>& m_nodeOrder =
             XLWorksheetNodeOrder;    // worksheet XML root node required child sequence
     };

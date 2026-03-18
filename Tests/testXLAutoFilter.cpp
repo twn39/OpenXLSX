@@ -79,10 +79,8 @@ TEST_CASE("Table AutoFilter Tests", "[XLTable][XLAutoFilter]")
     ws.cell("A3").value() = 2;
     ws.cell("B3").value() = 80;
 
-    auto& table = ws.tables();
-    table.setName("MyTable");
+    auto table = ws.tables().add("MyTable", "A1:B3");
     table.setDisplayName("MyTableDisplay");
-    table.setRangeReference("A1:B3");
 
     auto filter = table.autoFilter();
     REQUIRE(filter);
@@ -97,7 +95,7 @@ TEST_CASE("Table AutoFilter Tests", "[XLTable][XLAutoFilter]")
     XLDocument doc2;
     doc2.open("TableAutoFilterTest.xlsx");
     auto ws2 = doc2.workbook().worksheet("Sheet1");
-    auto& table2 = ws2.tables();
+    auto table2 = ws2.tables()[0];
     auto filter2 = table2.autoFilter();
 
     REQUIRE(filter2);

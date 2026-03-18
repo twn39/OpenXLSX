@@ -2,6 +2,8 @@
 
 #include "XLXmlParser.hpp"
 #include <string>
+#include <string_view>
+#include <optional>
 
 namespace OpenXLSX {
 
@@ -55,7 +57,7 @@ namespace OpenXLSX {
          * @brief Set the name of the table column.
          * @param name The new name of the column.
          */
-        void setName(const std::string& name);
+        void setName(std::string_view name);
 
         /**
          * @brief Get the totals row function for this column.
@@ -79,7 +81,31 @@ namespace OpenXLSX {
          * @brief Set the totals row label for this column.
          * @param label The string to set as label.
          */
-        void setTotalsRowLabel(const std::string& label);
+        void setTotalsRowLabel(std::string_view label);
+
+        /**
+         * @brief Get the calculated column formula.
+         * @return The formula string, or an empty string if not set.
+         */
+        std::string calculatedColumnFormula() const;
+
+        /**
+         * @brief Set the calculated column formula.
+         * @param formula The formula string (e.g., "[@Price]*[@Quantity]").
+         */
+        void setCalculatedColumnFormula(std::string_view formula);
+
+        /**
+         * @brief Get the custom totals row formula.
+         * @return The formula string, or an empty string if not set.
+         */
+        std::string totalsRowFormula() const;
+
+        /**
+         * @brief Set a custom totals row formula.
+         * @param formula The formula string.
+         */
+        void setTotalsRowFormula(std::string_view formula);
 
     private:
         XMLNode m_node;

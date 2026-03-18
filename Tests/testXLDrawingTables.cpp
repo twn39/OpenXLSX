@@ -84,12 +84,8 @@ TEST_CASE("XLDrawing (VML) and XLTables Tests", "[Drawing][Tables]")
 
             // Trigger table creation
             auto& tables = wks.tables();
+            tables.add("MyTable", "A1:B2");
             REQUIRE(tables.valid());
-
-            // Test print
-            std::stringstream ss;
-            tables.print(ss);
-            // Even if empty, it should be valid XML structure if anything is printed
 
             doc.save();
             doc.close();

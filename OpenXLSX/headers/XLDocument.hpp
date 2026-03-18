@@ -79,6 +79,7 @@ namespace OpenXLSX
         friend class XLWorkbook;
         friend class XLSheet;
         friend class XLXmlData;
+        friend class XLTableCollection;
 
         //---------- Public Member Functions
     public:
