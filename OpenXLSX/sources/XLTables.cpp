@@ -219,13 +219,14 @@ namespace OpenXLSX
     
     void XLTable::setShowHeaderRow(bool show) { 
         XMLNode node = xmlDocument().document_element();
-        appendAndSetAttribute(node, "headerRowCount", show ? "1" : "0"); 
+        setTableAttribute(node, "headerRowCount", show ? "1" : "0");
     }
 
     bool XLTable::showTotalsRow() const { return xmlDocument().document_element().attribute("totalsRowShown").as_bool(); }
     void XLTable::setShowTotalsRow(bool show) {
         XMLNode node = xmlDocument().document_element();
-        appendAndSetAttribute(node, "totalsRowShown", show ? "1" : "0");
+        setTableAttribute(node, "totalsRowShown", show ? "1" : "0");
+        setTableAttribute(node, "totalsRowCount", show ? "1" : "0");
     }
 
     void XLTable::createColumnsFromRange(const XLWorksheet& worksheet) {
@@ -258,6 +259,11 @@ namespace OpenXLSX
 
     XLTableColumn XLTable::column(std::string_view name) const {
         auto col = xmlDocument().document_element().child("tableColumns").find_child_by_attribute("tableColumn", "name", std::string(name).c_str());
+        return XLTableColumn(col);
+    }
+
+    XLTableColumn XLTable::column(uint32_t id) const {
+        auto col = xmlDocument().document_element().child("tableColumns").find_child_by_attribute("tableColumn", "id", std::to_string(id).c_str());
         return XLTableColumn(col);
     }
 

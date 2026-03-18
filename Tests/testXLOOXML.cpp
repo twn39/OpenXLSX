@@ -440,10 +440,12 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             // Totals Row
             table.setShowTotalsRow(true);
             
-            auto col1 = table.appendColumn("H1");
+            auto col1 = table.column(1);
+            col1.setName("H1");
             col1.setTotalsRowLabel("Total");
             
-            auto col2 = table.appendColumn("H2");
+            auto col2 = table.column(2);
+            col2.setName("H2");
             col2.setTotalsRowFunction(XLTotalsRowFunction::Sum);
 
             doc.save();
