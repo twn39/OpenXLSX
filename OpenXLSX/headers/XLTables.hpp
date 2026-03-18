@@ -13,9 +13,13 @@
 #include "XLException.hpp"
 #include "XLXmlData.hpp"
 #include "XLXmlFile.hpp"
+#include "XLAutoFilter.hpp"
+#include "XLTableColumn.hpp"
 
 namespace OpenXLSX
 {
+    class XLWorksheet;
+
     /**
      * @brief The XLTables class is the base class for worksheet tables
      */
@@ -128,6 +132,30 @@ namespace OpenXLSX
         void setShowRowStripes(bool show);
 
         /**
+         * @brief Check if the header row is shown
+         * @return bool True if the header row is shown
+         */
+        bool showHeaderRow() const;
+
+        /**
+         * @brief Set whether the header row is shown
+         * @param show True to show the header row
+         */
+        void setShowHeaderRow(bool show);
+
+        /**
+         * @brief Check if the totals row is shown
+         * @return bool True if the totals row is shown
+         */
+        bool showTotalsRow() const;
+
+        /**
+         * @brief Set whether the totals row is shown
+         * @param show True to show the totals row
+         */
+        void setShowTotalsRow(bool show);
+
+        /**
          * @brief Check if column stripes are shown
          * @return bool True if column stripes are shown
          */
@@ -166,8 +194,37 @@ namespace OpenXLSX
         /**
          * @brief Append a new column to the table
          * @param name The column name
+         * @return The appended XLTableColumn
          */
-        void appendColumn(std::string_view name);
+        XLTableColumn appendColumn(std::string_view name);
+
+        /**
+         * @brief Get a column by its name
+         * @param name The name of the column
+         * @return The XLTableColumn object
+         */
+        XLTableColumn column(std::string_view name) const;
+
+        /**
+         * @brief Get a column by its 1-based ID
+         * @param id The 1-based ID of the column
+         * @return The XLTableColumn object
+         */
+        XLTableColumn column(uint32_t id) const;
+
+        /**
+         * @brief Get the auto filter object for the table.
+         * @return XLAutoFilter The auto filter object.
+         */
+        XLAutoFilter autoFilter() const;
+
+        /**
+         * @brief Automatically resizes the table to fit the contiguous data in the worksheet.
+         * The resize begins from the top-left corner of the current table's reference range.
+         * It expands downwards and rightwards until it hits the boundaries of the used data.
+         * @param worksheet The worksheet containing this table.
+         */
+        void resizeToFitData(const XLWorksheet& worksheet);
 
         /**
          * @brief Print the XML contents of this XLTables instance using the underlying XMLNode print function

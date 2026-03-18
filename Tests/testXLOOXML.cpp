@@ -408,10 +408,10 @@ testTestDoc:    // Wait, I'll just use the doc directly.
 
             // 4. Verify tableStyleInfo attribute order and boolean format
             // Order: showFirstColumn -> showLastColumn -> showRowStripes -> showColumnStripes
-            size_t posFirst = table2Xml.find("showFirstColumn=\"true\"");
-            size_t posLast  = table2Xml.find("showLastColumn=\"false\"");
-            size_t posRow   = table2Xml.find("showRowStripes=\"false\"");
-            size_t posCol   = table2Xml.find("showColumnStripes=\"false\"");
+            size_t posFirst = table2Xml.find("showFirstColumn=\"1\"");
+            size_t posLast  = table2Xml.find("showLastColumn=\"0\"");
+            size_t posRow   = table2Xml.find("showRowStripes=\"0\"");
+            size_t posCol   = table2Xml.find("showColumnStripes=\"0\"");
 
             REQUIRE(posFirst != std::string::npos);
             REQUIRE(posLast != std::string::npos);
@@ -421,6 +421,59 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             REQUIRE(posFirst < posLast);
             REQUIRE(posLast < posRow);
             REQUIRE(posRow < posCol);
+
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
+
+    SECTION("Verify Table TotalsRow and AutoFilter Structure in OOXML")
+    {
+        std::string filename = "ooxml_table_totals_autofilter_test.xlsx";
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+
+            auto wks = doc.workbook().worksheet("Sheet1");
+            auto& table = wks.tables();
+            table.setName("FeatureTable");
+            table.setRangeReference("A1:B3");
+            
+            // AutoFilter
+            auto filter = table.autoFilter();
+            filter.filterColumn(1).setCustomFilter("greaterThan", "100");
+
+            // Totals Row
+            table.setShowTotalsRow(true);
+            
+            auto col1 = table.appendColumn("H1");
+            col1.setTotalsRowLabel("Total");
+            
+            auto col2 = table.appendColumn("H2");
+            col2.setTotalsRowFunction(XLTotalsRowFunction::Sum);
+
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLDocumentTest testDoc;
+            testDoc.open(filename);
+
+            std::string tableXml = testDoc.getRawXml("xl/tables/table1.xml");
+            
+            // 1. Verify totals row attributes on root node
+            REQUIRE(tableXml.find("totalsRowShown=\"1\"") != std::string::npos);
+            REQUIRE(tableXml.find("totalsRowCount=\"1\"") != std::string::npos);
+
+            // 2. Verify autoFilter and custom filter
+            REQUIRE(tableXml.find("<autoFilter ref=\"A1:B3\">") != std::string::npos);
+            REQUIRE(tableXml.find("<filterColumn colId=\"1\">") != std::string::npos);
+            REQUIRE(tableXml.find("<customFilter operator=\"greaterThan\" val=\"100\"") != std::string::npos);
+
+            // 3. Verify table column attributes
+            REQUIRE(tableXml.find("<tableColumn id=\"1\" name=\"H1\" totalsRowLabel=\"Total\"") != std::string::npos);
+            REQUIRE(tableXml.find("<tableColumn id=\"2\" name=\"H2\" totalsRowFunction=\"sum\"") != std::string::npos);
 
             testDoc.close();
         }

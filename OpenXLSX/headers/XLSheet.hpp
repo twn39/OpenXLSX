@@ -33,6 +33,7 @@
 #include "XLStyles.hpp"    // XLStyleIndex
 #include "XLTables.hpp"    // XLTables
 #include "XLXmlFile.hpp"
+#include "XLAutoFilter.hpp"
 
 namespace OpenXLSX
 {
@@ -1026,6 +1027,12 @@ namespace OpenXLSX
          * @return A string with the range reference (e.g., "A1:C10"), or an empty string if no AutoFilter exists.
          */
         std::string autoFilter() const;
+
+        /**
+         * @brief Get the XLAutoFilter object.
+         * @return The XLAutoFilter object.
+         */
+        XLAutoFilter autofilterObject() const;
 
         /**
          * @brief Get an XLCellReference to the last (bottom right) cell in the worksheet.

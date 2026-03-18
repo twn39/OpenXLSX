@@ -1,6 +1,7 @@
 #ifndef OPENXLSX_OPENXLSX_HPP
 #define OPENXLSX_OPENXLSX_HPP
 
+#include "headers/XLAutoFilter.hpp"
 #include "headers/XLCell.hpp"
 #include "headers/XLCellRange.hpp"
 #include "headers/XLCellReference.hpp"

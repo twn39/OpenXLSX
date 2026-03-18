@@ -1400,6 +1400,12 @@ std::string XLWorksheet::autoFilter() const
     return autoFilterNode.attribute("ref").value();
 }
 
+XLAutoFilter XLWorksheet::autofilterObject() const
+{
+    XMLNode autoFilterNode = xmlDocument().document_element().child("autoFilter");
+    return XLAutoFilter(autoFilterNode);
+}
+
 /**
  * @details Returns an XLCellReference to the last cell using rowCount() and columnCount() methods.
  */

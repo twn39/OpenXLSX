@@ -13,6 +13,7 @@ OpenXLSX is a high-performance C++ library for reading, writing, creating, and m
 - **Comprehensive Image Support**: Insert and read images (PNG/JPEG) with automatic dimension detection and aspect ratio preservation.
 - **Rich Text & Formatting**: Support for multi-format text segments (`XLRichText`), fonts, fills, borders, and conditional formatting.
 - **Advanced Data Validation**: Enterprise-grade data validation API with smart range collapsing, complex region subtraction, cross-sheet reference safety, and ergonomic configuration objects (`XLDataValidationConfig`).
+- **Data Tables & AutoFilters**: High-level API for creating and managing Excel Tables (`XLTables`), including totals rows, column-level aggregate functions (`Sum`, `Average`, etc.), and custom logical AutoFilters.
 - **AutoFilter & Names**: Set worksheet filters and manage workbook-level named ranges and constants.
 - **Page Setup & Print**: Fine-grained control over margins, orientation, paper size, and print options (gridlines, headings, centering).
 - **Sheet Protection**: Secure worksheets with passwords and granular permission controls.
@@ -37,6 +38,55 @@ int main() {
     // Writing data
     wks.cell("A1").value() = "Hello, OpenXLSX!";
     wks.cell("B1").value() = 42;
+
+    doc.save();
+    return 0;
+}
+```
+
+### 📊 Advanced Feature: Data Tables & AutoFilters
+
+```cpp
+#include <OpenXLSX.hpp>
+#include <iostream>
+
+using namespace OpenXLSX;
+
+int main() {
+    XLDocument doc;
+    doc.create("SalesTable.xlsx", XLForceOverwrite);
+    auto wks = doc.workbook().worksheet("Sheet1");
+
+    // 1. Prepare data (Headers + 3 rows)
+    wks.cell("B2").value() = "Product";
+    wks.cell("C2").value() = "Sales";
+    wks.cell("B3").value() = "Apples";  wks.cell("C3").value() = 5000;
+    wks.cell("B4").value() = "Oranges"; wks.cell("C4").value() = 4200;
+    wks.cell("B5").value() = "Bananas"; wks.cell("C5").value() = 7500;
+
+    // 2. Create a Table and snap it to the data
+    auto& table = wks.tables();
+    table.setName("SalesTable");
+    table.resizeToFitData(wks); // Automatically detects B2:C5
+    
+    // 3. Enable Totals Row and expand range (B2:C6)
+    table.setRangeReference("B2:C6"); 
+    table.setShowTotalsRow(true);
+    table.setStyleName("TableStyleMedium9");
+
+    // 4. Configure Column-level Aggregate Functions
+    auto col1 = table.appendColumn("Product");
+    col1.setTotalsRowLabel("Total:");
+    wks.cell("B6").value() = "Total:";
+
+    auto col2 = table.appendColumn("Sales");
+    col2.setTotalsRowFunction(XLTotalsRowFunction::Sum);
+    // Use SUBTOTAL formula for dynamic updates when filtering
+    wks.cell("C6").formula() = "SUBTOTAL(109,SalesTable[Sales])";
+
+    // 5. Apply a Custom AutoFilter (Sales > 4500)
+    auto filter = table.autoFilter();
+    filter.filterColumn(1).setCustomFilter("greaterThan", "4500");
 
     doc.save();
     return 0;
@@ -98,6 +148,14 @@ The build system includes platform-specific optimizations for `Release` builds (
 
 <details>
 <summary><b>Detailed Change Log</b></summary>
+
+### 2026-03-18: Enhanced Data Tables & AutoFilter
+- **Table High-level API**: Implemented a comprehensive `XLTables` interface for creating and managing Excel Tables.
+- **Totals Row Support**: Added support for `showTotalsRow`, `totalsRowCount`, and column-level aggregate functions (`Sum`, `Average`, `Count`, etc.) via `XLTableColumn`.
+- **Advanced AutoFilters**: Enhanced `XLAutoFilter` to support custom logical rules (e.g., `greaterThan`) and value-based filtering.
+- **Ergonomic Resizing**: Added `resizeToFitData()` to automatically snap table boundaries to contiguous worksheet data.
+- **OOXML Compliance Fixes**: Standardized boolean XML attributes to `1`/`0` and optimized node ordering to ensure 100% compatibility with MS Excel's strict validation.
+- **Performance & Testing**: Added comprehensive Catch2 unit tests and OOXML structure verification tests.
 
 ### 2026-03-16: Architectural Migration & Privacy Cleanup
 - **Modernized File Creation**: Completely abandoned the hardcoded, 7.7KB hex-encoded binary `.xlsx` template. Migrated to dynamic, `constexpr std::string_view` XML string templates (inspired by Excelize), significantly improving code readability and maintainability without sacrificing C++ performance.
