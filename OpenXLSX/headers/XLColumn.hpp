@@ -25,37 +25,9 @@ namespace OpenXLSX
     public:
         /**
          * @brief Constructor
-         * @param columnNode A pointer to the XMLNode for the column.
+         * @param columnNode The XMLNode for the column.
          */
-        explicit XLColumn(const XMLNode& columnNode);
-
-        /**
-         * @brief Copy Constructor [deleted]
-         */
-        XLColumn(const XLColumn& other);
-
-        /**
-         * @brief Move Constructor
-         * @note The move constructor has been explicitly deleted.
-         */
-        XLColumn(XLColumn&& other) noexcept;
-
-        /**
-         * @brief Destructor
-         */
-        ~XLColumn();
-
-        /**
-         * @brief Copy assignment operator [deleted]
-         */
-        XLColumn& operator=(const XLColumn& other);
-
-        /**
-         * @brief
-         * @param other
-         * @return
-         */
-        XLColumn& operator=(XLColumn&& other) noexcept = default;
+        explicit XLColumn(XMLNode columnNode);
 
         /**
          * @brief Get the width of the column.
@@ -109,7 +81,7 @@ namespace OpenXLSX
          * @brief Get the XMLNode object for the column.
          * @return The XMLNode for the column
          */
-        XMLNode& columnNode() const;
+        XMLNode columnNode() const;
 
         /**
          * @brief Get the array index of xl/styles.xml:<styleSheet>:<cellXfs> for the style assigned to the column.
@@ -126,7 +98,14 @@ namespace OpenXLSX
         bool setFormat(XLStyleIndex cellFormatIndex);
 
     private:
-        std::unique_ptr<XMLNode> m_columnNode; /**< A pointer to the XMLNode object for the column. */
+        /**
+         * @brief Get or create an attribute of the column node.
+         * @param attrName The name of the attribute.
+         * @return The XMLAttribute object.
+         */
+        XMLAttribute getOrCreateAttribute(const char* attrName);
+
+        XMLNode m_columnNode; /**< The XMLNode object for the column. */
     };
 
 }    // namespace OpenXLSX
