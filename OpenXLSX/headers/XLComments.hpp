@@ -35,7 +35,7 @@ namespace OpenXLSX
          * @brief Constructor. New items should only be created through an XLComments object.
          * @param node An XMLNode object with the comment XMLNode. If no input is provided, a null node is used.
          */
-        explicit XLComment(const XMLNode& node);
+        explicit XLComment(XMLNode node);
 
         /**
          * @brief Copy Constructor.
@@ -85,7 +85,7 @@ namespace OpenXLSX
         /**
          * @brief Setter functions
          */
-        bool setText(std::string newText);
+        bool setText(const std::string& newText);
         bool setRichText(const XLRichText& richText);
         bool setAuthorId(uint16_t newAuthorId);
 
@@ -115,19 +115,19 @@ namespace OpenXLSX
          * @brief The constructor.
          * @param xmlData the source XML of the comments file
          */
-        XLComments(XLXmlData* xmlData);
+        explicit XLComments(XLXmlData* xmlData);
 
         /**
          * @brief The copy constructor.
          * @param other The object to be copied.
          */
-        XLComments(const XLComments& other);
+        XLComments(const XLComments& other) = default;
 
         /**
          * @brief
          * @param other
          */
-        XLComments(XLComments&& other) noexcept;
+        XLComments(XLComments&& other) noexcept = default;
 
         /**
          * @brief The destructor
@@ -140,25 +140,26 @@ namespace OpenXLSX
          * @param other
          * @return
          */
-        XLComments& operator=(XLComments&& other) noexcept;
+        XLComments& operator=(XLComments&& other) noexcept = default;
 
         /**
          * @brief Assignment operator
          * @return A reference to the new object.
          */
-        XLComments& operator=(const XLComments&);
+        XLComments& operator=(const XLComments& other) = default;
 
         /**
          * @brief associate the worksheet's VML drawing object with the comments so it can be modified from here
          * @param vmlDrawing the worksheet's previously created XLVmlDrawing object
          * @return true upon success
          */
-        bool setVmlDrawing(XLVmlDrawing& vmlDrawing);
+        bool setVmlDrawing(const XLVmlDrawing& vmlDrawing);
 
     private:    // helper functions with repeating code
         XMLNode authorNode(uint16_t index) const;
         XMLNode commentNode(size_t index) const;
         XMLNode commentNode(const std::string& cellRef) const;
+        void    setupVmlShape(const std::string& cellRef, uint32_t destRow, uint16_t destCol, bool newCommentCreated);
 
     public:
         uint16_t authorCount() const;
@@ -224,7 +225,7 @@ namespace OpenXLSX
     private:
         XMLNode                       m_authors{};
         XMLNode                       m_commentList{};
-        std::unique_ptr<XLVmlDrawing> m_vmlDrawing;
+        XLVmlDrawing                  m_vmlDrawing;
         mutable XMLNode m_hintNode{};    // the last comment XML Node accessed by index is stored here, if any - will be reset when comments
                                          // are inserted or deleted
         mutable size_t m_hintIndex{0};    // this has the index at which m_hintNode was accessed, only valid if not m_hintNode.empty()
