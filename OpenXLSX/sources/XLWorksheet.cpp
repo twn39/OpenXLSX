@@ -227,6 +227,13 @@ XLColumn XLWorksheet::column(std::string const& columnRef) const { return column
 
 void XLWorksheet::groupRows(uint32_t rowFirst, uint32_t rowLast, uint8_t outlineLevel, bool collapsed)
 {
+    auto sheetPr = xmlDocument().document_element().child("sheetPr");
+    if (sheetPr.empty()) sheetPr = xmlDocument().document_element().prepend_child("sheetPr");
+    auto outlinePr = sheetPr.child("outlinePr");
+    if (outlinePr.empty()) outlinePr = sheetPr.append_child("outlinePr");
+    if (outlinePr.attribute("summaryBelow").empty()) outlinePr.append_attribute("summaryBelow").set_value("1");
+    if (outlinePr.attribute("summaryRight").empty()) outlinePr.append_attribute("summaryRight").set_value("1");
+
     for (uint32_t r = rowFirst; r <= rowLast; ++r) {
         auto rowObj = row(r);
         rowObj.setOutlineLevel(outlineLevel);
@@ -240,6 +247,13 @@ void XLWorksheet::groupRows(uint32_t rowFirst, uint32_t rowLast, uint8_t outline
 
 void XLWorksheet::groupColumns(uint16_t colFirst, uint16_t colLast, uint8_t outlineLevel, bool collapsed)
 {
+    auto sheetPr = xmlDocument().document_element().child("sheetPr");
+    if (sheetPr.empty()) sheetPr = xmlDocument().document_element().prepend_child("sheetPr");
+    auto outlinePr = sheetPr.child("outlinePr");
+    if (outlinePr.empty()) outlinePr = sheetPr.append_child("outlinePr");
+    if (outlinePr.attribute("summaryBelow").empty()) outlinePr.append_attribute("summaryBelow").set_value("1");
+    if (outlinePr.attribute("summaryRight").empty()) outlinePr.append_attribute("summaryRight").set_value("1");
+
     for (uint16_t c = colFirst; c <= colLast; ++c) {
         auto colObj = column(c);
         colObj.setOutlineLevel(outlineLevel);
@@ -537,6 +551,46 @@ XLPageSetup XLWorksheet::pageSetup() const
     XMLNode node     = rootNode.child("pageSetup");
     if (node.empty()) node = appendAndGetNode(rootNode, "pageSetup", m_nodeOrder);
     return XLPageSetup(node);
+}
+
+void XLWorksheet::setPrintArea(const std::string& sqref)
+{
+    uint32_t localSheetId = index() - 1; // index() is 1-based, localSheetId is 0-based
+    parentDoc().workbook().definedNames().append("_xlnm.Print_Area", "'" + name() + "'!" + sqref, localSheetId);
+}
+
+void XLWorksheet::setPrintTitleRows(uint32_t firstRow, uint32_t lastRow)
+{
+    uint32_t localSheetId = index() - 1;
+    std::string rowRef = "'" + name() + "'!$" + std::to_string(firstRow) + ":$" + std::to_string(lastRow);
+    
+    auto currentName = parentDoc().workbook().definedNames().get("_xlnm.Print_Titles", localSheetId);
+    if (currentName.valid()) {
+        std::string currentRef = currentName.refersTo();
+        if (currentRef.find(":") != std::string::npos && currentRef.find("$1") == std::string::npos) {
+            rowRef = rowRef + "," + currentRef;
+            parentDoc().workbook().definedNames().remove("_xlnm.Print_Titles", localSheetId);
+        }
+    }
+    
+    parentDoc().workbook().definedNames().append("_xlnm.Print_Titles", rowRef, localSheetId);
+}
+
+void XLWorksheet::setPrintTitleCols(uint16_t firstCol, uint16_t lastCol)
+{
+    uint32_t localSheetId = index() - 1;
+    std::string colRef = "'" + name() + "'!$" + XLCellReference::columnAsString(firstCol) + ":$" + XLCellReference::columnAsString(lastCol);
+    
+    auto currentName = parentDoc().workbook().definedNames().get("_xlnm.Print_Titles", localSheetId);
+    if (currentName.valid()) {
+        std::string currentRef = currentName.refersTo();
+        if (currentRef.find(":") != std::string::npos && currentRef.find("$A") == std::string::npos) {
+            colRef = currentRef + "," + colRef;
+            parentDoc().workbook().definedNames().remove("_xlnm.Print_Titles", localSheetId);
+        }
+    }
+    
+    parentDoc().workbook().definedNames().append("_xlnm.Print_Titles", colRef, localSheetId);
 }
 
 bool XLWorksheet::protectSheet(bool set)

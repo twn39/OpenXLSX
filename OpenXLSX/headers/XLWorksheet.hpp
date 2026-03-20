@@ -156,6 +156,26 @@ namespace OpenXLSX
         XLPrintOptions printOptions() const;
         XLPageSetup pageSetup() const;
 
+        /**
+         * @brief Set the print area for this worksheet.
+         * @param sqref The cell range (e.g., "A1:F50").
+         */
+        void setPrintArea(const std::string& sqref);
+
+        /**
+         * @brief Set rows to repeat at the top of each printed page.
+         * @param firstRow The first row to repeat (1-based).
+         * @param lastRow The last row to repeat (1-based).
+         */
+        void setPrintTitleRows(uint32_t firstRow, uint32_t lastRow);
+
+        /**
+         * @brief Set columns to repeat at the left of each printed page.
+         * @param firstCol The first column to repeat (1-based).
+         * @param lastCol The last column to repeat (1-based).
+         */
+        void setPrintTitleCols(uint16_t firstCol, uint16_t lastCol);
+
         bool protectSheet(bool set = true);
         bool protectObjects(bool set = true);
         bool protectScenarios(bool set = true);
