@@ -15,10 +15,6 @@
 #include "XLXmlData.hpp"
 #include "XLXmlFile.hpp"
 
-// TODO:
-//   add to [Content_Types].xml:
-//     <Override PartName="/xl/comments1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml"/>
-
 namespace OpenXLSX
 {
     /**

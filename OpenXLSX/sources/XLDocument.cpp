@@ -1007,10 +1007,6 @@ bool XLDocument::execCommand(const XLCommand& command)
             m_workbook.setSheetName(command.getParam<std::string>("sheetID"), command.getParam<std::string>("newName"));
             break;
 
-        case XLCommandType::SetSheetColor:
-            // TODO: To be implemented
-            break;
-
         case XLCommandType::SetSheetVisibility:
             m_workbook.setSheetVisibility(command.getParam<std::string>("sheetID"), command.getParam<std::string>("sheetVisibility"));
             break;

@@ -20,7 +20,6 @@ namespace OpenXLSX
      */
     enum class XLCommandType : uint8_t {
         SetSheetName,
-        SetSheetColor,
         SetSheetVisibility,
         SetSheetIndex,
         SetSheetActive,
