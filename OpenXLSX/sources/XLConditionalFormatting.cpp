@@ -283,7 +283,7 @@ void XLCfvo::setValue(const std::string& value) {
 }
 void XLCfvo::setGte(bool gte) { 
     if (m_cfvoNode.attribute("gte").empty()) m_cfvoNode.append_attribute("gte");
-    m_cfvoNode.attribute("gte").set_value(gte); 
+    m_cfvoNode.attribute("gte").set_value(gte ? "1" : "0"); 
 }
 
 XLCfColorScale::XLCfColorScale() : m_xmlDocument(std::make_unique<XMLDocument>()) 
@@ -419,9 +419,10 @@ void XLCfDataBar::setColor(const XLColor& color)
     node.attribute("rgb").set_value(color.hex().c_str());
 }
 bool XLCfDataBar::showValue() const { return m_dataBarNode.attribute("showValue").as_bool(true); }
-void XLCfDataBar::setShowValue(bool show) { 
+void XLCfDataBar::setShowValue(bool show)
+{
     if (m_dataBarNode.attribute("showValue").empty()) m_dataBarNode.append_attribute("showValue");
-    m_dataBarNode.attribute("showValue").set_value(show); 
+    m_dataBarNode.attribute("showValue").set_value(show ? "1" : "0");
 }
 
 XLCfIconSet::XLCfIconSet() : m_xmlDocument(std::make_unique<XMLDocument>()) 
@@ -483,17 +484,17 @@ void XLCfIconSet::clear() { m_iconSetNode.remove_children(); }
 bool XLCfIconSet::showValue() const { return m_iconSetNode.attribute("showValue").as_bool(true); }
 void XLCfIconSet::setShowValue(bool show) { 
     if (m_iconSetNode.attribute("showValue").empty()) m_iconSetNode.append_attribute("showValue");
-    m_iconSetNode.attribute("showValue").set_value(show); 
+    m_iconSetNode.attribute("showValue").set_value(show ? "1" : "0"); 
 }
 bool XLCfIconSet::percent() const { return m_iconSetNode.attribute("percent").as_bool(true); }
 void XLCfIconSet::setPercent(bool percent) { 
     if (m_iconSetNode.attribute("percent").empty()) m_iconSetNode.append_attribute("percent");
-    m_iconSetNode.attribute("percent").set_value(percent); 
+    m_iconSetNode.attribute("percent").set_value(percent ? "1" : "0"); 
 }
 bool XLCfIconSet::reverse() const { return m_iconSetNode.attribute("reverse").as_bool(false); }
 void XLCfIconSet::setReverse(bool reverse) { 
     if (m_iconSetNode.attribute("reverse").empty()) m_iconSetNode.append_attribute("reverse");
-    m_iconSetNode.attribute("reverse").set_value(reverse); 
+    m_iconSetNode.attribute("reverse").set_value(reverse ? "1" : "0"); 
 }
 
 XLCfRule::XLCfRule() : m_xmlDocument(std::make_unique<XMLDocument>()), m_cfRuleNode(XMLNode()) 
@@ -626,10 +627,18 @@ bool XLCfRule::setDataBar(XLCfDataBar const& newDataBar)
 bool XLCfRule::setIconSet(XLCfIconSet const& newIconSet)
 {
     auto node = appendAndGetNode(m_cfRuleNode, "iconSet", m_nodeOrder);
+    node.remove_attributes();
     node.remove_children();
-    if (node.attribute("iconSet").empty()) node.append_attribute("iconSet");
-    node.attribute("iconSet").set_value(newIconSet.iconSet().c_str());
-    for (auto& cfvo : newIconSet.cfvos()) node.append_copy(cfvo.node());
+    
+    // Copy all attributes
+    for (pugi::xml_attribute attr = newIconSet.node().first_attribute(); attr; attr = attr.next_attribute()) {
+        node.append_attribute(attr.name()).set_value(attr.value());
+    }
+    
+    // Copy all children
+    for (pugi::xml_node child = newIconSet.node().first_child(); child; child = child.next_sibling()) {
+        node.append_copy(child);
+    }
     return true;
 }
 
@@ -638,16 +647,16 @@ bool XLCfRule::setExtLst(XLUnsupportedElement const& newExtLst) { OpenXLSX::igno
 bool XLCfRule::setType(XLCfType newType) { return appendAndSetAttribute(m_cfRuleNode, "type", XLCfTypeToString(newType)).empty() == false; }
 bool XLCfRule::setDxfId(XLStyleIndex newDxfId) { return appendAndSetAttribute(m_cfRuleNode, "dxfId", std::to_string(newDxfId)).empty() == false; }
 bool XLCfRule::setPriority(uint16_t newPriority) { return appendAndSetAttribute(m_cfRuleNode, "priority", std::to_string(newPriority)).empty() == false; }
-bool XLCfRule::setStopIfTrue(bool set) { return appendAndSetAttribute(m_cfRuleNode, "stopIfTrue", (set ? "true" : "false")).empty() == false; }
-bool XLCfRule::setAboveAverage(bool set) { return appendAndSetAttribute(m_cfRuleNode, "aboveAverage", (set ? "true" : "false")).empty() == false; }
-bool XLCfRule::setPercent(bool set) { return appendAndSetAttribute(m_cfRuleNode, "percent", (set ? "true" : "false")).empty() == false; }
-bool XLCfRule::setBottom(bool set) { return appendAndSetAttribute(m_cfRuleNode, "bottom", (set ? "true" : "false")).empty() == false; }
+bool XLCfRule::setStopIfTrue(bool set) { return appendAndSetAttribute(m_cfRuleNode, "stopIfTrue", (set ? "1" : "0")).empty() == false; }
+bool XLCfRule::setAboveAverage(bool set) { return appendAndSetAttribute(m_cfRuleNode, "aboveAverage", (set ? "1" : "0")).empty() == false; }
+bool XLCfRule::setPercent(bool set) { return appendAndSetAttribute(m_cfRuleNode, "percent", (set ? "1" : "0")).empty() == false; }
+bool XLCfRule::setBottom(bool set) { return appendAndSetAttribute(m_cfRuleNode, "bottom", (set ? "1" : "0")).empty() == false; }
 bool XLCfRule::setOperator(XLCfOperator newOperator) { return appendAndSetAttribute(m_cfRuleNode, "operator", XLCfOperatorToString(newOperator)).empty() == false; }
 bool XLCfRule::setText(std::string const& newText) { return appendAndSetAttribute(m_cfRuleNode, "text", newText.c_str()).empty() == false; }
 bool XLCfRule::setTimePeriod(XLCfTimePeriod newTimePeriod) { return appendAndSetAttribute(m_cfRuleNode, "timePeriod", XLCfTimePeriodToString(newTimePeriod)).empty() == false; }
 bool XLCfRule::setRank(uint16_t newRank) { return appendAndSetAttribute(m_cfRuleNode, "rank", std::to_string(newRank)).empty() == false; }
 bool XLCfRule::setStdDev(int16_t newStdDev) { return appendAndSetAttribute(m_cfRuleNode, "stdDev", std::to_string(newStdDev)).empty() == false; }
-bool XLCfRule::setEqualAverage(bool set) { return appendAndSetAttribute(m_cfRuleNode, "equalAverage", (set ? "true" : "false")).empty() == false; }
+bool XLCfRule::setEqualAverage(bool set) { return appendAndSetAttribute(m_cfRuleNode, "equalAverage", (set ? "1" : "0")).empty() == false; }
 
 std::string XLCfRule::summary() const
 {
