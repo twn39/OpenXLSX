@@ -305,19 +305,6 @@ bool XLComments::deleteComment(const std::string& cellRef)
     return true;
 }
 
-// comment entries:
-//  attribute ref -> cell
-//  attribute authorId -> author index in array
-//  node text
-//     subnode t -> regular text
-//        attribute xml:space="preserve" - seems useful to always apply
-//        subnode pc_data -> the comment text
-//     subnode r -> rich text, repetition of:
-//        subnode rPr -> rich text formatting
-//           subnode sz -> font size (int)
-//           subnode rFont -> font name (string)
-//           subnode family -> TBC: font family (int)
-//        subnode t -> regular text like above
 XLComment   XLComments::get(size_t index) const { return XLComment(commentNode(index)); }
 std::string XLComments::get(const std::string& cellRef) const { return getCommentString(commentNode(cellRef)); }
 
@@ -398,7 +385,7 @@ void XLComments::setupVmlShape(const std::string& cellRef, uint32_t destRow, uin
         textbox = shapeNode.prepend_child("v:textbox");
         shapeNode.insert_child_before(pugi::node_pcdata, textbox).set_value("\n\t\t");
     }
-    appendAndSetAttribute(textbox, "style", "mso-direction-alt:auto;mso-fit-shape-to-text:t");
+    appendAndSetAttribute(textbox, "style", "mso-direction-alt:auto");
     if (textbox.child("div").empty()) {
         XMLNode div = textbox.append_child("div");
         appendAndSetAttribute(div, "style", "text-align:left");
