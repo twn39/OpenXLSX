@@ -82,7 +82,7 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         REQUIRE(font.fontSize() == 14);
         REQUIRE(font.bold() == true);
         REQUIRE(font.italic() == true);
-        REQUIRE(font.fontColor().hex() == "ff804020");
+        REQUIRE(font.fontColor().hex() == "FF804020");
         REQUIRE(font.underline() == XLUnderlineDouble);
 
         doc.close();
@@ -103,8 +103,8 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         fill.setBackgroundColor(XLColor(255, 255, 255, 255)); // White
 
         REQUIRE(fill.patternType() == XLPatternSolid);
-        REQUIRE(fill.color().hex() == "ffff0000");
-        REQUIRE(fill.backgroundColor().hex() == "ffffffff");
+        REQUIRE(fill.color().hex() == "FFFF0000");
+        REQUIRE(fill.backgroundColor().hex() == "FFFFFFFF");
 
         doc.close();
     }
@@ -125,7 +125,7 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         border.setBottom(XLLineStyleThin, XLColor(255, 0, 0, 0));
 
         REQUIRE(border.left().style() == XLLineStyleThick);
-        REQUIRE(border.left().color().rgb().hex() == "ff00ff00");
+        REQUIRE(border.left().color().rgb().hex() == "FF00FF00");
         REQUIRE(border.right().style() == XLLineStyleDashed);
         REQUIRE(border.top().style() == XLLineStyleDouble);
         REQUIRE(border.bottom().style() == XLLineStyleThin);
@@ -219,9 +219,9 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
 
         REQUIRE(diffCellFormats.count() == initialCount + 1);
         REQUIRE(diffCellFormat.font().bold() == true);
-        REQUIRE(diffCellFormat.font().fontColor().hex() == "ffff0000");
+        REQUIRE(diffCellFormat.font().fontColor().hex() == "FFFF0000");
         REQUIRE(diffCellFormat.fill().patternType() == XLPatternSolid);
-        REQUIRE(diffCellFormat.fill().backgroundColor().hex() == "ff00ff00");
+        REQUIRE(diffCellFormat.fill().backgroundColor().hex() == "FF00FF00");
 
         doc.close();
         std::filesystem::remove("./testXLStylesDiffCellFormats.xlsx");

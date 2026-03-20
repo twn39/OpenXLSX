@@ -117,9 +117,109 @@ TEST_CASE("XLConditionalFormatting Tests", "[ConditionalFormatting]") {
             count++;
         }
         REQUIRE(count == 2);
-        REQUIRE(std::string(dbNode.child("color").attribute("rgb").value()) == "ff0000ff");
+        REQUIRE(std::string(dbNode.child("color").attribute("rgb").value()) == "FF0000FF");
 
         doc.save();
         doc.close();
     }
+
+    SECTION("High-level Builder Functions") {
+        XLDocument doc;
+        doc.create("CFBuilderTest.xlsx", XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
+
+        // Color Scale Rule
+        auto csRule = XLColorScaleRule(XLColor("FFFF0000"), XLColor("FF00FF00"));
+        wks.addConditionalFormatting("A1:A10", csRule);
+
+        // Data Bar Rule
+        auto dbRule = XLDataBarRule(XLColor("FF0000FF"), true);
+        wks.addConditionalFormatting("B1:B10", dbRule);
+
+        // Cell Is Rule with Style
+        XLDxf dxf;
+        dxf.font().setFontColor(XLColor("FFFF00FF"));
+        auto cellIsRule = XLCellIsRule(">=", "50");
+        wks.addConditionalFormatting("C1:C10", cellIsRule, dxf);
+
+        // Formula Rule
+        auto formulaRule = XLFormulaRule("MOD(ROW(),2)=0");
+        wks.addConditionalFormatting(wks.range("D1:D10"), formulaRule);
+
+        // Validation
+        auto cfList = wks.conditionalFormats();
+        REQUIRE(cfList.count() == 4);
+
+        REQUIRE(cfList[0].sqref() == "A1:A10");
+        REQUIRE(cfList[0].cfRules().count() == 1);
+        REQUIRE(cfList[0].cfRules()[0].type() == XLCfType::ColorScale);
+
+        REQUIRE(cfList[1].sqref() == "B1:B10");
+        REQUIRE(cfList[1].cfRules().count() == 1);
+        REQUIRE(cfList[1].cfRules()[0].type() == XLCfType::DataBar);
+
+        REQUIRE(cfList[2].sqref() == "C1:C10");
+        REQUIRE(cfList[2].cfRules().count() == 1);
+        REQUIRE(cfList[2].cfRules()[0].type() == XLCfType::CellIs);
+        REQUIRE(cfList[2].cfRules()[0].Operator() == XLCfOperator::GreaterThanOrEqual);
+        REQUIRE(cfList[2].cfRules()[0].formula() == "50");
+        REQUIRE(cfList[2].cfRules()[0].dxfId() != XLInvalidStyleIndex);
+
+        REQUIRE(cfList[3].sqref() == "D1:D10");
+        REQUIRE(cfList[3].cfRules().count() == 1);
+        REQUIRE(cfList[3].cfRules()[0].type() == XLCfType::Expression);
+        REQUIRE(cfList[3].cfRules()[0].formula() == "MOD(ROW(),2)=0");
+
+        doc.save();
+        doc.close();
+    }
+}
+
+TEST_CASE("Conditional Formatting Excel Generation", "[ConditionalFormattingGen]") {
+    XLDocument doc;
+    doc.create("ConditionalFormatting_Verification.xlsx", XLForceOverwrite);
+    auto wks = doc.workbook().worksheet("Sheet1");
+
+    // ----- 准备一些测试数据 -----
+    // A列：用于测试双色渐变 (1-10)
+    // B列：用于测试数据条 (10-100)
+    // C列：用于测试单元格数值判断 (1-10，遇到 >= 5 会高亮)
+    // D列：用于测试公式判断 (偶数行会高亮)
+    for (int i = 1; i <= 10; ++i) {
+        wks.cell("A" + std::to_string(i)).value() = i;
+        wks.cell("B" + std::to_string(i)).value() = i * 10;
+        wks.cell("C" + std::to_string(i)).value() = i;
+        wks.cell("D" + std::to_string(i)).value() = "Row " + std::to_string(i);
+    }
+
+    // 1. Color Scale Rule (A列: 最小值为红，最大值为绿)
+    auto csRule = XLColorScaleRule(XLColor("FFFF0000"), XLColor("FF00FF00"));
+    wks.addConditionalFormatting("A1:A10", csRule);
+
+    // 2. Data Bar Rule (B列: 蓝色数据条)
+    auto dbRule = XLDataBarRule(XLColor("FF0000FF"), true);
+    wks.addConditionalFormatting("B1:B10", dbRule);
+
+    // 3. Cell Is Rule (C列: 值 >= 5 时背景变黄，文字变红)
+    XLDxf dxfC;
+    dxfC.font().setFontColor(XLColor("FFFF0000")); // 红字
+    dxfC.fill().setFillType(XLPatternFill);
+    dxfC.fill().setPatternType(XLPatternSolid);
+    dxfC.fill().setBackgroundColor(XLColor("FFFFFF00")); // 黄底
+    dxfC.fill().setColor(XLColor("FFFFFF00"));           // fgColor 也设为黄
+    auto cellIsRule = XLCellIsRule(">=", "5");
+    wks.addConditionalFormatting("C1:C10", cellIsRule, dxfC);
+
+    // 4. Formula Rule (D列: 偶数行字体加粗并带下划线)
+    XLDxf dxfD;
+    dxfD.font().setBold(true);
+    dxfD.font().setUnderline(XLUnderlineSingle);
+    auto formulaRule = XLFormulaRule("MOD(ROW(),2)=0");
+    wks.addConditionalFormatting(wks.range("D1:D10"), formulaRule, dxfD);
+
+    doc.save();
+    doc.close();
+    std::cout << "\nSuccessfully created ConditionalFormatting_Verification.xlsx" << std::endl;
+    
+    REQUIRE(true); // Dummy requirement to make Catch2 happy
 }

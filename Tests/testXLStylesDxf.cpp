@@ -19,8 +19,8 @@ TEST_CASE("XLDxf Tests", "[Dxf]") {
         
         // OOXML Validation for the solid fill fix (fgColor AND bgColor)
         XMLNode fillNode = dxf.node().child("fill").child("patternFill");
-        REQUIRE(std::string(fillNode.child("fgColor").attribute("rgb").value()) == "ffffff00");
-        REQUIRE(std::string(fillNode.child("bgColor").attribute("rgb").value()) == "ffffff00");
+        REQUIRE(std::string(fillNode.child("fgColor").attribute("rgb").value()) == "FFFFFF00");
+        REQUIRE(std::string(fillNode.child("bgColor").attribute("rgb").value()) == "FFFFFF00");
 
         // Test clear methods
         dxf.clearFont();

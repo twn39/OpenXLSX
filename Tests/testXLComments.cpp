@@ -124,7 +124,7 @@ TEST_CASE("XLComments Tests", "[XLComments]")
         REQUIRE(commentsXml.find("<rPr>") != std::string::npos);
         REQUIRE(commentsXml.find("<b />") != std::string::npos);
         REQUIRE(commentsXml.find("<t>Bold</t>") != std::string::npos);
-        REQUIRE(commentsXml.find("<color rgb=\"ffff0000\" />") != std::string::npos);
+        REQUIRE(commentsXml.find("<color rgb=\"FFFF0000\" />") != std::string::npos);
         REQUIRE(commentsXml.find("<t xml:space=\"preserve\"> Red</t>") != std::string::npos);
 
         doc.close();
@@ -139,7 +139,7 @@ TEST_CASE("XLComments Tests", "[XLComments]")
         REQUIRE(rt2.runs()[0].text() == "Bold");
         REQUIRE(rt2.runs()[0].bold() == true);
         REQUIRE(rt2.runs()[1].text() == " Red");
-        REQUIRE(rt2.runs()[1].fontColor()->hex() == "ffff0000");
+        REQUIRE(rt2.runs()[1].fontColor()->hex() == "FFFF0000");
 
         doc2.close();
     }

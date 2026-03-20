@@ -643,10 +643,10 @@ bool XLFont::setFontSize(size_t newSize)
 { return appendAndSetNodeAttribute(*m_fontNode, "sz", "val", std::to_string(newSize)).empty() == false; }
 bool XLFont::setFontColor(XLColor newColor)
 { return appendAndSetNodeAttribute(*m_fontNode, "color", "rgb", newColor.hex(), XLRemoveAttributes).empty() == false; }
-bool XLFont::setBold(bool set) { return appendAndSetNodeAttribute(*m_fontNode, "b", "val", (set ? "true" : "false")).empty() == false; }
-bool XLFont::setItalic(bool set) { return appendAndSetNodeAttribute(*m_fontNode, "i", "val", (set ? "true" : "false")).empty() == false; }
+bool XLFont::setBold(bool set) { return appendAndSetNodeAttribute(*m_fontNode, "b", "val", (set ? "1" : "0")).empty() == false; }
+bool XLFont::setItalic(bool set) { return appendAndSetNodeAttribute(*m_fontNode, "i", "val", (set ? "1" : "0")).empty() == false; }
 bool XLFont::setStrikethrough(bool set)
-{ return appendAndSetNodeAttribute(*m_fontNode, "strike", "val", (set ? "true" : "false")).empty() == false; }
+{ return appendAndSetNodeAttribute(*m_fontNode, "strike", "val", (set ? "1" : "0")).empty() == false; }
 bool XLFont::setUnderline(XLUnderlineStyle style)
 { return appendAndSetNodeAttribute(*m_fontNode, "u", "val", XLUnderlineStyleToString(style)).empty() == false; }
 bool XLFont::setScheme(XLFontSchemeStyle newScheme)
@@ -1203,16 +1203,19 @@ bool XLFill::setColor(XLColor newColor)
     
     // For solid fills, Excel requires both fgColor and bgColor to be set in DXF contexts (Conditional Formatting),
     // and it's a safe best-practice for regular styles as well to ensure consistent rendering.
-    bool res = appendAndSetNodeAttribute(fillDescription, "fgColor", "rgb", newColor.hex(), XLRemoveAttributes).empty() == false;
+    // OOXML requires fgColor then bgColor
+    std::vector<std::string_view> nodeOrder = {"fgColor", "bgColor"};
+    bool res = appendAndSetNodeAttribute(fillDescription, "fgColor", "rgb", newColor.hex(), XLRemoveAttributes, nodeOrder).empty() == false;
     if (patternType() == XLPatternSolid)
-        res &= appendAndSetNodeAttribute(fillDescription, "bgColor", "rgb", newColor.hex(), XLRemoveAttributes).empty() == false;
+        res &= appendAndSetNodeAttribute(fillDescription, "bgColor", "rgb", newColor.hex(), XLRemoveAttributes, nodeOrder).empty() == false;
     return res;
 }
 bool XLFill::setBackgroundColor(XLColor newBgColor)
 {
     XMLNode fillDescription = getValidFillDescription(XLPatternFill, __func__);
     if (fillDescription.empty()) return false;    // if no description could be fetched: fail
-    return appendAndSetNodeAttribute(fillDescription, "bgColor", "rgb", newBgColor.hex(), XLRemoveAttributes).empty() == false;
+    std::vector<std::string_view> nodeOrder = {"fgColor", "bgColor"};
+    return appendAndSetNodeAttribute(fillDescription, "bgColor", "rgb", newBgColor.hex(), XLRemoveAttributes, nodeOrder).empty() == false;
 }
 
 /**

@@ -143,6 +143,11 @@ namespace OpenXLSX
         bool setRowFormat(uint32_t row, XLStyleIndex cellFormatIndex);
 
         XLConditionalFormats conditionalFormats() const;
+        void addConditionalFormatting(const std::string& sqref, const XLCfRule& rule);
+        void addConditionalFormatting(const std::string& sqref, const XLCfRule& rule, const XLDxf& dxf);
+        void addConditionalFormatting(const XLCellRange& range, const XLCfRule& rule);
+        void addConditionalFormatting(const XLCellRange& range, const XLCfRule& rule, const XLDxf& dxf);
+
         XLPageMargins pageMargins() const;
         XLPrintOptions printOptions() const;
         XLPageSetup pageSetup() const;

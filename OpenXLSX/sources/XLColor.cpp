@@ -137,5 +137,5 @@ uint8_t XLColor::blue() const { return m_blue; }
 
 std::string XLColor::hex() const
 {
-    return fmt::format("{:02x}{:02x}{:02x}{:02x}", m_alpha, m_red, m_green, m_blue);
+    return fmt::format("{:02X}{:02X}{:02X}{:02X}", m_alpha, m_red, m_green, m_blue);
 }

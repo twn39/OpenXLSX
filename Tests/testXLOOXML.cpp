@@ -331,7 +331,7 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             REQUIRE(stylesXml.find("<font>") != std::string::npos);
             REQUIRE(stylesXml.find("name val=\"Arial\"") != std::string::npos);
             REQUIRE(stylesXml.find("sz val=\"12\"") != std::string::npos);
-            REQUIRE(stylesXml.find("color rgb=\"ff000000\"") != std::string::npos);
+            REQUIRE(stylesXml.find("color rgb=\"FF000000\"") != std::string::npos);
             REQUIRE(stylesXml.find("family val=\"0\"") != std::string::npos);
             REQUIRE(stylesXml.find("charset val=\"1\"") != std::string::npos);
 
@@ -347,7 +347,7 @@ testTestDoc:    // Wait, I'll just use the doc directly.
             REQUIRE(stylesXml.find("<bottom>") != std::string::npos);
             REQUIRE(stylesXml.find("<diagonal>") != std::string::npos);
             // Verify black colors on border nodes
-            REQUIRE(stylesXml.find("<color rgb=\"ff000000\"") != std::string::npos);
+            REQUIRE(stylesXml.find("<color rgb=\"FF000000\"") != std::string::npos);
 
             testDoc.close();
         }

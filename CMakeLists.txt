@@ -136,7 +136,7 @@ endif()
 # TESTS (Merged configuration)
 #=======================================================================================================================
 if(OPENXLSX_BUILD_TESTS)
-    file(GLOB TEST_SOURCES Tests/testXL*.cpp Tests/main.cpp)
+    file(GLOB TEST_SOURCES Tests/testXL*.cpp)
     add_executable(OpenXLSXTests ${TEST_SOURCES})
     target_link_libraries(OpenXLSXTests PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
 

@@ -274,8 +274,12 @@ void XLCfvo::setType(XLCfvoType type) {
     m_cfvoNode.attribute("type").set_value(XLCfvoTypeToString(type).c_str()); 
 }
 void XLCfvo::setValue(const std::string& value) { 
-    if (m_cfvoNode.attribute("val").empty()) m_cfvoNode.append_attribute("val");
-    m_cfvoNode.attribute("val").set_value(value.c_str()); 
+    if (value.empty()) {
+        m_cfvoNode.remove_attribute("val");
+    } else {
+        if (m_cfvoNode.attribute("val").empty()) m_cfvoNode.append_attribute("val");
+        m_cfvoNode.attribute("val").set_value(value.c_str()); 
+    }
 }
 void XLCfvo::setGte(bool gte) { 
     if (m_cfvoNode.attribute("gte").empty()) m_cfvoNode.append_attribute("gte");
@@ -775,12 +779,17 @@ XLCfRule XLCfRules::cfRuleByIndex(size_t index) const
 
 size_t XLCfRules::create(XLCfRule copyFrom, std::string cfRulePrefix)
 {
-    OpenXLSX::ignore(copyFrom);
+    uint16_t explicitPrio = XLPriorityNotSet;
+    if (!copyFrom.empty() && copyFrom.priority() != XLPriorityNotSet) {
+        explicitPrio = copyFrom.priority();
+    }
+    
     uint16_t maxPrio = maxPriorityValue();
-    if (maxPrio == std::numeric_limits<uint16_t>::max()) {
+    if (explicitPrio == XLPriorityNotSet && maxPrio == std::numeric_limits<uint16_t>::max()) {
         using namespace std::literals::string_literals;
         throw XLException("XLCfRules::"s + __func__ + ": can not create a new cfRule entry: no available priority value - please renumberPriorities or otherwise free up the highest value"s);
     }
+    
     size_t  index = count();
     XMLNode newNode{};
     if (index == 0)
@@ -793,8 +802,24 @@ size_t XLCfRules::create(XLCfRule copyFrom, std::string cfRulePrefix)
         using namespace std::literals::string_literals;
         throw XLException("XLCfRules::"s + __func__ + ": failed to create a new cfRule entry");
     }
+    
+    if (!copyFrom.empty()) {
+        for (pugi::xml_attribute attr = copyFrom.node().first_attribute(); attr; attr = attr.next_attribute()) {
+            newNode.append_attribute(attr.name()).set_value(attr.value());
+        }
+        for (pugi::xml_node child = copyFrom.node().first_child(); child; child = child.next_sibling()) {
+            newNode.append_copy(child);
+        }
+    }
+    
     m_conditionalFormattingNode.insert_child_before(pugi::node_pcdata, newNode).set_value(cfRulePrefix.c_str());
-    cfRuleByIndex(index).setPriority(maxPrio + 1);
+    
+    if (explicitPrio != XLPriorityNotSet) {
+        cfRuleByIndex(index).setPriority(explicitPrio);
+    } else {
+        cfRuleByIndex(index).setPriority(maxPrio + 1);
+    }
+    
     return index;
 }
 
@@ -879,7 +904,6 @@ XLConditionalFormat XLConditionalFormats::conditionalFormatByIndex(size_t index)
 
 size_t XLConditionalFormats::create(XLConditionalFormat copyFrom, std::string conditionalFormattingPrefix)
 {
-    OpenXLSX::ignore(copyFrom);
     size_t  index = count();
     XMLNode newNode{};
     if (index == 0)
@@ -892,6 +916,16 @@ size_t XLConditionalFormats::create(XLConditionalFormat copyFrom, std::string co
         using namespace std::literals::string_literals;
         throw XLException("XLConditionalFormats::"s + __func__ + ": failed to create a new conditional formatting entry");
     }
+    
+    if (!copyFrom.empty()) {
+        for (pugi::xml_attribute attr = copyFrom.m_conditionalFormattingNode.first_attribute(); attr; attr = attr.next_attribute()) {
+            newNode.append_attribute(attr.name()).set_value(attr.value());
+        }
+        for (pugi::xml_node child = copyFrom.m_conditionalFormattingNode.first_child(); child; child = child.next_sibling()) {
+            newNode.append_copy(child);
+        }
+    }
+    
     m_sheetNode.insert_child_before(pugi::node_pcdata, newNode).set_value(conditionalFormattingPrefix.c_str());
     return index;
 }
@@ -906,4 +940,77 @@ std::string XLConditionalFormats::summary() const
         if (idx + 1 < conditionalFormatsCount) result += ", ";
     }
     return result;
+}
+
+// ----- Helper Builder Functions for XLCfRule -----
+
+namespace OpenXLSX {
+
+XLCfRule XLColorScaleRule(const XLColor& minColor, const XLColor& maxColor)
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::ColorScale);
+    XLCfColorScale colorScale;
+    colorScale.addValue(XLCfvoType::Min, "", minColor);
+    colorScale.addValue(XLCfvoType::Max, "", maxColor);
+    rule.setColorScale(colorScale);
+    return rule;
+}
+
+XLCfRule XLColorScaleRule(const XLColor& minColor, const XLColor& midColor, const XLColor& maxColor)
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::ColorScale);
+    XLCfColorScale colorScale;
+    colorScale.addValue(XLCfvoType::Min, "", minColor);
+    colorScale.addValue(XLCfvoType::Percentile, "50", midColor);
+    colorScale.addValue(XLCfvoType::Max, "", maxColor);
+    rule.setColorScale(colorScale);
+    return rule;
+}
+
+XLCfRule XLDataBarRule(const XLColor& color, bool showValue)
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::DataBar);
+    XLCfDataBar dataBar;
+    dataBar.setMin(XLCfvoType::Min, "");
+    dataBar.setMax(XLCfvoType::Max, "");
+    dataBar.setColor(color);
+    dataBar.setShowValue(showValue);
+    rule.setDataBar(dataBar);
+    return rule;
+}
+
+XLCfRule XLCellIsRule(XLCfOperator op, const std::string& value)
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::CellIs);
+    rule.setOperator(op);
+    rule.addFormula(value);
+    return rule;
+}
+
+XLCfRule XLCellIsRule(const std::string& op, const std::string& value)
+{
+    XLCfOperator cfOp = XLCfOperator::Equal;
+    if (op == ">") cfOp = XLCfOperator::GreaterThan;
+    else if (op == ">=") cfOp = XLCfOperator::GreaterThanOrEqual;
+    else if (op == "<") cfOp = XLCfOperator::LessThan;
+    else if (op == "<=") cfOp = XLCfOperator::LessThanOrEqual;
+    else if (op == "==" || op == "=") cfOp = XLCfOperator::Equal;
+    else if (op == "!=" || op == "<>") cfOp = XLCfOperator::NotEqual;
+    else cfOp = XLCfOperatorFromString(op);
+
+    return XLCellIsRule(cfOp, value);
+}
+
+XLCfRule XLFormulaRule(const std::string& formula)
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::Expression);
+    rule.addFormula(formula);
+    return rule;
+}
+
 }

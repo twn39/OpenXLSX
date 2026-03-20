@@ -251,7 +251,6 @@ namespace OpenXLSX
         bool setType(XLCfType newType);
         bool setDxfId(XLStyleIndex newDxfId);
 
-    private:
         bool setPriority(uint16_t newPriority);
     public:
         bool setStopIfTrue(bool set = true);
@@ -366,6 +365,16 @@ namespace OpenXLSX
         mutable XMLNode m_sheetNode;
         const std::vector<std::string_view>* m_nodeOrder;
     };
+
+    // ----- Helper Builder Functions for XLCfRule -----
+    
+    OPENXLSX_EXPORT XLCfRule XLColorScaleRule(const XLColor& minColor, const XLColor& maxColor);
+    OPENXLSX_EXPORT XLCfRule XLColorScaleRule(const XLColor& minColor, const XLColor& midColor, const XLColor& maxColor);
+    OPENXLSX_EXPORT XLCfRule XLDataBarRule(const XLColor& color, bool showValue = true);
+    OPENXLSX_EXPORT XLCfRule XLCellIsRule(XLCfOperator op, const std::string& value);
+    OPENXLSX_EXPORT XLCfRule XLCellIsRule(const std::string& op, const std::string& value);
+    OPENXLSX_EXPORT XLCfRule XLFormulaRule(const std::string& formula);
+
 }
 
 #endif

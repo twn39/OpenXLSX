@@ -13,14 +13,14 @@ TEST_CASE("XLColor", "[XLColor]")
         REQUIRE(color.red() == 0);
         REQUIRE(color.green() == 0);
         REQUIRE(color.blue() == 0);
-        REQUIRE(color.hex() == "ff000000");
+        REQUIRE(color.hex() == "FF000000");
 
         color = XLColor(128, 128, 128);
         REQUIRE(color.alpha() == 255);
         REQUIRE(color.red() == 128);
         REQUIRE(color.green() == 128);
         REQUIRE(color.blue() == 128);
-        REQUIRE(color.hex() == "ff808080");
+        REQUIRE(color.hex() == "FF808080");
 
         color = XLColor(128, 128, 128, 128);
         REQUIRE(color.alpha() == 128);
@@ -41,21 +41,21 @@ TEST_CASE("XLColor", "[XLColor]")
         REQUIRE(color.red() == 255);
         REQUIRE(color.green() == 255);
         REQUIRE(color.blue() == 255);
-        REQUIRE(color.hex() == "ffffffff");
+        REQUIRE(color.hex() == "FFFFFFFF");
 
         color.set("808080");
         REQUIRE(color.alpha() == 255);
         REQUIRE(color.red() == 128);
         REQUIRE(color.green() == 128);
         REQUIRE(color.blue() == 128);
-        REQUIRE(color.hex() == "ff808080");
+        REQUIRE(color.hex() == "FF808080");
 
         color.set(255, 255, 255);
         REQUIRE(color.alpha() == 255);
         REQUIRE(color.red() == 255);
         REQUIRE(color.green() == 255);
         REQUIRE(color.blue() == 255);
-        REQUIRE(color.hex() == "ffffffff");
+        REQUIRE(color.hex() == "FFFFFFFF");
 
         color.set(0, 0, 0, 0);
         REQUIRE(color.alpha() == 0);
@@ -65,6 +65,6 @@ TEST_CASE("XLColor", "[XLColor]")
         REQUIRE(color.hex() == "00000000");
 
         REQUIRE_THROWS(XLColor("ffff"));
-        REQUIRE_THROWS(XLColor("ffffffffff"));
+        REQUIRE_THROWS(XLColor("FFFFFFFFff"));
     }
 }

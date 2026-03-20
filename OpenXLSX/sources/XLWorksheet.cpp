@@ -430,6 +430,66 @@ bool XLWorksheet::setRowFormat(uint32_t rowNumber, XLStyleIndex cellFormatIndex)
 
 XLConditionalFormats XLWorksheet::conditionalFormats() const { return XLConditionalFormats(xmlDocument().document_element()); }
 
+void XLWorksheet::addConditionalFormatting(const std::string& sqref, const XLCfRule& rule)
+{
+    auto cfList = conditionalFormats();
+    XLConditionalFormat cfTarget;
+    bool found = false;
+    for (size_t i = 0; i < cfList.count(); ++i) {
+        if (cfList[i].sqref() == sqref) {
+            cfTarget = cfList[i];
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        size_t idx = cfList.create();
+        cfTarget = cfList[idx];
+        cfTarget.setSqref(sqref);
+    }
+    
+    // Compute global max priority across all conditional formatting rules in this worksheet
+    uint16_t globalMaxPrio = 0;
+    for (size_t i = 0; i < cfList.count(); ++i) {
+        auto cfmt = cfList[i];
+        for (size_t j = 0; j < cfmt.cfRules().count(); ++j) {
+            uint16_t prio = cfmt.cfRules()[j].priority();
+            if (prio > globalMaxPrio) {
+                globalMaxPrio = prio;
+            }
+        }
+    }
+    
+    // We create a mutable copy to update priority before inserting it
+    XLCfRule ruleWithPrio = rule;
+    ruleWithPrio.setPriority(globalMaxPrio + 1);
+    
+    // The underlying XLCfRules::create also computes maxPrio internally but only within its parent CF node.
+    // By setting it explicitly beforehand and relying on the `copyFrom` behavior, we can ensure it's copied properly.
+    cfTarget.cfRules().create(ruleWithPrio);
+}
+
+void XLWorksheet::addConditionalFormatting(const std::string& sqref, const XLCfRule& rule, const XLDxf& dxf)
+{
+    // Need a mutable copy to update dxfId before passing to create()
+    XLCfRule ruleWithDxf = rule;
+    if (!dxf.empty()) {
+        XLStyleIndex dxfId = parentDoc().styles().addDxf(dxf);
+        ruleWithDxf.setDxfId(dxfId);
+    }
+    addConditionalFormatting(sqref, ruleWithDxf);
+}
+
+void XLWorksheet::addConditionalFormatting(const XLCellRange& range, const XLCfRule& rule)
+{
+    addConditionalFormatting(range.address(), rule);
+}
+
+void XLWorksheet::addConditionalFormatting(const XLCellRange& range, const XLCfRule& rule, const XLDxf& dxf)
+{
+    addConditionalFormatting(range.address(), rule, dxf);
+}
+
 XLPageMargins XLWorksheet::pageMargins() const
 {
     XMLNode rootNode = xmlDocument().document_element();
