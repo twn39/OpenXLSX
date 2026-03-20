@@ -84,10 +84,10 @@ void XLWorksheet::addScaledImage(const std::string& name, const std::string& dat
     drw.addScaledImage(imgRel.id(), name, "", data, row, col, scalingFactor);
 }
 
-XLChart XLWorksheet::addChart([[maybe_unused]] XLChartType type, std::string_view name, uint32_t row, uint32_t col, uint32_t width, uint32_t height)
+XLChart XLWorksheet::addChart(XLChartType type, std::string_view name, uint32_t row, uint32_t col, uint32_t width, uint32_t height)
 {
     // 1. Create Chart File in Document
-    XLChart chart = parentDoc().createChart();
+    XLChart chart = parentDoc().createChart(type);
 
     // 2. Get Drawing for the sheet
     XLDrawing& drw = drawing();

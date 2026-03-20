@@ -9,7 +9,21 @@
 namespace OpenXLSX
 {
     enum class XLChartType {
-        Bar
+        Bar,
+        Line,
+        Pie,
+        Scatter,
+        Area,
+        Doughnut
+    };
+
+    enum class XLLegendPosition {
+        Bottom,
+        Left,
+        Right,
+        Top,
+        TopRight,
+        Hidden
     };
 
     /**
@@ -57,12 +71,27 @@ namespace OpenXLSX
 
         /**
          * @brief Add a data series to the chart
-         * @param valuesRef A cell reference to the data values (e.g. "Sheet1!$A$1:$A$10")
+         * @param valuesRef A cell reference to the data values (e.g. "Sheet1!$B$1:$B$10")
+         * @param title A literal string or cell reference for the series name (e.g. "Revenue" or "Sheet1!$B$1")
+         * @param categoriesRef A cell reference for the X-axis categories (e.g. "Sheet1!$A$1:$A$10")
          */
-        void addSeries(std::string_view valuesRef);
+        void addSeries(std::string_view valuesRef, std::string_view title = "", std::string_view categoriesRef = "");
+
+        /**
+         * @brief Set the chart title
+         * @param title The title text
+         */
+        void setTitle(std::string_view title);
+
+        /**
+         * @brief Set the legend position or hide it
+         * @param position The legend position
+         */
+        void setLegendPosition(XLLegendPosition position);
 
     private:
-        void initXml();
+        friend class XLDocument;
+        void initXml(XLChartType type = XLChartType::Bar);
         [[nodiscard]] uint32_t seriesCount() const;
     };
 }

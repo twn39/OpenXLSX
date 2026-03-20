@@ -31,6 +31,7 @@
 #include "XLWorkbook.hpp"
 #include "XLXmlData.hpp"
 #include "XLZipArchive.hpp"
+#include "XLChart.hpp"
 
 namespace OpenXLSX
 {
@@ -232,7 +233,7 @@ namespace OpenXLSX
         XLComments      sheetComments(uint16_t sheetXmlNo);
         XLTables        sheetTables(uint16_t sheetXmlNo);
         
-        class XLChart   createChart();
+        class XLChart   createChart(XLChartType type = XLChartType::Bar);
 
         /**
          * @brief Insert image into the archive's media folder. Uses string_view for zero-copy data transfer.

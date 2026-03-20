@@ -563,7 +563,7 @@ XLDrawing XLDocument::sheetDrawing(uint16_t sheetXmlNo)
     return XLDrawing(xmlData);
 }
 
-XLChart XLDocument::createChart()
+XLChart XLDocument::createChart(XLChartType type)
 {
     using namespace std::literals::string_literals;
 
@@ -584,7 +584,9 @@ XLChart XLDocument::createChart()
         xmlData = &m_data.emplace_back(this, chartFilename, "", XLContentType::Chart);
     }
 
-    return XLChart(xmlData);
+    XLChart chart(xmlData);
+    chart.initXml(type);
+    return chart;
 }
 
 /**

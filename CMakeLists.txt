@@ -165,3 +165,10 @@ if(OPENXLSX_BUILD_BENCHMARKS)
     target_link_libraries(OpenXLSXBenchmark PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
 endif()
 target_sources(OpenXLSXTests PRIVATE Tests/testXLAdvancedLayout.cpp)
+
+#=======================================================================================================================
+# DEMO EXECUTABLE
+#=======================================================================================================================
+add_executable(demo_title demo_title.cpp)
+target_link_libraries(demo_title PRIVATE OpenXLSX::OpenXLSX)
+target_sources(OpenXLSXTests PRIVATE Tests/testXLChartAdvanced.cpp)

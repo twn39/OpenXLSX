@@ -103,4 +103,145 @@ TEST_CASE("Chart Creation and Verification", "[XLChart][OOXML]")
         }
         std::filesystem::remove(filename);
     }
+
+    SECTION("Create Line Chart")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            auto chart = wks.addChart(XLChartType::Line, "Line Chart", 2, 4, 400, 300);
+            chart.addSeries("Sheet1!$A$1:$A$10");
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLChartTestDoc testDoc;
+            testDoc.open(filename);
+            std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
+            REQUIRE(chartXml.find("<c:lineChart>") != std::string::npos);
+            REQUIRE(chartXml.find("<c:ser>") != std::string::npos);
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
+
+    SECTION("Create Pie Chart")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            auto chart = wks.addChart(XLChartType::Pie, "Pie Chart", 2, 4, 400, 300);
+            chart.addSeries("Sheet1!$A$1:$A$10");
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLChartTestDoc testDoc;
+            testDoc.open(filename);
+            std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
+            REQUIRE(chartXml.find("<c:pieChart>") != std::string::npos);
+            REQUIRE(chartXml.find("<c:ser>") != std::string::npos);
+            REQUIRE(chartXml.find("<c:catAx>") == std::string::npos); // Pie chart shouldn't have axes
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
+
+    SECTION("Create Scatter Chart")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            auto chart = wks.addChart(XLChartType::Scatter, "Scatter Chart", 2, 4, 400, 300);
+            chart.addSeries("Sheet1!$A$1:$A$10");
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLChartTestDoc testDoc;
+            testDoc.open(filename);
+            std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
+            REQUIRE(chartXml.find("<c:scatterChart>") != std::string::npos);
+            REQUIRE(chartXml.find("<c:scatterStyle val=\"lineMarker\"") != std::string::npos);
+            REQUIRE(chartXml.find("<c:ser>") != std::string::npos);
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
+
+    SECTION("Series with Categories and Title")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            auto chart = wks.addChart(XLChartType::Bar, "Bar Chart", 2, 4, 400, 300);
+            
+            // valueRef, title, categoriesRef
+            chart.addSeries("Sheet1!$B$2:$B$10", "Revenue", "Sheet1!$A$2:$A$10");
+            chart.addSeries("Sheet1!$C$2:$C$10", "Sheet1!$C$1", "Sheet1!$A$2:$A$10");
+            
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLChartTestDoc testDoc;
+            testDoc.open(filename);
+            std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
+
+            // Check literal string title
+            REQUIRE(chartXml.find("<c:v>Revenue</c:v>") != std::string::npos);
+            // Check cell reference title
+            REQUIRE(chartXml.find("<c:f>Sheet1!$C$1</c:f>") != std::string::npos);
+            // Check categories
+            REQUIRE(chartXml.find("<c:cat>") != std::string::npos);
+            REQUIRE(chartXml.find("<c:f>Sheet1!$A$2:$A$10</c:f>") != std::string::npos);
+            
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
+
+    SECTION("Scatter Chart Validation")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            auto chart = wks.addChart(XLChartType::Scatter, "Scatter", 2, 4, 400, 300);
+            
+            // Y-values, Title, X-values (categoriesRef for Scatter)
+            chart.addSeries("Sheet1!$C$2:$C$10", "Correlation", "Sheet1!$B$2:$B$10");
+            
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLChartTestDoc testDoc;
+            testDoc.open(filename);
+            std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
+            
+            // For Scatter chart, the "category" is mapped to X values (c:xVal) and value is Y values (c:yVal)
+            REQUIRE(chartXml.find("<c:xVal>") != std::string::npos);
+            REQUIRE(chartXml.find("<c:f>Sheet1!$B$2:$B$10</c:f>") != std::string::npos);
+            
+            REQUIRE(chartXml.find("<c:yVal>") != std::string::npos);
+            REQUIRE(chartXml.find("<c:f>Sheet1!$C$2:$C$10</c:f>") != std::string::npos);
+
+            // X-axis and Y-axis for scatter should both be valAx
+            REQUIRE(chartXml.find("<c:valAx>") != std::string::npos);
+            REQUIRE(chartXml.find("<c:catAx>") == std::string::npos);
+
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
 }
