@@ -2017,15 +2017,17 @@ XLStyleIndex XLCellFormats::create(XLCellFormat copyFrom, std::string styleEntri
         newCellFormat.setFontIndex(0);
         newCellFormat.setFillIndex(0);
         newCellFormat.setBorderIndex(0);
-        newCellFormat.setXfId(0);
+        if (m_permitXfId) {
+            newCellFormat.setXfId(0);
+            newCellFormat.setQuotePrefix(false);
+            newCellFormat.setPivotButton(false);
+        }
         newCellFormat.setApplyNumberFormat(false);
         newCellFormat.setApplyFont(false);
         newCellFormat.setApplyFill(false);
         newCellFormat.setApplyBorder(false);
         newCellFormat.setApplyAlignment(false);
         newCellFormat.setApplyProtection(false);
-        newCellFormat.setQuotePrefix(false);
-        newCellFormat.setPivotButton(false);
         newCellFormat.setLocked(false);
         newCellFormat.setHidden(false);
         // Unsupported setter
@@ -2204,9 +2206,9 @@ XLStyleIndex XLCellStyles::create(XLCellStyle copyFrom, std::string styleEntries
     XLCellStyle newCellStyle(newNode);
     if (copyFrom.m_cellStyleNode->empty()) {    // if no template is given
         // ===== Create a cell style with default values
-        // TODO: implement cell style defaults
-        // newCellStyle.setProperty(defaultValue);
-        // ...
+        newCellStyle.setName("");
+        newCellStyle.setXfId(0);
+        newCellStyle.setHidden(false);
     }
     else
         copyXMLNode(newNode, *copyFrom.m_cellStyleNode);    // will use copyFrom as template, does nothing if copyFrom is empty
@@ -2697,3 +2699,86 @@ XLDxfs& XLStyles::dxfs() const { return *m_dxfs; }
  * @details Add a differential cell format (DXF) to the styles and return its index
  */
 XLStyleIndex XLStyles::addDxf(const XLDxf& dxf) { return m_dxfs->create(dxf); }
+
+XLStyleIndex XLStyles::addNamedStyle(const std::string& name,
+                                     std::optional<XLStyleIndex> fontId,
+                                     std::optional<XLStyleIndex> fillId,
+                                     std::optional<XLStyleIndex> borderId,
+                                     std::optional<XLStyleIndex> numFmtId)
+{
+    // 1. Create format definition in <cellStyleXfs>
+    XLStyleIndex styleXfIdx = cellStyleFormats().create();
+    auto styleXf = cellStyleFormats()[styleXfIdx];
+    
+    if (fontId) {
+        styleXf.setFontIndex(*fontId);
+        styleXf.setApplyFont(true);
+    }
+    if (fillId) {
+        styleXf.setFillIndex(*fillId);
+        styleXf.setApplyFill(true);
+    }
+    if (borderId) {
+        styleXf.setBorderIndex(*borderId);
+        styleXf.setApplyBorder(true);
+    }
+    if (numFmtId) {
+        styleXf.setNumberFormatId(*numFmtId);
+        styleXf.setApplyNumberFormat(true);
+    }
+
+    // 2. Register the name in <cellStyles>
+    XLStyleIndex cellStyleIdx = cellStyles().create();
+    auto cellStyle = cellStyles()[cellStyleIdx];
+    cellStyle.setName(name);
+    cellStyle.setXfId(styleXfIdx);
+
+    // 3. Create a ready-to-use cell format in <cellXfs> that inherits this style
+    XLStyleIndex cellXfIdx = cellFormats().create();
+    auto cellXf = cellFormats()[cellXfIdx];
+    
+    cellXf.setXfId(styleXfIdx); // Bind to the named style format
+    
+    // Excel strictly requires these to be mirrored in the cellXfs node
+    if (fontId) {
+        cellXf.setFontIndex(*fontId);
+        cellXf.setApplyFont(true);
+    }
+    if (fillId) {
+        cellXf.setFillIndex(*fillId);
+        cellXf.setApplyFill(true);
+    }
+    if (borderId) {
+        cellXf.setBorderIndex(*borderId);
+        cellXf.setApplyBorder(true);
+    }
+    if (numFmtId) {
+        cellXf.setNumberFormatId(*numFmtId);
+        cellXf.setApplyNumberFormat(true);
+    }
+
+    return cellXfIdx;
+}
+
+XLStyleIndex XLStyles::namedStyle(const std::string& name) const
+{
+    // Find the cellStyle by name to get its xfId
+    XLStyleIndex targetStyleXfId = XLInvalidStyleIndex;
+    for (size_t i = 0; i < cellStyles().count(); ++i) {
+        if (cellStyles()[i].name() == name) {
+            targetStyleXfId = cellStyles()[i].xfId();
+            break;
+        }
+    }
+    
+    if (targetStyleXfId == XLInvalidStyleIndex) return XLInvalidStyleIndex;
+
+    // Find a corresponding cellXfs entry that uses this xfId
+    for (size_t i = 0; i < cellFormats().count(); ++i) {
+        if (cellFormats()[i].xfId() == targetStyleXfId) {
+            return static_cast<XLStyleIndex>(i);
+        }
+    }
+    
+    return XLInvalidStyleIndex;
+}

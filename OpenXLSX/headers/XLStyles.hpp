@@ -12,6 +12,7 @@
 #include <string>
 #include <string_view>    // std::string_view
 #include <vector>
+#include <optional>
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
@@ -2329,6 +2330,28 @@ namespace OpenXLSX
          * @return The index of the added DXF.
          */
         XLStyleIndex addDxf(const XLDxf& dxf);
+
+        /**
+         * @brief Add a named style with the given properties and return the index to be used in cells.
+         * @param name Name of the new style
+         * @param fontId Optional font index
+         * @param fillId Optional fill index
+         * @param borderId Optional border index
+         * @param numFmtId Optional number format index
+         * @return The XLStyleIndex in cellXfs that corresponds to this named style.
+         */
+        XLStyleIndex addNamedStyle(const std::string& name,
+                                   std::optional<XLStyleIndex> fontId = std::nullopt,
+                                   std::optional<XLStyleIndex> fillId = std::nullopt,
+                                   std::optional<XLStyleIndex> borderId = std::nullopt,
+                                   std::optional<XLStyleIndex> numFmtId = std::nullopt);
+
+        /**
+         * @brief Look up a named style by name and return its index for cell formatting.
+         * @param name Name of the style
+         * @return The XLStyleIndex in cellXfs, or XLInvalidStyleIndex if not found.
+         */
+        XLStyleIndex namedStyle(const std::string& name) const;
 
         // ---------- Protected Member Functions ---------- //
     private:
