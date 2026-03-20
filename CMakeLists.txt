@@ -164,18 +164,3 @@ if(OPENXLSX_BUILD_BENCHMARKS)
     add_executable(OpenXLSXBenchmark Benchmarks/Benchmark.cpp)
     target_link_libraries(OpenXLSXBenchmark PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
 endif()
-
-#=======================================================================================================================
-# DOCUMENTATION (Subdirectory configuration)
-#=======================================================================================================================
-if(OPENXLSX_CREATE_DOCS)
-    add_subdirectory(Documentation)
-endif()
-
-#=======================================================================================================================
-# DEMO TABLES EXECUTABLE
-#=======================================================================================================================
-add_executable(demo_tables Tests/demo_tables.cpp)
-target_link_libraries(demo_tables PRIVATE OpenXLSX::OpenXLSX)
-
-
