@@ -63,19 +63,19 @@ namespace OpenXLSX
          */
         explicit operator bool() const;
 
-        bool isValid() const;
+        [[nodiscard]] bool isValid() const;
 
         /**
          * @brief
          * @return
          */
-        bool isOpen() const;
+        [[nodiscard]] bool isOpen() const;
 
         /**
          * @brief
          * @param fileName
          */
-        void open(const std::string& fileName);
+        void open(std::string_view fileName);
 
         /**
          * @brief
@@ -86,40 +86,40 @@ namespace OpenXLSX
          * @brief
          * @param path
          */
-        void save(const std::string& path = "");
+        void save(std::string_view path = "");
 
         /**
          * @brief
          * @param name
          * @param data
          */
-        void addEntry(const std::string& name, const std::string& data);
+        void addEntry(std::string_view name, std::string_view data);
 
         /**
          * @brief
          * @param entryName
          */
-        void deleteEntry(const std::string& entryName);
+        void deleteEntry(std::string_view entryName);
 
         /**
          * @brief
          * @param name
          * @return
          */
-        std::string getEntry(const std::string& name) const;
+        [[nodiscard]] std::string getEntry(std::string_view name) const;
 
         /**
          * @brief
          * @param entryName
          * @return
          */
-        bool hasEntry(const std::string& entryName) const;
+        [[nodiscard]] bool hasEntry(std::string_view entryName) const;
 
         /**
          * @brief Get a list of all entry names in the archive.
          * @return A vector of strings containing the names of all entries.
          */
-        std::vector<std::string> entryNames() const;
+        [[nodiscard]] std::vector<std::string> entryNames() const;
 
     private:
         struct LibZipApp;

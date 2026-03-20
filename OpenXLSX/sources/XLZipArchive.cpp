@@ -40,7 +40,7 @@ bool XLZipArchive::isValid() const { return m_archive != nullptr; }
 
 bool XLZipArchive::isOpen() const { return m_archive && m_archive->archive != nullptr; }
 
-void XLZipArchive::open(const std::string& fileName)
+void XLZipArchive::open(std::string_view fileName)
 {
     if (isOpen()) close();
 
@@ -68,7 +68,7 @@ void XLZipArchive::open(const std::string& fileName)
     }
     zip_error_fini(&zerr);
 #else
-    m_archive->archive = zip_open(fileName.c_str(), ZIP_CREATE, &err);
+    m_archive->archive = zip_open(std::string(fileName).c_str(), ZIP_CREATE, &err);
     if (!m_archive->archive) {
         zip_error_t zerr;
         zip_error_init_with_code(&zerr, err);
@@ -77,7 +77,7 @@ void XLZipArchive::open(const std::string& fileName)
         throw XLInternalError("Failed to open zip archive: " + msg);
     }
 #endif
-    m_archive->currentPath = fileName;
+    m_archive->currentPath = std::string(fileName);
 }
 
 void XLZipArchive::close()
@@ -100,7 +100,7 @@ void XLZipArchive::close()
     }
 }
 
-void XLZipArchive::save(const std::string& path)
+void XLZipArchive::save(std::string_view path)
 {
     if (!isOpen()) return;
 
@@ -123,24 +123,28 @@ void XLZipArchive::save(const std::string& path)
     }
 }
 
-void XLZipArchive::addEntry(const std::string& name, const std::string& data)
+void XLZipArchive::addEntry(std::string_view name, std::string_view data)
 {
     if (!isOpen()) throw XLInternalError("Archive not open");
 
     m_archive->isModified = true;    // Mark as modified
-    void* rawBuffer       = malloc(data.size());
+
+    // Create a robust copy using string and release it to zip_source_buffer
+    // We use new char[] instead of malloc to follow C++ guidelines slightly better,
+    // though malloc is also fine here since libzip's zip_source_buffer(..., 1) will internally call free().
+    // Actually, libzip *requires* the buffer to be allocated with malloc() when using free_data=1
+    void* rawBuffer = std::malloc(data.size());
     if (!rawBuffer) throw std::bad_alloc();
 
-    // Use RAII to guarantee safety in case of exceptions before zip_source_buffer
-    std::unique_ptr<void, decltype(&std::free)> safeBuffer(rawBuffer, std::free);
-    memcpy(safeBuffer.get(), data.c_str(), data.size());
+    std::memcpy(rawBuffer, data.data(), data.size());
 
-    zip_source_t* s = zip_source_buffer(m_archive->archive, safeBuffer.get(), static_cast<zip_uint64_t>(data.size()), 1);
-    if (!s) { throw XLInternalError("Failed to create zip source"); }
-    // Release ownership to libzip since zip_source_buffer(..., 1) will free it
-    safeBuffer.release();
+    zip_source_t* s = zip_source_buffer(m_archive->archive, rawBuffer, static_cast<zip_uint64_t>(data.size()), 1);
+    if (!s) { 
+        std::free(rawBuffer); // Free immediately if source creation fails
+        throw XLInternalError("Failed to create zip source"); 
+    }
 
-    zip_int64_t idx = zip_name_locate(m_archive->archive, name.c_str(), 0);
+    zip_int64_t idx = zip_name_locate(m_archive->archive, std::string(name).c_str(), 0);
     if (idx >= 0) {
         if (zip_file_replace(m_archive->archive, idx, s, ZIP_FL_ENC_UTF_8) < 0) {
             zip_source_free(s);
@@ -148,19 +152,19 @@ void XLZipArchive::addEntry(const std::string& name, const std::string& data)
         }
     }
     else {
-        if (zip_file_add(m_archive->archive, name.c_str(), s, ZIP_FL_ENC_UTF_8) < 0) {
+        if (zip_file_add(m_archive->archive, std::string(name).c_str(), s, ZIP_FL_ENC_UTF_8) < 0) {
             zip_source_free(s);
             throw XLInternalError(std::string("Failed to add entry: ") + zip_strerror(m_archive->archive));
         }
     }
 }
 
-void XLZipArchive::deleteEntry(const std::string& entryName)
+void XLZipArchive::deleteEntry(std::string_view entryName)
 {
     if (!isOpen()) return;
 
     m_archive->isModified = true;    // Mark as modified
-    zip_int64_t idx       = zip_name_locate(m_archive->archive, entryName.c_str(), 0);
+    zip_int64_t idx       = zip_name_locate(m_archive->archive, std::string(entryName).c_str(), 0);
     if (idx >= 0) {
         if (zip_delete(m_archive->archive, idx) < 0) {
             throw XLInternalError(std::string("Failed to delete entry: ") + zip_strerror(m_archive->archive));
@@ -168,23 +172,23 @@ void XLZipArchive::deleteEntry(const std::string& entryName)
     }
 }
 
-std::string XLZipArchive::getEntry(const std::string& name) const
+std::string XLZipArchive::getEntry(std::string_view name) const
 {
     if (!isOpen()) throw XLInternalError("Archive not open");
 
     zip_stat_t st;
     zip_stat_init(&st);
-    if (zip_stat(m_archive->archive, name.c_str(), 0, &st) < 0) { throw XLInternalError("Entry not found: " + name); }
+    if (zip_stat(m_archive->archive, std::string(name).c_str(), 0, &st) < 0) { throw XLInternalError("Entry not found: " + std::string(name)); }
 
-    zip_file_t* f = zip_fopen(m_archive->archive, name.c_str(), 0);
-    if (!f) throw XLInternalError("Failed to open entry: " + name);
+    zip_file_t* f = zip_fopen(m_archive->archive, std::string(name).c_str(), 0);
+    if (!f) throw XLInternalError("Failed to open entry: " + std::string(name));
 
     std::string result;
     result.resize(st.size);
     zip_int64_t bytesRead = zip_fread(f, result.data(), st.size);
     if (bytesRead < 0) {
         zip_fclose(f);
-        throw XLInternalError("Failed to read entry: " + name);
+        throw XLInternalError("Failed to read entry: " + std::string(name));
     }
     result.resize(bytesRead);
     zip_fclose(f);
@@ -192,19 +196,24 @@ std::string XLZipArchive::getEntry(const std::string& name) const
     return result;
 }
 
-bool XLZipArchive::hasEntry(const std::string& entryName) const
+bool XLZipArchive::hasEntry(std::string_view entryName) const
 {
     if (!isOpen()) return false;
-    return zip_name_locate(m_archive->archive, entryName.c_str(), 0) >= 0;
+    return zip_name_locate(m_archive->archive, std::string(entryName).c_str(), 0) >= 0;
 }
 
 std::vector<std::string> XLZipArchive::entryNames() const
 {
     if (!isOpen()) return {};
 
+    zip_int64_t numEntries = zip_get_num_entries(m_archive->archive, 0);
+    if (numEntries <= 0) return {};
+
     std::vector<std::string> result;
-    zip_int64_t              numEntries = zip_get_num_entries(m_archive->archive, 0);
-    for (zip_int64_t i = 0; i < numEntries; ++i) { result.emplace_back(zip_get_name(m_archive->archive, i, 0)); }
+    result.reserve(static_cast<size_t>(numEntries));
+    for (zip_int64_t i = 0; i < numEntries; ++i) { 
+        result.emplace_back(zip_get_name(m_archive->archive, i, 0)); 
+    }
 
     return result;
 }
