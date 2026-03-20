@@ -1,6 +1,9 @@
 // ===== External Includes ===== //
 #include <array>
 #include <cmath>
+#include <string_view>
+#include <gsl/assert>
+#include <gsl/util>
 #ifdef CHARCONV_ENABLED
 #    include <charconv>
 #endif
@@ -20,15 +23,14 @@ constexpr uint8_t asciiOffset = 64;
 
 namespace
 {
-    bool addressIsValid(uint32_t row, uint16_t column)
+    constexpr bool addressIsValid(uint32_t row, uint16_t column) noexcept
     { return !(row < 1 or row > OpenXLSX::MAX_ROWS or column < 1 or column > OpenXLSX::MAX_COLS); }
 }    // namespace
 
 /**
- * @details The constructor creates a new XLCellReference from a string, e.g. 'A1'. If there's no input,
- * the default reference will be cell A1.
+ * @details Initializes a reference using an Excel-style coordinate string (e.g., 'A1'). Serves as the primary parser for cell identities read directly from the DOM.
  */
-XLCellReference::XLCellReference(const std::string& cellAddress)
+XLCellReference::XLCellReference(std::string_view cellAddress)
 {
     if (not cellAddress.empty()) {
         setAddress(cellAddress);
@@ -38,8 +40,7 @@ XLCellReference::XLCellReference(const std::string& cellAddress)
 }
 
 /**
- * @details This constructor creates a new XLCellReference from a given row and column number, e.g. 1,1 (=A1)
- * @todo consider swapping the arguments.
+ * @details Directly binds explicit row and column indices. Offers higher performance than string parsing when iterating systematically (e.g., over a numerical range).
  */
 XLCellReference::XLCellReference(uint32_t row, uint16_t column)
 {
@@ -48,10 +49,9 @@ XLCellReference::XLCellReference(uint32_t row, uint16_t column)
 }
 
 /**
- * @details This constructor creates a new XLCellReference from a row number and the column name (e.g. 1, A)
- * @todo consider swapping the arguments.
+ * @details Binds a hybrid coordinate system using explicit numeric rows and alphabetical column headers, typically for convenient manual cell selection.
  */
-XLCellReference::XLCellReference(uint32_t row, const std::string& column)
+XLCellReference::XLCellReference(uint32_t row, std::string_view column)
 {
     if (!addressIsValid(row, columnAsNumber(column))) throw XLCellAddressError("Cell reference is invalid");
     setRowAndColumn(row, columnAsNumber(column));
@@ -140,13 +140,12 @@ XLCellReference XLCellReference::operator--(int)
 }
 
 /**
- * @details Returns the m_row property.
+ * @details Provides the raw integer index representing the 1-based vertical position within the worksheet.
  */
-uint32_t XLCellReference::row() const { return m_row; }
+uint32_t XLCellReference::row() const noexcept { return m_row; }
 
 /**
- * @details Sets the row of the XLCellReference objects. If the number is larger than 16384 (the maximum),
- * the row is set to 16384.
+ * @details Mutates the 1-based vertical index. Automatically recalculates the full Excel-style string address to keep the internal state in sync.
  */
 void XLCellReference::setRow(uint32_t row)
 {
@@ -157,13 +156,12 @@ void XLCellReference::setRow(uint32_t row)
 }
 
 /**
- * @details Returns the m_column property.
+ * @details Provides the raw integer index representing the 1-based horizontal position within the worksheet.
  */
-uint16_t XLCellReference::column() const { return m_column; }
+uint16_t XLCellReference::column() const noexcept { return m_column; }
 
 /**
- * @details Sets the column of the XLCellReference object. If the number is larger than 1048576 (the maximum),
- * the column is set to 1048576.
+ * @details Mutates the 1-based horizontal index. Validates the boundary and keeps the cached string address in sync.
  */
 void XLCellReference::setColumn(uint16_t column)
 {
@@ -174,8 +172,7 @@ void XLCellReference::setColumn(uint16_t column)
 }
 
 /**
- * @details Sets row and column of the XLCellReference object. Checks that row and column is less than
- * or equal to the maximum row and column numbers allowed by Excel.
+ * @details Re-binds the object to an entirely new coordinate, bypassing dual string recalculation by batching the integer mutations together.
  */
 void XLCellReference::setRowAndColumn(uint32_t row, uint16_t column)
 {
@@ -187,24 +184,23 @@ void XLCellReference::setRowAndColumn(uint32_t row, uint16_t column)
 }
 
 /**
- * @details Returns the m_cellAddress property.
+ * @details Provides the cached Excel-style cell identifier (e.g. 'A1'), which is directly compliant with the OOXML <c r=\"A1\"> coordinate schema requirement.
  */
 std::string XLCellReference::address() const { return m_cellAddress; }
 
 /**
- * @details Sets the address of the XLCellReference object, e.g. 'B2'. Checks that row and column is less than
- * or equal to the maximum row and column numbers allowed by Excel.
+ * @details Parses an Excel-style coordinate string (e.g., 'A1') and breaks it down into raw 1-based vertical and horizontal integer components for internal programmatic routing.
  */
-void XLCellReference::setAddress(const std::string& address)
+void XLCellReference::setAddress(std::string_view address)
 {
-    const auto [fst, snd] = coordinatesFromAddress(address);
-    m_row                 = fst;
-    m_column              = snd;
+    const auto [row, col] = coordinatesFromAddress(address);
+    m_row                 = row;
+    m_column              = col;
     m_cellAddress         = address;
 }
 
 /**
- * @details
+ * @details Highly optimized formatter converting integer indices to strings (using std::to_chars if available) to minimize serialization overhead.
  */
 std::string XLCellReference::rowAsString(uint32_t row)
 {
@@ -213,65 +209,65 @@ std::string XLCellReference::rowAsString(uint32_t row)
     const auto*         p = std::to_chars(str.data(), str.data() + str.size(), row).ptr;
     return std::string{str.data(), static_cast<uint16_t>(p - str.data())};
 #else
-    std::string result;
+    std::string result(7, '\0');
+    int pos = 6;
     while (row != 0) {
         uint32_t rem = row % 10;
-        result += static_cast<char>((rem > 9) ? (rem - 10) + 'a' : rem + '0');
+        result[pos--] = gsl::narrow_cast<char>((rem > 9) ? (rem - 10) + 'a' : rem + '0');
         row = row / 10;
     }
-
-    for (unsigned int i = 0; i < result.length() / 2; i++) std::swap(result[i], result[result.length() - i - 1]);
-
-    return result;
+    return result.substr(pos + 1);
 #endif
 }
 
 /**
- * @details
+ * @details Fast integer parser specifically meant to process the numeric half of an Excel cell address.
  */
-uint32_t XLCellReference::rowAsNumber(const std::string& row)
+uint32_t XLCellReference::rowAsNumber(std::string_view row)
 {
 #ifdef CHARCONV_ENABLED
     uint32_t value = 0;
     std::from_chars(row.data(), row.data() + row.size(), value);    // NOLINT
     return value;
 #else
-    return static_cast<uint32_t>(stoul(row));
+    return gsl::narrow_cast<uint32_t>(std::stoul(std::string(row)));
 #endif
 }
 
 /**
- * @details Helper method to calculate the column letter from column number.
+ * @details Translates a 1-based horizontal integer index into the standard Excel alphabetical column notation (A, B, ..., Z, AA, AB...). Required for generating compliant OOXML XML nodes.
  */
 std::string XLCellReference::columnAsString(uint16_t column)
 {
+    Expects(column >= 1 && column <= MAX_COLS);
     std::string result;
 
+    constexpr uint16_t oneLetterMax = alphabetSize;
+    constexpr uint16_t twoLetterMax = alphabetSize + alphabetSize * alphabetSize;
+
     // ===== If there is one letter in the Column Name:
-    if (column <= alphabetSize) result += static_cast<char>(column + asciiOffset);
+    if (column <= oneLetterMax) result += gsl::narrow_cast<char>(column + asciiOffset);
 
     // ===== If there are two letters in the Column Name:
-    else if (column > alphabetSize and column <= alphabetSize * (alphabetSize + 1)) {
-        result += static_cast<char>((column - (alphabetSize + 1)) / alphabetSize + asciiOffset + 1);
-        result += static_cast<char>((column - (alphabetSize + 1)) % alphabetSize + asciiOffset + 1);
+    else if (column > oneLetterMax and column <= twoLetterMax) {
+        result += gsl::narrow_cast<char>((column - (oneLetterMax + 1)) / alphabetSize + asciiOffset + 1);
+        result += gsl::narrow_cast<char>((column - (oneLetterMax + 1)) % alphabetSize + asciiOffset + 1);
     }
 
     // ===== If there are three letters in the Column Name:
     else {
-        result += static_cast<char>((column - 703) / (alphabetSize * alphabetSize) + asciiOffset + 1);    // NOLINT
-        result += static_cast<char>(((column - 703) / alphabetSize) % alphabetSize + asciiOffset + 1);    // NOLINT
-        result += static_cast<char>((column - 703) % alphabetSize + asciiOffset + 1);                     // NOLINT
+        result += gsl::narrow_cast<char>((column - (twoLetterMax + 1)) / (alphabetSize * alphabetSize) + asciiOffset + 1);
+        result += gsl::narrow_cast<char>(((column - (twoLetterMax + 1)) / alphabetSize) % alphabetSize + asciiOffset + 1);
+        result += gsl::narrow_cast<char>((column - (twoLetterMax + 1)) % alphabetSize + asciiOffset + 1);
     }
 
     return result;
 }
 
 /**
- * @details Helper method to calculate the column number from column letter.
- * @throws XLInputError
- * @note 2024-06-03: added check for valid address
+ * @details Performs Base26 reverse-translation from alphabetical column notation into a numeric index. Throws XLInputError for non-alphabet characters or violations of maximum bounds.
  */
-uint16_t XLCellReference::columnAsNumber(const std::string& column)
+uint16_t XLCellReference::columnAsNumber(std::string_view column)
 {
     uint64_t letterCount = 0;
     uint32_t colNo       = 0;
@@ -285,28 +281,16 @@ uint16_t XLCellReference::columnAsNumber(const std::string& column)
     }
 
     // ===== If the full string was decoded and colNo is within allowed range [1;MAX_COLS]
-    if (letterCount == column.length() and colNo > 0 and colNo <= MAX_COLS) return static_cast<uint16_t>(colNo);
-    throw XLInputError("XLCellReference::columnAsNumber - column \"" + column + "\" is invalid");
+    if (letterCount == column.length() and colNo > 0 and colNo <= MAX_COLS) return gsl::narrow_cast<uint16_t>(colNo);
+    throw XLInputError("XLCellReference::columnAsNumber - column \"" + std::string(column) + "\" is invalid");
 
-    /* 2024-06-19 OBSOLETE CODE:
-    // uint16_t result = 0;
-    // uint16_t factor = 1;
-    //
-    // for (int16_t i = static_cast<int16_t>(column.size() - 1); i >= 0; --i) {
-    //     result += static_cast<uint16_t>((column[static_cast<uint64_t>(i)] - asciiOffset) * factor);
-    //     factor *= alphabetSize;
-    // }
-    //
-    // return result;
-    */
+
 }
 
 /**
- * @details Helper method for calculating the coordinates from the cell address.
- * @throws XLInputError
- * @note 2024-06-03: added check for valid address
+ * @details Splits a consolidated alphanumeric coordinate (e.g., 'A1') into discrete row and column components. Throws if the format is malformed or out of bounds.
  */
-XLCoordinates XLCellReference::coordinatesFromAddress(const std::string& address)
+XLCoordinates XLCellReference::coordinatesFromAddress(std::string_view address)
 {
     uint64_t letterCount = 0;
     uint32_t colNo       = 0;
@@ -326,15 +310,9 @@ XLCoordinates XLCellReference::coordinatesFromAddress(const std::string& address
         for (; pos < address.length() and std::isdigit(address[pos]); ++pos)    // check digits
             rowNo = rowNo * 10 + static_cast<uint64_t>(address[pos] - '0');
         if (pos == address.length() and rowNo <= MAX_ROWS)    // full address was < 4 letters + only digits
-            return std::make_pair(rowNo, colNo);
+            return {gsl::narrow_cast<uint32_t>(rowNo), gsl::narrow_cast<uint16_t>(colNo)};
     }
-    throw XLInputError("XLCellReference::coordinatesFromAddress - address \"" + address + "\" is invalid");
+    throw XLInputError("XLCellReference::coordinatesFromAddress - address \"" + std::string(address) + "\" is invalid");
 
-    /* 2024-06-19 OBSOLETE CODE
-    // auto it = std::find_if(address.begin(), address.end(), ::isdigit);
-    // auto columnPart = std::string(address.begin(), it);
-    // auto rowPart = std::string(it, address.end());
-    //
-    // return std::make_pair(rowAsNumber(rowPart), columnAsNumber(columnPart));
-    */
+
 }

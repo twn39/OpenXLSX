@@ -116,24 +116,24 @@ namespace
 }    // namespace
 
 /**
- * @details Initializes a new document with the provided ZIP archive.
+ * @details Allows creating or manipulating an in-memory or custom-provided ZIP archive, decoupling the document from direct disk I/O.
  */
 XLDocument::XLDocument(const IZipArchive& zipArchive) : m_xmlSavingDeclaration{}, m_archive(zipArchive) {}
 
 /**
- * @details Constructor taking a non-owning string_view to the .xlsx path to reduce heap allocations during initialization.
+ * @details Provides an optimized initialization path that avoids string copies when reading an existing workbook from disk.
  */
 XLDocument::XLDocument(std::string_view docPath, const IZipArchive& zipArchive) : m_xmlSavingDeclaration{}, m_archive(zipArchive)
 { open(docPath); }
 
 /**
- * @details Legacy constructor for std::string compatibility, forwarding to the string_view implementation.
+ * @details Maintains backward compatibility for existing codebases relying on std::string, ensuring smooth upgrades.
  */
 XLDocument::XLDocument(const std::string& docPath, const IZipArchive& zipArchive) : m_xmlSavingDeclaration{}, m_archive(zipArchive)
 { open(std::string_view(docPath)); }
 
 /**
- * @details Ensures the document package is safely closed and resources are released upon destruction.
+ * @details Prevents resource leaks and ensures any pending archive handles or DOM structures are properly disposed of when the object goes out of scope.
  */
 XLDocument::~XLDocument()
 {
@@ -141,18 +141,17 @@ XLDocument::~XLDocument()
 }
 
 /**
- * @details disable m_suppressWarnings
+ * @details Enables stdout logging for non-critical schema deviations (e.g., unknown xml relationships), which is vital for debugging compatibility issues.
  */
 void XLDocument::showWarnings() { m_suppressWarnings = false; }
 
 /**
- * @details enable m_suppressWarnings
+ * @details Silences non-critical schema deviation warnings to keep the console output clean during production use.
  */
 void XLDocument::suppressWarnings() { m_suppressWarnings = true; }
 
 /**
- * @details Opens the .xlsx package by loading the ZIP archive and initializing the internal document structure.
- * This includes reading [Content_Types].xml, document relationships, and core workbook data.
+ * @details Establishes the document's internal structure by parsing its root relationships and mandatory XML parts. This serves as the primary entry point for accessing and mutating any existing workbook.
  */
 void XLDocument::open(std::string_view fileName)
 {
@@ -368,7 +367,7 @@ namespace
 }    // anonymous namespace
 
 /**
- * @details Initializes a new, empty .xlsx package by writing a template archive to the specified path.
+ * @details Bootstraps a minimal, valid OOXML document structure from scratch. Uses hardcoded string templates instead of a binary payload to prevent carrying opaque blobs in the executable.
  */
 void XLDocument::create(std::string_view fileName, bool forceOverwrite)
 {
@@ -402,12 +401,12 @@ void XLDocument::create(std::string_view fileName, bool forceOverwrite)
 }
 
 /**
- * @details Legacy function to create a new document
+ * @details Maintains backward compatibility for creating new documents using std::string, ensuring smooth upgrades.
  */
 void XLDocument::create(const std::string& fileName) { create(std::string_view(fileName), XLForceOverwrite); }
 
 /**
- * @details Closes the document, releases the ZIP archive, and resets all internal document state.
+ * @details Safely drops the internal DOM representations and archive handles, returning the XLDocument to a pristine, uninitialized state to prevent cross-contamination between files.
  */
 void XLDocument::close()
 {
@@ -430,12 +429,12 @@ void XLDocument::close()
 }
 
 /**
- * @details Persists all document changes back to the original file path.
+ * @details Commits the current DOM state to the archive, updating dimensions and calculation chains before disk flush to ensure Excel interprets the modified file as valid.
  */
 void XLDocument::save() { saveAs(m_filePath, XLForceOverwrite); }
 
 /**
- * @details Persists the current document state to a new file location.
+ * @details Serializes the modified DOM objects into their respective XML strings and constructs a new ZIP archive. Caches and restores unhandled media/VBA entries to prevent data loss in macro-enabled files.
  */
 void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
 {
@@ -484,12 +483,12 @@ void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
 }
 
 /**
- * @details Legacy function to save the document with a new name
+ * @details Maintains backward compatibility for saving documents using std::string, ensuring smooth upgrades.
  */
 void XLDocument::saveAs(const std::string& fileName) { saveAs(std::string_view(fileName), XLForceOverwrite); }
 
 /**
- * @details Extracts and returns the filename from the document's full path.
+ * @details Provides the base filename to facilitate identification in UI, logging, or reporting contexts.
  */
 std::string XLDocument::name() const
 {
@@ -501,12 +500,12 @@ std::string XLDocument::name() const
 }
 
 /**
- * @details
+ * @details Exposes the content types manager, which is required to register new XML parts (like sheets or drawings) so Excel recognizes their purpose.
  */
 XLContentTypes& XLDocument::contentTypes() { return m_contentTypes; }
 
 /**
- * @details
+ * @details Provides access to custom properties, enabling the storage of application-specific metadata within the OOXML container.
  */
 XLCustomProperties& XLDocument::customProperties()
 {
@@ -515,12 +514,12 @@ XLCustomProperties& XLDocument::customProperties()
 }
 
 /**
- * @details
+ * @details Returns the active file path to allow consumers to verify or display the target destination.
  */
 const std::string& XLDocument::path() const { return m_filePath; }
 
 /**
- * @details Get a const pointer to the underlying XLWorkbook object.
+ * @details Calculates the next available auto-incrementing ID across all tables to ensure unique table references within the document, a strict OOXML requirement.
  */
 uint32_t XLDocument::nextTableId() const
 {
@@ -534,10 +533,13 @@ uint32_t XLDocument::nextTableId() const
     return maxId + 1;
 }
 
+/**
+ * @details Provides access to the core workbook component, serving as the gateway to manage worksheets, chartsheets, and global definitions.
+ */
 XLWorkbook XLDocument::workbook() const { return m_workbook; }
 
 /**
- * @details Get the value for a property.
+ * @details Provides read access to standard OOXML document metadata (core and extended properties) such as creator, application version, or creation date.
  */
 std::string XLDocument::property(XLProperty prop) const
 {
@@ -589,7 +591,7 @@ std::string XLDocument::property(XLProperty prop) const
 
 /**
  * @brief extract an integer major version v1 and minor version v2 from a string
- * @details trims all whitespaces from begin and end of versionString and attempts to extract two integers from the format
+ * @details Extracts integer major and minor versions from a string, ensuring the formatting strictly complies with the OOXML AppVersion schema requirements.
  * [0-9]{1,2}\.[0-9]{1,4}  (Example: 14.123)
  * @param versionString the string to process
  * @param majorVersion by reference: store the major version here
@@ -632,7 +634,7 @@ bool getAppVersion(std::string_view versionString, int& majorVersion, int& minor
 }
 
 /**
- * @details Set the value for a property.
+ * @details Mutates document metadata, explicitly validating format-specific constraints (e.g., boolean strings or version formatting 'XX.XXXX') to prevent schema validation failures in Excel.
  */
 void XLDocument::setProperty(XLProperty prop, std::string_view value)
 {
@@ -728,12 +730,12 @@ void XLDocument::setProperty(XLProperty prop, std::string_view value)
 }
 
 /**
- * @details Delete a property
+ * @details Clears a specific metadata property to clean up unneeded, obsolete, or sensitive document traces.
  */
 void XLDocument::deleteProperty(XLProperty theProperty) { setProperty(theProperty, ""); }
 
 /**
- * @details
+ * @details Allows fast truthy checks to verify if the underlying zip archive is successfully bound and accessible.
  */
 XLDocument::operator bool() const
 {
@@ -741,17 +743,17 @@ XLDocument::operator bool() const
 }
 
 /**
- * @details
+ * @details Provides an explicit boolean check for the document's readiness state, preventing operations on uninitialized archives.
  */
 bool XLDocument::isOpen() const { return this->operator bool(); }
 
 /**
- * @details fetch a reference to m_styles
+ * @details Provides access to the global stylesheet manager to retrieve or define fonts, fills, borders, and number formats used across the workbook.
  */
 XLStyles& XLDocument::styles() { return m_styles; }
 
 /**
- * @details determine - without creation - whether the document contains a sheet relationships file for sheet with sheetXmlNo
+ * @details Probes the archive index for sheet relationships to conditionally access dependencies, avoiding eager and expensive XML allocations for untouched components.
  */
 bool XLDocument::hasSheetRelationships(uint16_t sheetXmlNo) const
 {
@@ -760,7 +762,7 @@ bool XLDocument::hasSheetRelationships(uint16_t sheetXmlNo) const
 }
 
 /**
- * @details determine - without creation - whether the document contains a drawing file for sheet with sheetXmlNo
+ * @details Probes the archive index for drawings to verify the presence of visual elements before attempting to parse them.
  */
 bool XLDocument::hasSheetDrawing(uint16_t sheetXmlNo) const
 {
@@ -769,7 +771,7 @@ bool XLDocument::hasSheetDrawing(uint16_t sheetXmlNo) const
 }
 
 /**
- * @details determine - without creation - whether the document contains a VML drawing file for sheet with sheetXmlNo
+ * @details Probes the archive index for legacy VML drawings (often used for comments or form controls) to avoid redundant DOM creation.
  */
 bool XLDocument::hasSheetVmlDrawing(uint16_t sheetXmlNo) const
 {
@@ -778,7 +780,7 @@ bool XLDocument::hasSheetVmlDrawing(uint16_t sheetXmlNo) const
 }
 
 /**
- * @details determine - without creation - whether the document contains a comments file for sheet with sheetXmlNo
+ * @details Probes the archive index for comments to conditionally parse them, optimizing load times for sheets without annotations.
  */
 bool XLDocument::hasSheetComments(uint16_t sheetXmlNo) const
 {
@@ -787,7 +789,7 @@ bool XLDocument::hasSheetComments(uint16_t sheetXmlNo) const
 }
 
 /**
- * @details determine - without creation - whether the document contains a table(s) file for sheet with sheetXmlNo
+ * @details Probes the archive index for table definitions, delaying XML parsing until table data is explicitly requested.
  */
 bool XLDocument::hasSheetTables(uint16_t sheetXmlNo) const
 {
@@ -796,7 +798,7 @@ bool XLDocument::hasSheetTables(uint16_t sheetXmlNo) const
 }
 
 /**
- * @details return an XLRelationships item for sheet with sheetXmlNo - create the underlying XML and add it to the archive if needed
+ * @details Lazily resolves or bootstraps sheet-level relationships. This is necessary to construct valid linkages before adding interactive or visual elements to a sheet.
  */
 XLRelationships XLDocument::sheetRelationships(uint16_t sheetXmlNo)
 {
@@ -812,7 +814,7 @@ XLRelationships XLDocument::sheetRelationships(uint16_t sheetXmlNo)
 }
 
 /**
- * @details return an XLRelationships item for a drawing
+ * @details Lazily resolves or bootstraps drawing-level relationships, which are required when linking images or charts within a drawing surface.
  */
 XLRelationships XLDocument::drawingRelationships(std::string_view drawingPath)
 {
@@ -832,7 +834,7 @@ XLRelationships XLDocument::drawingRelationships(std::string_view drawingPath)
 }
 
 /**
- * @details return an XLDrawing item for sheet with sheetXmlNo
+ * @details Initializes or retrieves the drawing canvas for a sheet, serving as the root container for images, charts, and shapes.
  */
 XLDrawing XLDocument::sheetDrawing(uint16_t sheetXmlNo)
 {
@@ -851,7 +853,7 @@ XLDrawing XLDocument::sheetDrawing(uint16_t sheetXmlNo)
 }
 
 /**
- * @details return an XLVmlDrawing item for sheet with sheetXmlNo
+ * @details Initializes or retrieves the legacy VML drawing canvas, primarily required for anchoring cell comments to the UI.
  */
 XLVmlDrawing XLDocument::sheetVmlDrawing(uint16_t sheetXmlNo)
 {
@@ -870,7 +872,7 @@ XLVmlDrawing XLDocument::sheetVmlDrawing(uint16_t sheetXmlNo)
 }
 
 /**
- * @details Add an image to the document archive (xl/media/)
+ * @details Injects binary image payloads into the internal media folder and registers their MIME type, laying the groundwork for visual sheet annotations.
  */
 std::string XLDocument::addImage(std::string_view name, std::string_view data)
 {
@@ -892,7 +894,7 @@ std::string XLDocument::addImage(std::string_view name, std::string_view data)
 }
 
 /**
- * @details Get an image from the document archive (xl/media/)
+ * @details Retrieves the raw binary payload of an embedded image, enabling external rendering or extraction of worksheet media.
  */
 std::string XLDocument::getImage(std::string_view path) const
 {
@@ -901,7 +903,7 @@ std::string XLDocument::getImage(std::string_view path) const
 }
 
 /**
- * @details return an XLComments item for sheet with sheetXmlNo
+ * @details Bootstraps or retrieves the comment thread storage for a sheet, required to read or write cell-anchored notes.
  */
 XLComments XLDocument::sheetComments(uint16_t sheetXmlNo)
 {
@@ -920,7 +922,7 @@ XLComments XLDocument::sheetComments(uint16_t sheetXmlNo)
 }
 
 /**
- * @details return an XLTableCollection item for sheet with sheetXmlNo
+ * @details Bootstraps or retrieves the table registry for a sheet, facilitating structured data manipulation and formatting.
  */
 XLTableCollection XLDocument::sheetTables(uint16_t sheetXmlNo)
 {
@@ -994,7 +996,7 @@ bool           XLDocument::validateSheetName(std::string_view sheetName, bool th
 }
 
 /**
- * @details return value defaults to true, false only where the XLCommandType implements it
+ * @details Provides a centralized mutation interface for document-level changes. Abstracted as commands to decouple the UI/API layers from the internal DOM routing and dependency management logic.
  */
 bool XLDocument::execCommand(const XLCommand& command)
 {
@@ -1194,7 +1196,7 @@ bool XLDocument::execCommand(const XLCommand& command)
 }
 
 /**
- * @details
+ * @details Provides a centralized read interface for querying document state. Decouples consumers from traversing the relationship graphs directly.
  */
 XLQuery XLDocument::execQuery(const XLQuery& query) const
 {
@@ -1257,12 +1259,12 @@ XLQuery XLDocument::execQuery(const XLQuery& query) const
 }
 
 /**
- * @details
+ * @details Non-const overload for querying document state.
  */
 XLQuery XLDocument::execQuery(const XLQuery& query) { return static_cast<const XLDocument&>(*this).execQuery(query); }
 
 /**
- * @details assign savingDeclaration to m_xmlSavingDeclaration
+ * @details Overrides the default XML header attributes, allowing consumers to dictate XML standalone status or encoding during serialization.
  */
 void XLDocument::setSavingDeclaration(XLXmlSavingDeclaration const& savingDeclaration) { m_xmlSavingDeclaration = savingDeclaration; }
 
@@ -1316,19 +1318,19 @@ void XLDocument::cleanupSharedStrings()
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
- * @details
+ * @details Serves as the foundational bridge between the raw ZIP layer and the parsed DOM layer, safely extracting content only when explicitly requested.
  */
 std::string XLDocument::extractXmlFromArchive(std::string_view path)
 { return m_archive.hasEntry(std::string(path)) ? m_archive.getEntry(std::string(path)) : ""; }
 
 /**
- * @details
+ * @details Returns a mutable pointer to the requested XML part, acting as the document's central DOM registry cache.
  */
 XLXmlData* XLDocument::getXmlData(std::string_view path, bool doNotThrow)
 { return const_cast<XLXmlData*>(const_cast<XLDocument const*>(this)->getXmlData(path, doNotThrow)); }
 
 /**
- * @details
+ * @details Returns a read-only pointer to the requested XML part from the DOM cache.
  */
 const XLXmlData* XLDocument::getXmlData(std::string_view path, bool doNotThrow) const
 {
@@ -1341,7 +1343,7 @@ const XLXmlData* XLDocument::getXmlData(std::string_view path, bool doNotThrow) 
 }
 
 /**
- * @details
+ * @details Provides a safe lookup into the DOM cache to verify the existence of optional parts without triggering exceptions.
  */
 bool XLDocument::hasXmlData(std::string_view path) const
 {
@@ -1361,7 +1363,7 @@ namespace OpenXLSX
     }
 
     /**
-     * @details create a hex string from data
+     * @details Converts raw byte arrays into hex-encoded strings, required for constructing valid OOXML password hashes.
      */
     std::string BinaryAsHexString(gsl::span<const std::byte> data)
     {
@@ -1376,7 +1378,7 @@ namespace OpenXLSX
     }
 
     /**
-     * @details apply the XLSX password hashing algorithm to password
+     * @details Implements the legacy Excel hash algorithm to verify or secure sheet protection features.
      */
     uint16_t ExcelPasswordHash(std::string_view password)
     {
@@ -1393,7 +1395,7 @@ namespace OpenXLSX
     }
 
     /**
-     * @details same as ExcelPasswordHash but return the result as a hex string
+     * @details Bridges the legacy integer hash to the required XML string format, simplifying integration with the DOM attributes.
      */
     std::string ExcelPasswordHashAsString(std::string_view password)
     {

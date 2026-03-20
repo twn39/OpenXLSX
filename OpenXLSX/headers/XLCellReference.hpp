@@ -10,6 +10,7 @@
 // ===== External Includes ===== //
 #include <cstdint>    // Pull request #276
 #include <string>
+#include <string_view>
 #include <utility>
 
 // ===== OpenXLSX Includes ===== //
@@ -20,19 +21,22 @@ namespace OpenXLSX
     /**
      * @brief
      */
-    using XLCoordinates = std::pair<uint32_t, uint16_t>;
+    struct XLCoordinates {
+        uint32_t row;
+        uint16_t column;
+    };
 
     /**
      * @brief
      */
     class OPENXLSX_EXPORT XLCellReference final
     {
-        friend bool operator==(const XLCellReference& lhs, const XLCellReference& rhs);
-        friend bool operator!=(const XLCellReference& lhs, const XLCellReference& rhs);
-        friend bool operator<(const XLCellReference& lhs, const XLCellReference& rhs);
-        friend bool operator>(const XLCellReference& lhs, const XLCellReference& rhs);
-        friend bool operator<=(const XLCellReference& lhs, const XLCellReference& rhs);
-        friend bool operator>=(const XLCellReference& lhs, const XLCellReference& rhs);
+        friend bool operator==(const XLCellReference& lhs, const XLCellReference& rhs) noexcept;
+        friend bool operator!=(const XLCellReference& lhs, const XLCellReference& rhs) noexcept;
+        friend bool operator<(const XLCellReference& lhs, const XLCellReference& rhs) noexcept;
+        friend bool operator>(const XLCellReference& lhs, const XLCellReference& rhs) noexcept;
+        friend bool operator<=(const XLCellReference& lhs, const XLCellReference& rhs) noexcept;
+        friend bool operator>=(const XLCellReference& lhs, const XLCellReference& rhs) noexcept;
 
         //----------------------------------------------------------------------------------------------------------------------
         //           Public Member Functions
@@ -42,10 +46,9 @@ namespace OpenXLSX
         /**
          * @brief Constructor taking a cell address as argument.
          * @param cellAddress The address of the cell, e.g. 'A1'.
-         * @details The constructor creates a new XLCellReference from a string, e.g. 'A1'. If there's no input,
-         * the default reference will be cell A1.
+         * @details Initializes a reference using an Excel-style coordinate string (e.g., 'A1'). Serves as the primary parser for cell identities read directly from the DOM.
          */
-        XLCellReference(const std::string& cellAddress = "");    // NOLINT
+        XLCellReference(std::string_view cellAddress = "");    // NOLINT
 
         /**
          * @brief Constructor taking the cell coordinates as arguments.
@@ -59,7 +62,7 @@ namespace OpenXLSX
          * @param row The row number of the cell.
          * @param column The column letter of the cell.
          */
-        XLCellReference(uint32_t row, const std::string& column);
+        XLCellReference(uint32_t row, std::string_view column);
 
         /**
          * @brief Copy constructor
@@ -120,7 +123,7 @@ namespace OpenXLSX
          * @brief Get the row number of the XLCellReference.
          * @return The row.
          */
-        uint32_t row() const;
+        uint32_t row() const noexcept;
 
         /**
          * @brief Set the row number for the XLCellReference.
@@ -132,7 +135,7 @@ namespace OpenXLSX
          * @brief Get the column number of the XLCellReference.
          * @return The column number.
          */
-        uint16_t column() const;
+        uint16_t column() const noexcept;
 
         /**
          * @brief Set the column number of the XLCellReference.
@@ -158,7 +161,7 @@ namespace OpenXLSX
          * @param address The address, e.g. 'A1'
          * @pre The address input string must be a valid Excel cell reference. Otherwise the behaviour is undefined.
          */
-        void setAddress(const std::string& address);
+        void setAddress(std::string_view address);
 
         //----------------------------------------------------------------------------------------------------------------------
         //           Private Member Functions
@@ -178,7 +181,7 @@ namespace OpenXLSX
          * @param row
          * @return
          */
-        static uint32_t rowAsNumber(const std::string& row);
+        static uint32_t rowAsNumber(std::string_view row);
 
         /**
          * @brief Static helper function to convert column number to column letter (e.g. column 1 becomes 'A')
@@ -192,14 +195,14 @@ namespace OpenXLSX
          * @param column The column letter, e.g. 'A'
          * @return The column number.
          */
-        static uint16_t columnAsNumber(const std::string& column);
+        static uint16_t columnAsNumber(std::string_view column);
 
         /**
          * @brief Static helper function to convert cell address to coordinates.
          * @param address The address to be converted, e.g. 'A1'
          * @return A std::pair<row, column>
          */
-        static XLCoordinates coordinatesFromAddress(const std::string& address);
+        static XLCoordinates coordinatesFromAddress(std::string_view address);
 
         //----------------------------------------------------------------------------------------------------------------------
         //           Private Member Variables
@@ -211,54 +214,36 @@ namespace OpenXLSX
     };
 
     /**
-     * @brief Helper function to check equality between two XLCellReferences.
-     * @param lhs The first XLCellReference
-     * @param rhs The second XLCellReference
-     * @return true if equal; otherwise false.
+     * @brief Determines exact coordinate identity, allowing comparisons without resolving their DOM node equivalence.
      */
-    inline bool operator==(const XLCellReference& lhs, const XLCellReference& rhs)
+    inline bool operator==(const XLCellReference& lhs, const XLCellReference& rhs) noexcept
     { return lhs.row() == rhs.row() and lhs.column() == rhs.column(); }
 
     /**
-     * @brief Helper function to check for in-equality between two XLCellReferences
-     * @param lhs The first XLCellReference
-     * @param rhs The second XLCellReference
-     * @return false if equal; otherwise true.
+     * @brief Detects coordinate divergence, effectively identical to `!(lhs == rhs)`.
      */
-    inline bool operator!=(const XLCellReference& lhs, const XLCellReference& rhs) { return !(lhs == rhs); }
+    inline bool operator!=(const XLCellReference& lhs, const XLCellReference& rhs) noexcept { return !(lhs == rhs); }
 
     /**
-     * @brief Helper function to check if one XLCellReference is smaller than another.
-     * @param lhs The first XLCellReference
-     * @param rhs The second XLCellReference
-     * @return true if lhs < rhs; otherwise false.
+     * @brief Evaluates precedence primarily by row, then by column, allowing cell ranges to be sorted efficiently and sequentially from left-to-right, top-to-bottom.
      */
-    inline bool operator<(const XLCellReference& lhs, const XLCellReference& rhs)
+    inline bool operator<(const XLCellReference& lhs, const XLCellReference& rhs) noexcept
     { return lhs.row() < rhs.row() or (lhs.row() <= rhs.row() and lhs.column() < rhs.column()); }
 
     /**
-     * @brief Helper function to check if one XLCellReference is larger than another.
-     * @param lhs The first XLCellReference
-     * @param rhs The second XLCellReference
-     * @return true if lhs > rhs; otherwise false.
+     * @brief Inverts the less-than operator logic to verify strict left-to-right, top-to-bottom traversal dominance.
      */
-    inline bool operator>(const XLCellReference& lhs, const XLCellReference& rhs) { return (rhs < lhs); }
+    inline bool operator>(const XLCellReference& lhs, const XLCellReference& rhs) noexcept { return (rhs < lhs); }
 
     /**
-     * @brief Helper function to check if one XLCellReference is smaller than or equal to another.
-     * @param lhs The first XLCellReference
-     * @param rhs The second XLCellReference
-     * @return true if lhs <= rhs; otherwise false
+     * @brief Asserts whether a cell sequentially precedes or occupies the exact same coordinate as another.
      */
-    inline bool operator<=(const XLCellReference& lhs, const XLCellReference& rhs) { return !(lhs > rhs); }
+    inline bool operator<=(const XLCellReference& lhs, const XLCellReference& rhs) noexcept { return !(lhs > rhs); }
 
     /**
-     * @brief Helper function to check if one XLCellReference is larger than or equal to another.
-     * @param lhs The first XLCellReference
-     * @param rhs The second XLCellReference
-     * @return true if lhs >= rhs; otherwise false.
+     * @brief Asserts whether a cell sequentially follows or occupies the exact same coordinate as another.
      */
-    inline bool operator>=(const XLCellReference& lhs, const XLCellReference& rhs) { return !(lhs < rhs); }
+    inline bool operator>=(const XLCellReference& lhs, const XLCellReference& rhs) noexcept { return !(lhs < rhs); }
 }    // namespace OpenXLSX
 
 #ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
