@@ -4,10 +4,12 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <memory>
 #include <string_view>
 #include "OpenXLSX-Exports.hpp"
 #include "XLXmlParser.hpp"
 #include "XLStyles.hpp"
+#include "XLColor.hpp"
 
 namespace OpenXLSX
 {
@@ -65,12 +67,143 @@ namespace OpenXLSX
         Invalid   = 255
     };
 
+    enum class XLCfvoType : uint8_t {
+        Min        = 0,
+        Max        = 1,
+        Number     = 2,
+        Percent    = 3,
+        Formula    = 4,
+        Percentile = 5,
+        Invalid    = 255
+    };
+
     OPENXLSX_EXPORT XLCfType XLCfTypeFromString(std::string const& typeString);
     OPENXLSX_EXPORT std::string  XLCfTypeToString(XLCfType cfType);
     OPENXLSX_EXPORT XLCfOperator XLCfOperatorFromString(std::string const& operatorString);
     OPENXLSX_EXPORT std::string    XLCfOperatorToString(XLCfOperator cfOperator);
     OPENXLSX_EXPORT XLCfTimePeriod XLCfTimePeriodFromString(std::string const& timePeriodString);
     OPENXLSX_EXPORT std::string XLCfTimePeriodToString(XLCfTimePeriod cfTimePeriod);
+    OPENXLSX_EXPORT XLCfvoType XLCfvoTypeFromString(std::string const& cfvoTypeString);
+    OPENXLSX_EXPORT std::string XLCfvoTypeToString(XLCfvoType cfvoType);
+
+    class OPENXLSX_EXPORT XLCfvo
+    {
+        friend class XLCfColorScale;
+        friend class XLCfDataBar;
+        friend class XLCfIconSet;
+        friend class XLCfRule;
+    public:
+        XLCfvo();
+        explicit XLCfvo(const XMLNode& node);
+        XLCfvo(const XLCfvo& other);
+        XLCfvo(XLCfvo&& other) noexcept;
+        ~XLCfvo();
+
+        XLCfvo& operator=(const XLCfvo& other);
+        XLCfvo& operator=(XLCfvo&& other) noexcept;
+
+        XLCfvoType type() const;
+        std::string value() const;
+        bool gte() const;
+
+        void setType(XLCfvoType type);
+        void setValue(const std::string& value);
+        void setGte(bool gte);
+
+        XMLNode node() const { return m_cfvoNode; }
+
+    private:
+        std::unique_ptr<XMLDocument> m_xmlDocument;
+        mutable XMLNode m_cfvoNode;
+    };
+
+    class OPENXLSX_EXPORT XLCfColorScale
+    {
+    public:
+        XLCfColorScale();
+        explicit XLCfColorScale(const XMLNode& node);
+        XLCfColorScale(const XLCfColorScale& other);
+        XLCfColorScale(XLCfColorScale&& other) noexcept;
+        ~XLCfColorScale();
+
+        XLCfColorScale& operator=(const XLCfColorScale& other);
+        XLCfColorScale& operator=(XLCfColorScale&& other) noexcept;
+
+        std::vector<XLCfvo> cfvos() const;
+        std::vector<XLColor> colors() const;
+
+        void addValue(XLCfvoType type, const std::string& value, const XLColor& color);
+        void clear();
+
+        XMLNode node() const { return m_colorScaleNode; }
+
+    private:
+        std::unique_ptr<XMLDocument> m_xmlDocument;
+        mutable XMLNode m_colorScaleNode;
+    };
+
+    class OPENXLSX_EXPORT XLCfDataBar
+    {
+    public:
+        XLCfDataBar();
+        explicit XLCfDataBar(const XMLNode& node);
+        XLCfDataBar(const XLCfDataBar& other);
+        XLCfDataBar(XLCfDataBar&& other) noexcept;
+        ~XLCfDataBar();
+
+        XLCfDataBar& operator=(const XLCfDataBar& other);
+        XLCfDataBar& operator=(XLCfDataBar&& other) noexcept;
+
+        XLCfvo min() const;
+        XLCfvo max() const;
+        XLColor color() const;
+
+        void setMin(XLCfvoType type, const std::string& value);
+        void setMax(XLCfvoType type, const std::string& value);
+        void setColor(const XLColor& color);
+
+        bool showValue() const;
+        void setShowValue(bool show);
+
+        XMLNode node() const { return m_dataBarNode; }
+
+    private:
+        std::unique_ptr<XMLDocument> m_xmlDocument;
+        mutable XMLNode m_dataBarNode;
+    };
+
+    class OPENXLSX_EXPORT XLCfIconSet
+    {
+    public:
+        XLCfIconSet();
+        explicit XLCfIconSet(const XMLNode& node);
+        XLCfIconSet(const XLCfIconSet& other);
+        XLCfIconSet(XLCfIconSet&& other) noexcept;
+        ~XLCfIconSet();
+
+        XLCfIconSet& operator=(const XLCfIconSet& other);
+        XLCfIconSet& operator=(XLCfIconSet&& other) noexcept;
+
+        std::string iconSet() const;
+        void setIconSet(const std::string& iconSetName);
+
+        std::vector<XLCfvo> cfvos() const;
+        void addValue(XLCfvoType type, const std::string& value);
+        void clear();
+
+        bool showValue() const;
+        void setShowValue(bool show);
+        bool percent() const;
+        void setPercent(bool percent);
+        bool reverse() const;
+        void setReverse(bool reverse);
+
+        XMLNode node() const { return m_iconSetNode; }
+
+    private:
+        std::unique_ptr<XMLDocument> m_xmlDocument;
+        mutable XMLNode m_iconSetNode;
+    };
 
     class OPENXLSX_EXPORT XLCfRule
     {
@@ -87,9 +220,9 @@ namespace OpenXLSX
 
         bool empty() const;
         std::string          formula() const;
-        XLUnsupportedElement colorScale() const;
-        XLUnsupportedElement dataBar() const;
-        XLUnsupportedElement iconSet() const;
+        XLCfColorScale       colorScale() const;
+        XLCfDataBar          dataBar() const;
+        XLCfIconSet          iconSet() const;
         XLUnsupportedElement extLst() const;
 
         XLCfType     type() const;
@@ -107,9 +240,9 @@ namespace OpenXLSX
         bool equalAverage() const;
 
         bool setFormula(std::string const& newFormula);
-        bool setColorScale(XLUnsupportedElement const& newColorScale);
-        bool setDataBar(XLUnsupportedElement const& newDataBar);
-        bool setIconSet(XLUnsupportedElement const& newIconSet);
+        bool setColorScale(XLCfColorScale const& newColorScale);
+        bool setDataBar(XLCfDataBar const& newDataBar);
+        bool setIconSet(XLCfIconSet const& newIconSet);
         bool setExtLst(XLUnsupportedElement const& newExtLst);
 
         bool setType(XLCfType newType);
@@ -207,7 +340,7 @@ namespace OpenXLSX
     {
     public:
         XLConditionalFormats();
-        explicit XLConditionalFormats(const XMLNode& node);
+        explicit XLConditionalFormats(const XMLNode& sheet);
         XLConditionalFormats(const XLConditionalFormats& other);
         XLConditionalFormats(XLConditionalFormats&& other) noexcept;
         ~XLConditionalFormats();
