@@ -16,6 +16,16 @@ TEST_CASE("XLDxf Tests", "[Dxf]") {
         REQUIRE_FALSE(dxf.hasBorder());
         REQUIRE(dxf.font().fontColor() == XLColor(255, 0, 0));
         REQUIRE(dxf.fill().patternType() == XLPatternSolid);
+        
+        // OOXML Validation for the solid fill fix (fgColor AND bgColor)
+        XMLNode fillNode = dxf.node().child("fill").child("patternFill");
+        REQUIRE(std::string(fillNode.child("fgColor").attribute("rgb").value()) == "ffffff00");
+        REQUIRE(std::string(fillNode.child("bgColor").attribute("rgb").value()) == "ffffff00");
+
+        // Test clear methods
+        dxf.clearFont();
+        REQUIRE_FALSE(dxf.hasFont());
+        REQUIRE(dxf.hasFill());
     }
 
     SECTION("Integration: Apply DXF to Conditional Formatting") {

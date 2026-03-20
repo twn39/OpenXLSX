@@ -212,18 +212,19 @@ namespace OpenXLSX
         XLCfRule();
         explicit XLCfRule(const XMLNode& node);
         XLCfRule(const XLCfRule& other);
-        XLCfRule(XLCfRule&& other) noexcept = default;
+        XLCfRule(XLCfRule&& other) noexcept;
         ~XLCfRule();
 
         XLCfRule& operator=(const XLCfRule& other);
-        XLCfRule& operator=(XLCfRule&& other) noexcept = default;
+        XLCfRule& operator=(XLCfRule&& other) noexcept;
 
         bool empty() const;
-        std::string          formula() const;
-        XLCfColorScale       colorScale() const;
-        XLCfDataBar          dataBar() const;
-        XLCfIconSet          iconSet() const;
-        XLUnsupportedElement extLst() const;
+        std::string              formula() const;
+        std::vector<std::string> formulas() const;
+        XLCfColorScale           colorScale() const;
+        XLCfDataBar              dataBar() const;
+        XLCfIconSet              iconSet() const;
+        XLUnsupportedElement     extLst() const;
 
         XLCfType     type() const;
         XLStyleIndex dxfId() const;
@@ -240,6 +241,8 @@ namespace OpenXLSX
         bool equalAverage() const;
 
         bool setFormula(std::string const& newFormula);
+        bool addFormula(std::string const& newFormula);
+        void clearFormulas();
         bool setColorScale(XLCfColorScale const& newColorScale);
         bool setDataBar(XLCfDataBar const& newDataBar);
         bool setIconSet(XLCfIconSet const& newIconSet);
@@ -264,7 +267,10 @@ namespace OpenXLSX
 
         std::string summary() const;
 
+        XMLNode node() const { return m_cfRuleNode; }
+
     private:
+        std::unique_ptr<XMLDocument> m_xmlDocument;
         mutable XMLNode m_cfRuleNode;
         inline static const std::vector<std::string_view> m_nodeOrder = {
             "formula",

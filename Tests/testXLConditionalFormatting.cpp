@@ -58,6 +58,31 @@ TEST_CASE("XLConditionalFormatting Tests", "[ConditionalFormatting]") {
         REQUIRE(iconSet.reverse() == true);
     }
 
+    SECTION("Multi-Formula Support") {
+        XLCfRule rule;
+        rule.setType(XLCfType::CellIs);
+        rule.setOperator(XLCfOperator::Between);
+        rule.addFormula("10");
+        rule.addFormula("20");
+
+        auto formulas = rule.formulas();
+        REQUIRE(formulas.size() == 2);
+        REQUIRE(formulas[0] == "10");
+        REQUIRE(formulas[1] == "20");
+
+        // OOXML Validation
+        int count = 0;
+        for (auto& node : rule.node().children("formula")) {
+            if (count == 0) REQUIRE(std::string(node.text().get()) == "10");
+            if (count == 1) REQUIRE(std::string(node.text().get()) == "20");
+            count++;
+        }
+        REQUIRE(count == 2);
+
+        rule.clearFormulas();
+        REQUIRE(rule.formulas().empty());
+    }
+
     SECTION("Worksheet Integration and OOXML Validation") {
         XLDocument doc;
         doc.create("CFTest.xlsx", XLForceOverwrite);

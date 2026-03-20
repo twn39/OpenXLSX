@@ -492,14 +492,43 @@ void XLCfIconSet::setReverse(bool reverse) {
     m_iconSetNode.attribute("reverse").set_value(reverse); 
 }
 
-XLCfRule::XLCfRule() : m_cfRuleNode(XMLNode()) {}
+XLCfRule::XLCfRule() : m_xmlDocument(std::make_unique<XMLDocument>()), m_cfRuleNode(XMLNode()) 
+{
+    m_cfRuleNode = m_xmlDocument->append_child("cfRule");
+}
 XLCfRule::XLCfRule(const XMLNode& node) : m_cfRuleNode(node) {}
-XLCfRule::XLCfRule(const XLCfRule& other) : m_cfRuleNode(other.m_cfRuleNode) {}
+XLCfRule::XLCfRule(const XLCfRule& other) : m_cfRuleNode(other.m_cfRuleNode) 
+{
+    if (other.m_xmlDocument) {
+        m_xmlDocument = std::make_unique<XMLDocument>();
+        m_xmlDocument->reset(*other.m_xmlDocument);
+        m_cfRuleNode = m_xmlDocument->document_element();
+    }
+}
+XLCfRule::XLCfRule(XLCfRule&& other) noexcept : m_xmlDocument(std::move(other.m_xmlDocument)), m_cfRuleNode(other.m_cfRuleNode) {}
 XLCfRule::~XLCfRule() = default;
 
 XLCfRule& XLCfRule::operator=(const XLCfRule& other)
 {
-    if (&other != this) m_cfRuleNode = other.m_cfRuleNode;
+    if (&other != this) {
+        m_cfRuleNode = other.m_cfRuleNode;
+        if (other.m_xmlDocument) {
+            m_xmlDocument = std::make_unique<XMLDocument>();
+            m_xmlDocument->reset(*other.m_xmlDocument);
+            m_cfRuleNode = m_xmlDocument->document_element();
+        } else {
+            m_xmlDocument.reset();
+        }
+    }
+    return *this;
+}
+
+XLCfRule& XLCfRule::operator=(XLCfRule&& other) noexcept 
+{
+    if (this != &other) {
+        m_xmlDocument = std::move(other.m_xmlDocument);
+        m_cfRuleNode = other.m_cfRuleNode;
+    }
     return *this;
 }
 
@@ -508,6 +537,15 @@ bool XLCfRule::empty() const { return m_cfRuleNode.empty(); }
 std::string XLCfRule::formula() const
 {
     return m_cfRuleNode.child("formula").first_child_of_type(pugi::node_pcdata).value();
+}
+
+std::vector<std::string> XLCfRule::formulas() const
+{
+    std::vector<std::string> result;
+    for (auto& node : m_cfRuleNode.children("formula")) {
+        result.emplace_back(node.text().get());
+    }
+    return result;
 }
 
 XLCfColorScale XLCfRule::colorScale() const { return XLCfColorScale(m_cfRuleNode.child("colorScale")); }
@@ -531,10 +569,31 @@ bool           XLCfRule::equalAverage() const { return m_cfRuleNode.attribute("e
 
 bool XLCfRule::setFormula(std::string const& newFormula)
 {
-    XMLNode formula = appendAndGetNode(m_cfRuleNode, "formula", m_nodeOrder);
-    if (formula.empty()) return false;
-    formula.remove_children();
-    return formula.append_child(pugi::node_pcdata).set_value(newFormula.c_str());
+    clearFormulas();
+    return addFormula(newFormula);
+}
+
+bool XLCfRule::addFormula(std::string const& newFormula)
+{
+    // Find where to insert: before the first non-formula child that is in m_nodeOrder
+    XMLNode insertBefore = XMLNode();
+    for (auto child : m_cfRuleNode.children()) {
+        std::string_view name = child.name();
+        if (name != "formula") {
+            insertBefore = child;
+            break;
+        }
+    }
+    
+    XMLNode newNode = insertBefore.empty() ? m_cfRuleNode.append_child("formula") : m_cfRuleNode.insert_child_before("formula", insertBefore);
+    return newNode.append_child(pugi::node_pcdata).set_value(newFormula.c_str());
+}
+
+void XLCfRule::clearFormulas()
+{
+    while (!m_cfRuleNode.child("formula").empty()) {
+        m_cfRuleNode.remove_child("formula");
+    }
 }
 
 bool XLCfRule::setColorScale(XLCfColorScale const& newColorScale)

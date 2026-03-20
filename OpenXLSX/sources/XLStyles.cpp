@@ -1200,7 +1200,13 @@ bool XLFill::setColor(XLColor newColor)
 {
     XMLNode fillDescription = getValidFillDescription(XLPatternFill, __func__);
     if (fillDescription.empty()) return false;    // if no description could be fetched: fail
-    return appendAndSetNodeAttribute(fillDescription, "fgColor", "rgb", newColor.hex(), XLRemoveAttributes).empty() == false;
+    
+    // For solid fills, Excel requires both fgColor and bgColor to be set in DXF contexts (Conditional Formatting),
+    // and it's a safe best-practice for regular styles as well to ensure consistent rendering.
+    bool res = appendAndSetNodeAttribute(fillDescription, "fgColor", "rgb", newColor.hex(), XLRemoveAttributes).empty() == false;
+    if (patternType() == XLPatternSolid)
+        res &= appendAndSetNodeAttribute(fillDescription, "bgColor", "rgb", newColor.hex(), XLRemoveAttributes).empty() == false;
+    return res;
 }
 bool XLFill::setBackgroundColor(XLColor newBgColor)
 {
