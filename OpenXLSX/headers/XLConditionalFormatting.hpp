@@ -375,6 +375,18 @@ namespace OpenXLSX
     OPENXLSX_EXPORT XLCfRule XLCellIsRule(const std::string& op, const std::string& value);
     OPENXLSX_EXPORT XLCfRule XLFormulaRule(const std::string& formula);
 
+    // Advanced builders
+    OPENXLSX_EXPORT XLCfRule XLIconSetRule(const std::string& iconSetName = "3TrafficLights1", bool showValue = true, bool reverse = false);
+    OPENXLSX_EXPORT XLCfRule XLTop10Rule(uint16_t rank = 10, bool percent = false, bool bottom = false);
+    OPENXLSX_EXPORT XLCfRule XLAboveAverageRule(bool aboveAverage = true, bool equalAverage = false, int16_t stdDev = 0);
+    OPENXLSX_EXPORT XLCfRule XLDuplicateValuesRule(bool unique = false);
+    OPENXLSX_EXPORT XLCfRule XLContainsTextRule(const std::string& text);
+    OPENXLSX_EXPORT XLCfRule XLNotContainsTextRule(const std::string& text);
+    OPENXLSX_EXPORT XLCfRule XLContainsBlanksRule();
+    OPENXLSX_EXPORT XLCfRule XLNotContainsBlanksRule();
+    OPENXLSX_EXPORT XLCfRule XLContainsErrorsRule();
+    OPENXLSX_EXPORT XLCfRule XLNotContainsErrorsRule();
+
 }
 
 #endif

@@ -490,6 +490,31 @@ void XLWorksheet::addConditionalFormatting(const XLCellRange& range, const XLCfR
     addConditionalFormatting(range.address(), rule, dxf);
 }
 
+void XLWorksheet::removeConditionalFormatting(const std::string& sqref)
+{
+    auto rootNode = xmlDocument().document_element();
+    for (XMLNode node = rootNode.child("conditionalFormatting"); not node.empty(); ) {
+        XMLNode next = node.next_sibling("conditionalFormatting");
+        if (std::string(node.attribute("sqref").value()) == sqref) {
+            rootNode.remove_child(node);
+        }
+        node = next;
+    }
+}
+
+void XLWorksheet::removeConditionalFormatting(const XLCellRange& range)
+{
+    removeConditionalFormatting(range.address());
+}
+
+void XLWorksheet::clearAllConditionalFormatting()
+{
+    auto rootNode = xmlDocument().document_element();
+    while (XMLNode node = rootNode.child("conditionalFormatting")) {
+        rootNode.remove_child(node);
+    }
+}
+
 XLPageMargins XLWorksheet::pageMargins() const
 {
     XMLNode rootNode = xmlDocument().document_element();

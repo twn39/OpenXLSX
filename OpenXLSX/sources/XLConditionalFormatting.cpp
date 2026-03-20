@@ -1013,4 +1013,104 @@ XLCfRule XLFormulaRule(const std::string& formula)
     return rule;
 }
 
+// Advanced builders
+XLCfRule XLIconSetRule(const std::string& iconSetName, bool showValue, bool reverse)
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::IconSet);
+    XLCfIconSet iconSet;
+    iconSet.setIconSet(iconSetName);
+    
+    if (!showValue) iconSet.setShowValue(false);
+    if (reverse) iconSet.setReverse(true);
+    
+    // Determine number of icons by looking at the first character of the iconSetName (e.g., "3Arrows", "4TrafficLights", "5Rating")
+    int numIcons = 3; // default
+    if (!iconSetName.empty() && std::isdigit(iconSetName[0])) {
+        numIcons = iconSetName[0] - '0';
+    }
+    
+    // Generate evenly spaced percentile thresholds (e.g., for 3: 0, 33, 67)
+    for (int i = 0; i < numIcons; ++i) {
+        int percent = (i * 100) / numIcons;
+        iconSet.addValue(XLCfvoType::Percent, std::to_string(percent));
+    }
+    
+    rule.setIconSet(iconSet);
+    return rule;
+}
+
+XLCfRule XLTop10Rule(uint16_t rank, bool percent, bool bottom)
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::Top10);
+    rule.setRank(rank);
+    if (percent) rule.setPercent(true);
+    if (bottom) rule.setBottom(true);
+    return rule;
+}
+
+XLCfRule XLAboveAverageRule(bool aboveAverage, bool equalAverage, int16_t stdDev)
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::AboveAverage);
+    if (!aboveAverage) rule.setAboveAverage(false);
+    if (equalAverage) rule.setEqualAverage(true);
+    if (stdDev > 0) rule.setStdDev(stdDev);
+    return rule;
+}
+
+XLCfRule XLDuplicateValuesRule(bool unique)
+{
+    XLCfRule rule;
+    rule.setType(unique ? XLCfType::UniqueValues : XLCfType::DuplicateValues);
+    return rule;
+}
+
+XLCfRule XLContainsTextRule(const std::string& text)
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::ContainsText);
+    rule.setText(text);
+    rule.setOperator(XLCfOperator::ContainsText);
+    return rule;
+}
+
+XLCfRule XLNotContainsTextRule(const std::string& text)
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::NotContainsText);
+    rule.setText(text);
+    rule.setOperator(XLCfOperator::NotContains);
+    return rule;
+}
+
+XLCfRule XLContainsBlanksRule()
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::ContainsBlanks);
+    return rule;
+}
+
+XLCfRule XLNotContainsBlanksRule()
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::NotContainsBlanks);
+    return rule;
+}
+
+XLCfRule XLContainsErrorsRule()
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::ContainsErrors);
+    return rule;
+}
+
+XLCfRule XLNotContainsErrorsRule()
+{
+    XLCfRule rule;
+    rule.setType(XLCfType::NotContainsErrors);
+    return rule;
+}
+
 }

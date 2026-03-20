@@ -148,6 +148,10 @@ namespace OpenXLSX
         void addConditionalFormatting(const XLCellRange& range, const XLCfRule& rule);
         void addConditionalFormatting(const XLCellRange& range, const XLCfRule& rule, const XLDxf& dxf);
 
+        void removeConditionalFormatting(const std::string& sqref);
+        void removeConditionalFormatting(const XLCellRange& range);
+        void clearAllConditionalFormatting();
+
         XLPageMargins pageMargins() const;
         XLPrintOptions printOptions() const;
         XLPageSetup pageSetup() const;

@@ -68,3 +68,31 @@ TEST_CASE("Conditional Formatting OOXML Structure Validation", "[ConditionalForm
 
     doc.close();
 }
+
+TEST_CASE("Conditional Formatting Advanced Rules and Deletion", "[ConditionalFormatting][OOXML]") {
+    XLDocument doc;
+    doc.create("CF_Advanced_Deletion.xlsx", XLForceOverwrite);
+    auto wks = doc.workbook().worksheet("Sheet1");
+
+    wks.addConditionalFormatting("A1:A10", XLIconSetRule("3Arrows"));
+    wks.addConditionalFormatting("B1:B10", XLTop10Rule(5, true, false));
+    wks.addConditionalFormatting("C1:C10", XLAboveAverageRule(true, true, 1));
+    wks.addConditionalFormatting("D1:D10", XLDuplicateValuesRule());
+    wks.addConditionalFormatting("E1:E10", XLContainsTextRule("Error"));
+
+    auto cfList = wks.conditionalFormats();
+    REQUIRE(cfList.count() == 5);
+
+    // Test Deletion
+    wks.removeConditionalFormatting("C1:C10");
+    cfList = wks.conditionalFormats();
+    REQUIRE(cfList.count() == 4);
+
+    doc.save();
+
+    wks.clearAllConditionalFormatting();
+    cfList = wks.conditionalFormats();
+    REQUIRE(cfList.count() == 0);
+
+    doc.close();
+}
