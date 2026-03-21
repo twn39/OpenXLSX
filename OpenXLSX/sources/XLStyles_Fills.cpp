@@ -2,11 +2,11 @@
 #include <cstdint>
 #include <gsl/gsl>
 #include <fmt/format.h>
-#include <memory>      // std::make_unique
+#include <memory>     
 #include <pugixml.hpp>
-#include <stdexcept>    // std::invalid_argument
-#include <string>       // std::stoi, std::literals::string_literals
-#include <vector>       // std::vector
+#include <stdexcept>   
+#include <string>      
+#include <vector>      
 
 // ===== OpenXLSX Includes ===== //
 #include "XLColor.hpp"
@@ -184,7 +184,7 @@ XLGradientStops::XLGradientStops(const XMLNode& gradient) : m_gradientNode(std::
 
 XLGradientStops::~XLGradientStops()
 {
-    m_gradientStops.clear();    // delete vector with all children
+    m_gradientStops.clear();   
 }
 
 XLGradientStops::XLGradientStops(const XLGradientStops& other)
@@ -217,8 +217,8 @@ XLGradientStop XLGradientStops::stopByIndex(XLStyleIndex index) const
 
 XLStyleIndex XLGradientStops::create(XLGradientStop copyFrom, std::string_view styleEntriesPrefix)
 {
-    XLStyleIndex index = count();    // index for the gradient stop to be created
-    XMLNode      newNode{};          // scope declaration
+    XLStyleIndex index = count();   
+    XMLNode      newNode{};         
 
     // ===== Append new node prior to final whitespaces, if any
     XMLNode lastStyle = m_gradientNode->last_child_of_type(pugi::node_element);
@@ -230,21 +230,21 @@ XLStyleIndex XLGradientStops::create(XLGradientStop copyFrom, std::string_view s
         using namespace std::literals::string_literals;
         throw XLException("XLGradientStops::"s + __func__ + ": failed to append a new stop node"s);
     }
-    if (styleEntriesPrefix.length() > 0)    // if a whitespace prefix is configured
+    if (styleEntriesPrefix.length() > 0)   
         m_gradientNode->insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());    // prefix the new node with styleEntriesPrefix
+            .set_value(std::string(styleEntriesPrefix).c_str());   
 
     XLGradientStop newStop(newNode);
-    if (copyFrom.m_stopNode->empty()) {    // if no template is given
+    if (copyFrom.m_stopNode->empty()) {   
         // ===== Create a stop node with default values
         newStop.setPosition(0.0);
         newStop.color().setRgb(XLColor(OpenXLSX::XLDefaultPatternFgColor));
     }
     else
-        copyXMLNode(newNode, *copyFrom.m_stopNode);    // will use copyFrom as template, does nothing if copyFrom is empty
+        copyXMLNode(newNode, *copyFrom.m_stopNode);   
 
     m_gradientStops.push_back(newStop);
-    appendAndSetAttribute(*m_gradientNode, "count", std::to_string(m_gradientStops.size()));    // update array count in XML
+    appendAndSetAttribute(*m_gradientNode, "count", std::to_string(m_gradientStops.size()));   
     return index;
 }
 
@@ -468,7 +468,7 @@ XLFills::XLFills(const XMLNode& fills) : m_fillsNode(std::make_unique<XMLNode>(f
 
 XLFills::~XLFills()
 {
-    m_fills.clear();    // delete vector with all children
+    m_fills.clear();   
 }
 
 XLFills::XLFills(const XLFills& other) : m_fillsNode(std::make_unique<XMLNode>(*other.m_fillsNode)), m_fills(other.m_fills) {}
@@ -495,8 +495,8 @@ XLFill XLFills::fillByIndex(XLStyleIndex index) const
 
 XLStyleIndex XLFills::create(XLFill copyFrom, std::string_view styleEntriesPrefix)
 {
-    XLStyleIndex index = count();    // index for the fill to be created
-    XMLNode      newNode{};          // scope declaration
+    XLStyleIndex index = count();   
+    XMLNode      newNode{};         
 
     // ===== Append new node prior to final whitespaces, if any
     XMLNode lastStyle = m_fillsNode->last_child_of_type(pugi::node_element);
@@ -508,20 +508,20 @@ XLStyleIndex XLFills::create(XLFill copyFrom, std::string_view styleEntriesPrefi
         using namespace std::literals::string_literals;
         throw XLException("XLFills::"s + __func__ + ": failed to append a new fill node"s);
     }
-    if (styleEntriesPrefix.length() > 0)    // if a whitespace prefix is configured
+    if (styleEntriesPrefix.length() > 0)   
         m_fillsNode->insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());    // prefix the new node with styleEntriesPrefix
+            .set_value(std::string(styleEntriesPrefix).c_str());   
 
     XLFill newFill(newNode);
-    if (copyFrom.m_fillNode->empty()) {    // if no template is given
+    if (copyFrom.m_fillNode->empty()) {   
         // ===== Create a fill with default values
         newFill.setPatternType(OpenXLSX::XLDefaultPatternType);
     }
     else
-        copyXMLNode(newNode, *copyFrom.m_fillNode);    // will use copyFrom as template, does nothing if copyFrom is empty
+        copyXMLNode(newNode, *copyFrom.m_fillNode);   
 
     m_fills.push_back(newFill);
-    appendAndSetAttribute(*m_fillsNode, "count", std::to_string(m_fills.size()));    // update array count in XML
+    appendAndSetAttribute(*m_fillsNode, "count", std::to_string(m_fills.size()));   
     return index;
 }
 

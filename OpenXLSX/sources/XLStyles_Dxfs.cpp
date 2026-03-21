@@ -2,11 +2,11 @@
 #include <cstdint>
 #include <gsl/gsl>
 #include <fmt/format.h>
-#include <memory>      // std::make_unique
+#include <memory>     
 #include <pugixml.hpp>
-#include <stdexcept>    // std::invalid_argument
-#include <string>       // std::stoi, std::literals::string_literals
-#include <vector>       // std::vector
+#include <stdexcept>   
+#include <string>      
+#include <vector>      
 
 // ===== OpenXLSX Includes ===== //
 #include "XLColor.hpp"
@@ -148,7 +148,7 @@ XLDxfs::XLDxfs(const XMLNode& dxfs) : m_dxfsNode(dxfs)
 
 XLDxfs::~XLDxfs()
 {
-    m_dxfs.clear();    // delete vector with all children
+    m_dxfs.clear();   
 }
 
 XLDxfs::XLDxfs(const XLDxfs& other)
@@ -190,8 +190,8 @@ XLDxf XLDxfs::dxfByIndex(XLStyleIndex index) const
 
 XLStyleIndex XLDxfs::create(XLDxf copyFrom, std::string_view styleEntriesPrefix)
 {
-    XLStyleIndex index = count();    // index for the cell style to be created
-    XMLNode      newNode{};          // scope declaration
+    XLStyleIndex index = count();   
+    XMLNode      newNode{};         
 
     // ===== Append new node prior to final whitespaces, if any
     XMLNode lastDxf = m_dxfsNode.last_child_of_type(pugi::node_element);
@@ -203,19 +203,19 @@ XLStyleIndex XLDxfs::create(XLDxf copyFrom, std::string_view styleEntriesPrefix)
         using namespace std::literals::string_literals;
         throw XLException("XLDxfs::"s + __func__ + ": failed to append a new dxf node"s);
     }
-    if (styleEntriesPrefix.length() > 0)    // if a whitespace prefix is configured
+    if (styleEntriesPrefix.length() > 0)   
         m_dxfsNode.insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());    // prefix the new node with styleEntriesPrefix
+            .set_value(std::string(styleEntriesPrefix).c_str());   
 
     XLDxf newDxf(newNode);
-    if (copyFrom.node().empty()) {    // if no template is given
+    if (copyFrom.node().empty()) {   
         // no-op: differential cell format entries have NO default values
     }
     else
-        copyXMLNode(newNode, copyFrom.node());    // will use copyFrom as template, does nothing if copyFrom is empty
+        copyXMLNode(newNode, copyFrom.node());   
 
     m_dxfs.push_back(newDxf);
-    appendAndSetAttribute(m_dxfsNode, "count", std::to_string(m_dxfs.size()));    // update array count in XML
+    appendAndSetAttribute(m_dxfsNode, "count", std::to_string(m_dxfs.size()));   
     return index;
 }
 

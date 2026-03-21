@@ -2,11 +2,11 @@
 #include <cstdint>
 #include <gsl/gsl>
 #include <fmt/format.h>
-#include <memory>      // std::make_unique
+#include <memory>     
 #include <pugixml.hpp>
-#include <stdexcept>    // std::invalid_argument
-#include <string>       // std::stoi, std::literals::string_literals
-#include <vector>       // std::vector
+#include <stdexcept>   
+#include <string>      
+#include <vector>      
 
 // ===== OpenXLSX Includes ===== //
 #include "XLColor.hpp"
@@ -297,7 +297,7 @@ XLCellFormats::XLCellFormats(const XMLNode& cellStyleFormats, bool permitXfId)
 
 XLCellFormats::~XLCellFormats()
 {
-    m_cellFormats.clear();    // delete vector with all children
+    m_cellFormats.clear();   
 }
 
 XLCellFormats::XLCellFormats(const XLCellFormats& other)
@@ -333,8 +333,8 @@ XLCellFormat XLCellFormats::cellFormatByIndex(XLStyleIndex index) const
 
 XLStyleIndex XLCellFormats::create(XLCellFormat copyFrom, std::string_view styleEntriesPrefix)
 {
-    XLStyleIndex index = count();    // index for the cell format to be created
-    XMLNode      newNode{};          // scope declaration
+    XLStyleIndex index = count();   
+    XMLNode      newNode{};         
 
     // ===== Append new node prior to final whitespaces, if any
     XMLNode lastStyle = m_cellFormatsNode->last_child_of_type(pugi::node_element);
@@ -346,12 +346,12 @@ XLStyleIndex XLCellFormats::create(XLCellFormat copyFrom, std::string_view style
         using namespace std::literals::string_literals;
         throw XLException("XLCellFormats::"s + __func__ + ": failed to append a new xf node"s);
     }
-    if (styleEntriesPrefix.length() > 0)    // if a whitespace prefix is configured
+    if (styleEntriesPrefix.length() > 0)   
         m_cellFormatsNode->insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());    // prefix the new node with styleEntriesPrefix
+            .set_value(std::string(styleEntriesPrefix).c_str());   
 
     XLCellFormat newCellFormat(newNode, m_permitXfId);
-    if (copyFrom.m_cellFormatNode->empty()) {    // if no template is given
+    if (copyFrom.m_cellFormatNode->empty()) {   
         // ===== Create a cell format with default values
         // default index 0 for other style elements should protect from exceptions
         newCellFormat.setNumberFormatId(0);
@@ -375,10 +375,10 @@ XLStyleIndex XLCellFormats::create(XLCellFormat copyFrom, std::string_view style
         newCellFormat.setExtLst(XLUnsupportedElement{});
     }
     else
-        copyXMLNode(newNode, *copyFrom.m_cellFormatNode);    // will use copyFrom as template, does nothing if copyFrom is empty
+        copyXMLNode(newNode, *copyFrom.m_cellFormatNode);   
 
     m_cellFormats.push_back(newCellFormat);
-    appendAndSetAttribute(*m_cellFormatsNode, "count", std::to_string(m_cellFormats.size()));    // update array count in XML
+    appendAndSetAttribute(*m_cellFormatsNode, "count", std::to_string(m_cellFormats.size()));   
     return index;
 }
 

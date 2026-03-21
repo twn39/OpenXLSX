@@ -2,11 +2,11 @@
 #include <cstdint>
 #include <gsl/gsl>
 #include <fmt/format.h>
-#include <memory>      // std::make_unique
+#include <memory>     
 #include <pugixml.hpp>
-#include <stdexcept>    // std::invalid_argument
-#include <string>       // std::stoi, std::literals::string_literals
-#include <vector>       // std::vector
+#include <stdexcept>   
+#include <string>      
+#include <vector>      
 
 // ===== OpenXLSX Includes ===== //
 #include "XLColor.hpp"
@@ -94,7 +94,7 @@ XLCellStyles::XLCellStyles(const XMLNode& cellStyles) : m_cellStylesNode(std::ma
 
 XLCellStyles::~XLCellStyles()
 {
-    m_cellStyles.clear();    // delete vector with all children
+    m_cellStyles.clear();   
 }
 
 XLCellStyles::XLCellStyles(const XLCellStyles& other)
@@ -127,8 +127,8 @@ XLCellStyle XLCellStyles::cellStyleByIndex(XLStyleIndex index) const
 
 XLStyleIndex XLCellStyles::create(XLCellStyle copyFrom, std::string_view styleEntriesPrefix)
 {
-    XLStyleIndex index = count();    // index for the cell style to be created
-    XMLNode      newNode{};          // scope declaration
+    XLStyleIndex index = count();   
+    XMLNode      newNode{};         
 
     // ===== Append new node prior to final whitespaces, if any
     XMLNode lastStyle = m_cellStylesNode->last_child_of_type(pugi::node_element);
@@ -140,22 +140,22 @@ XLStyleIndex XLCellStyles::create(XLCellStyle copyFrom, std::string_view styleEn
         using namespace std::literals::string_literals;
         throw XLException("XLCellStyles::"s + __func__ + ": failed to append a new cellStyle node"s);
     }
-    if (styleEntriesPrefix.length() > 0)    // if a whitespace prefix is configured
+    if (styleEntriesPrefix.length() > 0)   
         m_cellStylesNode->insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());    // prefix the new node with styleEntriesPrefix
+            .set_value(std::string(styleEntriesPrefix).c_str());   
 
     XLCellStyle newCellStyle(newNode);
-    if (copyFrom.m_cellStyleNode->empty()) {    // if no template is given
+    if (copyFrom.m_cellStyleNode->empty()) {   
         // ===== Create a cell style with default values
         newCellStyle.setName("");
         newCellStyle.setXfId(0);
         newCellStyle.setHidden(false);
     }
     else
-        copyXMLNode(newNode, *copyFrom.m_cellStyleNode);    // will use copyFrom as template, does nothing if copyFrom is empty
+        copyXMLNode(newNode, *copyFrom.m_cellStyleNode);   
 
     m_cellStyles.push_back(newCellStyle);
-    appendAndSetAttribute(*m_cellStylesNode, "count", std::to_string(m_cellStyles.size()));    // update array count in XML
+    appendAndSetAttribute(*m_cellStylesNode, "count", std::to_string(m_cellStyles.size()));   
     return index;
 }
 

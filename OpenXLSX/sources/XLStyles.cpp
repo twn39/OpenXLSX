@@ -71,7 +71,7 @@ namespace {
 
 // ===== XLStyles, master class
 
-XLStyles::XLStyles() {}    // TBD if defaulting this constructor again would reintroduce issue #310
+XLStyles::XLStyles() {}
 
 XLStyles::XLStyles(gsl::not_null<XLXmlData*> xmlData, bool suppressWarnings, std::string_view stylesPrefix)
     : XLXmlFile(xmlData),
@@ -87,38 +87,29 @@ XLStyles::XLStyles(gsl::not_null<XLXmlData*> xmlData, bool suppressWarnings, std
     XMLNode node = doc.document_element().first_child_of_type(pugi::node_element);
     while (not node.empty()) {
         XLStylesEntryType e = XLStylesEntryTypeFromString(node.name());
-        // std::cout << "node.name() is " << node.name() << ", resulting XLStylesEntryType is " << std::to_string(e) << std::endl;
         switch (e) {
             case XLStylesNumberFormats:
-                // std::cout << "found XLStylesNumberFormats, node name is " << node.name() << std::endl;
                 m_numberFormats = std::make_unique<XLNumberFormats>(node);
                 break;
             case XLStylesFonts:
-                // std::cout << "found XLStylesFonts, node name is " << node.name() << std::endl;
                 m_fonts = std::make_unique<XLFonts>(node);
                 break;
             case XLStylesFills:
-                // std::cout << "found XLStylesFills, node name is " << node.name() << std::endl;
                 m_fills = std::make_unique<XLFills>(node);
                 break;
             case XLStylesBorders:
-                // std::cout << "found XLStylesBorders, node name is " << node.name() << std::endl;
                 m_borders = std::make_unique<XLBorders>(node);
                 break;
             case XLStylesCellStyleFormats:
-                // std::cout << "found XLStylesCellStyleFormats, node name is " << node.name() << std::endl;
                 m_cellStyleFormats = std::make_unique<XLCellFormats>(node);
                 break;
             case XLStylesCellFormats:
-                // std::cout << "found XLStylesCellFormats, node name is " << node.name() << std::endl;
                 m_cellFormats = std::make_unique<XLCellFormats>(node, XLPermitXfID);
                 break;
             case XLStylesCellStyles:
-                // std::cout << "found XLStylesCellStyles, node name is " << node.name() << std::endl;
                 m_cellStyles = std::make_unique<XLCellStyles>(node);
                 break;
             case XLStylesDiffCellFormats:
-                // std::cout << "found XLStylesDiffCellFormats, node name is " << node.name() << std::endl;
                 m_dxfs = std::make_unique<XLDxfs>(node);
                 break;
             case XLStylesColors:

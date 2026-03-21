@@ -2,11 +2,11 @@
 #include <cstdint>
 #include <gsl/gsl>
 #include <fmt/format.h>
-#include <memory>      // std::make_unique
+#include <memory>     
 #include <pugixml.hpp>
-#include <stdexcept>    // std::invalid_argument
-#include <string>       // std::stoi, std::literals::string_literals
-#include <vector>       // std::vector
+#include <stdexcept>   
+#include <string>      
+#include <vector>      
 
 // ===== OpenXLSX Includes ===== //
 #include "XLColor.hpp"
@@ -106,8 +106,6 @@ size_t XLFont::fontSize() const
 XLColor XLFont::fontColor() const
 {
     using namespace std::literals::string_literals;
-    // XMLAttribute attr = appendAndGetNodeAttribute(*m_fontNode, "color", "theme", OpenXLSX::XLDefaultFontColorTheme);
-    // TBD what "theme" is and whether it should be supported at all
     XMLAttribute attr = appendAndGetNodeAttribute(*m_fontNode, "color", "rgb", XLDefaultFontColor);
     return XLColor(attr.value());
 }
@@ -198,7 +196,7 @@ XLFonts::XLFonts(const XMLNode& fonts) : m_fontsNode(std::make_unique<XMLNode>(f
 
 XLFonts::~XLFonts()
 {
-    m_fonts.clear();    // delete vector with all children
+    m_fonts.clear();   
 }
 
 XLFonts::XLFonts(const XLFonts& other) : m_fontsNode(std::make_unique<XMLNode>(*other.m_fontsNode)), m_fonts(other.m_fonts) {}
@@ -225,8 +223,8 @@ XLFont XLFonts::fontByIndex(XLStyleIndex index) const
 
 XLStyleIndex XLFonts::create(XLFont copyFrom, std::string_view styleEntriesPrefix)
 {
-    XLStyleIndex index = count();    // index for the font to be created
-    XMLNode      newNode{};          // scope declaration
+    XLStyleIndex index = count();   
+    XMLNode      newNode{};         
 
     // ===== Append new node prior to final whitespaces, if any
     XMLNode lastStyle = m_fontsNode->last_child_of_type(pugi::node_element);
@@ -238,12 +236,12 @@ XLStyleIndex XLFonts::create(XLFont copyFrom, std::string_view styleEntriesPrefi
         using namespace std::literals::string_literals;
         throw XLException("XLFonts::"s + __func__ + ": failed to append a new fonts node"s);
     }
-    if (styleEntriesPrefix.length() > 0)    // if a whitespace prefix is configured
+    if (styleEntriesPrefix.length() > 0)   
         m_fontsNode->insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());    // prefix the new node with styleEntriesPrefix
+            .set_value(std::string(styleEntriesPrefix).c_str());   
 
     XLFont newFont(newNode);
-    if (copyFrom.m_fontNode->empty()) {    // if no template is given
+    if (copyFrom.m_fontNode->empty()) {   
         // ===== Create a font with default values
         newFont.setFontName(OpenXLSX::XLDefaultFontName);
         newFont.setFontSize(OpenXLSX::XLDefaultFontSize);
@@ -252,9 +250,9 @@ XLStyleIndex XLFonts::create(XLFont copyFrom, std::string_view styleEntriesPrefi
         newFont.setFontCharset(OpenXLSX::XLDefaultFontCharset);
     }
     else
-        copyXMLNode(newNode, *copyFrom.m_fontNode);    // will use copyFrom as template, does nothing if copyFrom is empty
+        copyXMLNode(newNode, *copyFrom.m_fontNode);   
 
     m_fonts.push_back(newFont);
-    appendAndSetAttribute(*m_fontsNode, "count", std::to_string(m_fonts.size()));    // update array count in XML
+    appendAndSetAttribute(*m_fontsNode, "count", std::to_string(m_fonts.size()));   
     return index;
 }

@@ -2,11 +2,11 @@
 #include <cstdint>
 #include <gsl/gsl>
 #include <fmt/format.h>
-#include <memory>      // std::make_unique
+#include <memory>     
 #include <pugixml.hpp>
-#include <stdexcept>    // std::invalid_argument
-#include <string>       // std::stoi, std::literals::string_literals
-#include <vector>       // std::vector
+#include <stdexcept>   
+#include <string>      
+#include <vector>      
 
 // ===== OpenXLSX Includes ===== //
 #include "XLDocument.hpp"
@@ -66,7 +66,7 @@ XLNumberFormats::XLNumberFormats(const XMLNode& numberFormats) : m_numberFormats
 
 XLNumberFormats::~XLNumberFormats()
 {
-    m_numberFormats.clear();    // delete vector with all children
+    m_numberFormats.clear();   
 }
 
 XLNumberFormats::XLNumberFormats(const XLNumberFormats& other)
@@ -151,8 +151,8 @@ uint32_t XLNumberFormats::createNumberFormat(std::string_view formatCode)
 
 XLStyleIndex XLNumberFormats::create(XLNumberFormat copyFrom, std::string_view styleEntriesPrefix)
 {
-    XLStyleIndex index = count();    // index for the number format to be created
-    XMLNode      newNode{};          // scope declaration
+    XLStyleIndex index = count();   
+    XMLNode      newNode{};         
 
     // ===== Append new node prior to final whitespaces, if any
     XMLNode lastStyle = m_numberFormatsNode->last_child_of_type(pugi::node_element);
@@ -164,21 +164,21 @@ XLStyleIndex XLNumberFormats::create(XLNumberFormat copyFrom, std::string_view s
         using namespace std::literals::string_literals;
         throw XLException("XLNumberFormats::"s + __func__ + ": failed to append a new numFmt node"s);
     }
-    if (styleEntriesPrefix.length() > 0)    // if a whitespace prefix is configured
+    if (styleEntriesPrefix.length() > 0)   
         m_numberFormatsNode->insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());    // prefix the new node with styleEntriesPrefix
+            .set_value(std::string(styleEntriesPrefix).c_str());   
 
     XLNumberFormat newNumberFormat(newNode);
-    if (copyFrom.m_numberFormatNode->empty()) {    // if no template is given
+    if (copyFrom.m_numberFormatNode->empty()) {   
         // ===== Create a number format with default values
         newNumberFormat.setNumberFormatId(0);
         newNumberFormat.setFormatCode("General");
     }
     else
-        copyXMLNode(newNode, *copyFrom.m_numberFormatNode);    // will use copyFrom as template, does nothing if copyFrom is empty
+        copyXMLNode(newNode, *copyFrom.m_numberFormatNode);   
 
     m_numberFormats.push_back(newNumberFormat);
-    appendAndSetAttribute(*m_numberFormatsNode, "count", std::to_string(m_numberFormats.size()));    // update array count in XML
+    appendAndSetAttribute(*m_numberFormatsNode, "count", std::to_string(m_numberFormats.size()));   
     return index;
 }
 

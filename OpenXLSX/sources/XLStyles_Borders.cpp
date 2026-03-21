@@ -2,11 +2,11 @@
 #include <cstdint>
 #include <gsl/gsl>
 #include <fmt/format.h>
-#include <memory>      // std::make_unique
+#include <memory>     
 #include <pugixml.hpp>
-#include <stdexcept>    // std::invalid_argument
-#include <string>       // std::stoi, std::literals::string_literals
-#include <vector>       // std::vector
+#include <stdexcept>   
+#include <string>      
+#include <vector>      
 
 // ===== OpenXLSX Includes ===== //
 #include "XLColor.hpp"
@@ -92,37 +92,10 @@ XLDataBarColor XLLine::color() const
     if (color.empty()) return XLDataBarColor{};
     return XLDataBarColor(color);
 }
-// XLColor XLLine::color() const
-// {
-//     XMLNode colorDetails = m_lineNode->child("color");
-//     if (colorDetails.empty()) return XLColor("ffffffff");
-//     XMLAttribute colorRGB = colorDetails.attribute("rgb");
-//     if (colorRGB.empty()) return XLColor("ffffffff");
-//     return XLColor(colorRGB.value());
-// }
-//
-// /**
-//  * @details Returns the line color tint
-//  */
-// double XLLine::colorTint() const
-// {
-//     XMLNode colorDetails = m_lineNode->child("color");
-//     if (not colorDetails.empty()) {
-//         XMLAttribute colorTint = colorDetails.attribute("tint");
-//         if (not colorTint.empty())
-//             return colorTint.as_double();
-//     }
-//     return 0.0;
-// }
 
 std::string XLLine::summary() const
 {
     return fmt::format("line style is {}, {}", XLLineStyleToString(style()), color().summary());
-    // double tint = colorTint();
-    // std::string tintSummary = fmt::format("colorTint is {}", (tint == 0.0 ? "(none)" : std::to_string(tint)));
-    // size_t tintDecimalPos = tintSummary.find_last_of('.');
-    // if (tintDecimalPos != std::string::npos) tintSummary = tintSummary.substr(0, tintDecimalPos + 3); // truncate colorTint double output
-    // 2 digits after the decimal separator return fmt::format("line style is {}, color is {}, {}", XLLineStyleToString(style()), color().hex(), tintSummary);
 }
 
 XLBorder::XLBorder() : m_borderNode(std::make_unique<XMLNode>()) {}
@@ -160,18 +133,18 @@ bool XLBorder::setDiagonalDown(bool set)
 bool XLBorder::setOutline(bool set) { return appendAndSetAttribute(*m_borderNode, "outline", (set ? "true" : "false")).empty() == false; }
 bool XLBorder::setLine(XLLineType lineType, XLLineStyle lineStyle, XLColor lineColor, double lineTint)
 {
-    XMLNode lineNode = appendAndGetNode(*m_borderNode, XLLineTypeToString(lineType), m_nodeOrder);    // generate line node if not present
+    XMLNode lineNode = appendAndGetNode(*m_borderNode, XLLineTypeToString(lineType), m_nodeOrder);   
     // 2024-12-19: non-existing lines are added using an ordered insert to address issue #304
     bool success = (lineNode.empty() == false);
     if (success) {
         const char* styleStr = XLLineStyleToString(lineStyle);
         if (styleStr && *styleStr)
-            success = (appendAndSetAttribute(lineNode, "style", styleStr).empty() == false);    // set style attribute
+            success = (appendAndSetAttribute(lineNode, "style", styleStr).empty() == false);   
         else
             lineNode.remove_attribute("style");
     }
-    XMLNode colorNode{};                                                                                          // empty node
-    if (success) colorNode = appendAndGetNode(lineNode, "color");    // generate color node if not present
+    XMLNode colorNode{};                                                                                         
+    if (success) colorNode = appendAndGetNode(lineNode, "color");   
     XLDataBarColor colorObject{colorNode};
     success = (colorNode.empty() == false);
     if (success) success = colorObject.setRgb(lineColor);
@@ -230,7 +203,7 @@ XLBorders::XLBorders(const XMLNode& borders) : m_bordersNode(std::make_unique<XM
 
 XLBorders::~XLBorders()
 {
-    m_borders.clear();    // delete vector with all children
+    m_borders.clear();   
 }
 
 XLBorders::XLBorders(const XLBorders& other) : m_bordersNode(std::make_unique<XMLNode>(*other.m_bordersNode)), m_borders(other.m_borders) {}
@@ -257,8 +230,8 @@ XLBorder XLBorders::borderByIndex(XLStyleIndex index) const
 
 XLStyleIndex XLBorders::create(XLBorder copyFrom, std::string_view styleEntriesPrefix)
 {
-    XLStyleIndex index = count();    // index for the border to be created
-    XMLNode      newNode{};          // scope declaration
+    XLStyleIndex index = count();   
+    XMLNode      newNode{};         
 
     // ===== Append new node prior to final whitespaces, if any
     XMLNode lastStyle = m_bordersNode->last_child_of_type(pugi::node_element);
@@ -270,12 +243,12 @@ XLStyleIndex XLBorders::create(XLBorder copyFrom, std::string_view styleEntriesP
         using namespace std::literals::string_literals;
         throw XLException("XLBorders::"s + __func__ + ": failed to append a new border node"s);
     }
-    if (styleEntriesPrefix.length() > 0)    // if a whitespace prefix is configured
+    if (styleEntriesPrefix.length() > 0)   
         m_bordersNode->insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());    // prefix the new node with styleEntriesPrefix
+            .set_value(std::string(styleEntriesPrefix).c_str());   
 
     XLBorder newBorder(newNode);
-    if (copyFrom.m_borderNode->empty()) {    // if no template is given
+    if (copyFrom.m_borderNode->empty()) {   
         // ===== Create a border with default values
         newBorder.setLeft(OpenXLSX::XLLineStyleNone, XLColor(OpenXLSX::XLDefaultFontColor));
         newBorder.setRight(OpenXLSX::XLLineStyleNone, XLColor(OpenXLSX::XLDefaultFontColor));
@@ -284,10 +257,10 @@ XLStyleIndex XLBorders::create(XLBorder copyFrom, std::string_view styleEntriesP
         newBorder.setDiagonal(OpenXLSX::XLLineStyleNone, XLColor(OpenXLSX::XLDefaultFontColor));
     }
     else
-        copyXMLNode(newNode, *copyFrom.m_borderNode);    // will use copyFrom as template, does nothing if copyFrom is empty
+        copyXMLNode(newNode, *copyFrom.m_borderNode);   
 
     m_borders.push_back(newBorder);
-    appendAndSetAttribute(*m_bordersNode, "count", std::to_string(m_borders.size()));    // update array count in XML
+    appendAndSetAttribute(*m_bordersNode, "count", std::to_string(m_borders.size()));   
     return index;
 }
 
