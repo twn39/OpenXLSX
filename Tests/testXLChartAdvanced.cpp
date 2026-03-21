@@ -111,6 +111,109 @@ TEST_CASE("Advanced Chart Visual Elements", "[XLChart][OOXML]")
         }
     }
     
+
+    SECTION("Chart Data Labels")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            auto chart = wks.addChart(XLChartType::Pie, "Pie", 1, 1, 400, 300);
+            
+            // showValue = true, showCategory = true, showPercent = false
+            chart.setShowDataLabels(true, true, false);
+            
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLChartAdvTestDoc testDoc;
+            testDoc.open(filename);
+            std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
+
+            // Verify dLbls node architecture
+            REQUIRE(chartXml.find("<c:dLbls>") != std::string::npos);
+                        REQUIRE(chartXml.find("<c:showLegendKey val=\"0\" />") != std::string::npos);
+            REQUIRE(chartXml.find("<c:showVal val=\"1\" />") != std::string::npos);
+            REQUIRE(chartXml.find("<c:showCatName val=\"1\" />") != std::string::npos);
+            REQUIRE(chartXml.find("<c:showPercent val=\"0\" />") != std::string::npos);
+            
+            // strict order validation
+            size_t valPos = chartXml.find("<c:showVal");
+            size_t catPos = chartXml.find("<c:showCatName");
+            size_t percPos= chartXml.find("<c:showPercent");
+            REQUIRE(valPos < catPos);
+            REQUIRE(catPos < percPos);
+            
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
+
+
+    SECTION("Chart Data Labels Multi-Type OOXML Verification")
+    {
+        std::map<XLChartType, std::string> chartNames = {
+            {XLChartType::Bar, "c:barChart"},
+            {XLChartType::Pie, "c:pieChart"},
+            {XLChartType::Line, "c:lineChart"}
+        };
+
+        for (auto const& [enumPos, xmlVal] : chartNames) {
+            {
+                XLDocument doc;
+                doc.create(filename, XLForceOverwrite);
+                auto wks = doc.workbook().worksheet("Sheet1");
+                auto chart = wks.addChart(enumPos, "Chart", 1, 1, 400, 300);
+                chart.addSeries("Sheet1!$B$2:$B$5", "Title", "Sheet1!$A$2:$A$5");
+                
+                // turn on data labels
+                chart.setShowDataLabels(true, true, true);
+                
+                doc.save();
+                doc.close();
+            }
+
+            {
+                XLChartAdvTestDoc testDoc;
+                testDoc.open(filename);
+                std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
+
+                // verify base tag exists inside the correct chart type element
+                REQUIRE(chartXml.find("<" + xmlVal + ">") != std::string::npos);
+                REQUIRE(chartXml.find("<c:dLbls>") != std::string::npos);
+                
+                // the dLbls element MUST appear BEFORE specific elements like c:axId or c:gapWidth
+                size_t dLblsPos = chartXml.find("<c:dLbls>");
+                size_t axIdPos = chartXml.find("<c:axId");
+                
+                if (axIdPos != std::string::npos) {
+                    REQUIRE(dLblsPos < axIdPos);
+                }
+
+                // Verify the strict sequence INSIDE dLbls
+                size_t showLegendKeyPos = chartXml.find("<c:showLegendKey");
+                size_t showValPos = chartXml.find("<c:showVal");
+                size_t showCatNamePos = chartXml.find("<c:showCatName");
+                size_t showSerNamePos = chartXml.find("<c:showSerName");
+                size_t showPercentPos = chartXml.find("<c:showPercent");
+                size_t showBubbleSizePos = chartXml.find("<c:showBubbleSize");
+                size_t showLeaderLinesPos = chartXml.find("<c:showLeaderLines");
+
+                REQUIRE(showLegendKeyPos < showValPos);
+                REQUIRE(showValPos < showCatNamePos);
+                REQUIRE(showCatNamePos < showSerNamePos);
+                REQUIRE(showSerNamePos < showPercentPos);
+                REQUIRE(showPercentPos < showBubbleSizePos);
+                REQUIRE(showBubbleSizePos < showLeaderLinesPos);
+                
+                testDoc.close();
+            }
+            std::filesystem::remove(filename);
+        }
+    }
+
     SECTION("Hide Legend Functionality")
     {
         {

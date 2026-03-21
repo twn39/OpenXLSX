@@ -89,6 +89,15 @@ namespace OpenXLSX
          */
         void setLegendPosition(XLLegendPosition position);
 
+        /**
+         * @brief Configure the display of data labels on the chart.
+         * @param showValue Whether to show the data value.
+         * @param showCategory Whether to show the category name.
+         * @param showPercent Whether to show the percentage (useful for Pie/Doughnut charts).
+         */
+        void setShowDataLabels(bool showValue, bool showCategory = false, bool showPercent = false);
+
+
     private:
         friend class XLDocument;
         void initXml(XLChartType type = XLChartType::Bar);

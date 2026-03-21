@@ -280,3 +280,39 @@ namespace OpenXLSX
     }
 
 } // namespace OpenXLSX
+
+    void XLChart::setShowDataLabels(bool showValue, bool showCategory, bool showPercent)
+    {
+        XMLNode chartNode = getChartNode(xmlDocument());
+        if (chartNode.empty()) return;
+
+        XMLNode dLbls = chartNode.child("c:dLbls");
+        if (dLbls.empty()) {
+            XMLNode insertBeforeNode;
+            for (auto child : chartNode.children()) {
+                std::string_view name = child.name();
+                if (name != "c:barDir" && name != "c:grouping" && name != "c:scatterStyle" && name != "c:varyColors" && name != "c:ser") {
+                    insertBeforeNode = child;
+                    break;
+                }
+            }
+
+            if (!insertBeforeNode.empty()) {
+                dLbls = chartNode.insert_child_before("c:dLbls", insertBeforeNode);
+            } else {
+                dLbls = chartNode.append_child("c:dLbls");
+            }
+        } else {
+            // Clear existing data labels to maintain exact OOXML sequence
+            dLbls.remove_children();
+        }
+
+        // Must follow strict OOXML sequence: showLegendKey, showVal, showCatName, showSerName, showPercent, showBubbleSize, showLeaderLines
+        dLbls.append_child("c:showLegendKey").append_attribute("val").set_value("0");
+        dLbls.append_child("c:showVal").append_attribute("val").set_value(showValue ? "1" : "0");
+        dLbls.append_child("c:showCatName").append_attribute("val").set_value(showCategory ? "1" : "0");
+        dLbls.append_child("c:showSerName").append_attribute("val").set_value("0");
+        dLbls.append_child("c:showPercent").append_attribute("val").set_value(showPercent ? "1" : "0");
+        dLbls.append_child("c:showBubbleSize").append_attribute("val").set_value("0");
+        dLbls.append_child("c:showLeaderLines").append_attribute("val").set_value("1");
+    }
