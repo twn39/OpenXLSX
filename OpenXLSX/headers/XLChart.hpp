@@ -29,6 +29,31 @@ namespace OpenXLSX
     /**
      * @brief The XLChart class represents an Excel chart XML file.
      */
+    
+    /**
+     * @brief A proxy class for an individual chart axis.
+     */
+    class OPENXLSX_EXPORT XLAxis
+    {
+    public:
+        XLAxis() = default;
+        explicit XLAxis(const XMLNode& node);
+
+        void setTitle(std::string_view title);
+        
+        void setMinBounds(double min);
+        void clearMinBounds();
+        
+        void setMaxBounds(double max);
+        void clearMaxBounds();
+        
+        void setMajorGridlines(bool show);
+        void setMinorGridlines(bool show);
+
+    private:
+        XMLNode m_node;
+    };
+
     class OPENXLSX_EXPORT XLChart final : public XLXmlFile
     {
     public:
@@ -88,6 +113,19 @@ namespace OpenXLSX
          * @param position The legend position
          */
         void setLegendPosition(XLLegendPosition position);
+
+        /**
+         * @brief Get the X-axis (typically bottom category axis).
+         */
+        [[nodiscard]] XLAxis xAxis() const;
+
+        /**
+         * @brief Get the Y-axis (typically left value axis).
+         */
+        [[nodiscard]] XLAxis yAxis() const;
+        
+        [[nodiscard]] XLAxis axis(std::string_view position) const;
+
 
         /**
          * @brief Configure the display of data labels on the chart.

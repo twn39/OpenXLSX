@@ -6,6 +6,7 @@
 // ===== OpenXLSX Includes ===== //
 #include "XLDocument.hpp"
 #include "XLChart.hpp"
+#include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
 
@@ -104,8 +105,8 @@ namespace OpenXLSX
         <c:scaling><c:orientation val="minMax"/></c:scaling>
         <c:delete val="0"/>
         <c:axPos val="l"/>
-        <c:numFmt formatCode="General" sourceLinked="0"/>
         <c:majorGridlines/>
+        <c:numFmt formatCode="General" sourceLinked="0"/>
         <c:majorTickMark val="none"/>
         <c:minorTickMark val="none"/>
         <c:tickLblPos val="nextTo"/>
@@ -137,8 +138,8 @@ namespace OpenXLSX
         <c:scaling><c:orientation val="minMax"/></c:scaling>
         <c:delete val="0"/>
         <c:axPos val="l"/>
-        <c:numFmt formatCode="General" sourceLinked="0"/>
         <c:majorGridlines/>
+        <c:numFmt formatCode="General" sourceLinked="0"/>
         <c:majorTickMark val="none"/>
         <c:minorTickMark val="none"/>
         <c:tickLblPos val="nextTo"/>
@@ -316,3 +317,100 @@ namespace OpenXLSX
         dLbls.append_child("c:showBubbleSize").append_attribute("val").set_value("0");
         dLbls.append_child("c:showLeaderLines").append_attribute("val").set_value("1");
     }
+
+    static const std::vector<std::string_view> XLAxisNodeOrder = {
+        "c:axId", "c:scaling", "c:delete", "c:axPos", 
+        "c:majorGridlines", "c:minorGridlines", "c:title", 
+        "c:numFmt", "c:majorTickMark", "c:minorTickMark", 
+        "c:tickLblPos", "c:spPr", "c:txPr", "c:crossAx", 
+        "c:crosses", "c:crossesAt", "c:auto", "c:lblAlgn", 
+        "c:lblOffset", "c:tickLblSkip", "c:tickMarkSkip", 
+        "c:noMultiLvlLbl", "c:crossBetween"
+    };
+
+    static const std::vector<std::string_view> XLScalingNodeOrder = {
+        "c:logBase", "c:orientation", "c:max", "c:min", "c:extLst"
+    };
+
+    XLAxis::XLAxis(const XMLNode& node) : m_node(node) {}
+
+    void XLAxis::setTitle(std::string_view title) {
+        if (m_node.empty() || title.empty()) return;
+        m_node.remove_child("c:title");
+        XMLNode titleNode = appendAndGetNode(m_node, "c:title", XLAxisNodeOrder);
+        
+        XMLNode txNode = titleNode.append_child("c:tx");
+        XMLNode richNode = txNode.append_child("c:rich");
+        richNode.append_child("a:bodyPr");
+        richNode.append_child("a:lstStyle");
+        XMLNode pNode = richNode.append_child("a:p");
+        XMLNode rNode = pNode.append_child("a:r");
+        rNode.append_child("a:t").text().set(std::string(title).c_str());
+        
+        titleNode.append_child("c:overlay").append_attribute("val").set_value("0");
+    }
+
+    void XLAxis::setMinBounds(double min) {
+        if (m_node.empty()) return;
+        XMLNode scaling = m_node.child("c:scaling");
+        if (scaling.empty()) scaling = appendAndGetNode(m_node, "c:scaling", XLAxisNodeOrder);
+        XMLNode minNode = appendAndGetNode(scaling, "c:min", XLScalingNodeOrder);
+        minNode.attribute("val") ? minNode.attribute("val").set_value(min) : minNode.append_attribute("val").set_value(min);
+    }
+
+    void XLAxis::clearMinBounds() {
+        if (m_node.empty()) return;
+        m_node.child("c:scaling").remove_child("c:min");
+    }
+
+    void XLAxis::setMaxBounds(double max) {
+        if (m_node.empty()) return;
+        XMLNode scaling = m_node.child("c:scaling");
+        if (scaling.empty()) scaling = appendAndGetNode(m_node, "c:scaling", XLAxisNodeOrder);
+        XMLNode maxNode = appendAndGetNode(scaling, "c:max", XLScalingNodeOrder);
+        maxNode.attribute("val") ? maxNode.attribute("val").set_value(max) : maxNode.append_attribute("val").set_value(max);
+    }
+
+    void XLAxis::clearMaxBounds() {
+        if (m_node.empty()) return;
+        m_node.child("c:scaling").remove_child("c:max");
+    }
+
+    void XLAxis::setMajorGridlines(bool show) {
+        if (m_node.empty()) return;
+        if (show) {
+            if (m_node.child("c:majorGridlines").empty()) {
+                appendAndGetNode(m_node, "c:majorGridlines", XLAxisNodeOrder);
+            }
+        } else {
+            m_node.remove_child("c:majorGridlines");
+        }
+    }
+
+    void XLAxis::setMinorGridlines(bool show) {
+        if (m_node.empty()) return;
+        if (show) {
+            if (m_node.child("c:minorGridlines").empty()) {
+                appendAndGetNode(m_node, "c:minorGridlines", XLAxisNodeOrder);
+            }
+        } else {
+            m_node.remove_child("c:minorGridlines");
+        }
+    }
+
+    XLAxis XLChart::axis(std::string_view position) const {
+        XMLNode plotArea = xmlDocument().document_element().child("c:chart").child("c:plotArea");
+        for (auto child : plotArea.children()) {
+            std::string_view name = child.name();
+            if (name == "c:catAx" || name == "c:valAx" || name == "c:dateAx") {
+                if (child.child("c:axPos").attribute("val").value() == position) {
+                    return XLAxis(child);
+                }
+            }
+        }
+        return XLAxis(XMLNode());
+    }
+
+    XLAxis XLChart::xAxis() const { return axis("b"); }
+    XLAxis XLChart::yAxis() const { return axis("l"); }
+

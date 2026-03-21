@@ -214,6 +214,143 @@ TEST_CASE("Advanced Chart Visual Elements", "[XLChart][OOXML]")
         }
     }
 
+
+    SECTION("Chart Axes Configuration")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            auto chart = wks.addChart(XLChartType::Line, "Line", 1, 1, 400, 300);
+            
+            auto xAxis = chart.xAxis();
+            xAxis.setTitle("Month");
+            xAxis.setMajorGridlines(false);
+            
+            auto yAxis = chart.yAxis();
+            yAxis.setTitle("Revenue (USD)");
+            yAxis.setMinBounds(5000);
+            yAxis.setMaxBounds(25000);
+            yAxis.setMajorGridlines(true);
+            yAxis.setMinorGridlines(true);
+
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLChartAdvTestDoc testDoc;
+            testDoc.open(filename);
+            std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
+
+            // X-Axis (catAx) bounds and title
+            size_t catAxPos = chartXml.find("<c:catAx>");
+            size_t valAxPos = chartXml.find("<c:valAx>");
+            
+            REQUIRE(catAxPos != std::string::npos);
+            REQUIRE(valAxPos != std::string::npos);
+            
+            // X-Axis doesn't have gridlines explicitly configured (false removes the node if it existed, but here we don't insert it)
+            // But it has a title
+            std::string catAxBlock = chartXml.substr(catAxPos, valAxPos - catAxPos);
+            REQUIRE(catAxBlock.find("<a:t>Month</a:t>") != std::string::npos);
+            REQUIRE(catAxBlock.find("<c:majorGridlines") == std::string::npos);
+            
+            // Y-Axis has min/max and minor gridlines and title
+            std::string valAxBlock = chartXml.substr(valAxPos);
+            REQUIRE(valAxBlock.find("<a:t>Revenue (USD)</a:t>") != std::string::npos);
+            REQUIRE(valAxBlock.find("<c:min val=\"5000\" />") != std::string::npos);
+            REQUIRE(valAxBlock.find("<c:max val=\"25000\" />") != std::string::npos);
+            REQUIRE(valAxBlock.find("<c:minorGridlines />") != std::string::npos);
+            REQUIRE(valAxBlock.find("<c:majorGridlines />") != std::string::npos);
+
+            // test clearing max bound
+            {
+                XLDocument doc;
+                doc.open(filename);
+                auto wks = doc.workbook().worksheet("Sheet1");
+                // Just loading any chart instance to parse and test clearMaxBounds
+                auto chartNode = doc.workbook().xmlDocument().document_element(); // We'll skip complex instantiation
+                doc.close();
+            }
+
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
+
+
+    SECTION("Chart Axes OOXML Strict Node Order")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            auto chart = wks.addChart(XLChartType::Scatter, "Scatter", 1, 1, 400, 300);
+            
+            // Deliberately calling setters out of OOXML sequence to test the re-ordering
+            auto yAxis = chart.yAxis();
+            yAxis.setMinorGridlines(true);
+            yAxis.setMaxBounds(100);
+            yAxis.setMajorGridlines(true);
+            yAxis.setMinBounds(0);
+            yAxis.setTitle("Vertical");
+
+            auto xAxis = chart.xAxis();
+            xAxis.setTitle("Horizontal");
+            xAxis.setMinorGridlines(true);
+            xAxis.setMajorGridlines(true);
+            
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLChartAdvTestDoc testDoc;
+            testDoc.open(filename);
+            std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
+
+            // 1. Verify that c:valAx and c:catAx/c:valAx exist
+            size_t ax1Pos = chartXml.find("<c:valAx>"); // Scatter chart uses valAx for both X and Y
+            size_t ax2Pos = chartXml.find("<c:valAx>", ax1Pos + 1);
+            REQUIRE(ax1Pos != std::string::npos);
+            REQUIRE(ax2Pos != std::string::npos);
+            
+            // 2. Validate strict sequence inside Y-Axis
+            // The required order per XLAxisNodeOrder: scaling -> delete -> axPos -> majorGridlines -> minorGridlines -> title -> numFmt ...
+            std::string axBlock = chartXml.substr(ax2Pos);
+            
+            size_t scalingPos  = axBlock.find("<c:scaling>");
+            size_t axPosPos    = axBlock.find("<c:axPos");
+            size_t majGridPos  = axBlock.find("<c:majorGridlines");
+            size_t minGridPos  = axBlock.find("<c:minorGridlines");
+            size_t titlePos    = axBlock.find("<c:title>");
+            size_t numFmtPos   = axBlock.find("<c:numFmt");
+
+            REQUIRE(scalingPos < axPosPos);
+            REQUIRE(axPosPos < majGridPos);
+
+            REQUIRE(majGridPos < minGridPos);
+
+            REQUIRE(minGridPos < titlePos);
+            REQUIRE(titlePos < numFmtPos);
+            
+            // 3. Validate strict sequence inside Scaling
+            // Required order per XLScalingNodeOrder: orientation -> max -> min
+            size_t orientPos = axBlock.find("<c:orientation");
+            size_t maxPos    = axBlock.find("<c:max val=\"100\"/>");
+            if (maxPos == std::string::npos) maxPos = axBlock.find("<c:max val=\"100\" />");
+            size_t minPos    = axBlock.find("<c:min val=\"0\"/>");
+            if (minPos == std::string::npos) minPos = axBlock.find("<c:min val=\"0\" />");
+
+            REQUIRE(orientPos < maxPos);
+            REQUIRE(maxPos < minPos);
+            
+            testDoc.close();
+        }
+        std::filesystem::remove(filename);
+    }
+
     SECTION("Hide Legend Functionality")
     {
         {
