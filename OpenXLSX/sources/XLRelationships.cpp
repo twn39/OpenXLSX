@@ -20,8 +20,8 @@ using namespace OpenXLSX;
 
 namespace
 {                             // anonymous namespace: do not export these symbols
-    bool RandomIDs{false};    // default: use sequential IDs
-    bool RandomizerInitialized{
+    thread_local bool RandomIDs{false};    // default: use sequential IDs
+    thread_local bool RandomizerInitialized{
         false};    // will be initialized by GetNewRelsID, if XLRand32 / XLRand64 are used elsewhere, user should invoke XLInitRandom
 }    // anonymous namespace
 
@@ -40,7 +40,7 @@ namespace OpenXLSX
     /**
      * @details Use the std::mt19937 default return on operator()
      */
-    std::mt19937 Rand32(0);
+    thread_local std::mt19937 Rand32(0);
 
     /**
      * @details Combine values from two subsequent invocations of Rand32()
@@ -62,7 +62,7 @@ namespace OpenXLSX
             std::random_device rd;
             rdSeed = rd();
         }
-        Rand32.seed(static_cast<std::mt19937::result_type>(rdSeed));
+        Rand32.seed(gsl::narrow_cast<std::mt19937::result_type>(rdSeed));
         RandomizerInitialized = true;
     }
 }    // namespace OpenXLSX
@@ -80,8 +80,12 @@ namespace
      */
     XLRelationshipType GetRelationshipTypeFromString(std::string_view typeString)
     {
-        auto matches = [typeString](std::string_view domain, const char* path) -> bool {
-            if (typeString == std::string(domain) + path) return true;
+        auto matches = [typeString](std::string_view domain, std::string_view path) -> bool {
+            if (typeString.length() == domain.length() + path.length() &&
+                typeString.substr(0, domain.length()) == domain &&
+                typeString.substr(domain.length()) == path) {
+                return true;
+            }
             if (typeString.length() > 15) { // length of "/relationships/"
                 auto pos = typeString.find("/relationships/");
                 if (pos != std::string_view::npos) return typeString.substr(pos) == path;
@@ -125,53 +129,53 @@ namespace OpenXLSX_XLRelationships
     {
         switch (type) {
             case XLRelationshipType::ExtendedProperties:
-                return relationshipDomainOpenXml2006 + "/relationships/extended-properties";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties";
             case XLRelationshipType::CustomProperties:
-                return relationshipDomainOpenXml2006 + "/relationships/custom-properties";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/custom-properties";
             case XLRelationshipType::Workbook:
-                return relationshipDomainOpenXml2006 + "/relationships/officeDocument";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument";
             case XLRelationshipType::Worksheet:
-                return relationshipDomainOpenXml2006 + "/relationships/worksheet";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet";
             case XLRelationshipType::Styles:
-                return relationshipDomainOpenXml2006 + "/relationships/styles";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles";
             case XLRelationshipType::SharedStrings:
-                return relationshipDomainOpenXml2006 + "/relationships/sharedStrings";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings";
             case XLRelationshipType::CalculationChain:
-                return relationshipDomainOpenXml2006 + "/relationships/calcChain";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/calcChain";
             case XLRelationshipType::ExternalLink:
-                return relationshipDomainOpenXml2006 + "/relationships/externalLink";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/externalLink";
             case XLRelationshipType::Theme:
-                return relationshipDomainOpenXml2006 + "/relationships/theme";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme";
             case XLRelationshipType::Chartsheet:
-                return relationshipDomainOpenXml2006 + "/relationships/chartsheet";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chartsheet";
             case XLRelationshipType::Drawing:
-                return relationshipDomainOpenXml2006 + "/relationships/drawing";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing";
             case XLRelationshipType::Image:
-                return relationshipDomainOpenXml2006 + "/relationships/image";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image";
             case XLRelationshipType::Chart:
-                return relationshipDomainOpenXml2006 + "/relationships/chart";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart";
             case XLRelationshipType::ExternalLinkPath:
-                return relationshipDomainOpenXml2006 + "/relationships/externalLinkPath";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/externalLinkPath";
             case XLRelationshipType::PrinterSettings:
-                return relationshipDomainOpenXml2006 + "/relationships/printerSettings";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/printerSettings";
             case XLRelationshipType::VMLDrawing:
-                return relationshipDomainOpenXml2006 + "/relationships/vmlDrawing";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/vmlDrawing";
             case XLRelationshipType::ControlProperties:
-                return relationshipDomainOpenXml2006 + "/relationships/ctrlProp";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/ctrlProp";
             case XLRelationshipType::CoreProperties:
-                return relationshipDomainOpenXml2006CoreProps + "/relationships/metadata/core-properties";
+                return "http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties";
             case XLRelationshipType::VBAProject:
-                return relationshipDomainMicrosoft2006 + "/relationships/vbaProject";
+                return "http://schemas.microsoft.com/office/2006/relationships/vbaProject";
             case XLRelationshipType::ChartStyle:
-                return relationshipDomainMicrosoft2011 + "/relationships/chartStyle";
+                return "http://schemas.microsoft.com/office/2011/relationships/chartStyle";
             case XLRelationshipType::ChartColorStyle:
-                return relationshipDomainMicrosoft2011 + "/relationships/chartColorStyle";
+                return "http://schemas.microsoft.com/office/2011/relationships/chartColorStyle";
             case XLRelationshipType::Comments:
-                return relationshipDomainOpenXml2006 + "/relationships/comments";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments";
             case XLRelationshipType::Table:
-                return relationshipDomainOpenXml2006 + "/relationships/table";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/table";
             case XLRelationshipType::Hyperlink:
-                return relationshipDomainOpenXml2006 + "/relationships/hyperlink";
+                return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink";
             default:
                 throw XLInternalError("RelationshipType not recognized!");
         }
@@ -233,21 +237,20 @@ bool XLRelationshipItem::empty() const { return m_relationshipNode.empty(); }
  * @details Creates a XLRelationships object. The pathTo will be verified and stored 
  * to resolve relationship targets as absolute paths within the XLSX archive.
  */
-XLRelationships::XLRelationships(XLXmlData* xmlData, std::string pathTo) : XLXmlFile(xmlData)
+XLRelationships::XLRelationships(gsl::not_null<XLXmlData*> xmlData, std::string pathTo) : XLXmlFile(xmlData)
 {
-    constexpr const char* relFolder = "_rels/";    // all relationships are stored in a (sub-)folder named "_rels/"
-    static const size_t   relFolderLen =
-        strlen(relFolder);    // 2024-08-23: strlen seems to not be accepted in a constexpr in VS2019 with c++17
+    constexpr std::string_view relFolder = "_rels/";    // all relationships are stored in a (sub-)folder named "_rels/"
+    constexpr size_t           relFolderLen = relFolder.length();
 
-    bool   addFirstSlash = (pathTo[0] != '/');    // if first character of pathTo is NOT a slash, then addFirstSlash = true
-    size_t pathToEndsAt  = pathTo.find_last_of('/');
+    const bool   addFirstSlash = (pathTo[0] != '/');    // if first character of pathTo is NOT a slash, then addFirstSlash = true
+    const size_t pathToEndsAt  = pathTo.find_last_of('/');
     if ((pathToEndsAt != std::string::npos) and (pathToEndsAt + 1 >= relFolderLen) &&
         (pathTo.substr(pathToEndsAt + 1 - relFolderLen, relFolderLen) == relFolder))    // nominal
         m_path = (addFirstSlash ? "/" : "") + pathTo.substr(0, pathToEndsAt - relFolderLen + 1);
     else {
         using namespace std::literals::string_literals;
         throw XLException("XLRelationships constructor: pathTo \""s + pathTo + "\" does not point to a file in a folder named \"" +
-                          relFolder + "\""s);
+                          std::string(relFolder) + "\""s);
     }
 
     XMLDocument& doc = xmlDocument();
@@ -270,7 +273,7 @@ XLRelationshipItem XLRelationships::relationshipById(std::string_view id) const
 XLRelationshipItem XLRelationships::relationshipByTarget(std::string_view target, bool throwIfNotFound) const
 {
     // Rationale: Convert to absolute path and normalize to resolve . and .. entries for consistent comparison.
-    std::string absoluteTarget = eliminateDotAndDotDotFromPath(!target.empty() && target.front() == '/' ? target : m_path + std::string(target));
+    const std::string absoluteTarget = eliminateDotAndDotDotFromPath(!target.empty() && target.front() == '/' ? target : m_path + std::string(target));
 
     XMLNode relationshipNode = xmlDocument().document_element().first_child_of_type(pugi::node_element);
     while (!relationshipNode.empty()) {

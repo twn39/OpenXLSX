@@ -8,6 +8,7 @@
 #endif    // _MSC_VER
 
 // ===== External Includes ===== //
+#include <gsl/pointers>
 #include <random>    // std::mt19937
 #include <string>
 #include <vector>
@@ -33,7 +34,7 @@ namespace OpenXLSX
      * @brief Return a 32 bit random value
      * @return A 32 bit random value
      */
-    extern std::mt19937 Rand32;
+    extern thread_local std::mt19937 Rand32;
 
     /**
      * @brief Return a 64 bit random value (by invoking Rand32 twice)
@@ -137,7 +138,7 @@ namespace OpenXLSX
          * @param xmlData Managed XML data source.
          * @param pathTo Path to the .rels file, used to resolve relative targets to absolute paths.
          */
-        explicit XLRelationships(XLXmlData* xmlData, std::string pathTo);
+        explicit XLRelationships(gsl::not_null<XLXmlData*> xmlData, std::string pathTo);
 
         ~XLRelationships();
 

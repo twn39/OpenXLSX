@@ -3,7 +3,9 @@
 
 // ===== External Includes ===== //
 #include <cstdint>    // uint8_t, uint16_t, uint32_t
+#include <gsl/pointers>
 #include <ostream>    // std::basic_ostream
+#include <string_view>
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
@@ -26,8 +28,8 @@ namespace OpenXLSX
     // 	<div style="text-align:left;"/>
     // </v:textbox>
 
-    extern const std::string ShapeNodeName;        // = "v:shape"
-    extern const std::string ShapeTypeNodeName;    // = "v:shapetype"
+    extern const std::string_view ShapeNodeName;        // = "v:shape"
+    extern const std::string_view ShapeTypeNodeName;    // = "v:shapetype"
 
     // NOTE: numerical values of XLShapeTextVAlign and XLShapeTextHAlign are shared with the same alignments from XLAlignmentStyle
     // (XLStyles.hpp)
@@ -113,10 +115,10 @@ namespace OpenXLSX
         /**
          * @brief Setter functions
          */
-        bool setObjectType(std::string newObjectType);
+        bool setObjectType(std::string_view newObjectType);
         bool setMoveWithCells(bool set = true);
         bool setSizeWithCells(bool set = true);
-        bool setAnchor(std::string newAnchor);
+        bool setAnchor(std::string_view newAnchor);
         bool setAutoFill(bool set = true);
         bool setTextVAlign(XLShapeTextVAlign newTextVAlign);
         bool setTextHAlign(XLShapeTextHAlign newTextHAlign);
@@ -168,12 +170,12 @@ namespace OpenXLSX
          * @return index of attribute in m_nodeOrder
          * @return -1 if not found
          */
-        int16_t attributeOrderIndex(std::string const& attributeName) const;
+        int16_t attributeOrderIndex(std::string_view attributeName) const;
         /**
          * @brief XLShapeStyle internal generic getter & setter functions
          */
-        XLShapeStyleAttribute getAttribute(std::string const& attributeName, std::string const& valIfNotFound = "") const;
-        bool                  setAttribute(std::string const& attributeName, std::string const& attributeValue);
+        XLShapeStyleAttribute getAttribute(std::string_view attributeName, std::string_view valIfNotFound = "") const;
+        bool                  setAttribute(std::string_view attributeName, std::string_view attributeValue);
         // bool setAttribute(XLShapeStyleAttribute const& attribute);
 
     public:
@@ -195,17 +197,17 @@ namespace OpenXLSX
         /**
          * @brief XLShapeStyle setter functions
          */
-        bool setPosition(std::string newPosition);
+        bool setPosition(std::string_view newPosition);
         bool setMarginLeft(uint16_t newMarginLeft);
         bool setMarginTop(uint16_t newMarginTop);
         bool setWidth(uint16_t newWidth);
         bool setHeight(uint16_t newHeight);
-        bool setMsoWrapStyle(std::string newMsoWrapStyle);
-        bool setVTextAnchor(std::string newVTextAnchor);
+        bool setMsoWrapStyle(std::string_view newMsoWrapStyle);
+        bool setVTextAnchor(std::string_view newVTextAnchor);
         bool hide();    // set visibility:hidden
         bool show();    // set visibility:visible
 
-        bool setRaw(std::string newStyle)
+        bool setRaw(std::string_view newStyle)
         {
             m_style = newStyle;
             return true;
@@ -295,11 +297,11 @@ namespace OpenXLSX
          * @return true for success, false for failure
          */
         // NOTE: setShapeId is not available because shape id is managed by the parent class in createShape
-        bool setFillColor(std::string const& newFillColor);
+        bool setFillColor(std::string_view newFillColor);
         bool setStroked(bool set);
-        bool setType(std::string const& newType);
+        bool setType(std::string_view newType);
         bool setAllowInCell(bool set);
-        bool setStyle(std::string const& newStyle);
+        bool setStyle(std::string_view newStyle);
         bool setStyle(XLShapeStyle const& newStyle);
 
     private:                                                           // ---------- Private Member Variables ---------- //
@@ -352,7 +354,7 @@ namespace OpenXLSX
          * @brief The constructor.
          * @param xmlData the source XML of the drawings file
          */
-        XLDrawing(XLXmlData* xmlData);
+        explicit XLDrawing(gsl::not_null<XLXmlData*> xmlData);
 
         /**
          * @brief The copy constructor.
@@ -390,9 +392,9 @@ namespace OpenXLSX
          * @param width the width of the image in pixels
          * @param height the height of the image in pixels
          */
-        void addImage(const std::string& rId,
-                      const std::string& name,
-                      const std::string& description,
+        void addImage(std::string_view rId,
+                      std::string_view name,
+                      std::string_view description,
                       uint32_t           row,
                       uint32_t           col,
                       uint32_t           width,
@@ -407,7 +409,7 @@ namespace OpenXLSX
          * @param width the width of the chart in pixels
          * @param height the height of the chart in pixels
          */
-        void addChartAnchor(const std::string& rId,
+        void addChartAnchor(std::string_view rId,
                             std::string_view   name,
                             uint32_t           row,
                             uint32_t           col,
@@ -424,10 +426,10 @@ namespace OpenXLSX
          * @param col the column where the image should be placed (0-indexed)
          * @param scalingFactor the factor to scale the image by (1.0 = original size)
          */
-        void addScaledImage(const std::string& rId,
-                            const std::string& name,
-                            const std::string& description,
-                            const std::string& data,
+        void addScaledImage(std::string_view rId,
+                            std::string_view name,
+                            std::string_view description,
+                            std::string_view data,
                             uint32_t           row,
                             uint32_t           col,
                             double             scalingFactor = 1.0);
@@ -475,7 +477,7 @@ namespace OpenXLSX
          * @brief The constructor.
          * @param xmlData the source XML of the comments file
          */
-        XLVmlDrawing(XLXmlData* xmlData);
+        explicit XLVmlDrawing(gsl::not_null<XLXmlData*> xmlData);
 
         /**
          * @brief The copy constructor.
@@ -521,14 +523,14 @@ namespace OpenXLSX
          * @param cellRef the reference to the cell for which a shape shall be found
          * @return the XMLNode that contains the desired shape, or an empty XMLNode if not found
          */
-        XMLNode shapeNode(std::string const& cellRef) const;
+        XMLNode shapeNode(std::string_view cellRef) const;
 
         uint32_t shapeCount() const;
 
         XLShape shape(uint32_t index) const;
 
         bool deleteShape(uint32_t index);
-        bool deleteShape(std::string const& cellRef);
+        bool deleteShape(std::string_view cellRef);
 
         XLShape createShape(const XLShape& shapeTemplate = XLShape());
 
