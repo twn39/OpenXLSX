@@ -20,17 +20,11 @@ using namespace OpenXLSX;
 
 // ===== XLDxf, formerly XLDiffCellFormat
 
-/**
- * @details Default constructor. Initializes an empty XLDxf object with a temporary XML document.
- */
 XLDxf::XLDxf() : m_xmlDocument(std::make_unique<XMLDocument>())
 {
     m_dxfNode = m_xmlDocument->append_child("dxf");
 }
 
-/**
- * @details Constructor. Initializes the member variables for the new XLDxf object.
- */
 XLDxf::XLDxf(const XMLNode& node) : m_dxfNode(node) {}
 
 XLDxf::~XLDxf() = default;
@@ -71,14 +65,8 @@ XLDxf& XLDxf::operator=(XLDxf&& other) noexcept
     return *this;
 }
 
-/**
- * @details Returns the differential cell format empty status
- */
 bool XLDxf::empty() const { return m_dxfNode.empty(); }
 
-/**
- * @details Getter functions
- */
 XLFont XLDxf::font() const
 {
     XMLNode fontNode = appendAndGetNode(m_dxfNode, "font");
@@ -131,9 +119,6 @@ bool XLDxf::setExtLst(XLUnsupportedElement const& newExtLst)
     return false;
 }
 
-/**
- * @details assemble a string summary about the differential cell format
- */
 std::string XLDxf::summary() const
 {
     return fmt::format("DXF containing: font={}, fill={}, border={}, alignment={}, numFmt={}",
@@ -146,19 +131,13 @@ std::string XLDxf::summary() const
 
 // ===== XLDxfs, parent of XLDxf
 
-/**
- * @details Constructor. Initializes an empty XLDxfs object
- */
 XLDxfs::XLDxfs() : m_dxfsNode(XMLNode()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLDxfs object.
- */
 XLDxfs::XLDxfs(const XMLNode& dxfs) : m_dxfsNode(dxfs)
 {
     XMLNode node = m_dxfsNode.first_child_of_type(pugi::node_element);
     while (not node.empty()) {
-        std::string nodeName = node.name();
+        std::string_view nodeName(node.name());
         if (nodeName == "dxf")
             m_dxfs.push_back(XLDxf(node));
         else
@@ -182,9 +161,6 @@ XLDxfs::XLDxfs(XLDxfs&& other)
       m_dxfs(std::move(other.m_dxfs))
 {}
 
-/**
- * @details Copy assignment operator
- */
 XLDxfs& XLDxfs::operator=(const XLDxfs& other)
 {
     if (&other != this) {
@@ -204,23 +180,14 @@ XLDxfs& XLDxfs::operator=(XLDxfs&& other) noexcept
     return *this;
 }
 
-/**
- * @details Returns the amount of differential cell formats held by the class
- */
 size_t XLDxfs::count() const { return m_dxfs.size(); }
 
-/**
- * @details fetch XLDxf from m_dxfs by index
- */
 XLDxf XLDxfs::dxfByIndex(XLStyleIndex index) const
 {
     Expects(index < m_dxfs.size());
     return m_dxfs.at(index);
 }
 
-/**
- * @details append a new XLDxf to m_dxfs and m_dxfsNode, based on copyFrom
- */
 XLStyleIndex XLDxfs::create(XLDxf copyFrom, std::string_view styleEntriesPrefix)
 {
     XLStyleIndex index = count();    // index for the cell style to be created

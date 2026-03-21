@@ -55,14 +55,8 @@ namespace {
     }
 }
 
-/**
- * @details Constructor. Initializes an empty XLAlignment object
- */
 XLAlignment::XLAlignment() : m_alignmentNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLAlignment object.
- */
 XLAlignment::XLAlignment(const XMLNode& node) : m_alignmentNode(std::make_unique<XMLNode>(node)) {}
 
 XLAlignment::~XLAlignment() = default;
@@ -75,54 +69,24 @@ XLAlignment& XLAlignment::operator=(const XLAlignment& other)
     return *this;
 }
 
-/**
- * @details Returns the horizontal alignment style
- */
 XLAlignmentStyle XLAlignment::horizontal() const { return XLAlignmentStyleFromString(m_alignmentNode->attribute("horizontal").value()); }
 
-/**
- * @details Returns the vertical alignment style
- */
 XLAlignmentStyle XLAlignment::vertical() const { return XLAlignmentStyleFromString(m_alignmentNode->attribute("vertical").value()); }
 
-/**
- * @details Returns the text rotation
- */
 uint16_t XLAlignment::textRotation() const { return gsl::narrow_cast<uint16_t>(m_alignmentNode->attribute("textRotation").as_uint()); }
 
-/**
- * @details check if text wrapping is enabled
- */
 bool XLAlignment::wrapText() const { return m_alignmentNode->attribute("wrapText").as_bool(); }
 
-/**
- * @details Returns the indent setting
- */
 uint32_t XLAlignment::indent() const { return m_alignmentNode->attribute("indent").as_uint(); }
 
-/**
- * @details Returns the relative indent setting
- */
 int32_t XLAlignment::relativeIndent() const { return m_alignmentNode->attribute("relativeIndent").as_int(); }
 
-/**
- * @details check if justification of last line is enabled
- */
 bool XLAlignment::justifyLastLine() const { return m_alignmentNode->attribute("justifyLastLine").as_bool(); }
 
-/**
- * @details check if shrink to fit is enabled
- */
 bool XLAlignment::shrinkToFit() const { return m_alignmentNode->attribute("shrinkToFit").as_bool(); }
 
-/**
- * @details Returns the reading order setting
- */
 uint32_t XLAlignment::readingOrder() const { return m_alignmentNode->attribute("readingOrder").as_uint(); }
 
-/**
- * @details Setter functions
- */
 bool XLAlignment::setHorizontal(XLAlignmentStyle newStyle)
 { return appendAndSetAttribute(*m_alignmentNode, "horizontal", XLAlignmentStyleToString(newStyle)).empty() == false; }
 bool XLAlignment::setVertical(XLAlignmentStyle newStyle)
@@ -142,9 +106,6 @@ bool XLAlignment::setShrinkToFit(bool set)
 bool XLAlignment::setReadingOrder(uint32_t newReadingOrder)
 { return appendAndSetAttribute(*m_alignmentNode, "readingOrder", std::to_string(newReadingOrder)).empty() == false; }
 
-/**
- * @details assemble a string summary about the fill
- */
 std::string XLAlignment::summary() const
 {
     return fmt::format("alignment horizontal={}, vertical={}, textRotation={}, wrapText={}, indent={}, relativeIndent={}, justifyLastLine={}, shrinkToFit={}, readingOrder={}",
@@ -159,14 +120,8 @@ std::string XLAlignment::summary() const
                        XLReadingOrderToString(readingOrder()));
 }
 
-/**
- * @details Constructor. Initializes an empty XLCellFormat object
- */
 XLCellFormat::XLCellFormat() : m_cellFormatNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLCellFormat object.
- */
 XLCellFormat::XLCellFormat(const XMLNode& node, bool permitXfId)
     : m_cellFormatNode(std::make_unique<XMLNode>(node)),
       m_permitXfId(permitXfId)
@@ -212,18 +167,12 @@ XLStyleIndex XLCellFormat::fillIndex() const { return m_cellFormatNode->attribut
  */
 XLStyleIndex XLCellFormat::borderIndex() const { return m_cellFormatNode->attribute("borderId").as_uint(XLInvalidStyleIndex); }
 
-/**
- * @details Returns the xfId value
- */
 XLStyleIndex XLCellFormat::xfId() const
 {
     if (m_permitXfId) return m_cellFormatNode->attribute("xfId").as_uint(XLInvalidStyleIndex);
     throw XLException("XLCellFormat::xfId not permitted when m_permitXfId is false");
 }
 
-/**
- * @details determine the applyNumberFormat,applyFont,applyFill,applyBorder,applyAlignment,applyProtection status
- */
 bool XLCellFormat::applyNumberFormat() const { return m_cellFormatNode->attribute("applyNumberFormat").as_bool(); }
 bool XLCellFormat::applyFont() const { return m_cellFormatNode->attribute("applyFont").as_bool(); }
 bool XLCellFormat::applyFill() const { return m_cellFormatNode->attribute("applyFill").as_bool(); }
@@ -231,21 +180,12 @@ bool XLCellFormat::applyBorder() const { return m_cellFormatNode->attribute("app
 bool XLCellFormat::applyAlignment() const { return m_cellFormatNode->attribute("applyAlignment").as_bool(); }
 bool XLCellFormat::applyProtection() const { return m_cellFormatNode->attribute("applyProtection").as_bool(); }
 
-/**
- * @details determine the quotePrefix, pivotButton status
- */
 bool XLCellFormat::quotePrefix() const { return m_cellFormatNode->attribute("quotePrefix").as_bool(); }
 bool XLCellFormat::pivotButton() const { return m_cellFormatNode->attribute("pivotButton").as_bool(); }
 
-/**
- * @details determine the protection:locked,protection:hidden status
- */
 bool XLCellFormat::locked() const { return m_cellFormatNode->child("protection").attribute("locked").as_bool(); }
 bool XLCellFormat::hidden() const { return m_cellFormatNode->child("protection").attribute("hidden").as_bool(); }
 
-/**
- * @details fetch alignment object
- */
 XLAlignment XLCellFormat::alignment(bool createIfMissing) const
 {
     XMLNode nodeAlignment = m_cellFormatNode->child("alignment");
@@ -255,9 +195,6 @@ XLAlignment XLCellFormat::alignment(bool createIfMissing) const
     return XLAlignment(nodeAlignment);
 }
 
-/**
- * @details Setter functions
- */
 bool XLCellFormat::setNumberFormatId(uint32_t newNumFmtId)
 { return appendAndSetAttribute(*m_cellFormatNode, "numFmtId", std::to_string(newNumFmtId)).empty() == false; }
 bool XLCellFormat::setFontIndex(XLStyleIndex newXfIndex)
@@ -317,9 +254,6 @@ bool XLCellFormat::setExtLst(XLUnsupportedElement const& newExtLst)
     return false;
 }
 
-/**
- * @details assemble a string summary about the cell format
- */
 std::string XLCellFormat::summary() const
 {
     return fmt::format("numberFormatId={}, fontIndex={}, fillIndex={}, borderIndex={}{}, applyNumberFormat: {}, applyFont: {}, applyFill: {}, applyBorder: {}, applyAlignment: {}, applyProtection: {}, quotePrefix: {}, pivotButton: {}, locked: {}, hidden: {}, {}",
@@ -343,14 +277,8 @@ std::string XLCellFormat::summary() const
 
 // ===== XLCellFormats, one parent of XLCellFormat (the other being XLCellFormats)
 
-/**
- * @details Constructor. Initializes an empty XLCellFormats object
- */
 XLCellFormats::XLCellFormats() : m_cellFormatsNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLCellFormats object.
- */
 XLCellFormats::XLCellFormats(const XMLNode& cellStyleFormats, bool permitXfId)
     : m_cellFormatsNode(std::make_unique<XMLNode>(cellStyleFormats)),
       m_permitXfId(permitXfId)
@@ -358,7 +286,7 @@ XLCellFormats::XLCellFormats(const XMLNode& cellStyleFormats, bool permitXfId)
     // initialize XLCellFormats entries and m_cellFormats here
     XMLNode node = cellStyleFormats.first_child_of_type(pugi::node_element);
     while (not node.empty()) {
-        std::string nodeName = node.name();
+        std::string_view nodeName(node.name());
         if (nodeName == "xf")
             m_cellFormats.push_back(XLCellFormat(node, m_permitXfId));
         else
@@ -384,9 +312,6 @@ XLCellFormats::XLCellFormats(XLCellFormats&& other)
       m_permitXfId(other.m_permitXfId)
 {}
 
-/**
- * @details Copy assignment operator
- */
 XLCellFormats& XLCellFormats::operator=(const XLCellFormats& other)
 {
     if (&other != this) {
@@ -398,23 +323,14 @@ XLCellFormats& XLCellFormats::operator=(const XLCellFormats& other)
     return *this;
 }
 
-/**
- * @details Returns the amount of cell format descriptions held by the class
- */
 size_t XLCellFormats::count() const { return m_cellFormats.size(); }
 
-/**
- * @details fetch XLCellFormat from m_cellFormats by index
- */
 XLCellFormat XLCellFormats::cellFormatByIndex(XLStyleIndex index) const
 {
     Expects(index < m_cellFormats.size());
     return m_cellFormats.at(index);
 }
 
-/**
- * @details append a new XLCellFormat to m_cellFormats and m_cellFormatsNode, based on copyFrom
- */
 XLStyleIndex XLCellFormats::create(XLCellFormat copyFrom, std::string_view styleEntriesPrefix)
 {
     XLStyleIndex index = count();    // index for the cell format to be created

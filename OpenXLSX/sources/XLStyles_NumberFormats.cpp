@@ -18,14 +18,8 @@
 using namespace OpenXLSX;
 
 
-/**
- * @details Constructor. Initializes an empty XLNumberFormat object
- */
 XLNumberFormat::XLNumberFormat() : m_numberFormatNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLNumberFormat object.
- */
 XLNumberFormat::XLNumberFormat(const XMLNode& node) : m_numberFormatNode(std::make_unique<XMLNode>(node)) {}
 
 XLNumberFormat::~XLNumberFormat() = default;
@@ -38,27 +32,15 @@ XLNumberFormat& XLNumberFormat::operator=(const XLNumberFormat& other)
     return *this;
 }
 
-/**
- * @details Returns the numFmtId value
- */
 uint32_t XLNumberFormat::numberFormatId() const { return m_numberFormatNode->attribute("numFmtId").as_uint(XLInvalidUInt32); }
 
-/**
- * @details Returns the formatCode value
- */
 std::string XLNumberFormat::formatCode() const { return m_numberFormatNode->attribute("formatCode").value(); }
 
-/**
- * @details Setter functions
- */
 bool XLNumberFormat::setNumberFormatId(uint32_t newNumberFormatId)
 { return appendAndSetAttribute(*m_numberFormatNode, "numFmtId", std::to_string(newNumberFormatId)).empty() == false; }
 bool XLNumberFormat::setFormatCode(std::string_view newFormatCode)
 { return appendAndSetAttribute(*m_numberFormatNode, "formatCode", std::string(newFormatCode).c_str()).empty() == false; }
 
-/**
- * @details assemble a string summary about the number format
- */
 std::string XLNumberFormat::summary() const
 {
     return fmt::format("numFmtId={}, formatCode={}", numberFormatId(), formatCode());
@@ -66,20 +48,14 @@ std::string XLNumberFormat::summary() const
 
 // ===== XLNumberFormats, parent of XLNumberFormat
 
-/**
- * @details Constructor. Initializes an empty XLNumberFormats object
- */
 XLNumberFormats::XLNumberFormats() : m_numberFormatsNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLNumberFormats object.
- */
 XLNumberFormats::XLNumberFormats(const XMLNode& numberFormats) : m_numberFormatsNode(std::make_unique<XMLNode>(numberFormats))
 {
     // initialize XLNumberFormat entries and m_numberFormats here
     XMLNode node = numberFormats.first_child_of_type(pugi::node_element);
     while (not node.empty()) {
-        std::string nodeName = node.name();
+        std::string_view nodeName(node.name());
         if (nodeName == "numFmt")
             m_numberFormats.push_back(XLNumberFormat(node));
         else
@@ -103,9 +79,6 @@ XLNumberFormats::XLNumberFormats(XLNumberFormats&& other)
       m_numberFormats(std::move(other.m_numberFormats))
 {}
 
-/**
- * @details Copy assignment operator
- */
 XLNumberFormats& XLNumberFormats::operator=(const XLNumberFormats& other)
 {
     if (&other != this) {
@@ -116,43 +89,28 @@ XLNumberFormats& XLNumberFormats::operator=(const XLNumberFormats& other)
     return *this;
 }
 
-/**
- * @details Returns the amount of numberFormats held by the class
- */
 size_t XLNumberFormats::count() const { return m_numberFormats.size(); }
 
-/**
- * @details fetch XLNumberFormat from m_numberFormats by index
- */
 XLNumberFormat XLNumberFormats::numberFormatByIndex(XLStyleIndex index) const
 {
     Expects(index < m_numberFormats.size());
     return m_numberFormats.at(index);
 }
 
-/**
- * @details fetch XLNumberFormat from m_numberFormats by its numberFormatId
- */
 XLNumberFormat XLNumberFormats::numberFormatById(uint32_t numberFormatId) const
 {
-    for (XLNumberFormat fmt : m_numberFormats)
+    for (const auto& fmt : m_numberFormats)
         if (fmt.numberFormatId() == numberFormatId) return fmt;
     using namespace std::literals::string_literals;
     throw XLException("XLNumberFormats::"s + __func__ + ": numberFormatId "s + std::to_string(numberFormatId) + " not found"s);
 }
 
-/**
- * @details fetch a numFmtId from m_numberFormats by index
- */
 uint32_t XLNumberFormats::numberFormatIdFromIndex(XLStyleIndex index) const
 {
     Expects(index < m_numberFormats.size());
     return m_numberFormats[index].numberFormatId();
 }
 
-/**
- * @details Create a new custom number format with a unique ID and format code
- */
 uint32_t XLNumberFormats::createNumberFormat(std::string_view formatCode)
 {
     uint32_t maxId = 163;
@@ -191,9 +149,6 @@ uint32_t XLNumberFormats::createNumberFormat(std::string_view formatCode)
     return newId;
 }
 
-/**
- * @details append a new XLNumberFormat to m_numberFormats and m_numberFormatsNode, based on copyFrom
- */
 XLStyleIndex XLNumberFormats::create(XLNumberFormat copyFrom, std::string_view styleEntriesPrefix)
 {
     XLStyleIndex index = count();    // index for the number format to be created

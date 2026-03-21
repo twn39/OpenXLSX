@@ -63,14 +63,8 @@ namespace {
     }
 }
 
-/**
- * @details Constructor. Initializes an empty XLLine object
- */
 XLLine::XLLine() : m_lineNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLLine object.
- */
 XLLine::XLLine(const XMLNode& node) : m_lineNode(std::make_unique<XMLNode>(node)) {}
 
 XLLine::~XLLine() = default;
@@ -83,9 +77,6 @@ XLLine& XLLine::operator=(const XLLine& other)
     return *this;
 }
 
-/**
- * @details Returns the line style (XLLineStyleNone if line is not set)
- */
 XLLineStyle XLLine::style() const
 {
     if (m_lineNode->empty()) return XLLineStyleNone;
@@ -93,14 +84,8 @@ XLLineStyle XLLine::style() const
     return XLLineStyleFromString(attr.value());
 }
 
-/**
- * @details check if line is used (set) or not
- */
 XLLine::operator bool() const { return (style() != XLLineStyleNone); }
 
-/**
- * @details Returns the line data bar color object
- */
 XLDataBarColor XLLine::color() const
 {
     XMLNode color = appendAndGetNode(*m_lineNode, "color");
@@ -130,9 +115,6 @@ XLDataBarColor XLLine::color() const
 //     return 0.0;
 // }
 
-/**
- * @details assemble a string summary about the fill
- */
 std::string XLLine::summary() const
 {
     return fmt::format("line style is {}, {}", XLLineStyleToString(style()), color().summary());
@@ -143,14 +125,8 @@ std::string XLLine::summary() const
     // 2 digits after the decimal separator return fmt::format("line style is {}, color is {}, {}", XLLineStyleToString(style()), color().hex(), tintSummary);
 }
 
-/**
- * @details Constructor. Initializes an empty XLBorder object
- */
 XLBorder::XLBorder() : m_borderNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLBorder object.
- */
 XLBorder::XLBorder(const XMLNode& node) : m_borderNode(std::make_unique<XMLNode>(node)) {}
 
 XLBorder::~XLBorder() = default;
@@ -163,24 +139,12 @@ XLBorder& XLBorder::operator=(const XLBorder& other)
     return *this;
 }
 
-/**
- * @details determines whether the diagonalUp property is set
- */
 bool XLBorder::diagonalUp() const { return m_borderNode->attribute("diagonalUp").as_bool(); }
 
-/**
- * @details determines whether the diagonalDown property is set
- */
 bool XLBorder::diagonalDown() const { return m_borderNode->attribute("diagonalDown").as_bool(); }
 
-/**
- * @details determines whether the outline property is set
- */
 bool XLBorder::outline() const { return m_borderNode->attribute("outline").as_bool(); }
 
-/**
- * @details fetch lines
- */
 XLLine XLBorder::left() const { return XLLine(m_borderNode->child("left")); }
 XLLine XLBorder::right() const { return XLLine(m_borderNode->child("right")); }
 XLLine XLBorder::top() const { return XLLine(m_borderNode->child("top")); }
@@ -189,9 +153,6 @@ XLLine XLBorder::diagonal() const { return XLLine(m_borderNode->child("diagonal"
 XLLine XLBorder::vertical() const { return XLLine(m_borderNode->child("vertical")); }
 XLLine XLBorder::horizontal() const { return XLLine(m_borderNode->child("horizontal")); }
 
-/**
- * @details Setter functions
- */
 bool XLBorder::setDiagonalUp(bool set)
 { return appendAndSetAttribute(*m_borderNode, "diagonalUp", (set ? "true" : "false")).empty() == false; }
 bool XLBorder::setDiagonalDown(bool set)
@@ -232,9 +193,6 @@ bool XLBorder::setVertical(XLLineStyle lineStyle, XLColor lineColor, double line
 bool XLBorder::setHorizontal(XLLineStyle lineStyle, XLColor lineColor, double lineTint)
 { return setLine(XLLineHorizontal, lineStyle, lineColor, lineTint); }
 
-/**
- * @details assemble a string summary about the fill
- */
 std::string XLBorder::summary() const
 {
     std::string lineInfo = fmt::format(", left: {}, right: {}, top: {}, bottom: {}, diagonal: {}, vertical: {}, horizontal: {}",
@@ -254,20 +212,14 @@ std::string XLBorder::summary() const
 
 // ===== XLBorders, parent of XLBorder
 
-/**
- * @details Constructor. Initializes an empty XLBorders object
- */
 XLBorders::XLBorders() : m_bordersNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLBorders object.
- */
 XLBorders::XLBorders(const XMLNode& borders) : m_bordersNode(std::make_unique<XMLNode>(borders))
 {
     // initialize XLBorders entries and m_borders here
     XMLNode node = borders.first_child_of_type(pugi::node_element);
     while (not node.empty()) {
-        std::string nodeName = node.name();
+        std::string_view nodeName(node.name());
         if (nodeName == "border")
             m_borders.push_back(XLBorder(node));
         else
@@ -285,9 +237,6 @@ XLBorders::XLBorders(const XLBorders& other) : m_bordersNode(std::make_unique<XM
 
 XLBorders::XLBorders(XLBorders&& other) : m_bordersNode(std::move(other.m_bordersNode)), m_borders(std::move(other.m_borders)) {}
 
-/**
- * @details Copy assignment operator
- */
 XLBorders& XLBorders::operator=(const XLBorders& other)
 {
     if (&other != this) {
@@ -298,23 +247,14 @@ XLBorders& XLBorders::operator=(const XLBorders& other)
     return *this;
 }
 
-/**
- * @details Returns the amount of border descriptions held by the class
- */
 size_t XLBorders::count() const { return m_borders.size(); }
 
-/**
- * @details fetch XLBorder from m_borders by index
- */
 XLBorder XLBorders::borderByIndex(XLStyleIndex index) const
 {
     Expects(index < m_borders.size());
     return m_borders.at(index);
 }
 
-/**
- * @details append a new XLBorder to m_borders and m_bordersNode, based on copyFrom
- */
 XLStyleIndex XLBorders::create(XLBorder copyFrom, std::string_view styleEntriesPrefix)
 {
     XLStyleIndex index = count();    // index for the border to be created

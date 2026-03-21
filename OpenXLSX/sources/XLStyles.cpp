@@ -71,14 +71,8 @@ namespace {
 
 // ===== XLStyles, master class
 
-/**
- * @details Default constructor
- */
 XLStyles::XLStyles() {}    // TBD if defaulting this constructor again would reintroduce issue #310
 
-/**
- * @details Creates an XLStyles object, which will initialize from the given xmlData
- */
 XLStyles::XLStyles(gsl::not_null<XLXmlData*> xmlData, bool suppressWarnings, std::string_view stylesPrefix)
     : XLXmlFile(xmlData),
       m_suppressWarnings(suppressWarnings)
@@ -200,9 +194,6 @@ XLStyles::XLStyles(gsl::not_null<XLXmlData*> xmlData, bool suppressWarnings, std
 
 XLStyles::~XLStyles() {}
 
-/**
- * @details move-construct an XLStyles object
- */
 XLStyles::XLStyles(XLStyles&& other) noexcept
     : XLXmlFile(other),
       m_suppressWarnings(other.m_suppressWarnings),
@@ -216,9 +207,6 @@ XLStyles::XLStyles(XLStyles&& other) noexcept
       m_dxfs(std::move(other.m_dxfs))
 {}
 
-/**
- * @details copy-construct an XLStyles object
- */
 XLStyles::XLStyles(const XLStyles& other)
     : XLXmlFile(other),
       m_suppressWarnings(other.m_suppressWarnings),
@@ -232,9 +220,6 @@ XLStyles::XLStyles(const XLStyles& other)
       m_dxfs(std::make_unique<XLDxfs>(*other.m_dxfs))
 {}
 
-/**
- * @details move-assign an XLStyles object
- */
 XLStyles& XLStyles::operator=(XLStyles&& other) noexcept
 {
     if (&other != this) {
@@ -252,9 +237,6 @@ XLStyles& XLStyles::operator=(XLStyles&& other) noexcept
     return *this;
 }
 
-/**
- * @details copy-assign an XLStyles object
- */
 XLStyles& XLStyles::operator=(const XLStyles& other)
 {
     if (&other != this) {
@@ -264,57 +246,27 @@ XLStyles& XLStyles::operator=(const XLStyles& other)
     return *this;
 }
 
-/**
- * @details Create a new custom number format with a unique ID and format code
- */
 uint32_t XLStyles::createNumberFormat(std::string_view formatCode)
 {
     return m_numberFormats->createNumberFormat(formatCode);
 }
 
-/**
- * @details return a handle to the underlying number formats
- */
 XLNumberFormats& XLStyles::numberFormats() const { return *m_numberFormats; }
 
-/**
- * @details return a handle to the underlying fonts
- */
 XLFonts& XLStyles::fonts() const { return *m_fonts; }
 
-/**
- * @details return a handle to the underlying fills
- */
 XLFills& XLStyles::fills() const { return *m_fills; }
 
-/**
- * @details return a handle to the underlying borders
- */
 XLBorders& XLStyles::borders() const { return *m_borders; }
 
-/**
- * @details return a handle to the underlying cell style formats
- */
 XLCellFormats& XLStyles::cellStyleFormats() const { return *m_cellStyleFormats; }
 
-/**
- * @details return a handle to the underlying cell formats
- */
 XLCellFormats& XLStyles::cellFormats() const { return *m_cellFormats; }
 
-/**
- * @details return a handle to the underlying cell styles
- */
 XLCellStyles& XLStyles::cellStyles() const { return *m_cellStyles; }
 
-/**
- * @details return a handle to the underlying differential cell formats
- */
 XLDxfs& XLStyles::dxfs() const { return *m_dxfs; }
 
-/**
- * @details Add a differential cell format (DXF) to the styles and return its index
- */
 XLStyleIndex XLStyles::addDxf(const XLDxf& dxf) { return m_dxfs->create(dxf); }
 
 XLStyleIndex XLStyles::addNamedStyle(std::string_view name,
@@ -393,7 +345,7 @@ XLStyleIndex XLStyles::namedStyle(std::string_view name) const
     // Find a corresponding cellXfs entry that uses this xfId
     for (size_t i = 0; i < cellFormats().count(); ++i) {
         if (cellFormats()[i].xfId() == targetStyleXfId) {
-            return static_cast<XLStyleIndex>(i);
+            return gsl::narrow_cast<XLStyleIndex>(i);
         }
     }
     

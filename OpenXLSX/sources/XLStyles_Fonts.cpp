@@ -65,14 +65,8 @@ namespace {
     }
 }
 
-/**
- * @details Constructor. Initializes an empty XLFont object
- */
 XLFont::XLFont() : m_fontNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLFont object.
- */
 XLFont::XLFont(const XMLNode& node) : m_fontNode(std::make_unique<XMLNode>(node)) {}
 
 XLFont::~XLFont() = default;
@@ -85,45 +79,30 @@ XLFont& XLFont::operator=(const XLFont& other)
     return *this;
 }
 
-/**
- * @details Returns the font name property
- */
 std::string XLFont::fontName() const
 {
     XMLAttribute attr = appendAndGetNodeAttribute(*m_fontNode, "name", "val", OpenXLSX::XLDefaultFontName);
     return attr.value();
 }
 
-/**
- * @details Returns the font charset property
- */
 size_t XLFont::fontCharset() const
 {
     XMLAttribute attr = appendAndGetNodeAttribute(*m_fontNode, "charset", "val", std::to_string(OpenXLSX::XLDefaultFontCharset));
     return attr.as_uint();
 }
 
-/**
- * @details Returns the font family property
- */
 size_t XLFont::fontFamily() const
 {
     XMLAttribute attr = appendAndGetNodeAttribute(*m_fontNode, "family", "val", std::to_string(OpenXLSX::XLDefaultFontFamily));
     return attr.as_uint();
 }
 
-/**
- * @details Returns the font size property
- */
 size_t XLFont::fontSize() const
 {
     XMLAttribute attr = appendAndGetNodeAttribute(*m_fontNode, "sz", "val", std::to_string(OpenXLSX::XLDefaultFontSize));
     return attr.as_uint();
 }
 
-/**
- * @details Returns the font color property
- */
 XLColor XLFont::fontColor() const
 {
     using namespace std::literals::string_literals;
@@ -133,9 +112,6 @@ XLColor XLFont::fontColor() const
     return XLColor(attr.value());
 }
 
-/**
- * @details getter functions: return the font's bold, italic, underline, strikethrough status
- */
 bool             XLFont::bold() const { return getBoolAttributeWhenOmittedMeansTrue(*m_fontNode, "b", "val"); }
 bool             XLFont::italic() const { return getBoolAttributeWhenOmittedMeansTrue(*m_fontNode, "i", "val"); }
 bool             XLFont::strikethrough() const { return getBoolAttributeWhenOmittedMeansTrue(*m_fontNode, "strike", "val"); }
@@ -150,9 +126,6 @@ bool XLFont::shadow() const { return getBoolAttributeWhenOmittedMeansTrue(*m_fon
 bool XLFont::condense() const { return getBoolAttributeWhenOmittedMeansTrue(*m_fontNode, "condense", "val"); }
 bool XLFont::extend() const { return getBoolAttributeWhenOmittedMeansTrue(*m_fontNode, "extend", "val"); }
 
-/**
- * @details Setter functions
- */
 bool XLFont::setFontName(std::string_view newName)
 { return appendAndSetNodeAttribute(*m_fontNode, "name", "val", std::string(newName).c_str()).empty() == false; }
 bool XLFont::setFontCharset(size_t newCharset)
@@ -185,9 +158,6 @@ bool XLFont::setCondense(bool set)
 bool XLFont::setExtend(bool set)
 { return appendAndSetNodeAttribute(*m_fontNode, "extend", "val", (set ? "true" : "false")).empty() == false; }
 
-/**
- * @details assemble a string summary about the font
- */
 std::string XLFont::summary() const
 {
     return fmt::format("font name is {}, charset: {}, font family: {}, size: {}, color: {}{}{}{}{}{}{}{}{}{}{}",
@@ -210,20 +180,14 @@ std::string XLFont::summary() const
 
 // ===== XLFonts, parent of XLFont
 
-/**
- * @details Constructor. Initializes an empty XLFonts object
- */
 XLFonts::XLFonts() : m_fontsNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLFonts object.
- */
 XLFonts::XLFonts(const XMLNode& fonts) : m_fontsNode(std::make_unique<XMLNode>(fonts))
 {
     // initialize XLFonts entries and m_fonts here
     XMLNode node = m_fontsNode->first_child_of_type(pugi::node_element);
     while (not node.empty()) {
-        std::string nodeName = node.name();
+        std::string_view nodeName(node.name());
         if (nodeName == "font")
             m_fonts.push_back(XLFont(node));
         else
@@ -241,9 +205,6 @@ XLFonts::XLFonts(const XLFonts& other) : m_fontsNode(std::make_unique<XMLNode>(*
 
 XLFonts::XLFonts(XLFonts&& other) : m_fontsNode(std::move(other.m_fontsNode)), m_fonts(std::move(other.m_fonts)) {}
 
-/**
- * @details Copy assignment operator
- */
 XLFonts& XLFonts::operator=(const XLFonts& other)
 {
     if (&other != this) {
@@ -254,23 +215,14 @@ XLFonts& XLFonts::operator=(const XLFonts& other)
     return *this;
 }
 
-/**
- * @details Returns the amount of fonts held by the class
- */
 size_t XLFonts::count() const { return m_fonts.size(); }
 
-/**
- * @details fetch XLFont from m_Fonts by index
- */
 XLFont XLFonts::fontByIndex(XLStyleIndex index) const
 {
     Expects(index < m_fonts.size());
     return m_fonts.at(index);
 }
 
-/**
- * @details append a new XLFont to m_fonts and m_fontsNode, based on copyFrom
- */
 XLStyleIndex XLFonts::create(XLFont copyFrom, std::string_view styleEntriesPrefix)
 {
     XLStyleIndex index = count();    // index for the font to be created

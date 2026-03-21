@@ -18,14 +18,8 @@
 
 using namespace OpenXLSX;
 
-/**
- * @details Constructor. Initializes an empty XLCellStyle object
- */
 XLCellStyle::XLCellStyle() : m_cellStyleNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLCellStyle object.
- */
 XLCellStyle::XLCellStyle(const XMLNode& node) : m_cellStyleNode(std::make_unique<XMLNode>(node)) {}
 
 XLCellStyle::~XLCellStyle() = default;
@@ -38,14 +32,8 @@ XLCellStyle& XLCellStyle::operator=(const XLCellStyle& other)
     return *this;
 }
 
-/**
- * @details Returns the style empty status
- */
 bool XLCellStyle::empty() const { return m_cellStyleNode->empty(); }
 
-/**
- * @details Getter functions
- */
 std::string  XLCellStyle::name() const { return m_cellStyleNode->attribute("name").value(); }
 XLStyleIndex XLCellStyle::xfId() const { return m_cellStyleNode->attribute("xfId").as_uint(XLInvalidStyleIndex); }
 uint32_t     XLCellStyle::builtinId() const { return m_cellStyleNode->attribute("builtinId").as_uint(XLInvalidUInt32); }
@@ -53,9 +41,6 @@ uint32_t     XLCellStyle::outlineStyle() const { return m_cellStyleNode->attribu
 bool         XLCellStyle::hidden() const { return m_cellStyleNode->attribute("hidden").as_bool(); }
 bool         XLCellStyle::customBuiltin() const { return m_cellStyleNode->attribute("customBuiltin").as_bool(); }
 
-/**
- * @details Setter functions
- */
 bool XLCellStyle::setName(std::string_view newName) { return appendAndSetAttribute(*m_cellStyleNode, "name", std::string(newName)).empty() == false; }
 bool XLCellStyle::setXfId(XLStyleIndex newXfId)
 { return appendAndSetAttribute(*m_cellStyleNode, "xfId", std::to_string(newXfId)).empty() == false; }
@@ -77,9 +62,6 @@ bool XLCellStyle::setExtLst(XLUnsupportedElement const& newExtLst)
     return false;
 }
 
-/**
- * @details assemble a string summary about the cell style
- */
 std::string XLCellStyle::summary() const
 {
     uint32_t iLevel = outlineStyle();
@@ -94,20 +76,14 @@ std::string XLCellStyle::summary() const
 
 // ===== XLCellStyles, parent of XLCellStyle
 
-/**
- * @details Constructor. Initializes an empty XLCellStyles object
- */
 XLCellStyles::XLCellStyles() : m_cellStylesNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLCellStyles object.
- */
 XLCellStyles::XLCellStyles(const XMLNode& cellStyles) : m_cellStylesNode(std::make_unique<XMLNode>(cellStyles))
 {
     // initialize XLCellStyles entries and m_cellStyles here
     XMLNode node = cellStyles.first_child_of_type(pugi::node_element);
     while (not node.empty()) {
-        std::string nodeName = node.name();
+        std::string_view nodeName(node.name());
         if (nodeName == "cellStyle")
             m_cellStyles.push_back(XLCellStyle(node));
         else
@@ -131,9 +107,6 @@ XLCellStyles::XLCellStyles(XLCellStyles&& other)
       m_cellStyles(std::move(other.m_cellStyles))
 {}
 
-/**
- * @details Copy assignment operator
- */
 XLCellStyles& XLCellStyles::operator=(const XLCellStyles& other)
 {
     if (&other != this) {
@@ -144,23 +117,14 @@ XLCellStyles& XLCellStyles::operator=(const XLCellStyles& other)
     return *this;
 }
 
-/**
- * @details Returns the amount of numberFormats held by the class
- */
 size_t XLCellStyles::count() const { return m_cellStyles.size(); }
 
-/**
- * @details fetch XLCellStyle from m_cellStyles by index
- */
 XLCellStyle XLCellStyles::cellStyleByIndex(XLStyleIndex index) const
 {
     Expects(index < m_cellStyles.size());
     return m_cellStyles.at(index);
 }
 
-/**
- * @details append a new XLCellStyle to m_cellStyles and m_cellStyleNode, based on copyFrom
- */
 XLStyleIndex XLCellStyles::create(XLCellStyle copyFrom, std::string_view styleEntriesPrefix)
 {
     XLStyleIndex index = count();    // index for the cell style to be created

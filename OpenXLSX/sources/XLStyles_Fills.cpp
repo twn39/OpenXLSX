@@ -80,41 +80,23 @@ namespace {
 
 // ===== XLDataBarColor, used by XLFills gradientFill and by XLLine (to be implemented)
 
-/**
- * @details Constructor. Initializes an empty XLDataBarColor object
- */
 XLDataBarColor::XLDataBarColor() : m_colorNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLDataBarColor object.
- */
 XLDataBarColor::XLDataBarColor(const XMLNode& node) : m_colorNode(std::make_unique<XMLNode>(node)) {}
 
-/**
- * @details Copy constructor - initializes the member variables from other
- */
 XLDataBarColor::XLDataBarColor(const XLDataBarColor& other) : m_colorNode(std::make_unique<XMLNode>(*other.m_colorNode)) {}
 
-/**
- * @details Assign values of other to this
- */
 XLDataBarColor& XLDataBarColor::operator=(const XLDataBarColor& other)
 {
     if (&other != this) *m_colorNode = *other.m_colorNode;
     return *this;
 }
 
-/**
- * @details Getter functions
- */
 XLColor  XLDataBarColor::rgb() const { return XLColor(m_colorNode->attribute("rgb").as_string("ffffffff")); }
 double   XLDataBarColor::tint() const { return m_colorNode->attribute("tint").as_double(0.0); }
 bool     XLDataBarColor::automatic() const { return m_colorNode->attribute("auto").as_bool(); }
 uint32_t XLDataBarColor::indexed() const { return m_colorNode->attribute("indexed").as_uint(); }
 uint32_t XLDataBarColor::theme() const { return m_colorNode->attribute("theme").as_uint(); }
-/**
- * @details Setter functions
- */
 bool XLDataBarColor::setRgb(XLColor newColor) { return appendAndSetAttribute(*m_colorNode, "rgb", newColor.hex()).empty() == false; }
 bool XLDataBarColor::setTint(double newTint)
 {
@@ -140,9 +122,6 @@ bool XLDataBarColor::setTheme(uint32_t newTheme)
     return appendAndSetAttribute(*m_colorNode, "theme", std::to_string(newTheme)).empty() == false;
 }
 
-/**
- * @details assemble a string summary about the color
- */
 std::string XLDataBarColor::summary() const
 {
     return fmt::format("rgb is {}, tint is {}{}{}{}",
@@ -153,33 +132,18 @@ std::string XLDataBarColor::summary() const
                        theme() ? fmt::format(", theme is {}", theme()) : "");
 }
 
-/**
- * @details Constructor. Initializes an empty XLGradientStop object
- */
 XLGradientStop::XLGradientStop() : m_stopNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLGradientStop object.
- */
 XLGradientStop::XLGradientStop(const XMLNode& node) : m_stopNode(std::make_unique<XMLNode>(node)) {}
 
-/**
- * @details Copy constructor - initializes the member variables from other
- */
 XLGradientStop::XLGradientStop(const XLGradientStop& other) : m_stopNode(std::make_unique<XMLNode>(*other.m_stopNode)) {}
 
-/**
- * @details Assign values of other to this
- */
 XLGradientStop& XLGradientStop::operator=(const XLGradientStop& other)
 {
     if (&other != this) *m_stopNode = *other.m_stopNode;
     return *this;
 }
 
-/**
- * @details Getter functions
- */
 XLDataBarColor XLGradientStop::color() const
 {
     XMLNode color = appendAndGetNode(*m_stopNode, "color");
@@ -192,15 +156,9 @@ double XLGradientStop::position() const
     return attr.as_double(0.0);
 }
 
-/**
- * @details Setter functions
- */
 bool XLGradientStop::setPosition(double newPosition)
 { return appendAndSetAttribute(*m_stopNode, "position", formatDoubleAsString(newPosition)).empty() == false; }
 
-/**
- * @details assemble a string summary about the stop
- */
 std::string XLGradientStop::summary() const
 {
     return fmt::format("stop position is {}, {}", formatDoubleAsString(position()), color().summary());
@@ -208,20 +166,14 @@ std::string XLGradientStop::summary() const
 
 // ===== XLGradientStops, parent of XLGradientStop
 
-/**
- * @details Constructor. Initializes an empty XLGradientStops object
- */
 XLGradientStops::XLGradientStops() : m_gradientNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLGradientStops object.
- */
 XLGradientStops::XLGradientStops(const XMLNode& gradient) : m_gradientNode(std::make_unique<XMLNode>(gradient))
 {
     // initialize XLGradientStops entries and m_gradientStops here
     XMLNode node = m_gradientNode->first_child_of_type(pugi::node_element);
     while (not node.empty()) {
-        std::string nodeName = node.name();
+        std::string_view nodeName(node.name());
         if (nodeName == "stop")
             m_gradientStops.push_back(XLGradientStop(node));
         else
@@ -245,9 +197,6 @@ XLGradientStops::XLGradientStops(XLGradientStops&& other)
       m_gradientStops(std::move(other.m_gradientStops))
 {}
 
-/**
- * @details Copy assignment operator
- */
 XLGradientStops& XLGradientStops::operator=(const XLGradientStops& other)
 {
     if (&other != this) {
@@ -258,23 +207,14 @@ XLGradientStops& XLGradientStops::operator=(const XLGradientStops& other)
     return *this;
 }
 
-/**
- * @details Returns the amount of gradient stops held by the class
- */
 size_t XLGradientStops::count() const { return m_gradientStops.size(); }
 
-/**
- * @details fetch XLGradientStop from m_gradientStops by index
- */
 XLGradientStop XLGradientStops::stopByIndex(XLStyleIndex index) const
 {
     Expects(index < m_gradientStops.size());
     return m_gradientStops.at(index);
 }
 
-/**
- * @details append a new XLGradientStop to m_gradientStops m_gradientNode, based on copyFrom
- */
 XLStyleIndex XLGradientStops::create(XLGradientStop copyFrom, std::string_view styleEntriesPrefix)
 {
     XLStyleIndex index = count();    // index for the gradient stop to be created
@@ -311,19 +251,13 @@ XLStyleIndex XLGradientStops::create(XLGradientStop copyFrom, std::string_view s
 std::string XLGradientStops::summary() const
 {
     std::string result{};
-    for (XLGradientStop stop : m_gradientStops) result += stop.summary() + ", ";
+    for (const auto& stop : m_gradientStops) result += stop.summary() + ", ";
     if (result.length() < 2) return "";    // if no stop summary was created - return empty string
     return result.substr(0, result.length() - 2);
 }
 
-/**
- * @details Constructor. Initializes an empty XLFill object
- */
 XLFill::XLFill() : m_fillNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLFill object.
- */
 XLFill::XLFill(const XMLNode& node) : m_fillNode(std::make_unique<XMLNode>(node)) {}
 
 XLFill::~XLFill() = default;
@@ -342,9 +276,6 @@ XLFill& XLFill::operator=(const XLFill& other)
  */
 XLFillType XLFill::fillType() const { return XLFillTypeFromString(m_fillNode->first_child_of_type(pugi::node_element).name()); }
 
-/**
- * @details set the fill type for a fill node - if force is true, delete any existing fill properties
- */
 bool XLFill::setFillType(XLFillType newFillType, bool force)
 {
     XLFillType ft = fillType();    // determine once, use twice
@@ -365,9 +296,6 @@ bool XLFill::setFillType(XLFillType newFillType, bool force)
     return (m_fillNode->append_child(XLFillTypeToString(newFillType)).empty() == false);
 }
 
-/**
- * @details Throw an XLException on a fill of typeToThrowOn
- */
 void XLFill::throwOnFillType(XLFillType typeToThrowOn, const char* functionName) const
 {
     using namespace std::literals::string_literals;
@@ -375,9 +303,6 @@ void XLFill::throwOnFillType(XLFillType typeToThrowOn, const char* functionName)
         throw XLException("XLFill::"s + functionName + " must not be invoked for a "s + XLFillTypeToString(typeToThrowOn));
 }
 
-/**
- * @details get the fill element XML, create element with default XLFillType if none exists
- */
 XMLNode XLFill::getValidFillDescription(XLFillType fillTypeIfEmpty, const char* functionName)
 {
     XLFillType throwOnThis = XLFillTypeInvalid;
@@ -398,9 +323,6 @@ XMLNode XLFill::getValidFillDescription(XLFillType fillTypeIfEmpty, const char* 
     return fillDescription;
 }
 
-/**
- * @details Getter functions for gradientFill
- */
 XLGradientType XLFill::gradientType()
 { return XLGradientTypeFromString(getValidFillDescription(XLGradientFill, __func__).attribute("type").value()); }
 double          XLFill::degree() { return getValidFillDescription(XLGradientFill, __func__).attribute("degree").as_double(0); }
@@ -410,9 +332,6 @@ double          XLFill::top() { return getValidFillDescription(XLGradientFill, _
 double          XLFill::bottom() { return getValidFillDescription(XLGradientFill, __func__).attribute("bottom").as_double(0); }
 XLGradientStops XLFill::stops() { return XLGradientStops(getValidFillDescription(XLGradientFill, __func__)); }
 
-/**
- * @details Getter functions for patternFill
- */
 XLPatternType XLFill::patternType()
 {
     XMLNode fillDescription = getValidFillDescription(XLPatternFill, __func__);
@@ -439,9 +358,6 @@ XLColor XLFill::backgroundColor()
     return XLColor(bgColorRGB.value());
 }
 
-/**
- * @details Setter functions for gradientFill
- */
 bool XLFill::setGradientType(XLGradientType newType)
 {
     XMLNode fillDescription = getValidFillDescription(XLGradientFill, __func__);
@@ -478,9 +394,6 @@ bool XLFill::setBottom(double newBottom)
     return appendAndSetAttribute(fillDescription, "bottom", formatDoubleAsString(newBottom).c_str()).empty() == false;
 }
 
-/**
- * @details Setter functions for patternFill
- */
 bool XLFill::setPatternType(XLPatternType newFillPattern)
 {
     XMLNode fillDescription = getValidFillDescription(XLPatternFill, __func__);
@@ -509,9 +422,6 @@ bool XLFill::setBackgroundColor(XLColor newBgColor)
     return appendAndSetNodeAttribute(fillDescription, "bgColor", "rgb", newBgColor.hex(), XLRemoveAttributes, nodeOrder).empty() == false;
 }
 
-/**
- * @details assemble a string summary about the fill
- */
 std::string XLFill::summary()
 {
     switch (fillType()) {
@@ -540,20 +450,14 @@ std::string XLFill::summary()
 
 // ===== XLFills, parent of XLFill
 
-/**
- * @details Constructor. Initializes an empty XLFills object
- */
 XLFills::XLFills() : m_fillsNode(std::make_unique<XMLNode>()) {}
 
-/**
- * @details Constructor. Initializes the member variables for the new XLFills object.
- */
 XLFills::XLFills(const XMLNode& fills) : m_fillsNode(std::make_unique<XMLNode>(fills))
 {
     // initialize XLFills entries and m_fills here
     XMLNode node = fills.first_child_of_type(pugi::node_element);
     while (not node.empty()) {
-        std::string nodeName = node.name();
+        std::string_view nodeName(node.name());
         if (nodeName == "fill")
             m_fills.push_back(XLFill(node));
         else
@@ -571,9 +475,6 @@ XLFills::XLFills(const XLFills& other) : m_fillsNode(std::make_unique<XMLNode>(*
 
 XLFills::XLFills(XLFills&& other) : m_fillsNode(std::move(other.m_fillsNode)), m_fills(std::move(other.m_fills)) {}
 
-/**
- * @details Copy assignment operator
- */
 XLFills& XLFills::operator=(const XLFills& other)
 {
     if (&other != this) {
@@ -584,23 +485,14 @@ XLFills& XLFills::operator=(const XLFills& other)
     return *this;
 }
 
-/**
- * @details Returns the amount of fills held by the class
- */
 size_t XLFills::count() const { return m_fills.size(); }
 
-/**
- * @details fetch XLFill from m_fills by index
- */
 XLFill XLFills::fillByIndex(XLStyleIndex index) const
 {
     Expects(index < m_fills.size());
     return m_fills.at(index);
 }
 
-/**
- * @details append a new XLFill to m_fills and m_fillsNode, based on copyFrom
- */
 XLStyleIndex XLFills::create(XLFill copyFrom, std::string_view styleEntriesPrefix)
 {
     XLStyleIndex index = count();    // index for the fill to be created
