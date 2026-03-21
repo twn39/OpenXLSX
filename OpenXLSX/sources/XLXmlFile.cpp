@@ -1,6 +1,7 @@
 // ===== External Includes ===== //
 #include <gsl/gsl>
 #include <pugixml.hpp>
+#include <string_view>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLDocument.hpp"
@@ -23,10 +24,10 @@ XLXmlFile::XLXmlFile(XLXmlData* xmlData) : m_xmlData(xmlData) {}
  * empty strings, which is not what we want. The downside is that whitespace characters such as \\n and \\t in the
  * input xml file may mess up the parsing.
  */
-void XLXmlFile::setXmlData(const std::string& xmlData)    // NOLINT
+void XLXmlFile::setXmlData(std::string_view xmlData)
 {
     Expects(m_xmlData != nullptr);
-    m_xmlData->setRawData(xmlData);
+    m_xmlData->setRawData(std::string(xmlData));
 }
 
 /**
@@ -38,27 +39,18 @@ std::string XLXmlFile::xmlData(XLXmlSavingDeclaration savingDeclaration) const
     return m_xmlData->getRawData(savingDeclaration);
 }
 
-/**
- * @details
- */
 const XLDocument& XLXmlFile::parentDoc() const
 {
     Expects(m_xmlData != nullptr);
     return *m_xmlData->getParentDoc();
 }
 
-/**
- * @details
- */
 XLDocument& XLXmlFile::parentDoc()
 {
     Expects(m_xmlData != nullptr);
     return *m_xmlData->getParentDoc();
 }
 
-/**
- * @details
- */
 std::string XLXmlFile::relationshipID() const
 {
     Expects(m_xmlData != nullptr);
@@ -71,8 +63,7 @@ std::string XLXmlFile::relationshipID() const
 XMLDocument& XLXmlFile::xmlDocument()
 {
     Expects(m_xmlData != nullptr);
-    return const_cast<XMLDocument&>(static_cast<const XLXmlFile*>(this)->xmlDocument());    // NOLINT
-    // return *m_xmlData->getXmlDocument();    // <- why not this easy version?
+    return *m_xmlData->getXmlDocument();
 }
 
 /**

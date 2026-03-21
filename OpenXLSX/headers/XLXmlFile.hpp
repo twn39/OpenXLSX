@@ -132,9 +132,9 @@ namespace OpenXLSX
     protected:    // ===== PROTECTED MEMBER FUNCTIONS
         /**
          * @brief Provide the XML data represented by the object.
-         * @param xmlData A std::string with the XML data.
+         * @param xmlData A std::string_view with the XML data.
          */
-        void setXmlData(const std::string& xmlData);
+        void setXmlData(std::string_view xmlData);
 
         /**
          * @brief This function returns the relationship ID (the ID used in the XLRelationships objects) for the object.
