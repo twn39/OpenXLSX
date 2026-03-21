@@ -20,14 +20,6 @@ namespace OpenXLSX
 {
     class XLRelationships;
 
-    // <v:fill o:detectmouseclick="t" type="solid" color2="#00003f"/>
-    // <v:shadow on="t" obscured="t" color="black"/>
-    // <v:stroke color="#3465a4" startarrow="block" startarrowwidth="medium" startarrowlength="medium" joinstyle="round" endcap="flat"/>
-    // <v:path o:connecttype="none"/>
-    // <v:textbox style="mso-direction-alt:auto;mso-fit-shape-to-text:t;">
-    // 	<div style="text-align:left;"/>
-    // </v:textbox>
-
     extern const std::string_view ShapeNodeName;        // = "v:shape"
     extern const std::string_view ShapeTypeNodeName;    // = "v:shapetype"
 
@@ -54,11 +46,8 @@ namespace OpenXLSX
      */
     class OPENXLSX_EXPORT XLShapeClientData
     {
-    public:    // ---------- Public Member Functions ---------- //
-        /**
-         * @brief
-         */
-        XLShapeClientData();
+    public:
+XLShapeClientData();
 
         /**
          * @brief Constructor. New items should only be created through an XLShape object.
@@ -78,9 +67,6 @@ namespace OpenXLSX
          */
         XLShapeClientData(XLShapeClientData&& other) noexcept = default;
 
-        /**
-         * @brief
-         */
         ~XLShapeClientData() = default;
 
         /**
@@ -98,7 +84,7 @@ namespace OpenXLSX
         XLShapeClientData& operator=(XLShapeClientData&& other) noexcept = default;
 
         /**
-         * @brief Getter functions
+         * @brief Component Data Accessors
          */
         std::string objectType() const;    // attribute ObjectType, value "Note"
         bool moveWithCells() const;    // element x:MoveWithCells - true = present or lowercase node_pcdata "true", false = not present or
@@ -113,7 +99,7 @@ namespace OpenXLSX
         uint16_t          column() const;        // element x:Column, 0-indexed column of cell to which this shape is linked
 
         /**
-         * @brief Setter functions
+         * @brief Component Data Mutators
          */
         bool setObjectType(std::string_view newObjectType);
         bool setMoveWithCells(bool set = true);
@@ -125,14 +111,8 @@ namespace OpenXLSX
         bool setRow(uint32_t newRow);
         bool setColumn(uint16_t newColumn);
 
-        // /**
-        //  * @brief Return a string summary of the x:ClientData properties
-        //  * @return string with info about the x:ClientData object
-        //  */
-        // std::string summary() const;
-
-    private:                                                                // ---------- Private Member Variables ---------- //
-        mutable XMLNode                                   m_clientDataNode; /**< An XMLNode object with the x:ClientData item */
+    private:
+mutable XMLNode                                   m_clientDataNode; /**< An XMLNode object with the x:ClientData item */
         inline static const std::vector<std::string_view> m_nodeOrder =
             {"x:MoveWithCells", "x:SizeWithCells", "x:Anchor", "x:AutoFill", "x:TextVAlign", "x:TextHAlign", "x:Row", "x:Column"};
     };
@@ -146,9 +126,6 @@ namespace OpenXLSX
     class OPENXLSX_EXPORT XLShapeStyle
     {
     public:
-        /**
-         * @brief
-         */
         XLShapeStyle();
 
         /**
@@ -176,11 +153,10 @@ namespace OpenXLSX
          */
         XLShapeStyleAttribute getAttribute(std::string_view attributeName, std::string_view valIfNotFound = "") const;
         bool                  setAttribute(std::string_view attributeName, std::string_view attributeValue);
-        // bool setAttribute(XLShapeStyleAttribute const& attribute);
 
     public:
         /**
-         * @brief XLShapeStyle getter functions
+         * @brief Style Attribute Accessors
          */
         std::string position() const;
         uint16_t    marginLeft() const;
@@ -195,7 +171,7 @@ namespace OpenXLSX
         std::string raw() const { return m_style; }
 
         /**
-         * @brief XLShapeStyle setter functions
+         * @brief Style Attribute Mutators
          */
         bool setPosition(std::string_view newPosition);
         bool setMarginLeft(uint16_t newMarginLeft);
@@ -231,11 +207,8 @@ namespace OpenXLSX
     {
         friend class XLVmlDrawing;    // for access to m_shapeNode in XLVmlDrawing::addShape
         friend class XLComments;      // added for access to m_shapeNode in XLComments::set
-    public:                           // ---------- Public Member Functions ---------- //
-        /**
-         * @brief
-         */
-        XLShape();
+    public:
+XLShape();
 
         /**
          * @brief Constructor. New items should only be created through an XLStyles object.
@@ -255,9 +228,6 @@ namespace OpenXLSX
          */
         XLShape(XLShape&& other) noexcept = default;
 
-        /**
-         * @brief
-         */
         ~XLShape() = default;
 
         /**
@@ -275,7 +245,7 @@ namespace OpenXLSX
         XLShape& operator=(XLShape&& other) noexcept = default;
 
         /**
-         * @brief Getter functions
+         * @brief Component Data Accessors
          */
         std::string  shapeId() const;        // v:shape attribute id - shape_# - can't be set by the user
         std::string  fillColor() const;      // v:shape attribute fillcolor, #<3 byte hex code>, e.g. #ffffc0
@@ -284,11 +254,6 @@ namespace OpenXLSX
         bool         allowInCell() const;    // v:shape attribute o:allowincell "f"
         XLShapeStyle style();                // v:shape attribute style, but constructed from the XMLAttribute
 
-        // XLShapeShadow& shadow();          // v:shape subnode v:shadow
-        // XLShapeFill& fill();              // v:shape subnode v:fill
-        // XLShapeStroke& stroke();          // v:shape subnode v:stroke
-        // XLShapePath& path();              // v:shape subnode v:path
-        // XLShapeTextbox& textbox();        // v:shape subnode v:textbox
         XLShapeClientData clientData();    // v:shape subnode x:ClientData
 
         /**
@@ -303,9 +268,8 @@ namespace OpenXLSX
         bool setAllowInCell(bool set);
         bool setStyle(std::string_view newStyle);
         bool setStyle(XLShapeStyle const& newStyle);
-
-    private:                                                           // ---------- Private Member Variables ---------- //
-        mutable XMLNode                                   m_shapeNode; /**< An XMLNode object with the v:shape item */
+    private:
+mutable XMLNode                                   m_shapeNode; /**< An XMLNode object with the v:shape item */
         inline static const std::vector<std::string_view> m_nodeOrder =
             {"v:shadow", "v:fill", "v:stroke", "v:path", "v:textbox", "x:ClientData"};
     };
@@ -486,10 +450,6 @@ namespace OpenXLSX
          */
         XLVmlDrawing(const XLVmlDrawing& other) = default;
 
-        /**
-         * @brief
-         * @param other
-         */
         XLVmlDrawing(XLVmlDrawing&& other) noexcept = default;
 
         /**
@@ -506,9 +466,6 @@ namespace OpenXLSX
         XLVmlDrawing& operator=(const XLVmlDrawing&) = default;
 
         /**
-         * @brief
-         * @param other
-         * @return
          */
         XLVmlDrawing& operator=(XLVmlDrawing&& other) noexcept = default;
 
