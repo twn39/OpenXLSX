@@ -9,8 +9,10 @@
 
 // ===== External Includes ===== //
 #include <cstdint>    // uint8_t
+#include <gsl/pointers>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 // ===== OpenXLSX Includes ===== //
@@ -57,68 +59,27 @@ namespace OpenXLSX
      */
     std::string XLContentTypeToString(XLContentType type);
 
-    /**
-     * @brief
-     */
     class OPENXLSX_EXPORT XLContentItem
     {
         friend class XLContentTypes;
 
     public:    // ---------- Public Member Functions ---------- //
-        /**
-         * @brief
-         */
         XLContentItem();
 
-        /**
-         * @brief
-         * @param node
-         */
         explicit XLContentItem(const XMLNode& node);
 
-        /**
-         * @brief
-         */
         ~XLContentItem() = default;
 
-        /**
-         * @brief
-         * @param other
-         * @return
-         */
         XLContentItem(const XLContentItem& other);
 
-        /**
-         * @brief
-         * @param other
-         * @return
-         */
         XLContentItem(XLContentItem&& other) noexcept;
 
-        /**
-         * @brief
-         * @param other
-         * @return
-         */
         XLContentItem& operator=(const XLContentItem& other);
 
-        /**
-         * @brief
-         * @param other
-         * @return
-         */
         XLContentItem& operator=(XLContentItem&& other) noexcept;
 
-        /**
-         * @brief
-         * @return
-         */
         XLContentType type() const;
 
-        /**
-         * @brief
-         * @return
-         */
         std::string path() const;
 
     private:
@@ -133,46 +94,18 @@ namespace OpenXLSX
     class OPENXLSX_EXPORT XLContentTypes : public XLXmlFile
     {
     public:    // ---------- Public Member Functions ---------- //
-        /**
-         * @brief
-         */
         XLContentTypes();
 
-        /**
-         * @brief
-         * @param xmlData
-         */
-        explicit XLContentTypes(XLXmlData* xmlData);
+        explicit XLContentTypes(gsl::not_null<XLXmlData*> xmlData);
 
-        /**
-         * @brief Destructor
-         */
         ~XLContentTypes() = default;
 
-        /**
-         * @brief
-         * @param other
-         */
         XLContentTypes(const XLContentTypes& other);
 
-        /**
-         * @brief
-         * @param other
-         */
         XLContentTypes(XLContentTypes&& other) noexcept;
 
-        /**
-         * @brief
-         * @param other
-         * @return
-         */
         XLContentTypes& operator=(const XLContentTypes& other);
 
-        /**
-         * @brief
-         * @param other
-         * @return
-         */
         XLContentTypes& operator=(XLContentTypes&& other) noexcept;
 
         /**
@@ -180,59 +113,42 @@ namespace OpenXLSX
          * @param extension The extension
          * @return true if it exists
          */
-        bool hasDefault(const std::string& extension) const;
+        bool hasDefault(std::string_view extension) const;
 
         /**
          * @brief Check if an override exists.
          * @param path The path
          * @return true if it exists
          */
-        bool hasOverride(const std::string& path) const;
+        bool hasOverride(std::string_view path) const;
 
         /**
          * @brief Add a new default extension key/value pair to the data store.
          * @param extension The extension
          * @param contentType The content type
          */
-        void addDefault(const std::string& extension, const std::string& contentType);
+        void addDefault(std::string_view extension, std::string_view contentType);
 
         /**
          * @brief Add a new override key/getValue pair to the data store.
          * @param path The key
          * @param type The getValue
          */
-        void addOverride(const std::string& path, XLContentType type);
+        void addOverride(std::string_view path, XLContentType type);
 
         /**
          * @brief Update an existing override key/getValue pair or add if it does not exist.
          * @param path The key
          * @param type The getValue
          */
-        void updateOverride(const std::string& path, XLContentType type);
+        void updateOverride(std::string_view path, XLContentType type);
 
-        /**
-         * @brief
-         * @param path
-         */
-        void deleteOverride(const std::string& path);
+        void deleteOverride(std::string_view path);
 
-        /**
-         * @brief
-         * @param item
-         */
         void deleteOverride(const XLContentItem& item);
 
-        /**
-         * @brief
-         * @param path
-         * @return
-         */
-        XLContentItem contentItem(const std::string& path);
+        XLContentItem contentItem(std::string_view path);
 
-        /**
-         * @brief
-         * @return
-         */
         std::vector<XLContentItem> getContentItems();
 
     private:    // ---------- Private Member Variables ---------- //
