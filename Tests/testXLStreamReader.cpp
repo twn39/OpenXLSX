@@ -62,7 +62,8 @@ TEST_CASE("Streaming Reader Skipping Empty Rows and Cells", "[XLStreamReader]")
 
     XLDocument doc;
     doc.open("./testXLStreamReader_skip.xlsx");
-    auto reader = doc.workbook().worksheet("Sheet1").streamReader();
+    auto wks = doc.workbook().worksheet("Sheet1");
+    auto reader = wks.streamReader();
     
     REQUIRE(reader.hasNext() == true);
     auto row1 = reader.nextRow();
@@ -80,7 +81,6 @@ TEST_CASE("Streaming Reader Skipping Empty Rows and Cells", "[XLStreamReader]")
     REQUIRE(row3[1].get<int>() == 3);
 
     REQUIRE(reader.hasNext() == false);
-    doc.close();
 }
 
 TEST_CASE("Streaming Reader Large File Test", "[XLStreamReader]")
@@ -100,7 +100,8 @@ TEST_CASE("Streaming Reader Large File Test", "[XLStreamReader]")
 
     XLDocument doc;
     doc.open("./testXLStreamReader_large.xlsx");
-    auto reader = doc.workbook().worksheet("Sheet1").streamReader();
+    auto wks = doc.workbook().worksheet("Sheet1");
+    auto reader = wks.streamReader();
     
     int count = 0;
     while (reader.hasNext()) {
