@@ -241,3 +241,24 @@ wks.dataValidations().add("C2:C100")
    .requireList({"Pending", "Approved", "Rejected"})
    .setErrorAlert("Invalid", "Please select a valid state from the list.");
 ```
+
+### 5. UI Behaviors (Freeze Panes & AutoFit)
+```cpp
+// Instantly freeze Row 1 and Column A
+wks.freezePanes("B2"); 
+
+// Make Column B width auto-adapt to fit the longest text inside it
+wks.autoFitColumn(2); 
+
+// Hide Column C
+wks.column("C").setHidden(true);
+```
+
+### 6. Formulas & Merge Cells
+```cpp
+// Write a formula
+wks.cell("E1").formula() = "SUM(A1:D1)";
+
+// Merge multiple cells
+wks.mergeCells("A1:D1");
+```
