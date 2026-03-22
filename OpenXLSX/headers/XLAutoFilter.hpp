@@ -75,6 +75,8 @@ namespace OpenXLSX {
      * @brief The XLAutoFilter class encapsulates the <autoFilter> XML node.
      * It manages the target range and the individual column filters.
      */
+    class XLCellRange;
+
     class XLAutoFilter {
     public:
         /**
@@ -99,7 +101,13 @@ namespace OpenXLSX {
          * @brief Set the reference range of the AutoFilter.
          * @param ref The reference range to set.
          */
-        void setRef(const std::string& ref);
+        XLAutoFilter& setRef(const std::string& ref);
+
+        /**
+         * @brief Set the reference range of the AutoFilter using a strongly-typed XLCellRange.
+         * @param range The XLCellRange object.
+         */
+        XLAutoFilter& setRef(const XLCellRange& range);
 
         /**
          * @brief Get or create a filter column by its ID.

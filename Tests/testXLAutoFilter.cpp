@@ -106,3 +106,45 @@ TEST_CASE("Table AutoFilter Tests", "[XLTable][XLAutoFilter]")
 
     doc2.close();
 }
+
+TEST_CASE("AutoFilter DX Validation", "[XLAutoFilter][Range]")
+{
+    const std::string filename = "AutoFilterDXTest.xlsx";
+
+    SECTION("setRef with XLCellRange and fluent interface")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            // Setup some dummy data
+            wks.cell("A1").value() = "ID";
+            wks.cell("B1").value() = "Value";
+            wks.cell("A2").value() = 1;
+            wks.cell("B2").value() = 100;
+            wks.cell("A3").value() = 2;
+            wks.cell("B3").value() = 200;
+
+            // DX feature 1: Range-based setAutoFilter on worksheet
+            auto rng = wks.range("A1:B3");
+            wks.setAutoFilter(rng);
+
+            // Fetch autoFilter and test DX feature 2: fluent setRef if re-configured
+            auto af = wks.autofilterObject();
+            af.setRef(wks.range("A1:B3"));
+
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLDocument doc;
+            doc.open(filename);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            
+            REQUIRE(wks.hasAutoFilter() == true);
+            REQUIRE(wks.autoFilter() == "A1:B3");
+        }
+    }
+}

@@ -1,4 +1,5 @@
 #include "XLAutoFilter.hpp"
+#include "XLCellRange.hpp"
 #include <string>
 
 namespace OpenXLSX {
@@ -100,14 +101,19 @@ namespace OpenXLSX {
         return m_node.attribute("ref").value();
     }
 
-    void XLAutoFilter::setRef(const std::string& ref) {
-        if (!m_node) return;
+    XLAutoFilter& XLAutoFilter::setRef(const std::string& ref) {
+        if (!m_node) return *this;
         auto attr = m_node.attribute("ref");
         if (!attr) {
             m_node.append_attribute("ref") = ref.c_str();
         } else {
             attr.set_value(ref.c_str());
         }
+        return *this;
+    }
+
+    XLAutoFilter& XLAutoFilter::setRef(const XLCellRange& range) {
+        return setRef(range.address());
     }
 
     XLFilterColumn XLAutoFilter::filterColumn(uint16_t colId) {
