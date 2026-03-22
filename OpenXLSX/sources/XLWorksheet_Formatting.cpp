@@ -18,7 +18,7 @@ XLDataValidations& XLWorksheet::dataValidations()
     return m_dataValidations;
 }
 
-void XLWorksheet::mergeCells(XLCellRange const& rangeToMerge, bool emptyHiddenCells)
+XLCellRange XLWorksheet::mergeCells(XLCellRange const& rangeToMerge, bool emptyHiddenCells)
 {
     if (rangeToMerge.numRows() * rangeToMerge.numColumns() < 2) {
         using namespace std::literals::string_literals;
@@ -33,10 +33,11 @@ void XLWorksheet::mergeCells(XLCellRange const& rangeToMerge, bool emptyHiddenCe
             ++it;
         }
     }
+    return rangeToMerge;
 }
 
-void XLWorksheet::mergeCells(const std::string& rangeReference, bool emptyHiddenCells)
-{ mergeCells(range(rangeReference), emptyHiddenCells); }
+XLCellRange XLWorksheet::mergeCells(const std::string& rangeReference, bool emptyHiddenCells)
+{ return mergeCells(range(rangeReference), emptyHiddenCells); }
 
 void XLWorksheet::unmergeCells(XLCellRange const& rangeToUnmerge)
 {

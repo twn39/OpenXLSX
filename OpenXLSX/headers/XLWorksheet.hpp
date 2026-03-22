@@ -163,8 +163,8 @@ namespace OpenXLSX
         XLMergeCells& merges();
         XLDataValidations& dataValidations();
 
-        void mergeCells(XLCellRange const& rangeToMerge, bool emptyHiddenCells = false);
-        void mergeCells(const std::string& rangeReference, bool emptyHiddenCells = false);
+        XLCellRange mergeCells(XLCellRange const& rangeToMerge, bool emptyHiddenCells = false);
+        XLCellRange mergeCells(const std::string& rangeReference, bool emptyHiddenCells = false);
         void unmergeCells(XLCellRange const& rangeToMerge);
         void unmergeCells(const std::string& rangeReference);
 

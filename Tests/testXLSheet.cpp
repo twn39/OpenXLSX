@@ -632,3 +632,36 @@ TEST_CASE("Worksheet Peek API", "[XLWorksheet][Peek]")
         }
     }
 }
+
+TEST_CASE("Worksheet mergeCells API", "[XLWorksheet][Merge]")
+{
+    std::string filename = "test_worksheet_merge.xlsx";
+
+    SECTION("mergeCells returns XLCellRange for fluent usage")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            // Modern fluent way:
+            wks.mergeCells("B2:D4") = "Fluent Title";
+
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLDocument doc;
+            doc.open(filename);
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            // Since it's merged B2:D4, the value is in B2
+            REQUIRE(wks.cell("B2").value().get<std::string>() == "Fluent Title");
+            
+            // Check that the other cells in the merge range also got the value
+            // (Because XLCellRange::operator= applies to all cells in range)
+            REQUIRE(wks.cell("C3").value().get<std::string>() == "Fluent Title");
+        }
+    }
+}
