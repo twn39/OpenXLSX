@@ -35,7 +35,8 @@ namespace OpenXLSX {
           m_tempPath(std::move(other.m_tempPath)),
           m_stream(std::move(other.m_stream)),
           m_currentRow(other.m_currentRow),
-          m_active(other.m_active)
+          m_active(other.m_active),
+          m_bottomHalf(std::move(other.m_bottomHalf))
     {
         other.m_worksheet = nullptr;
         other.m_active = false;
@@ -48,6 +49,7 @@ namespace OpenXLSX {
             m_stream = std::move(other.m_stream);
             m_currentRow = other.m_currentRow;
             m_active = other.m_active;
+            m_bottomHalf = std::move(other.m_bottomHalf);
             other.m_worksheet = nullptr;
             other.m_active = false;
         }
@@ -97,7 +99,7 @@ namespace OpenXLSX {
 
     void XLStreamWriter::flushSheetDataClose() {
         if (m_stream && m_stream->is_open()) {
-            *m_stream << "</sheetData></worksheet>";
+            *m_stream << m_bottomHalf;
             m_stream->close();
         }
         m_active = false;

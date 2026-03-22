@@ -399,18 +399,21 @@ std::optional<XLCell> XLWorksheet::peekCell(uint32_t rowNumber, uint16_t columnN
     return XLCell(cellNode, parentDoc().sharedStrings());
 }
 
+
 XLStreamWriter XLWorksheet::streamWriter()
 {
-    XLStreamWriter writer(this);
-    
     XMLDocument& doc = xmlDocument();
     XMLNode root = doc.document_element();
     XMLNode sheetData = root.child("sheetData");
     
-    if (!sheetData.empty()) {
-        root.remove_child(sheetData);
+    if (sheetData.empty()) {
+        sheetData = appendAndGetNode(root, "sheetData", m_nodeOrder);
     }
     
+    while (sheetData.first_child()) {
+        sheetData.remove_child(sheetData.first_child());
+    }
+
     struct StringWriter : pugi::xml_writer {
         std::string result;
         void write(const void* data, size_t size) override {
@@ -418,19 +421,35 @@ XLStreamWriter XLWorksheet::streamWriter()
         }
     } sw;
     
-    doc.save(sw, "  ", pugi::format_default | pugi::format_no_declaration);
-    
+    doc.save(sw, "", pugi::format_raw | pugi::format_no_declaration);
     std::string xmlStr = sw.result;
     
-    size_t closeTag = xmlStr.rfind("</worksheet>");
-    if (closeTag != std::string::npos) {
-        xmlStr = xmlStr.substr(0, closeTag);
+    std::string topHalf = "";
+    std::string bottomHalf = "";
+    
+    // Split accurately
+    size_t pos = xmlStr.find("<sheetData/>");
+    if (pos != std::string::npos) {
+        topHalf = xmlStr.substr(0, pos) + "<sheetData>";
+        bottomHalf = "</sheetData>" + xmlStr.substr(pos + 12);
+    } else {
+        pos = xmlStr.find("<sheetData></sheetData>");
+        if (pos != std::string::npos) {
+            topHalf = xmlStr.substr(0, pos) + "<sheetData>";
+            bottomHalf = "</sheetData>" + xmlStr.substr(pos + 23);
+        } else {
+            size_t endTag = xmlStr.find("</worksheet>");
+            topHalf = xmlStr.substr(0, endTag) + "<sheetData>";
+            bottomHalf = "</sheetData></worksheet>";
+        }
     }
     
-    xmlStr += "<sheetData>";
+    XLStreamWriter writer(this);
+    writer.m_bottomHalf = bottomHalf;
     
     if (writer.m_stream && writer.m_stream->is_open()) {
-        *(writer.m_stream) << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" << xmlStr;
+        std::string header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
+        *(writer.m_stream) << header << topHalf;
     }
     
     m_xmlData->m_isStreamed = true;
@@ -438,3 +457,4 @@ XLStreamWriter XLWorksheet::streamWriter()
     
     return writer;
 }
+

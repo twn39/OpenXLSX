@@ -40,6 +40,7 @@ namespace OpenXLSX {
         std::unique_ptr<std::ofstream> m_stream;
         uint32_t m_currentRow{1};
         bool m_active{false};
+        std::string m_bottomHalf;
     };
 
 }
