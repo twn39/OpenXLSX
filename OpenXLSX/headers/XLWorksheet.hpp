@@ -164,6 +164,11 @@ namespace OpenXLSX
         XLColumn column(uint16_t columnNumber) const;
         XLColumn column(std::string const& columnRef) const;
 
+        /**
+         * @brief Automatically adjusts the column width based on the content of its cells.
+         */
+        void autoFitColumn(uint16_t columnNumber);
+
         void groupRows(uint32_t rowFirst, uint32_t rowLast, uint8_t outlineLevel = 1, bool collapsed = false);
         void groupColumns(uint16_t colFirst, uint16_t colLast, uint8_t outlineLevel = 1, bool collapsed = false);
 

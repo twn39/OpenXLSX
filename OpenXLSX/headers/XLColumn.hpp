@@ -14,6 +14,8 @@
 #include "OpenXLSX-Exports.hpp"
 #include "XLStyles.hpp"    // XLStyleIndex
 #include "XLXmlParser.hpp"
+#include "XLStyle.hpp"
+#include "XLStyles.hpp"
 
 namespace OpenXLSX
 {
@@ -40,6 +42,13 @@ namespace OpenXLSX
          * @param width The width of the column
          */
         void setWidth(float width);
+
+        /**
+        /**
+         * @brief Auto fit the column width based on the content of its cells.
+         * @note This is a convenience method that internally delegates to XLWorksheet.
+         */
+        void autoFit();
 
         /**
          * @brief Is the column hidden?

@@ -167,3 +167,33 @@ XLCellRange XLCellRange::intersect(const XLCellRange& other) const
 
     return XLCellRange(m_dataNode, XLCellReference(top, left), XLCellReference(bottom, right), m_sharedStrings.get());
 }
+
+void XLCellRange::applyStyle(const XLStyle& style) {
+    for (auto& cell : *this) {
+        cell.setStyle(style);
+    }
+}
+
+void XLCellRange::setBorderOutline(XLLineStyle style, XLColor color) {
+    uint32_t top = topLeft().row();
+    uint32_t bottom = bottomRight().row();
+    uint16_t left = topLeft().column();
+    uint16_t right = bottomRight().column();
+
+    for (auto& cell : *this) {
+        uint32_t r = cell.cellReference().row();
+        uint16_t c = cell.cellReference().column();
+
+        XLStyle cellStyle;
+        bool isEdge = false;
+
+        if (r == top) { cellStyle.border.top.style = style; cellStyle.border.top.color = color; isEdge = true; }
+        if (r == bottom) { cellStyle.border.bottom.style = style; cellStyle.border.bottom.color = color; isEdge = true; }
+        if (c == left) { cellStyle.border.left.style = style; cellStyle.border.left.color = color; isEdge = true; }
+        if (c == right) { cellStyle.border.right.style = style; cellStyle.border.right.color = color; isEdge = true; }
+
+        if (isEdge) {
+            cell.setStyle(cellStyle);
+        }
+    }
+}

@@ -472,3 +472,27 @@ XLStreamWriter XLWorksheet::streamWriter()
     return writer;
 }
 
+
+void XLWorksheet::autoFitColumn(uint16_t columnNumber)
+{
+    float maxWidth = 0.0f;
+    // Iterate through all rows
+    for (uint32_t r = 1; r <= rowCount(); ++r) {
+        auto c = cell(r, columnNumber);
+        if (c.value().type() != XLValueType::Empty) {
+            std::string text = c.value().getString();
+            // Basic estimation: ~1.2 units per character for default 11pt Calibri
+            float estimatedWidth = static_cast<float>(text.length()) * 1.2f;
+            if (estimatedWidth > maxWidth) {
+                maxWidth = estimatedWidth;
+            }
+        }
+    }
+    
+    // Add padding and cap width
+    maxWidth += 1.5f;
+    if (maxWidth > 255.0f) maxWidth = 255.0f;
+    if (maxWidth < 8.43f) maxWidth = 8.43f; // Default width
+    
+    column(columnNumber).setWidth(maxWidth);
+}

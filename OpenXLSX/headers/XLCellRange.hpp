@@ -16,6 +16,7 @@
 #include "XLCellIterator.hpp"
 #include "XLCellReference.hpp"
 #include "XLXmlParser.hpp"
+#include "XLStyle.hpp"
 
 namespace OpenXLSX
 {
@@ -75,6 +76,27 @@ namespace OpenXLSX
         [[nodiscard]] XLCellIterator end() const;
 
         /**
+         * @brief Apply a high-level style to all cells within this range.
+         * @param style The requested high-level style object.
+         */
+        void applyStyle(const XLStyle& style);
+        
+        /**
+         * @brief Set border style specifically for the outer edges of this range.
+         * @param style The line style (e.g. XLLineStyleThick)
+         * @param color The line color (e.g. XLColor("000000"))
+         */
+        void setBorderOutline(XLLineStyle style, XLColor color);
+        
+        /**
+         * @brief Read the range into a 2D matrix of type T.
+         */
+        template<typename T>
+        std::vector<std::vector<T>> getValue() const;
+        
+        template<typename T>
+        void setValue(const std::vector<std::vector<T>>& matrix);
+        /**
          * @brief Returns true if the range is uninitialized or points to an invalid worksheet node.
          */
         [[nodiscard]] bool empty() const;
@@ -124,4 +146,40 @@ namespace OpenXLSX
 #    pragma warning(pop)
 #endif
 
-#endif    // OPENXLSX_XLCELLRANGE_HPP
+// Template implementations
+namespace OpenXLSX {
+    template<typename T>
+    std::vector<std::vector<T>> XLCellRange::getValue() const {
+        std::vector<std::vector<T>> matrix;
+        if (numRows() == 0 || numColumns() == 0) return matrix;
+        
+        matrix.resize(numRows(), std::vector<T>(numColumns()));
+        
+        uint32_t startRow = topLeft().row();
+        uint16_t startCol = topLeft().column();
+        
+        for (auto& cell : *this) {
+            uint32_t r = cell.cellReference().row() - startRow;
+            uint16_t c = cell.cellReference().column() - startCol;
+            matrix[r][c] = cell.value().get<T>();
+        }
+        return matrix;
+    }
+    
+    template<typename T>
+    void XLCellRange::setValue(const std::vector<std::vector<T>>& matrix) {
+        if (matrix.empty() || matrix[0].empty()) return;
+        
+        uint32_t startRow = topLeft().row();
+        uint16_t startCol = topLeft().column();
+        
+        for (auto& cell : *this) {
+            uint32_t r = cell.cellReference().row() - startRow;
+            uint16_t c = cell.cellReference().column() - startCol;
+            if (r < matrix.size() && c < matrix[r].size()) {
+                cell.value() = matrix[r][c];
+            }
+        }
+    }
+}
+#endif // OPENXLSX_XLCELLRANGE_HPP

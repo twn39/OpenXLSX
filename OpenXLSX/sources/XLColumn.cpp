@@ -110,3 +110,8 @@ bool XLColumn::setFormat(XLStyleIndex cellFormatIndex)
     styleAtt.set_value(cellFormatIndex);
     return true;
 }
+
+void XLColumn::autoFit()
+{
+    throw XLInternalError("autoFit() requires XLWorksheet context. Please use XLWorksheet::autoFitColumn(colIndex).");
+}

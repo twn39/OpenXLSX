@@ -18,6 +18,7 @@
 #include "XLFormula.hpp"
 #include "XLSharedStrings.hpp"
 #include "XLStyles.hpp"    // XLStyleIndex
+#include "XLStyle.hpp"
 
 namespace OpenXLSX
 {
@@ -177,6 +178,13 @@ namespace OpenXLSX
          * @returns True on success, false on failure
          */
         XLCell& setCellFormat(XLStyleIndex cellFormatIndex);
+
+        /**
+         * @brief Apply a high-level XLStyle to this cell. Automatically creates or reuses
+         * the required underlying XML structures in xl/styles.xml.
+         * @param style The requested high-level style
+         */
+        XLCell& setStyle(const XLStyle& style);
 
         /**
          * @brief Print the XML contents of the XLCell using the underlying XMLNode print function
