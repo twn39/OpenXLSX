@@ -19,6 +19,7 @@
 namespace OpenXLSX
 {
     class XLWorksheet;
+    class XLCellRange;
     class XLTable;
 
     /**
@@ -62,6 +63,14 @@ namespace OpenXLSX
          * @return The newly created XLTable object.
          */
         XLTable add(std::string_view name, std::string_view range);
+
+        /**
+         * @brief Add a new table using a typed cell range.
+         * @param name The table name.
+         * @param range The XLCellRange object.
+         * @return The newly created XLTable object.
+         */
+        XLTable add(std::string_view name, const XLCellRange& range);
 
         /**
          * @brief Check if the collection is valid.

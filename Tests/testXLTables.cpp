@@ -139,3 +139,42 @@ TEST_CASE("XLTables OOXML Compliance & Stability", "[XLTables]")
         }
     }
 }
+
+TEST_CASE("XLTables Ergonomic Add API", "[XLTables][Range]")
+{
+    const std::string filename = "TableErgonomicsTest.xlsx";
+
+    SECTION("Adding table via XLCellRange instead of magic string")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            wks.cell("A1").value() = "Column 1";
+            wks.cell("B1").value() = "Column 2";
+            wks.cell("A2").value() = 1;
+            wks.cell("B2").value() = 2;
+
+            // Use the new type-safe overload
+            auto range = wks.range("A1:B2");
+            auto tbl = wks.tables().add("MyTable", range);
+            
+            // This implicitly relies on the getString() safety patch
+            tbl.createColumnsFromRange(wks);
+
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLDocument doc;
+            doc.open(filename);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            auto tbl = wks.tables().table("MyTable");
+            REQUIRE(tbl.rangeReference() == "A1:B2");
+            REQUIRE(tbl.column("Column 1").id() == 1);
+            REQUIRE(tbl.column("Column 2").id() == 2);
+        }
+    }
+}

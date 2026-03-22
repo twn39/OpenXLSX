@@ -88,7 +88,7 @@ namespace OpenXLSX
                                "<autoFilter ref=\"" + std::string(range) + "\"/>"
                                "<tableColumns count=\"" + std::to_string(colCount) + "\">";
         for (uint32_t i = 0; i < colCount; ++i) {
-            std::string h = m_worksheet->cell(start.row(), start.column() + i).value().get<std::string>();
+            std::string h = m_worksheet->cell(start.row(), start.column() + i).value().getString();
             if (h.empty()) h = "Column" + std::to_string(i + 1);
             tableXml += "<tableColumn id=\"" + std::to_string(i + 1) + "\" name=\"" + h + "\"/>";
         }
@@ -243,7 +243,7 @@ namespace OpenXLSX
         for (uint16_t c = start.column(); c <= end.column(); ++c) {
             auto column = columns.append_child("tableColumn");
             column.append_attribute("id").set_value(c - start.column() + 1);
-            std::string h = worksheet.cell(start.row(), c).value().get<std::string>();
+            std::string h = worksheet.cell(start.row(), c).value().getString();
             if (h.empty()) h = "Column" + std::to_string(c - start.column() + 1);
             column.append_attribute("name").set_value(h.c_str());
         }
@@ -270,3 +270,9 @@ namespace OpenXLSX
     void XLTable::print(std::basic_ostream<char>& ostr) const { xmlDocument().document_element().print(ostr); }
 
 } // namespace OpenXLSX
+
+namespace OpenXLSX {
+    XLTable XLTableCollection::add(std::string_view name, const XLCellRange& range) {
+        return add(name, range.address());
+    }
+}
