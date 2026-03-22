@@ -8,6 +8,8 @@
 #include <string_view>
 #include "OpenXLSX-Exports.hpp"
 #include "XLSheetBase.hpp"
+#include "XLConstants.hpp"
+
 #include "XLCell.hpp"
 #include "XLCellRange.hpp"
 #include "XLCellReference.hpp"
@@ -98,6 +100,8 @@ namespace OpenXLSX
         XLCellAssignable cell(const std::string& ref) const;
         XLCellAssignable cell(const XLCellReference& ref) const;
         XLCellAssignable cell(uint32_t rowNumber, uint16_t columnNumber) const;
+        XLCellAssignable cell(XLRowIndex row, XLColIndex col) const { return cell(row.val, col.val); }
+
 
         XLCellAssignable findCell(const std::string& ref) const;
         XLCellAssignable findCell(const XLCellReference& ref) const;
@@ -106,6 +110,8 @@ namespace OpenXLSX
         std::optional<XLCell> peekCell(const std::string& ref) const;
         std::optional<XLCell> peekCell(const XLCellReference& ref) const;
         std::optional<XLCell> peekCell(uint32_t rowNumber, uint16_t columnNumber) const;
+        std::optional<XLCell> peekCell(XLRowIndex row, XLColIndex col) const { return peekCell(row.val, col.val); }
+
 
 
         XLCellRange range() const;

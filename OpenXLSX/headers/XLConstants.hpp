@@ -6,6 +6,24 @@ namespace OpenXLSX
     inline constexpr uint16_t MAX_COLS = 16'384;
     inline constexpr uint32_t MAX_ROWS = 1'048'576;
 
+    struct XLRowIndex {
+        uint32_t val;
+        explicit XLRowIndex(uint32_t v) : val(v) {}
+        operator uint32_t() const { return val; }
+    };
+
+    struct XLColIndex {
+        uint16_t val;
+        explicit XLColIndex(uint16_t v) : val(v) {}
+        operator uint16_t() const { return val; }
+    };
+
+    inline namespace IndexLiterals {
+        inline XLRowIndex operator""_row(unsigned long long v) { return XLRowIndex(static_cast<uint32_t>(v)); }
+        inline XLColIndex operator""_col(unsigned long long v) { return XLColIndex(static_cast<uint16_t>(v)); }
+    }
+
+
     class XLDistance {
     public:
         XLDistance() = default;

@@ -665,3 +665,33 @@ TEST_CASE("Worksheet mergeCells API", "[XLWorksheet][Merge]")
         }
     }
 }
+
+TEST_CASE("Worksheet Strong Index API", "[XLWorksheet][Index]")
+{
+    std::string filename = "test_worksheet_index.xlsx";
+
+    SECTION("Use strong index literals for row and column")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            using namespace OpenXLSX::IndexLiterals;
+            wks.cell(2_row, 3_col).value() = "C2";
+            wks.cell(XLRowIndex(4), XLColIndex(5)).value() = "E4";
+
+            doc.save();
+            doc.close();
+        }
+
+        {
+            XLDocument doc;
+            doc.open(filename);
+            auto wks = doc.workbook().worksheet("Sheet1");
+
+            REQUIRE(wks.cell("C2").value().get<std::string>() == "C2");
+            REQUIRE(wks.cell("E4").value().get<std::string>() == "E4");
+        }
+    }
+}
