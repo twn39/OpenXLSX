@@ -142,12 +142,12 @@ void XLCellRange::clear()
 /**
  * @details
  */
-bool XLCellRange::setFormat(XLStyleIndex cellFormatIndex)
+XLCellRange& XLCellRange::setFormat(XLStyleIndex cellFormatIndex)
 {
     for (auto& cell : *this) {
-        if (!cell.setCellFormat(cellFormatIndex)) return false;
+        cell.setCellFormat(cellFormatIndex);
     }
-    return true;
+    return *this;
 }
 
 /**

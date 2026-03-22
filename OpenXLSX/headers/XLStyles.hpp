@@ -507,21 +507,21 @@ namespace OpenXLSX
          * @param value that shall be set
          * @return true for success, false for failure
          */
-        bool setFontName(std::string_view newName);
-        bool setFontCharset(size_t newCharset);
-        bool setFontFamily(size_t newFamily);
-        bool setFontSize(size_t newSize);
-        bool setFontColor(XLColor newColor);
-        bool setBold(bool set = true);
-        bool setItalic(bool set = true);
-        bool setStrikethrough(bool set = true);
-        bool setUnderline(XLUnderlineStyle style = XLUnderlineSingle);
-        bool setScheme(XLFontSchemeStyle newScheme);
-        bool setVertAlign(XLVerticalAlignRunStyle newVertAlign);
-        bool setOutline(bool set = true);
-        bool setShadow(bool set = true);
-        bool setCondense(bool set = true);
-        bool setExtend(bool set = true);
+        XLFont& setFontName(std::string_view newName);
+        XLFont& setFontCharset(size_t newCharset);
+        XLFont& setFontFamily(size_t newFamily);
+        XLFont& setFontSize(size_t newSize);
+        XLFont& setFontColor(XLColor newColor);
+        XLFont& setBold(bool set = true);
+        XLFont& setItalic(bool set = true);
+        XLFont& setStrikethrough(bool set = true);
+        XLFont& setUnderline(XLUnderlineStyle style = XLUnderlineSingle);
+        XLFont& setScheme(XLFontSchemeStyle newScheme);
+        XLFont& setVertAlign(XLVerticalAlignRunStyle newVertAlign);
+        XLFont& setOutline(bool set = true);
+        XLFont& setShadow(bool set = true);
+        XLFont& setCondense(bool set = true);
+        XLFont& setExtend(bool set = true);
 
         /**
          * @brief Return a string summary of the font properties
@@ -984,9 +984,9 @@ namespace OpenXLSX
          * @param value that shall be set
          * @return true for success, false for failure
          */
-        bool setPatternType(XLPatternType newPatternType);
-        bool setColor(XLColor newColor);
-        bool setBackgroundColor(XLColor newBgColor);
+        XLFill& setPatternType(XLPatternType newPatternType);
+        XLFill& setColor(XLColor newColor);
+        XLFill& setBackgroundColor(XLColor newBgColor);
 
         /**
          * @brief Return a string summary of the fill properties
@@ -1276,9 +1276,9 @@ namespace OpenXLSX
          * @param value2 (optional) that shall be set
          * @return true for success, false for failure
          */
-        bool setDiagonalUp(bool set = true);
-        bool setDiagonalDown(bool set = true);
-        bool setOutline(bool set = true);
+        XLBorder& setDiagonalUp(bool set = true);
+        XLBorder& setDiagonalDown(bool set = true);
+        XLBorder& setOutline(bool set = true);
         bool setLine(XLLineType lineType, XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
         bool setLeft(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
         bool setRight(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
@@ -1686,25 +1686,25 @@ namespace OpenXLSX
          * @param value that shall be set
          * @return true for success, false for failure
          */
-        bool setNumberFormatId(uint32_t newNumFmtId);
-        bool setFontIndex(XLStyleIndex newFontIndex);
-        bool setFillIndex(XLStyleIndex newFillIndex);
-        bool setBorderIndex(XLStyleIndex newBorderIndex);
-        bool setXfId(XLStyleIndex newXfId);    // NOTE: throws when invoked from cellStyleFormats
-        bool setApplyNumberFormat(bool set = true);
-        bool setApplyFont(bool set = true);
-        bool setApplyFill(bool set = true);
-        bool setApplyBorder(bool set = true);
-        bool setApplyAlignment(bool set = true);
-        bool setApplyProtection(bool set = true);
-        bool setQuotePrefix(bool set = true);
-        bool setPivotButton(bool set = true);
-        bool setLocked(bool set = true);
-        bool setHidden(bool set = true);
+        XLCellFormat& setNumberFormatId(uint32_t newNumFmtId);
+        XLCellFormat& setFontIndex(XLStyleIndex newFontIndex);
+        XLCellFormat& setFillIndex(XLStyleIndex newFillIndex);
+        XLCellFormat& setBorderIndex(XLStyleIndex newBorderIndex);
+        XLCellFormat& setXfId(XLStyleIndex newXfId);    // NOTE: throws when invoked from cellStyleFormats
+        XLCellFormat& setApplyNumberFormat(bool set = true);
+        XLCellFormat& setApplyFont(bool set = true);
+        XLCellFormat& setApplyFill(bool set = true);
+        XLCellFormat& setApplyBorder(bool set = true);
+        XLCellFormat& setApplyAlignment(bool set = true);
+        XLCellFormat& setApplyProtection(bool set = true);
+        XLCellFormat& setQuotePrefix(bool set = true);
+        XLCellFormat& setPivotButton(bool set = true);
+        XLCellFormat& setLocked(bool set = true);
+        XLCellFormat& setHidden(bool set = true);
         /**
          * @brief Unsupported setter
          */
-        bool setExtLst(XLUnsupportedElement const& newExtLst);
+        XLCellFormat& setExtLst(XLUnsupportedElement const& newExtLst);
 
         /**
          * @brief Return a string summary of the cell format properties

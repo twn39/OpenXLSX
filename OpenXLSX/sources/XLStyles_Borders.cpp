@@ -126,11 +126,11 @@ XLLine XLBorder::diagonal() const { return XLLine(m_borderNode->child("diagonal"
 XLLine XLBorder::vertical() const { return XLLine(m_borderNode->child("vertical")); }
 XLLine XLBorder::horizontal() const { return XLLine(m_borderNode->child("horizontal")); }
 
-bool XLBorder::setDiagonalUp(bool set)
-{ return appendAndSetAttribute(*m_borderNode, "diagonalUp", (set ? "true" : "false")).empty() == false; }
-bool XLBorder::setDiagonalDown(bool set)
-{ return appendAndSetAttribute(*m_borderNode, "diagonalDown", (set ? "true" : "false")).empty() == false; }
-bool XLBorder::setOutline(bool set) { return appendAndSetAttribute(*m_borderNode, "outline", (set ? "true" : "false")).empty() == false; }
+XLBorder& XLBorder::setDiagonalUp(bool set)
+{ appendAndSetAttribute(*m_borderNode, "diagonalUp", (set ? "true" : "false")).empty(); return *this; }
+XLBorder& XLBorder::setDiagonalDown(bool set)
+{ appendAndSetAttribute(*m_borderNode, "diagonalDown", (set ? "true" : "false")).empty(); return *this; }
+XLBorder& XLBorder::setOutline(bool set) { appendAndSetAttribute(*m_borderNode, "outline", (set ? "true" : "false")).empty(); return *this; }
 bool XLBorder::setLine(XLLineType lineType, XLLineStyle lineStyle, XLColor lineColor, double lineTint)
 {
     XMLNode lineNode = appendAndGetNode(*m_borderNode, XLLineTypeToString(lineType), m_nodeOrder);   

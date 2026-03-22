@@ -124,37 +124,36 @@ bool XLFont::shadow() const { return getBoolAttributeWhenOmittedMeansTrue(*m_fon
 bool XLFont::condense() const { return getBoolAttributeWhenOmittedMeansTrue(*m_fontNode, "condense", "val"); }
 bool XLFont::extend() const { return getBoolAttributeWhenOmittedMeansTrue(*m_fontNode, "extend", "val"); }
 
-bool XLFont::setFontName(std::string_view newName)
-{ return appendAndSetNodeAttribute(*m_fontNode, "name", "val", std::string(newName).c_str()).empty() == false; }
-bool XLFont::setFontCharset(size_t newCharset)
-{ return appendAndSetNodeAttribute(*m_fontNode, "charset", "val", std::to_string(newCharset)).empty() == false; }
-bool XLFont::setFontFamily(size_t newFamily)
-{ return appendAndSetNodeAttribute(*m_fontNode, "family", "val", std::to_string(newFamily)).empty() == false; }
-bool XLFont::setFontSize(size_t newSize)
-{ return appendAndSetNodeAttribute(*m_fontNode, "sz", "val", std::to_string(newSize)).empty() == false; }
-bool XLFont::setFontColor(XLColor newColor)
-{ return appendAndSetNodeAttribute(*m_fontNode, "color", "rgb", newColor.hex(), XLRemoveAttributes).empty() == false; }
-bool XLFont::setBold(bool set) { return appendAndSetNodeAttribute(*m_fontNode, "b", "val", (set ? "1" : "0")).empty() == false; }
-bool XLFont::setItalic(bool set) { return appendAndSetNodeAttribute(*m_fontNode, "i", "val", (set ? "1" : "0")).empty() == false; }
-bool XLFont::setStrikethrough(bool set)
-{ return appendAndSetNodeAttribute(*m_fontNode, "strike", "val", (set ? "1" : "0")).empty() == false; }
-bool XLFont::setUnderline(XLUnderlineStyle style)
-{ return appendAndSetNodeAttribute(*m_fontNode, "u", "val", XLUnderlineStyleToString(style)).empty() == false; }
-bool XLFont::setScheme(XLFontSchemeStyle newScheme)
-{ return appendAndSetNodeAttribute(*m_fontNode, "scheme", "val", XLFontSchemeStyleToString(newScheme)).empty() == false; }
-bool XLFont::setVertAlign(XLVerticalAlignRunStyle newVertAlign)
+XLFont& XLFont::setFontName(std::string_view newName)
+{ appendAndSetNodeAttribute(*m_fontNode, "name", "val", std::string(newName).c_str()).empty(); return *this; }
+XLFont& XLFont::setFontCharset(size_t newCharset)
+{ appendAndSetNodeAttribute(*m_fontNode, "charset", "val", std::to_string(newCharset)).empty(); return *this; }
+XLFont& XLFont::setFontFamily(size_t newFamily)
+{ appendAndSetNodeAttribute(*m_fontNode, "family", "val", std::to_string(newFamily)).empty(); return *this; }
+XLFont& XLFont::setFontSize(size_t newSize)
+{ appendAndSetNodeAttribute(*m_fontNode, "sz", "val", std::to_string(newSize)).empty(); return *this; }
+XLFont& XLFont::setFontColor(XLColor newColor)
+{ appendAndSetNodeAttribute(*m_fontNode, "color", "rgb", newColor.hex(), XLRemoveAttributes).empty(); return *this; }
+XLFont& XLFont::setBold(bool set) { appendAndSetNodeAttribute(*m_fontNode, "b", "val", (set ? "1" : "0")).empty(); return *this; }
+XLFont& XLFont::setItalic(bool set) { appendAndSetNodeAttribute(*m_fontNode, "i", "val", (set ? "1" : "0")).empty(); return *this; }
+XLFont& XLFont::setStrikethrough(bool set)
+{ appendAndSetNodeAttribute(*m_fontNode, "strike", "val", (set ? "1" : "0")).empty(); return *this; }
+XLFont& XLFont::setUnderline(XLUnderlineStyle style)
+{ appendAndSetNodeAttribute(*m_fontNode, "u", "val", XLUnderlineStyleToString(style)).empty(); return *this; }
+XLFont& XLFont::setScheme(XLFontSchemeStyle newScheme)
+{ appendAndSetNodeAttribute(*m_fontNode, "scheme", "val", XLFontSchemeStyleToString(newScheme)).empty(); return *this; }
+XLFont& XLFont::setVertAlign(XLVerticalAlignRunStyle newVertAlign)
 {
-    return appendAndSetNodeAttribute(*m_fontNode, "vertAlign", "val", XLVerticalAlignRunStyleToString(newVertAlign)).empty() ==
-           false;
+    appendAndSetNodeAttribute(*m_fontNode, "vertAlign", "val", XLVerticalAlignRunStyleToString(newVertAlign)).empty(); return *this;
 }
-bool XLFont::setOutline(bool set)
-{ return appendAndSetNodeAttribute(*m_fontNode, "outline", "val", (set ? "true" : "false")).empty() == false; }
-bool XLFont::setShadow(bool set)
-{ return appendAndSetNodeAttribute(*m_fontNode, "shadow", "val", (set ? "true" : "false")).empty() == false; }
-bool XLFont::setCondense(bool set)
-{ return appendAndSetNodeAttribute(*m_fontNode, "condense", "val", (set ? "true" : "false")).empty() == false; }
-bool XLFont::setExtend(bool set)
-{ return appendAndSetNodeAttribute(*m_fontNode, "extend", "val", (set ? "true" : "false")).empty() == false; }
+XLFont& XLFont::setOutline(bool set)
+{ appendAndSetNodeAttribute(*m_fontNode, "outline", "val", (set ? "true" : "false")).empty(); return *this; }
+XLFont& XLFont::setShadow(bool set)
+{ appendAndSetNodeAttribute(*m_fontNode, "shadow", "val", (set ? "true" : "false")).empty(); return *this; }
+XLFont& XLFont::setCondense(bool set)
+{ appendAndSetNodeAttribute(*m_fontNode, "condense", "val", (set ? "true" : "false")).empty(); return *this; }
+XLFont& XLFont::setExtend(bool set)
+{ appendAndSetNodeAttribute(*m_fontNode, "extend", "val", (set ? "true" : "false")).empty(); return *this; }
 
 std::string XLFont::summary() const
 {

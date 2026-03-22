@@ -103,7 +103,7 @@ namespace OpenXLSX
          * @param cellFormatIndex The index in the workbook's style sheet.
          * @return true on success.
          */
-        bool setFormat(XLStyleIndex cellFormatIndex);
+        XLCellRange& setFormat(XLStyleIndex cellFormatIndex);
 
         /**
          * @brief Calculates the intersection area between this range and another.

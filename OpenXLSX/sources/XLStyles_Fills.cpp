@@ -394,32 +394,30 @@ bool XLFill::setBottom(double newBottom)
     return appendAndSetAttribute(fillDescription, "bottom", formatDoubleAsString(newBottom).c_str()).empty() == false;
 }
 
-bool XLFill::setPatternType(XLPatternType newFillPattern)
+XLFill& XLFill::setPatternType(XLPatternType newFillPattern)
 {
     XMLNode fillDescription = getValidFillDescription(XLPatternFill, __func__);
-    if (fillDescription.empty()) return false;    // if no description could be fetched: fail
-    return appendAndSetAttribute(fillDescription, "patternType", XLPatternTypeToString(newFillPattern)).empty() == false;
+    if (fillDescription.empty()) return *this;
+    appendAndSetAttribute(fillDescription, "patternType", XLPatternTypeToString(newFillPattern));
+    return *this;
 }
-bool XLFill::setColor(XLColor newColor)
+XLFill& XLFill::setColor(XLColor newColor)
 {
     XMLNode fillDescription = getValidFillDescription(XLPatternFill, __func__);
-    if (fillDescription.empty()) return false;    // if no description could be fetched: fail
-    
-    // For solid fills, Excel requires both fgColor and bgColor to be set in DXF contexts (Conditional Formatting),
-    // and it's a safe best-practice for regular styles as well to ensure consistent rendering.
-    // OOXML requires fgColor then bgColor
+    if (fillDescription.empty()) return *this;
     std::vector<std::string_view> nodeOrder = {"fgColor", "bgColor"};
-    bool res = appendAndSetNodeAttribute(fillDescription, "fgColor", "rgb", newColor.hex(), XLRemoveAttributes, nodeOrder).empty() == false;
+    appendAndSetNodeAttribute(fillDescription, "fgColor", "rgb", newColor.hex(), XLRemoveAttributes, nodeOrder);
     if (patternType() == XLPatternSolid)
-        res &= appendAndSetNodeAttribute(fillDescription, "bgColor", "rgb", newColor.hex(), XLRemoveAttributes, nodeOrder).empty() == false;
-    return res;
+        appendAndSetNodeAttribute(fillDescription, "bgColor", "rgb", newColor.hex(), XLRemoveAttributes, nodeOrder);
+    return *this;
 }
-bool XLFill::setBackgroundColor(XLColor newBgColor)
+XLFill& XLFill::setBackgroundColor(XLColor newBgColor)
 {
     XMLNode fillDescription = getValidFillDescription(XLPatternFill, __func__);
-    if (fillDescription.empty()) return false;    // if no description could be fetched: fail
+    if (fillDescription.empty()) return *this;
     std::vector<std::string_view> nodeOrder = {"fgColor", "bgColor"};
-    return appendAndSetNodeAttribute(fillDescription, "bgColor", "rgb", newBgColor.hex(), XLRemoveAttributes, nodeOrder).empty() == false;
+    appendAndSetNodeAttribute(fillDescription, "bgColor", "rgb", newBgColor.hex(), XLRemoveAttributes, nodeOrder);
+    return *this;
 }
 
 std::string XLFill::summary()

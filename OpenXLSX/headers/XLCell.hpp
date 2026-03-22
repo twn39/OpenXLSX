@@ -176,7 +176,7 @@ namespace OpenXLSX
          * @param cellFormatIndex The style to set, corresponding to the nidex of XLStyles::cellStyles()
          * @returns True on success, false on failure
          */
-        bool setCellFormat(XLStyleIndex cellFormatIndex);
+        XLCell& setCellFormat(XLStyleIndex cellFormatIndex);
 
         /**
          * @brief Print the XML contents of the XLCell using the underlying XMLNode print function

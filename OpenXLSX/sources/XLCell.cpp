@@ -145,13 +145,13 @@ size_t XLCell::cellFormat() const
  * @details set the s attribute of the cell node, pointing to an xl/styles.xml cellXfs index
  *          the attribute will be created if not existant, function will fail if attribute creation fails
  */
-bool XLCell::setCellFormat(size_t cellFormatIndex)
+XLCell& XLCell::setCellFormat(size_t cellFormatIndex)
 {
     if (!m_cellNode) throw XLException("XLCell object has not been initialized.");
     XMLAttribute attr = m_cellNode->attribute("s");
     if (attr.empty() and not m_cellNode->empty()) attr = m_cellNode->append_attribute("s");
     attr.set_value(cellFormatIndex);    // silently fails on empty attribute, which is intended here
-    return attr.empty() == false;
+    return *this;
 }
 
 void XLCell::print(std::basic_ostream<char>& ostr) const
