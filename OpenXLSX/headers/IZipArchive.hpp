@@ -108,7 +108,7 @@ namespace OpenXLSX
 
         inline void addEntry(const std::string& name, const std::string& data) { m_zipArchive->addEntry(name, data); }
 
-        inline void addEntryFromFile(const std::string& name, const std::string& filePath) { m_zipArchive->addEntryFromFile(name, filePath); }
+        inline void addEntryFromFile(std::string_view name, std::string_view filePath) { m_zipArchive->addEntryFromFile(std::string(name), std::string(filePath)); }
 
 
         inline void deleteEntry(const std::string& entryName) { m_zipArchive->deleteEntry(entryName); }
@@ -176,7 +176,7 @@ namespace OpenXLSX
 
             inline virtual void addEntry(const std::string& name, const std::string& data) = 0;
 
-            inline virtual void addEntryFromFile(const std::string& name, const std::string& filePath) = 0;
+            inline virtual void addEntryFromFile(std::string_view name, std::string_view filePath) = 0;
 
 
             inline virtual void deleteEntry(const std::string& entryName) = 0;
@@ -251,7 +251,7 @@ namespace OpenXLSX
 
             inline void addEntry(const std::string& name, const std::string& data) override { ZipType.addEntry(name, data); }
 
-            inline void addEntryFromFile(const std::string& name, const std::string& filePath) override { ZipType.addEntryFromFile(name, filePath); }
+            inline void addEntryFromFile(std::string_view name, std::string_view filePath) override { ZipType.addEntryFromFile(name, filePath); }
 
 
             inline void deleteEntry(const std::string& entryName) override { ZipType.deleteEntry(entryName); }
