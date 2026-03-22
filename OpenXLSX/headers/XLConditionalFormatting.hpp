@@ -240,7 +240,7 @@ namespace OpenXLSX
         int16_t  stdDev() const;
         bool equalAverage() const;
 
-        bool setFormula(std::string const& newFormula);
+        XLCfRule& setFormula(std::string const& newFormula);
         bool addFormula(std::string const& newFormula);
         void clearFormulas();
         bool setColorScale(XLCfColorScale const& newColorScale);
@@ -248,21 +248,21 @@ namespace OpenXLSX
         bool setIconSet(XLCfIconSet const& newIconSet);
         bool setExtLst(XLUnsupportedElement const& newExtLst);
 
-        bool setType(XLCfType newType);
-        bool setDxfId(XLStyleIndex newDxfId);
+        XLCfRule& setType(XLCfType newType);
+        XLCfRule& setDxfId(XLStyleIndex newDxfId);
 
-        bool setPriority(uint16_t newPriority);
+        XLCfRule& setPriority(uint16_t newPriority);
     public:
-        bool setStopIfTrue(bool set = true);
-        bool setAboveAverage(bool set = true);
-        bool setPercent(bool set = true);
-        bool setBottom(bool set = true);
-        bool setOperator(XLCfOperator newOperator);
-        bool setText(std::string const& newText);
-        bool setTimePeriod(XLCfTimePeriod newTimePeriod);
-        bool setRank(uint16_t newRank);
-        bool setStdDev(int16_t newStdDev);
-        bool setEqualAverage(bool set = true);
+        XLCfRule& setStopIfTrue(bool set = true);
+        XLCfRule& setAboveAverage(bool set = true);
+        XLCfRule& setPercent(bool set = true);
+        XLCfRule& setBottom(bool set = true);
+        XLCfRule& setOperator(XLCfOperator newOperator);
+        XLCfRule& setText(std::string const& newText);
+        XLCfRule& setTimePeriod(XLCfTimePeriod newTimePeriod);
+        XLCfRule& setRank(uint16_t newRank);
+        XLCfRule& setStdDev(int16_t newStdDev);
+        XLCfRule& setEqualAverage(bool set = true);
 
         std::string summary() const;
 

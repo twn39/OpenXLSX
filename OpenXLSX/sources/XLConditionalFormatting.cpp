@@ -572,10 +572,10 @@ uint16_t       XLCfRule::rank() const { return static_cast<uint16_t>(m_cfRuleNod
 int16_t        XLCfRule::stdDev() const { return static_cast<int16_t>(m_cfRuleNode.attribute("stdDev").as_int()); }
 bool           XLCfRule::equalAverage() const { return m_cfRuleNode.attribute("equalAverage").as_bool(false); }
 
-bool XLCfRule::setFormula(std::string const& newFormula)
+XLCfRule& XLCfRule::setFormula(std::string const& newFormula)
 {
     clearFormulas();
-    return addFormula(newFormula);
+    addFormula(newFormula); return *this;
 }
 
 bool XLCfRule::addFormula(std::string const& newFormula)
@@ -644,19 +644,19 @@ bool XLCfRule::setIconSet(XLCfIconSet const& newIconSet)
 
 bool XLCfRule::setExtLst(XLUnsupportedElement const& newExtLst) { OpenXLSX::ignore(newExtLst); return false; }
 
-bool XLCfRule::setType(XLCfType newType) { return appendAndSetAttribute(m_cfRuleNode, "type", XLCfTypeToString(newType)).empty() == false; }
-bool XLCfRule::setDxfId(XLStyleIndex newDxfId) { return appendAndSetAttribute(m_cfRuleNode, "dxfId", std::to_string(newDxfId)).empty() == false; }
-bool XLCfRule::setPriority(uint16_t newPriority) { return appendAndSetAttribute(m_cfRuleNode, "priority", std::to_string(newPriority)).empty() == false; }
-bool XLCfRule::setStopIfTrue(bool set) { return appendAndSetAttribute(m_cfRuleNode, "stopIfTrue", (set ? "1" : "0")).empty() == false; }
-bool XLCfRule::setAboveAverage(bool set) { return appendAndSetAttribute(m_cfRuleNode, "aboveAverage", (set ? "1" : "0")).empty() == false; }
-bool XLCfRule::setPercent(bool set) { return appendAndSetAttribute(m_cfRuleNode, "percent", (set ? "1" : "0")).empty() == false; }
-bool XLCfRule::setBottom(bool set) { return appendAndSetAttribute(m_cfRuleNode, "bottom", (set ? "1" : "0")).empty() == false; }
-bool XLCfRule::setOperator(XLCfOperator newOperator) { return appendAndSetAttribute(m_cfRuleNode, "operator", XLCfOperatorToString(newOperator)).empty() == false; }
-bool XLCfRule::setText(std::string const& newText) { return appendAndSetAttribute(m_cfRuleNode, "text", newText.c_str()).empty() == false; }
-bool XLCfRule::setTimePeriod(XLCfTimePeriod newTimePeriod) { return appendAndSetAttribute(m_cfRuleNode, "timePeriod", XLCfTimePeriodToString(newTimePeriod)).empty() == false; }
-bool XLCfRule::setRank(uint16_t newRank) { return appendAndSetAttribute(m_cfRuleNode, "rank", std::to_string(newRank)).empty() == false; }
-bool XLCfRule::setStdDev(int16_t newStdDev) { return appendAndSetAttribute(m_cfRuleNode, "stdDev", std::to_string(newStdDev)).empty() == false; }
-bool XLCfRule::setEqualAverage(bool set) { return appendAndSetAttribute(m_cfRuleNode, "equalAverage", (set ? "1" : "0")).empty() == false; }
+XLCfRule& XLCfRule::setType(XLCfType newType) { appendAndSetAttribute(m_cfRuleNode, "type", XLCfTypeToString(newType)).empty(); return *this; }
+XLCfRule& XLCfRule::setDxfId(XLStyleIndex newDxfId) { appendAndSetAttribute(m_cfRuleNode, "dxfId", std::to_string(newDxfId)).empty(); return *this; }
+XLCfRule& XLCfRule::setPriority(uint16_t newPriority) { appendAndSetAttribute(m_cfRuleNode, "priority", std::to_string(newPriority)).empty(); return *this; }
+XLCfRule& XLCfRule::setStopIfTrue(bool set) { appendAndSetAttribute(m_cfRuleNode, "stopIfTrue", (set ? "1" : "0")).empty(); return *this; }
+XLCfRule& XLCfRule::setAboveAverage(bool set) { appendAndSetAttribute(m_cfRuleNode, "aboveAverage", (set ? "1" : "0")).empty(); return *this; }
+XLCfRule& XLCfRule::setPercent(bool set) { appendAndSetAttribute(m_cfRuleNode, "percent", (set ? "1" : "0")).empty(); return *this; }
+XLCfRule& XLCfRule::setBottom(bool set) { appendAndSetAttribute(m_cfRuleNode, "bottom", (set ? "1" : "0")).empty(); return *this; }
+XLCfRule& XLCfRule::setOperator(XLCfOperator newOperator) { appendAndSetAttribute(m_cfRuleNode, "operator", XLCfOperatorToString(newOperator)).empty(); return *this; }
+XLCfRule& XLCfRule::setText(std::string const& newText) { appendAndSetAttribute(m_cfRuleNode, "text", newText.c_str()).empty(); return *this; }
+XLCfRule& XLCfRule::setTimePeriod(XLCfTimePeriod newTimePeriod) { appendAndSetAttribute(m_cfRuleNode, "timePeriod", XLCfTimePeriodToString(newTimePeriod)).empty(); return *this; }
+XLCfRule& XLCfRule::setRank(uint16_t newRank) { appendAndSetAttribute(m_cfRuleNode, "rank", std::to_string(newRank)).empty(); return *this; }
+XLCfRule& XLCfRule::setStdDev(int16_t newStdDev) { appendAndSetAttribute(m_cfRuleNode, "stdDev", std::to_string(newStdDev)).empty(); return *this; }
+XLCfRule& XLCfRule::setEqualAverage(bool set) { appendAndSetAttribute(m_cfRuleNode, "equalAverage", (set ? "1" : "0")).empty(); return *this; }
 
 std::string XLCfRule::summary() const
 {
@@ -731,7 +731,7 @@ bool XLCfRules::setPriority(size_t cfRuleIndex, uint16_t newPriority)
             ++index;
         }
     }
-    return affectedRule.setPriority(newPriority);
+    affectedRule.setPriority(newPriority); return true;
 }
 
 void XLCfRules::renumberPriorities(uint16_t increment)
