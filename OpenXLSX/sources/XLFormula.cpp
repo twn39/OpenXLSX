@@ -308,65 +308,41 @@ XLFormula XLFormulaProxy::getFormula() const
 
             // Try to get XLDocument
             // We use friendship or public access if available. Since we are in the library, we can access internals.
-            // m_cell->m_sharedStrings is private, but XLFormulaProxy is a friend? No, wait.
-            // XLCell friends: XLFormulaProxy. Yes!
-            
-            // However, m_sharedStrings.get() returns a const XLSharedStrings&.
-            // XLSharedStrings inherits from XLXmlFile, which has m_xmlData protected.
-            // We need a way to get the XLDocument.
-            
-            // Let's use a more direct way if possible.
-            // Every XLCell has m_sharedStrings which is linked to the XLDocument.
-            
-            // Since we can't easily change XLCell.hpp right now without more tool calls, 
-            // I'll assume we can get it or I'll add a helper.
-            
-            // Wait, I see the error: m_sharedStrings.get().xmlData() -> returns XLXmlData*.
-            // XLXmlData has getParentDoc() -> returns XLDocument*.
-            
-            // The error was: error: member reference type 'std::string' (aka 'basic_string<char>') is not a pointer; 
-            // did you mean to use '.'?
-            // Ah, I see. XLSharedStrings::getString(index) returns const char*. 
-            // Wait, XLSharedStrings::xmlData() does not exist? Let's check XLSharedStrings.hpp.
-            // It inherits from XLXmlFile. XLXmlFile has m_xmlData.
-            
-            // I'll add a friend declaration or a getter.
-            
-            // For now, I'll use a hacky way to get the doc if I can't reach it.
-            // Actually, I can just use the XLDocument pointer if I had it.
-            
-            // Let's fix the XLCell private member access. 
-            // XLFormulaProxy IS a friend of XLCell. So m_cell->m_sharedStrings should be accessible.
-            
-            // The problem is reaching XLDocument from XLSharedStrings.
-            // I'll use a cast or add a method.
-            
-            // Actually, I'll just remove the complex cache for now and do a simple scan 
-            // to satisfy the user's request without throwing an exception.
-            // Optimization can come later.
-            
-            // If formula text is present, return it.
-            if (!formulaNode.text().empty()) return XLFormula(formulaNode.text().get());
-
-            // If slave cell, scan worksheet for master.
+            auto& doc = const_cast<XLDocument&>(m_cell->m_sharedStrings.get().parentDoc());
             XMLNode sheetData = m_cellNode->parent().parent();
-            for (auto row : sheetData.children("row")) {
-                for (auto cell : row.children("c")) {
-                    XMLNode f = cell.child("f");
-                    if (!f.empty() && std::string(f.attribute("t").value()) == "shared" && 
-                        f.attribute("si").as_uint() == si && !f.text().empty()) {
-                        
-                        std::string formula = f.text().get();
-                        auto masterRef = XLCellReference(cell.attribute("r").value());
-                        auto currentRef = m_cell->cellReference();
-                        
-                        return XLFormula(shiftFormula(formula, 
-                                                      static_cast<int32_t>(currentRef.row()) - static_cast<int32_t>(masterRef.row()),
-                                                      static_cast<int16_t>(currentRef.column()) - static_cast<int16_t>(masterRef.column())));
+            void* sheetKey = sheetData.internal_object();
+            
+            // Access the document's shared formulas cache
+            auto& formulasCache = doc.m_sharedFormulas[sheetKey];
+            
+            // If cache is empty for this sheet, populate it in one single pass (O(N))
+            if (formulasCache.empty()) {
+                for (auto row : sheetData.children("row")) {
+                    for (auto cell : row.children("c")) {
+                        XMLNode f = cell.child("f");
+                        if (!f.empty() && std::string(f.attribute("t").value()) == "shared" && !f.text().empty()) {
+                            uint32_t sharedIndex = f.attribute("si").as_uint();
+                            auto masterRef = XLCellReference(cell.attribute("r").value());
+                            
+                            formulasCache[sharedIndex] = XLDocument::SharedFormula {
+                                f.text().get(),
+                                masterRef.row(),
+                                masterRef.column()
+                            };
+                        }
                     }
                 }
             }
             
+            // Look up the master formula in the populated O(1) cache
+            auto it = formulasCache.find(si);
+            if (it != formulasCache.end()) {
+                auto currentRef = m_cell->cellReference();
+                return XLFormula(shiftFormula(it->second.formula, 
+                                              static_cast<int32_t>(currentRef.row()) - static_cast<int32_t>(it->second.baseRow),
+                                              static_cast<int16_t>(currentRef.column()) - static_cast<int16_t>(it->second.baseCol)));
+            }
+
             throw XLFormulaError(fmt::format("Could not find master formula for shared index {}", si));
         }
 
