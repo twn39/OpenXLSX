@@ -74,7 +74,7 @@ void XLCell::copyFrom(XLCell const& other)
     if (!m_cellNode) {
         // copyFrom invoked by empty XLCell: create a new cell with reference & m_cellNode from other
         m_cellNode      = std::make_unique<XMLNode>(*other.m_cellNode);
-        m_sharedStrings = other.m_sharedStrings;    // TBD: check for XLSharedStringsDefaulted and avoid copy?
+        m_sharedStrings = other.m_sharedStrings;
         m_valueProxy    = XLCellValueProxy(this, m_cellNode.get());
         m_formulaProxy  = XLFormulaProxy(this, m_cellNode.get());
         return;

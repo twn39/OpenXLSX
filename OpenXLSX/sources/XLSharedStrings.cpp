@@ -174,11 +174,7 @@ void XLSharedStrings::clearString(int32_t index) const    // 2024-04-30: whitesp
     // iter->text().set(""); // 2024-04-30: BUGFIX: this was never going to work, <si> entries can be plenty that need to be cleared,
     // including formatting
 
-    /* 2024-04-30 CAUTION: performance critical - with whitespace support, the function can no longer know the exact iterator position of
-     *   the shared string to be cleared - TBD what to do instead?
-     * Potential solution: store the XML child position with each entry in m_stringCache in a std::deque<struct entry>
-     *   with struct entry { std::string s; uint64_t xmlChildIndex; };
-     */
+    // Clear the node directly by iterating to its position
     XMLNode sharedStringNode = xmlDocument().document_element().first_child_of_type(pugi::node_element);
     int32_t sharedStringPos  = 0;
     while (sharedStringPos < index and not sharedStringNode.empty()) {

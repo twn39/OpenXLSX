@@ -1084,7 +1084,6 @@ namespace OpenXLSX
      */
     class OPENXLSX_EXPORT XLLine
     {
-        // friend class TBD: XLBorder or XLBorders;    // for access to m_lineNode in TBD
     public:    // ---------- Public Member Functions ---------- //
         /**
          * @brief
@@ -1386,7 +1385,6 @@ namespace OpenXLSX
      */
     class OPENXLSX_EXPORT XLAlignment
     {
-        // friend class TBD: XLCellFormat or XLCellFormats;    // for access to m_alignmentNode in TBD
     public:    // ---------- Public Member Functions ---------- //
         /**
          * @brief
@@ -1866,7 +1864,7 @@ namespace OpenXLSX
 
         /**
          * @brief Get the id of the cell style format
-         * @return The id referring to an index in cell style formats (cellStyleXfs) - TBD to be confirmed
+         * @return The id referring to an index in cell style formats (cellStyleXfs)
          */
         XLStyleIndex xfId() const;
 

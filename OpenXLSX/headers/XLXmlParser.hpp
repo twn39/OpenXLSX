@@ -85,7 +85,6 @@ namespace OpenXLSX
          * @brief Inherit all constructors with parameters from pugi::xml_node
          */
         template<class base>
-        // explicit OpenXLSX_xml_node(base b) : pugi::xml_node(b), name_begin(0) // TBD on explicit keyword
         OpenXLSX_xml_node(base b) : pugi::xml_node(b),
                                     name_begin(0)
         {
@@ -244,7 +243,6 @@ namespace OpenXLSX
          * @brief Inherit all constructors with parameters from pugi::xml_document
          */
         template<class base>
-        // explicit OpenXLSX_xml_document(base b) : xml_document(b) // TBD
         OpenXLSX_xml_document(base b) : pugi::xml_document(b)
         {}
 

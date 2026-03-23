@@ -93,7 +93,7 @@ XLShapeClientData();
                                        // lowercase node_pcdata "false"
         bool sizeWithCells() const;    // element x:SizeWithCells - logic as in MoveWithCells
         std::string
-             anchor() const;    // element x:Anchor - Example node_pcdata: "3, 23, 0, 0, 4, 25, 3, 5" - no idea what any number means - TBD
+             anchor() const;    // element x:Anchor - e.g. "3, 23, 0, 0, 4, 25, 3, 5"
         bool autoFill() const;                   // element x:AutoFill - logic as in MoveWithCells
         XLShapeTextVAlign textVAlign() const;    // element x:TextVAlign - Top, ???
         XLShapeTextHAlign textHAlign() const;    // element x:TextHAlign - Left, ???

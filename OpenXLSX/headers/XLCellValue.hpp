@@ -25,7 +25,7 @@
 #include "XLXmlParser.hpp"
 
 typedef std::variant<std::string, int64_t, double, bool, OpenXLSX::XLRichText>
-    XLCellValueType;    // TBD: typedef std::variant< std::string, int64_t, double, bool, struct timestamp > XLCellValueType;
+    XLCellValueType;
 
 namespace OpenXLSX
 {

@@ -150,15 +150,7 @@ namespace OpenXLSX
          */
         void clearString(int32_t index) const;
 
-        // 2024-06-18 TBD if this is ever needed
-        // /**
-        //  * @brief check m_stringCache is initialized
-        //  * @return true if m_stringCache != nullptr, false otherwise
-        //  * @note 2024-05-28 added function to enable other classes to check m_stringCache status
-        //  */
-        // bool initialized() const { return m_stringCache != nullptr; }
-
-        /**
+        protected:
          * @brief print the XML contents of the shared strings document using the underlying XMLNode print function
          */
         void print(std::basic_ostream<char>& ostr) const;

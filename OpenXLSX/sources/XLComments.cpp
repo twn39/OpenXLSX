@@ -300,8 +300,9 @@ size_t XLComments::count() const
     XMLNode comment = m_commentList.first_child_of_type(pugi::node_element);
     size_t  count   = 0;
     while (not comment.empty()) {
-        // if (comment.name() == "comment") // TBD: safe-guard against potential rogue node
-        ++count;
+        if (std::string_view(comment.name()) == "comment") {
+            ++count;
+        }
         comment = comment.next_sibling_of_type(pugi::node_element);
     }
     return count;
