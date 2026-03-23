@@ -280,28 +280,40 @@ namespace OpenXLSX
     inline bool operator!=(const XLCell& lhs, const XLCell& rhs) { return !XLCell::isEqual(lhs, rhs); }
 
     /**
-     * @brief      ostream output of XLCell content as string
+     * @brief      ostream output of XLCell content
      * @param os   the ostream destination
      * @param c    the cell to output to the stream
      * @return
      */
     inline std::ostream& operator<<(std::ostream& os, const XLCell& c)
     {
-        os << c.getString();
-        // TODO: send to stream different data types based on cell data type
+        XLCellValue val = c.value();
+        switch (val.type()) {
+            case XLValueType::Integer: os << val.get<int64_t>(); break;
+            case XLValueType::Float:   os << val.get<double>(); break;
+            case XLValueType::Boolean: os << (val.get<bool>() ? "true" : "false"); break;
+            case XLValueType::Empty:   break;
+            default:                   os << c.getString(); break;
+        }
         return os;
     }
 
     /**
-     * @brief      ostream output of XLCellAssignable content as string
+     * @brief      ostream output of XLCellAssignable content
      * @param os   the ostream destination
      * @param c    the cell to output to the stream
      * @return
      */
     inline std::ostream& operator<<(std::ostream& os, const XLCellAssignable& c)
     {
-        os << c.getString();
-        // TODO: send to stream different data types based on cell data type
+        XLCellValue val = c.value();
+        switch (val.type()) {
+            case XLValueType::Integer: os << val.get<int64_t>(); break;
+            case XLValueType::Float:   os << val.get<double>(); break;
+            case XLValueType::Boolean: os << (val.get<bool>() ? "true" : "false"); break;
+            case XLValueType::Empty:   break;
+            default:                   os << c.getString(); break;
+        }
         return os;
     }
 }    // namespace OpenXLSX

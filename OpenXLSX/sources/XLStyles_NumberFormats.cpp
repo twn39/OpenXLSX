@@ -111,33 +111,41 @@ uint32_t XLNumberFormats::numberFormatIdFromIndex(XLStyleIndex index) const
     return m_numberFormats[index].numberFormatId();
 }
 
-uint32_t XLNumberFormats::createNumberFormat(std::string_view formatCode)
+uint32_t XLNumberFormats::getFreeNumberFormatId() const
 {
-    uint32_t maxId = 163;
+    uint32_t maxId = 163; // Excel reserved format IDs end at 163
     for (const auto& fmt : m_numberFormats) {
-        if (fmt.formatCode() == formatCode) {
-            return fmt.numberFormatId();
-        }
         if (fmt.numberFormatId() > maxId) {
             maxId = fmt.numberFormatId();
         }
     }
-    
-    uint32_t newId = maxId + 1;
-    
+    return maxId + 1;
+}
+
+uint32_t XLNumberFormats::createNumberFormat(std::string_view formatCode)
+{
+    // If exact format code already exists, just return its ID
+    for (const auto& fmt : m_numberFormats) {
+        if (fmt.formatCode() == formatCode) {
+            return fmt.numberFormatId();
+        }
+    }
+
+    uint32_t newId = getFreeNumberFormatId();
+
     XMLNode newNode{};
     XMLNode lastStyle = m_numberFormatsNode->last_child_of_type(pugi::node_element);
     if (lastStyle.empty())
         newNode = m_numberFormatsNode->prepend_child("numFmt");
     else
         newNode = m_numberFormatsNode->insert_child_after("numFmt", lastStyle);
-        
+
     newNode.append_attribute("numFmtId").set_value(newId);
     newNode.append_attribute("formatCode").set_value(std::string(formatCode).c_str());
-    
+
     // Add to our tracked vector
     m_numberFormats.emplace_back(newNode);
-    
+
     // Update count attribute on <numFmts>
     auto countAttr = m_numberFormatsNode->attribute("count");
     if (countAttr.empty()) {
@@ -145,14 +153,14 @@ uint32_t XLNumberFormats::createNumberFormat(std::string_view formatCode)
     } else {
         countAttr.set_value(m_numberFormats.size());
     }
-    
+
     return newId;
 }
 
 XLStyleIndex XLNumberFormats::create(XLNumberFormat copyFrom, std::string_view styleEntriesPrefix)
 {
-    XLStyleIndex index = count();   
-    XMLNode      newNode{};         
+    XLStyleIndex index = count();
+    XMLNode      newNode{};
 
     // ===== Append new node prior to final whitespaces, if any
     XMLNode lastStyle = m_numberFormatsNode->last_child_of_type(pugi::node_element);
@@ -164,21 +172,22 @@ XLStyleIndex XLNumberFormats::create(XLNumberFormat copyFrom, std::string_view s
         using namespace std::literals::string_literals;
         throw XLException("XLNumberFormats::"s + __func__ + ": failed to append a new numFmt node"s);
     }
-    if (styleEntriesPrefix.length() > 0)   
+    if (styleEntriesPrefix.length() > 0)
         m_numberFormatsNode->insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());   
+            .set_value(std::string(styleEntriesPrefix).c_str());
 
     XLNumberFormat newNumberFormat(newNode);
-    if (copyFrom.m_numberFormatNode->empty()) {   
+    if (copyFrom.m_numberFormatNode->empty()) {
         // ===== Create a number format with default values
         newNumberFormat.setNumberFormatId(0);
         newNumberFormat.setFormatCode("General");
     }
-    else
-        copyXMLNode(newNode, *copyFrom.m_numberFormatNode);   
+    else {
+        copyXMLNode(newNode, *copyFrom.m_numberFormatNode);
+        newNumberFormat.setNumberFormatId(getFreeNumberFormatId()); // Ensure copied formats get a fresh ID
+    }
 
     m_numberFormats.push_back(newNumberFormat);
-    appendAndSetAttribute(*m_numberFormatsNode, "count", std::to_string(m_numberFormats.size()));   
+    appendAndSetAttribute(*m_numberFormatsNode, "count", std::to_string(m_numberFormats.size()));
     return index;
 }
-

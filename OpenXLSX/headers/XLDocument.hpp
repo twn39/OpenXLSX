@@ -32,6 +32,7 @@
 #include "XLXmlData.hpp"
 #include "XLZipArchive.hpp"
 #include "XLChart.hpp"
+#include "XLStringArena.hpp"
 
 namespace OpenXLSX
 {
@@ -345,8 +346,9 @@ namespace OpenXLSX
         };
 
         mutable std::list<XLXmlData>                     m_data{};
-        mutable std::deque<std::string>                  m_sharedStringCache{};
-        mutable std::unordered_map<std::string, int32_t> m_sharedStringIndex{};
+        mutable XLStringArena                            m_sharedStringArena{};
+        mutable std::vector<std::string_view>            m_sharedStringCache{};
+        mutable FlatHashMap<std::string_view, int32_t>   m_sharedStringIndex{};
         mutable XLSharedStrings                          m_sharedStrings{};
         mutable std::map<const XMLDocument*, std::unordered_map<uint32_t, SharedFormula>>
             m_sharedFormulas{};

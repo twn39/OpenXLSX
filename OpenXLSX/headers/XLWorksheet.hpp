@@ -304,7 +304,7 @@ namespace OpenXLSX
         bool hasTables() const;
 
         XLDrawing& drawing();
-        void addImage(const std::string& name, const std::string& data, uint32_t row, uint32_t col, uint32_t width, uint32_t height);
+        void addImage(const std::string& name, const std::string& data, uint32_t row, uint32_t col, uint32_t width, uint32_t height, const XLImageOptions& options = XLImageOptions());
 
         /**
          * @brief Insert an image at the specified cell with original dimensions (automatic parsing).

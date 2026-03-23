@@ -575,27 +575,58 @@ void XLDrawing::addImage(std::string_view rId,
                          uint32_t           row,
                          uint32_t           col,
                          uint32_t           width,
-                         uint32_t           height)
+                         uint32_t           height,
+                         const XLImageOptions& options)
 {
     XMLNode rootNode = xmlDocument().document_element();
 
-    // Create oneCellAnchor (Standard OOXML, Excel should handle it if metadata is correct)
-    XMLNode anchor = rootNode.append_child("xdr:oneCellAnchor");
+    XMLNode anchor;
+    if (options.positioning == XLImagePositioning::TwoCell) {
+        anchor = rootNode.append_child("xdr:twoCellAnchor");
+    } else if (options.positioning == XLImagePositioning::Absolute) {
+        anchor = rootNode.append_child("xdr:absoluteAnchor");
+    } else {
+        anchor = rootNode.append_child("xdr:oneCellAnchor");
+    }
 
-    // From node (top-left)
-    XMLNode from = anchor.append_child("xdr:from");
-    from.append_child("xdr:col").text().set(col);
-    from.append_child("xdr:colOff").text().set(0);
-    from.append_child("xdr:row").text().set(row);
-    from.append_child("xdr:rowOff").text().set(0);
+    if (options.positioning == XLImagePositioning::Absolute) {
+        XMLNode pos = anchor.append_child("xdr:pos");
+        pos.append_attribute("x").set_value(static_cast<int64_t>(options.offsetX) * EMU_PER_PIXEL);
+        pos.append_attribute("y").set_value(static_cast<int64_t>(options.offsetY) * EMU_PER_PIXEL);
+    } else {
+        // From node (top-left)
+        XMLNode from = anchor.append_child("xdr:from");
+        from.append_child("xdr:col").text().set(col);
+        from.append_child("xdr:colOff").text().set(static_cast<int64_t>(options.offsetX) * EMU_PER_PIXEL);
+        from.append_child("xdr:row").text().set(row);
+        from.append_child("xdr:rowOff").text().set(static_cast<int64_t>(options.offsetY) * EMU_PER_PIXEL);
 
-    // Extents (size)
+        if (options.positioning == XLImagePositioning::TwoCell) {
+            uint32_t toRow = row + 1; // Default fallback if not provided
+            uint32_t toCol = col + 1;
+            if (!options.bottomRightCell.empty()) {
+                XLCellReference brRef(options.bottomRightCell);
+                toRow = brRef.row() - 1;
+                toCol = brRef.column() - 1;
+            }
+
+            XMLNode to = anchor.append_child("xdr:to");
+            to.append_child("xdr:col").text().set(toCol);
+            to.append_child("xdr:colOff").text().set(0);
+            to.append_child("xdr:row").text().set(toRow);
+            to.append_child("xdr:rowOff").text().set(0);
+        }
+    }
+
     const uint64_t emuWidth  = static_cast<uint64_t>(width) * EMU_PER_PIXEL;
     const uint64_t emuHeight = static_cast<uint64_t>(height) * EMU_PER_PIXEL;
 
-    XMLNode ext = anchor.append_child("xdr:ext");
-    ext.append_attribute("cx").set_value(std::to_string(emuWidth).c_str());
-    ext.append_attribute("cy").set_value(std::to_string(emuHeight).c_str());
+    // Extents (size) - Required for oneCellAnchor and absoluteAnchor
+    if (options.positioning != XLImagePositioning::TwoCell) {
+        XMLNode ext = anchor.append_child("xdr:ext");
+        ext.append_attribute("cx").set_value(std::to_string(emuWidth).c_str());
+        ext.append_attribute("cy").set_value(std::to_string(emuHeight).c_str());
+    }
 
     // Picture node
     XMLNode pic = anchor.append_child("xdr:pic");

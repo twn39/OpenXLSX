@@ -463,16 +463,15 @@ namespace OpenXLSX
         if (m_currentRowNumber != rhs.m_currentRowNumber)    // If iterators point to a different row
             return false;                                    // that means no match
 
-        // CAUTION: for performance reasons, disabled all checks whether this and rhs are iterators on the same worksheet & row range
+        // Check if iterators belong to the same underlying XML document node (same worksheet)
+        if (m_dataNode && rhs.m_dataNode && *m_dataNode != *rhs.m_dataNode)
+            return false;
+        
+        // Check if iterators were created with the same range boundaries
+        if (m_firstRow != rhs.m_firstRow || m_lastRow != rhs.m_lastRow)
+            return false;
+
         return true;
-
-        // if (*m_dataNode != *rhs.m_dataNode) return false;     // TBD: iterators over different worksheets may never match
-        // TBD if iterators shall be considered not equal if they were created on different XLRowRanges
-        // this would require checking the m_firstRow and m_lastRow, potentially costing CPU time
-
-        // return m_currentRow == rhs.m_currentRow;   // match only if row nodes are equal
-        // CAUTION: in the current code, that means iterators that point to the same row in different worksheets,
-        // and rows that do not exist in both sheets, will be considered equal
     }
 
     bool XLRowIterator::operator!=(const XLRowIterator& rhs) const { return !(*this == rhs); }

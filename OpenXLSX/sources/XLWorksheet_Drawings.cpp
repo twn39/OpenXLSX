@@ -52,7 +52,7 @@ XLDrawing& XLWorksheet::drawing()
     return m_drawing;
 }
 
-void XLWorksheet::addImage(const std::string& name, const std::string& data, uint32_t row, uint32_t col, uint32_t width, uint32_t height)
+void XLWorksheet::addImage(const std::string& name, const std::string& data, uint32_t row, uint32_t col, uint32_t width, uint32_t height, const XLImageOptions& options)
 {
     std::string internalPath = parentDoc().addImage(name, data);
     XLDrawing& drw = drawing();
@@ -65,7 +65,7 @@ void XLWorksheet::addImage(const std::string& name, const std::string& data, uin
     else
         imgRel = drw.relationships().relationshipByTarget(imageRelativePath);
 
-    drw.addImage(imgRel.id(), name, "", row, col, width, height);
+    drw.addImage(imgRel.id(), name, "", row, col, width, height, options);
 }
 
 void XLWorksheet::addScaledImage(const std::string& name, const std::string& data, uint32_t row, uint32_t col, double scalingFactor)
@@ -318,8 +318,6 @@ void XLWorksheet::insertImage(const std::string& cellReference, const std::strin
     uint32_t scaledWidth = static_cast<uint32_t>(size.width * options.scaleX);
     uint32_t scaledHeight = static_cast<uint32_t>(size.height * options.scaleY);
 
-    // TODO: Advanced features like TwoCell and Offsets will require 
-    // more complex logic interacting with XLDrawing internals.
-    // For now, this acts as the foundational bridge mapping the high level API to the lower level.
-    addImage(name, data, row, col, scaledWidth, scaledHeight);
+    // Call addImage with options to correctly generate TwoCell or Absolute anchors
+    addImage(name, data, row, col, scaledWidth, scaledHeight, options);
 }

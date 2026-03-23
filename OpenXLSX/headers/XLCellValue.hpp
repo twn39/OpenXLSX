@@ -80,7 +80,7 @@ class XLCellValueProxy;
     {
 friend class XLCellValueProxy;    // to allow access to m_value
 
-        // TODO: Consider template functions to compare to ints, floats etc.
+        // Comparison operators between XLCellValue objects
         friend bool          operator==(const XLCellValue& lhs, const XLCellValue& rhs);
         friend bool          operator!=(const XLCellValue& lhs, const XLCellValue& rhs);
         friend bool          operator<(const XLCellValue& lhs, const XLCellValue& rhs);
@@ -89,6 +89,29 @@ friend class XLCellValueProxy;    // to allow access to m_value
         friend bool          operator>=(const XLCellValue& lhs, const XLCellValue& rhs);
         friend std::ostream& operator<<(std::ostream& os, const XLCellValue& value);
         friend std::hash<OpenXLSX::XLCellValue>;
+
+#define OPENXLSX_XLCELLVALUE_FRIEND_STRING_OP(OP, FUNCTOR) \
+        friend bool operator OP(const XLCellValue& lhs, std::string_view rhs) { \
+            if (std::holds_alternative<std::string>(lhs.m_value)) return FUNCTOR<>{}(std::string_view(std::get<std::string>(lhs.m_value)), rhs); \
+            return false; \
+        } \
+        friend bool operator OP(std::string_view lhs, const XLCellValue& rhs) { \
+            if (std::holds_alternative<std::string>(rhs.m_value)) return FUNCTOR<>{}(lhs, std::string_view(std::get<std::string>(rhs.m_value))); \
+            return false; \
+        } \
+        friend bool operator OP(const XLCellValue& lhs, const char* rhs) { return lhs OP std::string_view(rhs); } \
+        friend bool operator OP(const char* lhs, const XLCellValue& rhs) { return std::string_view(lhs) OP rhs; } \
+        friend bool operator OP(const XLCellValue& lhs, const std::string& rhs) { return lhs OP std::string_view(rhs); } \
+        friend bool operator OP(const std::string& lhs, const XLCellValue& rhs) { return std::string_view(lhs) OP rhs; }
+
+        OPENXLSX_XLCELLVALUE_FRIEND_STRING_OP(==, std::equal_to)
+        OPENXLSX_XLCELLVALUE_FRIEND_STRING_OP(!=, std::not_equal_to)
+        OPENXLSX_XLCELLVALUE_FRIEND_STRING_OP(<, std::less)
+        OPENXLSX_XLCELLVALUE_FRIEND_STRING_OP(>, std::greater)
+        OPENXLSX_XLCELLVALUE_FRIEND_STRING_OP(<=, std::less_equal)
+        OPENXLSX_XLCELLVALUE_FRIEND_STRING_OP(>=, std::greater_equal)
+
+#undef OPENXLSX_XLCELLVALUE_FRIEND_STRING_OP
 
     public:
 /**
@@ -646,44 +669,62 @@ XLCell*  m_cell;     /**< Pointer to the owning XLCell object. */
 
 }    // namespace OpenXLSX
 
-// TODO: Consider comparison operators on fundamental datatypes
+#include <functional>
+
 namespace OpenXLSX
 {
-    /**
-         * @param lhs
-     * @param rhs
-     */
-    inline bool operator==(const XLCellValue& lhs, const XLCellValue& rhs) { return lhs.m_value == rhs.m_value; }
+    // Utility for cross-type comparison
+    template <typename Op>
+    struct XLCompareVisitor {
+        template <typename T, typename U>
+        bool operator()(const T& lhs, const U& rhs) const {
+            if constexpr (std::is_arithmetic_v<T> && std::is_arithmetic_v<U> && !std::is_same_v<T, bool> && !std::is_same_v<U, bool>) {
+                return Op{}(lhs, rhs);
+            } else if constexpr (std::is_same_v<T, bool> && std::is_same_v<U, bool>) {
+                return Op{}(lhs, rhs);
+            } else if constexpr (std::is_same_v<T, std::string> && std::is_same_v<U, std::string>) {
+                return Op{}(lhs, rhs);
+            } else {
+                return false;
+            }
+        }
+    };
 
     /**
-         * @param lhs
+     * @param lhs
      * @param rhs
      */
-    inline bool operator!=(const XLCellValue& lhs, const XLCellValue& rhs) { return lhs.m_value != rhs.m_value; }
+    inline bool operator==(const XLCellValue& lhs, const XLCellValue& rhs) { return std::visit(XLCompareVisitor<std::equal_to<>>{}, lhs.m_value, rhs.m_value); }
 
     /**
-         * @param lhs
+     * @param lhs
      * @param rhs
      */
-    inline bool operator<(const XLCellValue& lhs, const XLCellValue& rhs) { return lhs.m_value < rhs.m_value; }
+    inline bool operator!=(const XLCellValue& lhs, const XLCellValue& rhs) { return std::visit(XLCompareVisitor<std::not_equal_to<>>{}, lhs.m_value, rhs.m_value); }
 
     /**
-         * @param lhs
+     * @param lhs
      * @param rhs
      */
-    inline bool operator>(const XLCellValue& lhs, const XLCellValue& rhs) { return lhs.m_value > rhs.m_value; }
+    inline bool operator<(const XLCellValue& lhs, const XLCellValue& rhs) { return std::visit(XLCompareVisitor<std::less<>>{}, lhs.m_value, rhs.m_value); }
 
     /**
-         * @param lhs
+     * @param lhs
      * @param rhs
      */
-    inline bool operator<=(const XLCellValue& lhs, const XLCellValue& rhs) { return lhs.m_value <= rhs.m_value; }
+    inline bool operator>(const XLCellValue& lhs, const XLCellValue& rhs) { return std::visit(XLCompareVisitor<std::greater<>>{}, lhs.m_value, rhs.m_value); }
 
     /**
-         * @param lhs
+     * @param lhs
      * @param rhs
      */
-    inline bool operator>=(const XLCellValue& lhs, const XLCellValue& rhs) { return lhs.m_value >= rhs.m_value; }
+    inline bool operator<=(const XLCellValue& lhs, const XLCellValue& rhs) { return std::visit(XLCompareVisitor<std::less_equal<>>{}, lhs.m_value, rhs.m_value); }
+
+    /**
+     * @param lhs
+     * @param rhs
+     */
+    inline bool operator>=(const XLCellValue& lhs, const XLCellValue& rhs) { return std::visit(XLCompareVisitor<std::greater_equal<>>{}, lhs.m_value, rhs.m_value); }
 
     /**
          * @param os

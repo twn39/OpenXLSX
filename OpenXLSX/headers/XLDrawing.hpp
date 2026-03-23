@@ -14,7 +14,7 @@
 #include "XLXmlData.hpp"
 #include "XLXmlFile.hpp"
 #include "XLConstants.hpp"
-
+#include "XLImageOptions.hpp"
 
 #include <memory>
 
@@ -357,6 +357,7 @@ mutable XMLNode                                   m_shapeNode; /**< An XMLNode o
          * @param col the column where the image should be placed (0-indexed)
          * @param width the width of the image in pixels
          * @param height the height of the image in pixels
+         * @param options the formatting and positioning options
          */
         void addImage(std::string_view rId,
                       std::string_view name,
@@ -364,7 +365,8 @@ mutable XMLNode                                   m_shapeNode; /**< An XMLNode o
                       uint32_t           row,
                       uint32_t           col,
                       uint32_t           width,
-                      uint32_t           height);
+                      uint32_t           height,
+                      const XLImageOptions& options = XLImageOptions());
 
         /**
          * @brief Add a chart to the drawing

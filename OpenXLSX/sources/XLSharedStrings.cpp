@@ -20,10 +20,12 @@ using namespace OpenXLSX;
  * @details Constructs a new XLSharedStrings object. Only one (common) object is allowed per XLDocument instance.
  * A filepath to the underlying XML file must be provided.
  */
-XLSharedStrings::XLSharedStrings(XLXmlData*                                xmlData,
-                                 std::deque<std::string>*                  stringCache,
-                                 std::unordered_map<std::string, int32_t>* stringIndex)
+XLSharedStrings::XLSharedStrings(XLXmlData*                              xmlData,
+                                 XLStringArena*                          stringArena,
+                                 std::vector<std::string_view>*          stringCache,
+                                 FlatHashMap<std::string_view, int32_t>* stringIndex)
     : XLXmlFile(xmlData),
+      m_stringArena(stringArena),
       m_stringCache(stringCache),
       m_stringIndex(stringIndex)
 {
@@ -68,7 +70,7 @@ int32_t XLSharedStrings::getStringIndex(const std::string& str) const
     }
 
     // Fallback to linear search (legacy behavior)
-    const auto iter = std::find_if(m_stringCache->begin(), m_stringCache->end(), [&](const std::string& s) { return str == s; });
+    const auto iter = std::find_if(m_stringCache->begin(), m_stringCache->end(), [&](std::string_view s) { return str == s; });
     return iter == m_stringCache->end() ? -1 : static_cast<int32_t>(std::distance(m_stringCache->begin(), iter));
 }
 
@@ -92,7 +94,7 @@ const char* XLSharedStrings::getString(int32_t index) const
         using namespace std::literals::string_literals;
         throw XLInternalError("XLSharedStrings::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
     }
-    return (*m_stringCache)[static_cast<size_t>(index)].c_str();
+    return (*m_stringCache)[static_cast<size_t>(index)].data();
 }
 
 /**
@@ -102,6 +104,7 @@ const char* XLSharedStrings::getString(int32_t index) const
 int32_t XLSharedStrings::appendString(const std::string& str) const
 {
     Expects(m_stringCache != nullptr);
+    Expects(m_stringArena != nullptr);
     size_t stringCacheSize = m_stringCache->size();    // 2024-05-31: analogous with already added range check in getString
     if (stringCacheSize >= XLMaxSharedStrings) {       // 2024-05-31: added range check
         using namespace std::literals::string_literals;
@@ -111,10 +114,12 @@ int32_t XLSharedStrings::appendString(const std::string& str) const
     if ((!str.empty()) and (str.front() == ' ' or str.back() == ' '))
         textNode.append_attribute("xml:space").set_value("preserve");    // pull request #161
     textNode.text().set(str.c_str());
-    m_stringCache->emplace_back(textNode.text().get());    // index of this element = previous stringCacheSize
+
+    std::string_view persistentView = m_stringArena->store(textNode.text().get());
+    m_stringCache->emplace_back(persistentView);    // index of this element = previous stringCacheSize
 
     // Update the hash index for O(1) lookup
-    if (m_stringIndex) { m_stringIndex->emplace(str, static_cast<int32_t>(stringCacheSize)); }
+    if (m_stringIndex) { m_stringIndex->emplace(persistentView, static_cast<int32_t>(stringCacheSize)); }
 
     return static_cast<int32_t>(stringCacheSize);
 }
@@ -194,11 +199,11 @@ int32_t XLSharedStrings::rewriteXmlFromCache()
     Expects(m_stringCache != nullptr);
     int32_t writtenStrings = 0;
     xmlDocument().document_element().remove_children();    // clear all existing XML
-    for (std::string& s : *m_stringCache) {
+    for (std::string_view s : *m_stringCache) {
         XMLNode textNode = xmlDocument().document_element().append_child("si").append_child("t");
         if ((!s.empty()) and (s.front() == ' ' or s.back() == ' '))
             textNode.append_attribute("xml:space").set_value("preserve");    // preserve spaces at begin/end of string
-        textNode.text().set(s.c_str());
+        textNode.text().set(s.data()); // s is guaranteed to be null-terminated by the Arena
         ++writtenStrings;
     }
     return writtenStrings;

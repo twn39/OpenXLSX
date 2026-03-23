@@ -49,10 +49,10 @@ namespace OpenXLSX
 
     constexpr const uint32_t XLDefaultFontSize       = 12;            //
     constexpr const char*    XLDefaultFontColor      = "ff000000";    // default font color
-    constexpr const char*    XLDefaultFontColorTheme = "";            // TBD what this means / how it is used
+    constexpr const char*    XLDefaultFontColorTheme = "";            // Theme color ID from theme1.xml (e.g., "1" for dark1)
     constexpr const char*    XLDefaultFontName       = "Arial";       //
-    constexpr const uint32_t XLDefaultFontFamily     = 0;             // TBD what this means / how it is used
-    constexpr const uint32_t XLDefaultFontCharset    = 1;             // TBD what this means / how it is used
+    constexpr const uint32_t XLDefaultFontFamily     = 0;             // Font Family (0 = N/A, 1 = Roman, 2 = Swiss, 3 = Modern)
+    constexpr const uint32_t XLDefaultFontCharset    = 1;             // Character set (0 = ANSI, 1 = Default, 2 = Symbol)
 
     constexpr const char* XLDefaultLineStyle = "";    // empty string = line not set
 
@@ -341,14 +341,16 @@ namespace OpenXLSX
         uint32_t createNumberFormat(std::string_view formatCode);
 
         /**
+         * @brief Get a free (unused) number format ID, skipping reserved IDs (0-163).
+         * @return A free ID starting from 164.
+         */
+        uint32_t getFreeNumberFormatId() const;
+
+        /**
          * @brief Append a new XLNumberFormat, based on copyFrom, and return its index in numFmts node
          * @param copyFrom Can provide an XLNumberFormat to use as template for the new style
          * @param styleEntriesPrefix Prefix the newly created cell style XMLNode with this pugi::node_pcdata text
          * @returns The index of the new style as used by operator[]
-         * @todo: TBD assign a unique, non-reserved uint32_t numFmtId. Alternatively, the user should configure it manually via
-         * setNumberFormatId
-         * @todo: TBD implement a "getFreeNumberFormatId()" method that skips reserved identifiers and iterates over m_numberFormats to
-         * avoid all existing number format Ids.
          */
         XLStyleIndex create(XLNumberFormat copyFrom = XLNumberFormat{}, std::string_view styleEntriesPrefix = XLDefaultStyleEntriesPrefix);
 
@@ -476,29 +478,25 @@ namespace OpenXLSX
 
         /**
          * @brief Get the outline status
-         * @return a TBD bool
-         * @todo need to find a use case for this
+         * @return true if the font is formatted with an outline effect (per ECMA-376 legacy macOS font styling)
          */
         bool outline() const;
 
         /**
          * @brief Get the shadow status
-         * @return a TBD bool
-         * @todo need to find a use case for this
+         * @return true if the font has a shadow effect
          */
         bool shadow() const;
 
         /**
          * @brief Get the condense status
-         * @return a TBD bool
-         * @todo need to find a use case for this
+         * @return true if the font is condensed
          */
         bool condense() const;
 
         /**
          * @brief Get the extend status
-         * @return a TBD bool
-         * @todo need to find a use case for this
+         * @return true if the font is extended (spacing between characters is increased)
          */
         bool extend() const;
 
@@ -1445,8 +1443,8 @@ namespace OpenXLSX
         XLAlignmentStyle vertical() const;
 
         /**
-         * @brief Get the text rotation
-         * @return A value in degrees (TBD: clockwise? counter-clockwise?)
+         * @brief Get text rotation
+         * @return A value indicating rotation: 0 to 90 is counter-clockwise, 90 to 180 is 90 degrees offset clockwise (e.g. 180 = 90 deg clockwise), 255 is vertical text.
          */
         uint16_t textRotation() const;
 

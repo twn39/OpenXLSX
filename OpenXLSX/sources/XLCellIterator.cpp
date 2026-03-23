@@ -245,6 +245,12 @@ bool XLCellIterator::operator==(const XLCellIterator& rhs) const noexcept
 
     if ((m_currentColumn != rhs.m_currentColumn) or (m_currentRow != rhs.m_currentRow)) return false;
 
+    // Check if iterators belong to the same underlying XML document node (same worksheet)
+    if (m_dataNode != rhs.m_dataNode) return false;
+
+    // Check if iterators were created with the same range boundaries
+    if (m_topLeft.address() != rhs.m_topLeft.address() || m_bottomRight.address() != rhs.m_bottomRight.address()) return false;
+
     return true;
 }
 

@@ -17,9 +17,16 @@
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
 #include "XLXmlFile.hpp"
+#include "XLStringArena.hpp"
+#include <vector>
+#include <string_view>
 
 namespace OpenXLSX
 {
+    // Alias for flat hash map to allow easy substitution in the future
+    template <typename Key, typename Value>
+    using FlatHashMap = std::unordered_map<Key, Value>;
+
     constexpr size_t XLMaxSharedStrings = (std::numeric_limits<int32_t>::max)();    // pull request #261: wrapped max in parentheses to
                                                                                     // prevent expansion of windows.h "max" macro
 
@@ -52,12 +59,14 @@ namespace OpenXLSX
         /**
          * @brief
          * @param xmlData
+         * @param stringArena
          * @param stringCache
          * @param stringIndex O(1) lookup hash map: string -> index
          */
-        explicit XLSharedStrings(XLXmlData*                                xmlData,
-                                 std::deque<std::string>*                  stringCache,
-                                 std::unordered_map<std::string, int32_t>* stringIndex);
+        explicit XLSharedStrings(XLXmlData*                              xmlData,
+                                 XLStringArena*                          stringArena,
+                                 std::vector<std::string_view>*          stringCache,
+                                 FlatHashMap<std::string_view, int32_t>* stringIndex);
 
         /**
          * @brief Destructor
@@ -162,8 +171,9 @@ namespace OpenXLSX
         int32_t rewriteXmlFromCache();
 
     private:
-        std::deque<std::string>* m_stringCache{}; /** < Each string must have an unchanging memory address; hence the use of std::deque */
-        std::unordered_map<std::string, int32_t>* m_stringIndex{}; /** < O(1) string -> index lookup */
+        XLStringArena* m_stringArena{}; /** < String memory pool for contiguous zero-copy allocation */
+        std::vector<std::string_view>* m_stringCache{}; /** < Each string must have an unchanging memory address; hence the use of std::vector of views into arena */
+        FlatHashMap<std::string_view, int32_t>* m_stringIndex{}; /** < O(1) string -> index lookup */
     };
 }    // namespace OpenXLSX
 

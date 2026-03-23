@@ -214,8 +214,8 @@ void XLDocument::open(std::string_view fileName)
         }
         // ===== Append an empty string even if elem.empty(), to keep the index aligned with the <si> tag index in the shared strings table
         // <sst>
-        m_sharedStringCache.emplace_back(
-            result);    // 2024-09-01 TBC BUGFIX: previously, a shared strings table entry that had neither <t> nor
+        m_sharedStringCache.emplace_back(m_sharedStringArena.store(result)); // store result string in arena and get a persistent view
+        // 2024-09-01 TBC BUGFIX: previously, a shared strings table entry that had neither <t> nor
         /**/            //     <r> nodes would not have appended to m_sharedStringCache, causing an index misalignment
 
         node = node.next_sibling_of_type(pugi::node_element);
@@ -241,7 +241,7 @@ void XLDocument::open(std::string_view fileName)
 
 
     if (getXmlData("xl/sharedStrings.xml", true)) {
-        m_sharedStrings = XLSharedStrings(getXmlData("xl/sharedStrings.xml"), &m_sharedStringCache, &m_sharedStringIndex);
+        m_sharedStrings = XLSharedStrings(getXmlData("xl/sharedStrings.xml"), &m_sharedStringArena, &m_sharedStringCache, &m_sharedStringIndex);
     } else {
         m_sharedStrings = XLSharedStrings();
     }
@@ -341,6 +341,7 @@ void XLDocument::close()
     }
     
     m_data.clear();
+    m_sharedStringArena.clear();
     m_sharedStringCache.clear();
     m_sharedStringIndex.clear();
     m_sharedStrings    = XLSharedStrings();
@@ -834,15 +835,22 @@ void XLDocument::cleanupSharedStrings()
         }
     }
 
-    std::vector<std::string> newStringCache(static_cast<size_t>(newStringCount));
-    newStringCache[0] = "";
+    XLStringArena newArena;
+    std::vector<std::string_view> newStringCache(static_cast<size_t>(newStringCount));
+    newStringCache[0] = newArena.store("");
     for (size_t oldIdx = 0; oldIdx < oldStringCount; ++oldIdx) {
         if (const int32_t newIdx = indexMap[oldIdx]; newIdx > 0)
-            newStringCache[static_cast<size_t>(newIdx)] = std::move(m_sharedStringCache[oldIdx]);
+            newStringCache[static_cast<size_t>(newIdx)] = newArena.store(m_sharedStringCache[oldIdx]);
     }
 
-    m_sharedStringCache.clear();
-    std::move(newStringCache.begin(), newStringCache.end(), std::back_inserter(m_sharedStringCache));
+    m_sharedStringArena = std::move(newArena);
+    m_sharedStringCache = std::move(newStringCache);
+    // rebuilding index
+    m_sharedStringIndex.clear();
+    for (size_t i = 0; i < m_sharedStringCache.size(); ++i) {
+        m_sharedStringIndex.emplace(m_sharedStringCache[i], static_cast<int32_t>(i));
+    }
+    
     if (static_cast<int32_t>(m_sharedStringCache.size()) != m_sharedStrings.rewriteXmlFromCache())
         throw XLInternalError("XLDocument::cleanupSharedStrings: failed to rewrite shared string table - document would be corrupted");
 }

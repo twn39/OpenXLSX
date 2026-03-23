@@ -158,7 +158,15 @@ XLChart XLChartsheet::addChart(XLChartType type, std::string_view name)
     return chart;
 }
 
-XLColor XLChartsheet::getColor_impl() const { return XLColor(); } // TODO: Implement
-void XLChartsheet::setColor_impl(const XLColor& color) { (void)color; } // TODO: Implement
-bool XLChartsheet::isSelected_impl() const { return false; } // TODO: Implement
-void XLChartsheet::setSelected_impl(bool selected) { (void)selected; } // TODO: Implement
+XLColor XLChartsheet::getColor_impl() const
+{
+    auto node = xmlDocument().document_element().child("sheetPr").child("tabColor");
+    if (node.empty()) return XLColor();
+    return XLColor(node.attribute("rgb").value());
+}
+
+void XLChartsheet::setColor_impl(const XLColor& color) { setTabColor(xmlDocument(), color); }
+
+bool XLChartsheet::isSelected_impl() const { return tabIsSelected(xmlDocument()); }
+
+void XLChartsheet::setSelected_impl(bool selected) { setTabSelected(xmlDocument(), selected); }
