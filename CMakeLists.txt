@@ -176,5 +176,3 @@ endif()
 
 
 
-add_executable(create_pivot_demo create_pivot_demo.cpp)
-target_link_libraries(create_pivot_demo OpenXLSX)
