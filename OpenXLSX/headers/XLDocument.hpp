@@ -82,6 +82,7 @@ namespace OpenXLSX
         friend class XLSheet;
         friend class XLXmlData;
         friend class XLTableCollection;
+        friend class XLFormulaProxy;
 
         //---------- Public Member Functions
     public:
@@ -357,7 +358,7 @@ namespace OpenXLSX
         mutable std::vector<std::string_view>            m_sharedStringCache{};
         mutable FlatHashMap<std::string_view, int32_t>   m_sharedStringIndex{};
         mutable XLSharedStrings                          m_sharedStrings{};
-        mutable std::map<const XMLDocument*, std::unordered_map<uint32_t, SharedFormula>>
+        mutable std::map<void*, std::unordered_map<uint32_t, SharedFormula>>
             m_sharedFormulas{};
         std::map<std::string, std::string> m_unhandledEntries{};
 
