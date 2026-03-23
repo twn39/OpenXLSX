@@ -283,25 +283,25 @@ bool XLShapeStyle::setAttribute(std::string_view attributeName, std::string_view
 std::string XLShapeStyle::position() const { return getAttribute("position").value; }
 uint16_t XLShapeStyle::marginLeft() const { 
     uint16_t val = 0; 
-    std::string_view str = getAttribute("margin-left").value;
+    std::string str = getAttribute("margin-left").value;
     std::from_chars(str.data(), str.data() + str.size(), val); 
     return val; 
 }
 uint16_t XLShapeStyle::marginTop() const { 
     uint16_t val = 0; 
-    std::string_view str = getAttribute("margin-top").value;
+    std::string str = getAttribute("margin-top").value;
     std::from_chars(str.data(), str.data() + str.size(), val); 
     return val; 
 }
 uint16_t XLShapeStyle::width() const { 
     uint16_t val = 0; 
-    std::string_view str = getAttribute("width").value;
+    std::string str = getAttribute("width").value;
     std::from_chars(str.data(), str.data() + str.size(), val); 
     return val; 
 }
 uint16_t XLShapeStyle::height() const { 
     uint16_t val = 0; 
-    std::string_view str = getAttribute("height").value;
+    std::string str = getAttribute("height").value;
     std::from_chars(str.data(), str.data() + str.size(), val); 
     return val; 
 }
