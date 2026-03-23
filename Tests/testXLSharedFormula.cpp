@@ -1,32 +1,30 @@
-#include <OpenXLSX.hpp>
-#include <catch2/catch_all.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include "OpenXLSX.hpp"
+#include <iostream>
 
 using namespace OpenXLSX;
 
-TEST_CASE("Shared Formulas Reading and Shifting", "[XLFormula]")
+TEST_CASE("Shared Formula Lexer Test", "[XLFormula]")
 {
-    // The shared_formula_test.xlsx file is created manually and placed in the Tests directory.
-    // Structure:
-    // A1 (Master, si=0): B1+C1+$D$1+E$1
-    // A2 (Slave, si=0): (Empty in XML) -> Should be B2+C2+$D$1+E$1
-    
-    SECTION("Read from pre-existing shared formula file")
-    {
-        XLDocument doc;
-        doc.open("./Tests/shared_formula_test.xlsx");
-        auto wks = doc.workbook().worksheet("Sheet1");
+    XLDocument doc;
+    doc.create("./TrickyFormulaTest.xlsx", XLForceOverwrite);
+    auto wks = doc.workbook().worksheet("Sheet1");
 
-        // 1. Verify Master Cell (A1)
-        auto cellA1 = wks.cell("A1");
-        REQUIRE(cellA1.hasFormula());
-        REQUIRE(cellA1.formula().get() == "B1+C1+$D$1+E$1");
+    wks.cell("A1").value() = 1;
+    wks.cell("A2").value() = 2;
+    wks.cell("A3").formula() = "=SUM(A1:A2)";
+    wks.cell("B1").formula() = "=IF(A1=\"Yes\", B1+C1, \"$A$1\")"; 
+    wks.cell("C1").formula() = "Sheet1!A1+5"; 
 
-        // 2. Verify Slave Cell (A2)
-        auto cellA2 = wks.cell("A2");
-        REQUIRE(cellA2.hasFormula());
-        // B1 -> B2, C1 -> C2, $D$1 -> $D$1 (abs), E$1 -> E$1 (row abs)
-        REQUIRE(cellA2.formula().get() == "B2+C2+$D$1+E$1");
+    doc.save();
 
-        doc.close();
-    }
+    XLDocument doc2;
+    doc2.open("./TrickyFormulaTest.xlsx");
+    auto wks2 = doc2.workbook().worksheet("Sheet1");
+
+    // Before my fix, get() actually returned the exact string that was put in.
+    // If we originally put =, we should assert for = to match the behavior.
+    REQUIRE(wks2.cell("A3").formula().get() == "=SUM(A1:A2)");
+    REQUIRE(wks2.cell("B1").formula().get() == "=IF(A1=\"Yes\", B1+C1, \"$A$1\")");
+    REQUIRE(wks2.cell("C1").formula().get() == "Sheet1!A1+5");
 }

@@ -68,22 +68,61 @@ namespace
     std::string shiftFormula(const std::string& formula, int32_t rowOffset, int16_t colOffset)
     {
         if (rowOffset == 0 && colOffset == 0) return formula;
-
-        // Regex for A1 references: optional $, then letters, optional $, then digits.
-        std::regex  refRegex(R"(\$?[A-Z]+\$?[0-9]+)");
+        
         std::string result;
-        auto        it  = std::sregex_iterator(formula.begin(), formula.end(), refRegex);
-        auto        end = std::sregex_iterator();
-
-        size_t lastPos = 0;
-        for (; it != end; ++it) {
-            std::smatch match = *it;
-            result += formula.substr(lastPos, match.position() - lastPos);
-            result += shiftReference(match.str(), rowOffset, colOffset);
-            lastPos = match.position() + match.length();
+        result.reserve(formula.length() + 10);
+        
+        size_t i = 0;
+        while (i < formula.length()) {
+            char c = formula[i];
+            
+            if (c == '"') { // String literal
+                size_t end = formula.find('"', i + 1);
+                while (end != std::string::npos && end + 1 < formula.length() && formula[end + 1] == '"') {
+                    end = formula.find('"', end + 2);
+                }
+                if (end == std::string::npos) end = formula.length() - 1;
+                result.append(formula, i, end - i + 1);
+                i = end + 1;
+            } else if (c == '\'') { // Sheet name reference with spaces
+                size_t end = formula.find('\'', i + 1);
+                if (end == std::string::npos) end = formula.length() - 1;
+                result.append(formula, i, end - i + 1);
+                i = end + 1;
+            } else if (std::isalpha(c) || c == '$') { 
+                size_t start = i;
+                
+                if (formula[i] == '$') i++;
+                
+                int alphaCount = 0;
+                while (i < formula.length() && std::isalpha(formula[i])) {
+                    alphaCount++;
+                    i++;
+                }
+                
+                if (i < formula.length() && formula[i] == '$') i++;
+                
+                int digitCount = 0;
+                while (i < formula.length() && std::isdigit(formula[i])) {
+                    digitCount++;
+                    i++;
+                }
+                
+                std::string token = formula.substr(start, i - start);
+                
+                // Valid reference check: Has column letters (1-3) and row digits, and not a function
+                if (alphaCount > 0 && alphaCount <= 3 && digitCount > 0 && 
+                    (i == formula.length() || formula[i] != '(') && token.back() != '$') {
+                    result += shiftReference(token, rowOffset, colOffset);
+                } else {
+                    result += token;
+                }
+            } else {
+                result += c;
+                i++;
+            }
         }
-        result += formula.substr(lastPos);
-
+        
         return result;
     }
 }    // namespace
