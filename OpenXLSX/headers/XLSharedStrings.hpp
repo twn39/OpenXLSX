@@ -150,7 +150,7 @@ namespace OpenXLSX
          */
         void clearString(int32_t index) const;
 
-        protected:
+        /**
          * @brief print the XML contents of the shared strings document using the underlying XMLNode print function
          */
         void print(std::basic_ostream<char>& ostr) const;

@@ -164,8 +164,11 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
     for (const auto& h : headers) {
         XMLNode fieldNode = cacheFieldsNode.append_child("cacheField");
         fieldNode.append_attribute("name").set_value(h.c_str());
-        fieldNode.append_attribute("sharedItems").set_value("1"); 
-        fieldNode.append_child("sharedItems").append_attribute("count").set_value("0"); 
+        fieldNode.append_attribute("numFmtId").set_value("0");
+        XMLNode sharedItemsNode = fieldNode.append_child("sharedItems");
+        sharedItemsNode.append_attribute("containsBlank").set_value("1");
+        sharedItemsNode.append_attribute("count").set_value("0"); 
+        sharedItemsNode.append_child("m"); 
 
         XMLNode ptFieldNode = pivotFieldsNode.append_child("pivotField");
         
@@ -222,7 +225,7 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
 
         colItemsNode = ptRoot.insert_child_after("colItems", colFieldsNode);
         colItemsNode.append_attribute("count").set_value("1");
-        colItemsNode.append_child("i").append_child("x");
+        colItemsNode.append_child("i");
     }
 
     if (!dataIndices.empty()) {

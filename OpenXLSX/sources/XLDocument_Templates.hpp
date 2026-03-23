@@ -105,17 +105,17 @@ namespace
 
 
 constexpr std::string_view xlPivotTableTemplate = R"(<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<pivotTableDefinition xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" name="PivotTable1" cacheId="1" applyNumberFormats="0" applyBorderFormats="0" applyFontFormats="0" applyPatternFormats="0" applyAlignmentFormats="0" applyWidthHeightFormats="1" dataCaption="Values" updatedVersion="8" minRefreshableVersion="3" useAutoFormatting="1" itemPrintTitles="1" createdVersion="8" indent="0" compact="0" compactData="0" multipleFieldFilters="0">
+<pivotTableDefinition xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" name="PivotTable1" cacheId="1" dataCaption="Values" showError="0" updatedVersion="8" minRefreshableVersion="3" showDrill="0" useAutoFormatting="0" pageOverThenDown="0" rowGrandTotals="0" colGrandTotals="0" mergeItem="0" createdVersion="3" compactData="0">
   <location ref="A1:A2" firstHeaderRow="1" firstDataRow="1" firstDataCol="1"/>
   <pivotFields count="0"/>
   <rowFields count="0"/>
   <rowItems count="0"/>
   <colItems count="0"/>
-  <pivotTableStyleInfo name="PivotStyleLight16" showRowHeaders="1" showColHeaders="1" showRowStripes="0" showColStripes="0" showLastColumn="1"/>
+  <pivotTableStyleInfo name="PivotStyleLight16" showRowHeaders="0" showColHeaders="0"/>
 </pivotTableDefinition>)";
 
 constexpr std::string_view xlPivotCacheDefinitionTemplate = R"(<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<pivotCacheDefinition xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" invalid="1" refreshOnLoad="1" recordCount="0">
+<pivotCacheDefinition xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" saveData="0" refreshOnLoad="1" createdVersion="3" refreshedVersion="8" minRefreshableVersion="3">
   <cacheSource type="worksheet">
     <worksheetSource ref="A1:A2" sheet="Sheet1"/>
   </cacheSource>
