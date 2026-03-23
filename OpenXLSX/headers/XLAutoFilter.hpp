@@ -62,6 +62,12 @@ namespace OpenXLSX {
         void setTop10(double value, bool percent = false, bool top = true);
 
         /**
+         * @brief Set a dynamic filter (e.g. "aboveAverage", "today", "Q1").
+         * @param type The type of dynamic filter.
+         */
+        void setDynamicFilter(const std::string& type);
+
+        /**
          * @brief Get the column ID (0-based relative to the AutoFilter range).
          * @return The column ID.
          */

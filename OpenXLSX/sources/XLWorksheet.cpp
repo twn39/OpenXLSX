@@ -278,6 +278,109 @@ XLAutoFilter XLWorksheet::autofilterObject() const
     return XLAutoFilter(autoFilterNode);
 }
 
+void XLWorksheet::addSortCondition(const std::string& ref, uint16_t colId, bool descending)
+{
+    XMLNode rootNode = xmlDocument().document_element();
+    XMLNode autoFilterNode = rootNode.child("autoFilter");
+    if (autoFilterNode.empty()) {
+        autoFilterNode = appendAndGetNode(rootNode, "autoFilter", m_nodeOrder);
+        autoFilterNode.append_attribute("ref") = ref.c_str();
+    }
+    
+    XMLNode sortStateNode = autoFilterNode.child("sortState");
+    if (sortStateNode.empty()) {
+        sortStateNode = autoFilterNode.append_child("sortState");
+    }
+    
+    // Set or update the ref attribute on sortState
+    if (sortStateNode.attribute("ref").empty()) {
+        sortStateNode.append_attribute("ref") = ref.c_str();
+    } else {
+        sortStateNode.attribute("ref") = ref.c_str();
+    }
+
+    // The ref string for a specific column should be just that column in the range, excluding the header
+    std::string colRef = XLCellReference::columnAsString(XLCellReference(ref.substr(0, ref.find(':'))).column() + colId) + 
+                         std::to_string(XLCellReference(ref.substr(0, ref.find(':'))).row() + 1) + ":" + 
+                         XLCellReference::columnAsString(XLCellReference(ref.substr(0, ref.find(':'))).column() + colId) + 
+                         std::to_string(XLCellReference(ref.substr(ref.find(':') + 1)).row());
+
+    XMLNode sortConditionNode = sortStateNode.append_child("sortCondition");
+    sortConditionNode.append_attribute("ref") = colRef.c_str();
+    if (descending) {
+        sortConditionNode.append_attribute("descending") = "1";
+    }
+}
+
+void XLWorksheet::applyAutoFilter()
+{
+    XLAutoFilter filter = autofilterObject();
+    if (!filter) return;
+
+    std::string ref = filter.ref();
+    if (ref.empty()) return;
+
+    XLCellRange filterRange = range(XLCellReference(ref.substr(0, ref.find(':'))), XLCellReference(ref.substr(ref.find(':') + 1)));
+    
+    // Default assumption is that the first row is the header row
+    uint32_t firstRow = filterRange.topLeft().row();
+    uint32_t lastRow = filterRange.bottomRight().row();
+    uint16_t firstCol = filterRange.topLeft().column();
+    uint16_t lastCol = filterRange.bottomRight().column();
+
+    // Iterate through all rows in the data area (skipping header)
+    for (uint32_t rowIdx = firstRow + 1; rowIdx <= lastRow; ++rowIdx) {
+        bool rowMatches = true;
+
+        // Check each column's filter conditions
+        for (uint16_t colIdx = firstCol; colIdx <= lastCol; ++colIdx) {
+            uint16_t filterColId = colIdx - firstCol;
+            
+            // Optimization: check if there are actually any filter conditions
+            XMLNode realColNode;
+            for (auto child : xmlDocument().document_element().child("autoFilter").children("filterColumn")) {
+                if (child.attribute("colId").as_uint() == filterColId) {
+                    realColNode = child;
+                    break;
+                }
+            }
+
+            if (realColNode.empty()) continue; // No filters on this column
+
+            std::string cellValue = cell(rowIdx, colIdx).value().getString();
+            bool colMatches = false;
+
+            // 1. Basic Value Filters (<filters><filter val="..."/></filters>)
+            XMLNode filtersNode = realColNode.child("filters");
+            if (!filtersNode.empty()) {
+                for (XMLNode f : filtersNode.children("filter")) {
+                    if (f.attribute("val").value() == cellValue) {
+                        colMatches = true;
+                        break;
+                    }
+                }
+            } else {
+                // If there are no basic filters, but custom filters exist, default to match until proven otherwise
+                colMatches = true; 
+            }
+
+            // Note: We skip complex custom filter logic (>, <, and/or) in this basic implementation
+            // A full implementation would require an expression evaluator
+
+            if (!filtersNode.empty() && !colMatches) {
+                rowMatches = false;
+                break;
+            }
+        }
+
+        if (rowMatches) {
+            row(rowIdx).setHidden(false);
+        } else {
+            row(rowIdx).setHidden(true);
+        }
+    }
+}
+
 XLCellReference XLWorksheet::lastCell() const noexcept { return {rowCount(), columnCount()}; }
 
 uint16_t XLWorksheet::columnCount() const noexcept

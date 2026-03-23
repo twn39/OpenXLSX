@@ -316,12 +316,14 @@ namespace OpenXLSX
          */
         void cleanupSharedStrings();
 
-    protected:
+    public:
         /**
          * @brief Fetch raw XML content for a specific package path. 
-         * Used internally for lazily loading components on demand.
+         * Used internally for lazily loading components on demand, or for advanced testing/inspection.
          */
         [[nodiscard]] std::string extractXmlFromArchive(std::string_view path);
+
+    protected:
 
         /**
          * @brief Provide access to managed XML data nodes, enabling centralized XML state management.

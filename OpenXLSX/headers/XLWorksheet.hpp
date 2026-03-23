@@ -178,6 +178,20 @@ namespace OpenXLSX
         bool hasAutoFilter() const;
         std::string autoFilter() const;
         XLAutoFilter autofilterObject() const;
+        
+        /**
+         * @brief Set the sort state for the worksheet.
+         * @param ref The cell range to apply the sort state to (e.g. "A1:C10").
+         * @param colId The 0-based column index relative to the range to sort by.
+         * @param descending True for descending order, false for ascending.
+         */
+        void addSortCondition(const std::string& ref, uint16_t colId, bool descending = false);
+
+        /**
+         * @brief Evaluates the current autoFilter conditions and hides rows that do not match the criteria.
+         * Note: Only basic text/value matching and some simple custom filters are evaluated. Complex dynamic filters might not be supported.
+         */
+        void applyAutoFilter();
 
         XLCellReference lastCell() const noexcept;
         uint16_t columnCount() const noexcept;

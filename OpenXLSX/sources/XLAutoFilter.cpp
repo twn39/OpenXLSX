@@ -83,6 +83,15 @@ namespace OpenXLSX {
         }
     }
 
+    void XLFilterColumn::setDynamicFilter(const std::string& type) {
+        if (!m_node) return;
+
+        clearFilters();
+
+        XMLNode dynamicFilterNode = m_node.append_child("dynamicFilter");
+        dynamicFilterNode.append_attribute("type") = type.c_str();
+    }
+
     uint16_t XLFilterColumn::colId() const {
         if (!m_node) return 0;
         return static_cast<uint16_t>(m_node.attribute("colId").as_uint());
