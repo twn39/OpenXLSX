@@ -220,6 +220,39 @@ wks.cell("E1").formula() = "SUM(A1:D1)";
 wks.mergeCells("A1:D1");
 ```
 
+### 7. Thread-Safe Concurrent Access
+OpenXLSX features a thread-safe two-tier lock architecture that enables high-performance parallel processing, allowing multiple threads to write to **different** worksheets simultaneously without data races.
+
+#### Thread Safety Guarantees
+| Operation | Safety | Note |
+|-----------|--------|------|
+| Multiple threads writing to **different** worksheets | ✅ Safe | Each worksheet has its own DOM |
+| `save()` during concurrent writes | ✅ Safe | Automatically blocks until writes finish |
+| Structural changes (`addWorksheet`, `deleteSheet`) | ✅ Safe | Protected by document-level exclusive lock |
+| Shared string table contention (text insertion) | ✅ Safe | Protected by dedicated SST mutex |
+| Multiple threads writing to the **same** worksheet | ❌ Unsafe | Pugixml DOM limitation |
+
+```cpp
+// 1. Thread 1 writing to Sheet 1
+std::thread t1([&]() {
+    auto wks1 = doc.workbook().worksheet("Sheet1");
+    wks1.cell("A1").value() = "Written from Thread 1";
+});
+
+// 2. Thread 2 writing to Sheet 2 concurrently!
+std::thread t2([&]() {
+    auto wks2 = doc.workbook().worksheet("Sheet2");
+    wks2.cell("A1").value() = "Written from Thread 2";
+});
+
+t1.join();
+t2.join();
+
+// 3. Save operation safely blocks and waits for all writes to complete
+doc.save();
+```
+*Note: The underlying Shared String Table is automatically protected by a dedicated mutex, making concurrent text insertions entirely thread-safe. Writing to the **same** worksheet from multiple threads is not supported.*
+
 ## 📜 Changelog
 <details>
 <summary><b>Detailed Change Log</b></summary>

@@ -242,7 +242,7 @@ void XLDocument::open(std::string_view fileName)
 
 
     if (getXmlData("xl/sharedStrings.xml", true)) {
-        m_sharedStrings = XLSharedStrings(getXmlData("xl/sharedStrings.xml"), &m_sharedStringArena, &m_sharedStringCache, &m_sharedStringIndex);
+        m_sharedStrings = XLSharedStrings(getXmlData("xl/sharedStrings.xml"), &m_sharedStringArena, &m_sharedStringCache, &m_sharedStringIndex, m_sharedStringMutex.get());
     } else {
         m_sharedStrings = XLSharedStrings();
     }
@@ -369,6 +369,8 @@ void XLDocument::addStreamedFile(std::string_view pathInZip, std::string_view te
  */
 void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
 {
+    std::unique_lock<std::shared_mutex> lock(*m_docMutex);
+    
     if (!forceOverwrite and pathExists(fileName)) {
         using namespace std::literals::string_literals;
         throw XLException("XLDocument::saveAs: refusing to overwrite existing file "s + std::string(fileName));
@@ -863,6 +865,8 @@ void XLDocument::setSavingDeclaration(XLXmlSavingDeclaration const& savingDeclar
  */
 void XLDocument::cleanupSharedStrings()
 {
+    std::unique_lock<std::shared_mutex> docLock(*m_docMutex);
+    std::unique_lock<std::shared_mutex> strLock(*m_sharedStringMutex);
     const size_t         oldStringCount = m_sharedStringCache.size();
     std::vector<int32_t> indexMap(oldStringCount, -1);
     int32_t              newStringCount = 1;

@@ -15,6 +15,8 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>    // O(1) shared string lookup
+#include <memory>       // std::unique_ptr
+#include <shared_mutex>     // std::shared_mutex
 
 // ===== OpenXLSX Includes ===== //
 #include "IZipArchive.hpp"
@@ -356,6 +358,12 @@ namespace OpenXLSX
         [[nodiscard]] bool             hasXmlData(std::string_view path) const;
 
 
+    public:
+        /**
+         * @brief Get the document-level mutex for thread-safe operations.
+         */
+        std::shared_mutex& mutex() const { return *m_docMutex; }
+
     private:
         bool        m_suppressWarnings{true};
         std::string m_filePath{};
@@ -373,6 +381,8 @@ namespace OpenXLSX
         mutable XLStringArena                            m_sharedStringArena{};
         mutable std::vector<std::string_view>            m_sharedStringCache{};
         mutable FlatHashMap<std::string_view, int32_t>   m_sharedStringIndex{};
+        mutable std::unique_ptr<std::shared_mutex>       m_sharedStringMutex{std::make_unique<std::shared_mutex>()};
+        mutable std::unique_ptr<std::shared_mutex>       m_docMutex{std::make_unique<std::shared_mutex>()};
         mutable XLSharedStrings                          m_sharedStrings{};
         mutable std::map<void*, std::unordered_map<uint32_t, SharedFormula>>
             m_sharedFormulas{};

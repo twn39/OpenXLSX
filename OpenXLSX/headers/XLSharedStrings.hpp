@@ -13,6 +13,7 @@
 #include <ostream>       // std::basic_ostream
 #include <string>
 #include <unordered_map>    // O(1) string lookup
+#include <shared_mutex>     // std::shared_mutex
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
@@ -62,11 +63,13 @@ namespace OpenXLSX
          * @param stringArena
          * @param stringCache
          * @param stringIndex O(1) lookup hash map: string -> index
+         * @param mutex Pointer to a shared mutex for thread safety
          */
         explicit XLSharedStrings(XLXmlData*                              xmlData,
                                  XLStringArena*                          stringArena,
                                  std::vector<std::string_view>*          stringCache,
-                                 FlatHashMap<std::string_view, int32_t>* stringIndex);
+                                 FlatHashMap<std::string_view, int32_t>* stringIndex,
+                                 std::shared_mutex*                      mutex = nullptr);
 
         /**
          * @brief Destructor
@@ -103,7 +106,13 @@ namespace OpenXLSX
          * @brief return the amount of shared string entries currently in the cache
          * @return
          */
-        int32_t stringCount() const { return static_cast<int32_t>(m_stringCache->size()); }
+        int32_t stringCount() const { 
+            if (m_mutex) {
+                std::shared_lock<std::shared_mutex> lock(*m_mutex);
+                return static_cast<int32_t>(m_stringCache->size()); 
+            }
+            return static_cast<int32_t>(m_stringCache->size());
+        }
 
         /**
          * @brief
@@ -166,6 +175,7 @@ namespace OpenXLSX
         XLStringArena* m_stringArena{}; /** < String memory pool for contiguous zero-copy allocation */
         std::vector<std::string_view>* m_stringCache{}; /** < Each string must have an unchanging memory address; hence the use of std::vector of views into arena */
         FlatHashMap<std::string_view, int32_t>* m_stringIndex{}; /** < O(1) string -> index lookup */
+        std::shared_mutex* m_mutex{}; /** < Pointer to shared mutex for thread-safe operations */
     };
 }    // namespace OpenXLSX
 

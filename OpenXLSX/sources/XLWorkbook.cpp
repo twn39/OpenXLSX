@@ -165,16 +165,25 @@ XLSheet XLWorkbook::sheet(std::string_view sheetName)
 XLSheet XLWorkbook::sheet(uint16_t index)
 {
     Expects(index >= 1);
-    if (index > sheetCount()) throw XLInputError(fmt::format("Sheet index {} is out of bounds", index));
+    
+    unsigned int count = 0;
+    for (XMLNode node = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not node.empty(); node = node.next_sibling_of_type(pugi::node_element)) count++;
+    
+    if (index > count) throw XLInputError(fmt::format("Sheet index {} is out of bounds", index));
 
+    std::string foundName;
     uint16_t curIndex = 0;
     for (XMLNode node = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not node.empty();
          node         = node.next_sibling_of_type(pugi::node_element))
     {
-        if (++curIndex == index) return sheet(node.attribute("name").value());
+        if (++curIndex == index) {
+            foundName = node.attribute("name").value();
+            break;
+        }
     }
 
-    throw XLInternalError(fmt::format("Sheet index {} is out of bounds", index));
+    if (foundName.empty()) throw XLInternalError(fmt::format("Sheet index {} is out of bounds", index));
+    return sheet(foundName);
 }
 
 XLWorksheet  XLWorkbook::worksheet(std::string_view sheetName) { return sheet(sheetName).get<XLWorksheet>(); }
@@ -194,6 +203,7 @@ void XLWorkbook::deleteNamedRanges() { xmlDocument().document_element().child("d
 
 void XLWorkbook::deleteSheet(std::string_view sheetName)
 {
+    std::unique_lock<std::shared_mutex> lock(parentDoc().mutex());
     auto sheetNode = sheetsNode(xmlDocument()).find_child_by_attribute("name", std::string(sheetName).c_str());
     if (sheetNode.empty()) { throw XLException(fmt::format("XLWorkbook::deleteSheet: workbook has no sheet with name \"{}\"", sheetName)); }
 
@@ -231,6 +241,7 @@ void XLWorkbook::deleteSheet(std::string_view sheetName)
 
 void XLWorkbook::addWorksheet(std::string_view sheetName)
 {
+    std::unique_lock<std::shared_mutex> lock(parentDoc().mutex());
     if (xmlDocument().document_element().child("sheets").find_child_by_attribute("name", std::string(sheetName).c_str()))
         throw XLInputError(fmt::format("Sheet named \"{}\" already exists.", sheetName));
 
@@ -259,6 +270,7 @@ void XLWorkbook::addChartsheet(std::string_view sheetName)
 
 void XLWorkbook::cloneSheet(std::string_view existingName, std::string_view newName)
 {
+    std::unique_lock<std::shared_mutex> lock(parentDoc().mutex());
     parentDoc().execCommand(
         XLCommand(XLCommandType::CloneSheet).setParam("sheetID", sheetID(existingName)).setParam("cloneName", std::string(newName)));
 }

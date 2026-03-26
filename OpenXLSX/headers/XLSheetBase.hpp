@@ -125,6 +125,7 @@ namespace OpenXLSX
          */
         void setVisibility(XLSheetState state)
         {
+            std::unique_lock<std::shared_mutex> lock(parentDoc().mutex());
             auto stateString = std::string();
             switch (state) {
                 case XLSheetState::Visible:
@@ -176,6 +177,7 @@ namespace OpenXLSX
          */
         void setIndex(uint16_t index)
         {
+            std::unique_lock<std::shared_mutex> lock(parentDoc().mutex());
             parentDoc().execCommand(
                 XLCommand(XLCommandType::SetSheetIndex).setParam("sheetID", relationshipID()).setParam("sheetIndex", index));
         }
@@ -197,6 +199,7 @@ namespace OpenXLSX
          */
         void setName(const std::string& sheetName)
         {
+            std::unique_lock<std::shared_mutex> lock(parentDoc().mutex());
             parentDoc().execCommand(XLCommand(XLCommandType::SetSheetName)
                                         .setParam("sheetID", relationshipID())
                                         .setParam("sheetName", name())
