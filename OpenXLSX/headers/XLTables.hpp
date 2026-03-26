@@ -25,7 +25,7 @@ namespace OpenXLSX
         std::string name = "";       // Defaults to column name if empty
         std::string caption = "";    // Defaults to column name if empty
         uint32_t width = 144;        // pixels
-        uint32_t height = 180;       // pixels
+        uint32_t height = 200;       // pixels
         int32_t offsetX = 0;         // pixels
         int32_t offsetY = 0;         // pixels
     };

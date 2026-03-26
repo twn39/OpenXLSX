@@ -598,7 +598,7 @@ XLDrawing XLDocument::sheetDrawing(uint16_t sheetXmlNo)
     std::string drawingFilename = fmt::format("xl/drawings/drawing{}.xml", sheetXmlNo);
 
     if (!m_archive.hasEntry(drawingFilename)) {
-        m_archive.addEntry(drawingFilename, "<?xml version=\"1.0\" encoding=\"UTF-8\"standalone=\"yes\"?>");
+        m_archive.addEntry(drawingFilename, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<xdr:wsDr xmlns:xdr=\"http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing\" xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\"></xdr:wsDr>");
         m_contentTypes.addOverride("/" + drawingFilename, XLContentType::Drawing);
     }
     constexpr bool DO_NOT_THROW = true;
@@ -961,7 +961,7 @@ std::string XLDocument::createTableSlicerCache(uint32_t tableId, uint32_t tableC
     }
 
     std::string templateStr = fmt::format(R"(<?xml version="1.0" encoding="UTF-8"?>
-<slicerCacheDefinition xmlns="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:x="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:x15="http://schemas.microsoft.com/office/spreadsheetml/2010/11/main" xmlns:xr10="http://schemas.microsoft.com/office/spreadsheetml/2016/revision10" name="{0}" sourceName="{1}">
+<slicerCacheDefinition xmlns="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:x="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:x15="http://schemas.microsoft.com/office/spreadsheetml/2010/11/main" xmlns:xr10="http://schemas.microsoft.com/office/spreadsheetml/2016/revision10" mc:Ignorable="x15 xr10" name="{0}" sourceName="{1}">
   <extLst>
     <ext xmlns:x15="http://schemas.microsoft.com/office/spreadsheetml/2010/11/main" uri="{{2F2917AC-EB37-4324-AD4E-5DD8C200BD13}}">
       <x15:tableSlicerCache tableId="{2}" column="{3}"/>
@@ -985,22 +985,33 @@ std::string XLDocument::createTableSlicerCache(uint32_t tableId, uint32_t tableC
     // Add extLst to workbook.xml to reference the slicer cache
     XMLNode wbkNode = m_workbook.xmlDocument().document_element();
     XMLNode extLst = wbkNode.child("extLst");
+    // Ensure mc namespaces are present
+    if (!wbkNode.attribute("xmlns:mc")) wbkNode.append_attribute("xmlns:mc").set_value("http://schemas.openxmlformats.org/markup-compatibility/2006");
+    if (!wbkNode.attribute("xmlns:x15")) wbkNode.append_attribute("xmlns:x15").set_value("http://schemas.microsoft.com/office/spreadsheetml/2010/11/main");
+    if (!wbkNode.attribute("mc:Ignorable")) wbkNode.append_attribute("mc:Ignorable").set_value("x15");
+
     if (extLst.empty()) extLst = wbkNode.append_child("extLst");
     
     XMLNode ext = extLst.find_child_by_attribute("uri", "{46BE6895-7355-4a93-B00E-2C351335B9C9}");
     if (ext.empty()) {
         ext = extLst.append_child("ext");
-        ext.append_attribute("xmlns:x15").set_value("http://schemas.microsoft.com/office/spreadsheetml/2010/11/main");
         ext.append_attribute("uri").set_value("{46BE6895-7355-4a93-B00E-2C351335B9C9}");
+        ext.append_attribute("xmlns:x15").set_value("http://schemas.microsoft.com/office/spreadsheetml/2010/11/main");
     }
     
     XMLNode slicerCaches = ext.child("x15:slicerCaches");
     if (slicerCaches.empty()) {
         slicerCaches = ext.append_child("x15:slicerCaches");
+        // Must inject x14 at the top of workbook or at least correctly
         slicerCaches.append_attribute("xmlns:x14").set_value("http://schemas.microsoft.com/office/spreadsheetml/2009/9/main");
     }
+    // Excel ignores or strips if the mc:Ignorable is missing or something?
+
     
     slicerCaches.append_child("x14:slicerCache").append_attribute("r:id").set_value(rId.c_str());
+
+
+
 
     // Add definedName to workbook.xml
     XMLNode definedNames = wbkNode.child("definedNames");
@@ -1015,7 +1026,6 @@ std::string XLDocument::createTableSlicerCache(uint32_t tableId, uint32_t tableC
     XMLNode definedName = definedNames.append_child("definedName");
     definedName.append_attribute("name").set_value(std::string(name).c_str());
     definedName.text().set("#N/A");
-
     return filename;
 }
 
@@ -1031,7 +1041,7 @@ std::string XLDocument::createSlicer(std::string_view name, std::string_view cac
     }
 
     std::string templateStr = fmt::format(R"(<?xml version="1.0" encoding="UTF-8"?>
-<slicers xmlns="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:x="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:xr10="http://schemas.microsoft.com/office/spreadsheetml/2016/revision10">
+<slicers xmlns="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:x="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:xr10="http://schemas.microsoft.com/office/spreadsheetml/2016/revision10" mc:Ignorable="xr10">
   <slicer name="{0}" cache="{1}" caption="{2}" rowHeight="251883"/>
 </slicers>)", name, cacheName, caption);
 

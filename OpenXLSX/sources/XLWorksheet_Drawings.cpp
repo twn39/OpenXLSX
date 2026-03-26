@@ -349,12 +349,23 @@ void XLWorksheet::addTableSlicer(std::string_view cellReference, const XLTable& 
     std::string slicerFilename = parentDoc().createSlicer(name, cacheName, caption);
 
     // 2. Add Slicer relationship to worksheet
-    relationships().addRelationship(XLRelationshipType::Slicer, "../" + slicerFilename);
-    std::string rId = relationships().relationshipByTarget("../" + slicerFilename).id();
+    relationships().addRelationship(XLRelationshipType::Slicer, "../slicers/" + slicerFilename.substr(11));
+    std::string rId = relationships().relationshipByTarget("../slicers/" + slicerFilename.substr(11)).id();
 
     // 3. Add extLst to worksheet.xml
     XMLNode sheetNode = xmlDocument().document_element();
     XMLNode extLst = sheetNode.child("extLst");
+    if (!sheetNode.attribute("xmlns:mc")) sheetNode.append_attribute("xmlns:mc").set_value("http://schemas.openxmlformats.org/markup-compatibility/2006");
+    if (!sheetNode.attribute("xmlns:x15")) sheetNode.append_attribute("xmlns:x15").set_value("http://schemas.microsoft.com/office/spreadsheetml/2010/11/main");
+    if (!sheetNode.attribute("mc:Ignorable")) {
+        sheetNode.append_attribute("mc:Ignorable").set_value("x15");
+    } else {
+        std::string ign = sheetNode.attribute("mc:Ignorable").value();
+        if (ign.find("x15") == std::string::npos) {
+            sheetNode.attribute("mc:Ignorable").set_value((ign + " x15").c_str());
+        }
+    }
+
     if (extLst.empty()) extLst = sheetNode.append_child("extLst");
 
     XMLNode ext = extLst.find_child_by_attribute("uri", "{3A4CF648-6AED-40f4-86FF-DC5316D8AED3}");
@@ -392,7 +403,7 @@ void XLWorksheet::addTableSlicer(std::string_view cellReference, const XLTable& 
     XMLNode to = anchor.append_child("xdr:to");
     to.append_child("xdr:col").text().set(colIdx + 2); // Approximate to
     to.append_child("xdr:colOff").text().set(options.offsetX * 9525);
-    to.append_child("xdr:row").text().set(row + 5);
+    to.append_child("xdr:row").text().set(row + 10);
     to.append_child("xdr:rowOff").text().set(options.offsetY * 9525);
 
     XMLNode altContent = anchor.append_child("mc:AlternateContent");
@@ -465,5 +476,5 @@ void XLWorksheet::addTableSlicer(std::string_view cellReference, const XLTable& 
     rPr.append_attribute("i").set_value("false");
     r.append_child("a:t").text().set("This shape represents a table slicer. Table slicers are not supported in this version of Excel.");
 
-    anchor.append_child("xdr:clientData");
+    XMLNode cd = anchor.append_child("xdr:clientData"); cd.append_attribute("fLocksWithSheet").set_value("true"); cd.append_attribute("fPrintsWithSheet").set_value("true");
 }
