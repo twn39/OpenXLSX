@@ -158,6 +158,29 @@ The build system includes platform-specific optimizations for `Release` builds (
 - [fast_float](https://github.com/fastfloat/fast_float) - Fast floating-point parsing.
 
 ---
+
+## ⚡ Performance Benchmarks
+
+OpenXLSX-NX is engineered for extreme performance. Below are the benchmark results measured on an Apple Silicon (ARM64) processor using Catch2. 
+
+### Basic I/O (800,000 Cells: 100,000 rows × 8 columns)
+| Operation | Data Type | Average Time | Throughput |
+| :--- | :--- | :--- | :--- |
+| **Write** | Strings (`std::string`) | ~2.64 s | 303,000 cells/sec |
+| **Write** | Integers (`int64_t`) | ~3.06 s | 261,000 cells/sec |
+| **Write** | Floats (`double`) | ~3.49 s | 229,000 cells/sec |
+| **Write** | Booleans (`bool`) | ~2.42 s | 330,000 cells/sec |
+| **Read** | Strings | ~1.05 s | **761,000 cells/sec** |
+| **Read** | Integers | ~0.84 s | **952,000 cells/sec** |
+
+### Advanced Engine Capabilities
+| Component | Test Description | Average Time | Operations/sec |
+| :--- | :--- | :--- | :--- |
+| **Formula Engine** | Lexing, parsing, and evaluating `SUM(A1:A3)` **10,000 times**. | ~110 ms | 90,000 evals/sec |
+| **Style Pool** | Invoking `findOrCreateStyle(s)` **50,000 times** to deduplicate identical complex styles. | ~911 ms | 54,000 lookups/sec |
+
+*Note: Benchmarks can be compiled by setting `-DOPENXLSX_BUILD_BENCHMARKS=ON` in CMake.*
+
 ## 🚀 Advanced Ergonomic Features
 
 ### 1. Matrix Binding & Batch Styling (Like Pandas)
