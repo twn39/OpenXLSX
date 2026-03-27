@@ -130,4 +130,59 @@ TEST_CASE("OpenXLSX Benchmarks", "[.benchmark]")
             return result;
         };
     }
+
+
+    SECTION("New Features Operations")
+    {
+        BENCHMARK("Formula Engine - Parse & Eval")
+        {
+            XLDocument doc;
+            doc.create("./benchmark_formula.xlsx", XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            
+            // Setup simple data
+            wks.cell("A1").value() = 100.5;
+            wks.cell("A2").value() = 200.5;
+            wks.cell("A3").value() = 300.5;
+            
+            XLFormulaEngine engine;
+            auto resolver = XLFormulaEngine::makeResolver(wks);
+            
+            double dummy_sum = 0;
+            // Benchmark parsing and evaluating formula strings repeatedly
+            for(int i = 0; i < 10000; ++i) {
+                XLCellValue result = engine.evaluate("SUM(A1:A3)", resolver);
+                dummy_sum += result.get<double>();
+            }
+            
+            doc.close();
+            std::filesystem::remove("./benchmark_formula.xlsx");
+            return dummy_sum;
+        };
+
+        BENCHMARK("Style Pool - Deduplication")
+        {
+            XLDocument doc;
+            doc.create("./benchmark_styles.xlsx", XLForceOverwrite);
+            auto styles = doc.styles();
+            
+            XLStyle s;
+            s.font.name = "Arial";
+            s.font.size = 12;
+            s.font.bold = true;
+            s.fill.pattern = XLPatternSolid;
+            s.fill.fgColor = XLColor("FFFF0000");
+
+            size_t calls = 50000;
+            // The first call registers the style, the next 49999 calls should hit the O(1) cache
+            for(size_t i = 0; i < calls; ++i) {
+                styles.findOrCreateStyle(s);
+            }
+            
+            doc.close();
+            std::filesystem::remove("./benchmark_styles.xlsx");
+            return calls;
+        };
+    }
+
 }
