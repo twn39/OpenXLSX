@@ -12,6 +12,7 @@
 #include "headers/XLDocument.hpp"
 #include "headers/XLException.hpp"
 #include "headers/XLFormula.hpp"
+#include "headers/XLFormulaEngine.hpp"
 #include "headers/XLPageSetup.hpp"
 #include "headers/XLRichText.hpp"
 #include "headers/XLRow.hpp"
