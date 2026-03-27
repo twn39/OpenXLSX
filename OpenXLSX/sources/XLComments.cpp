@@ -375,7 +375,7 @@ void XLComments::setupVmlShape(const std::string& cellRef, uint32_t destRow, uin
         }
 
         uint32_t anchorTopRow, anchorBottomRow;
-        if (OpenXLSX::MAX_ROWS - destRow > topRowOffset + heightRows) {
+        if (OpenXLSX::MAX_ROWS - destRow > static_cast<uint32_t>(topRowOffset + heightRows)) {
             anchorTopRow    = (destRow - 1) + topRowOffset;
             anchorBottomRow = (destRow - 1) + topRowOffset + heightRows;
         }

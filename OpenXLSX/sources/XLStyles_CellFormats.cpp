@@ -205,7 +205,10 @@ XLCellFormat& XLCellFormat::setBorderIndex(XLStyleIndex newBorderIndex)
 { appendAndSetAttribute(*m_cellFormatNode, "borderId", std::to_string(newBorderIndex)).empty(); return *this; }
 XLCellFormat& XLCellFormat::setXfId(XLStyleIndex newXfId)
 {
-    if (m_permitXfId) appendAndSetAttribute(*m_cellFormatNode, "xfId", std::to_string(newXfId)).empty(); return *this;
+    if (m_permitXfId) {
+        appendAndSetAttribute(*m_cellFormatNode, "xfId", std::to_string(newXfId)).empty();
+        return *this;
+    }
     throw XLException("XLCellFormat::setXfId not permitted when m_permitXfId is false");
 }
 XLCellFormat& XLCellFormat::setApplyNumberFormat(bool set)
