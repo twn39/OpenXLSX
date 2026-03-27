@@ -2,6 +2,8 @@
 #define OPENXLSX_XLSHEETBASE_HPP
 
 #include <cstdint>
+#include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <type_traits>
 #include "OpenXLSX-Exports.hpp"
