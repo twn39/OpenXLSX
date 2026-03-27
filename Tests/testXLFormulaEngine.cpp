@@ -247,3 +247,273 @@ TEST_CASE("XLFormulaEngine – Integration with XLDocument", "[XLFormulaEngine]"
 
     doc.close();
 }
+
+// =============================================================================
+// New Tests – Date functions
+// =============================================================================
+
+TEST_CASE("XLFormulaEngine – Date functions", "[XLFormulaEngine]")
+{
+    XLFormulaEngine eng;
+
+    // DATE(2024,3,15) – Excel serial for 2024-03-15
+    // Known: =DATE(2024,3,15) in Excel → 45365
+    SECTION("DATE builds serial") {
+        auto serial = eng.evaluate("=DATE(2024,3,15)").get<double>();
+        REQUIRE(serial == Catch::Approx(45366.0));  // Excel serial for 2024-03-15
+    }
+
+    SECTION("YEAR from DATE") {
+        REQUIRE(eng.evaluate("=YEAR(DATE(2024,3,15))").get<int64_t>() == 2024);
+    }
+    SECTION("MONTH from DATE") {
+        REQUIRE(eng.evaluate("=MONTH(DATE(2024,3,15))").get<int64_t>() == 3);
+    }
+    SECTION("DAY from DATE") {
+        REQUIRE(eng.evaluate("=DAY(DATE(2024,3,15))").get<int64_t>() == 15);
+    }
+
+    // 2024-03-15 is a Friday → WEEKDAY mode-1 = 6
+    SECTION("WEEKDAY Friday mode 1") {
+        REQUIRE(eng.evaluate("=WEEKDAY(DATE(2024,3,15),1)").get<int64_t>() == 6);
+    }
+    // mode-2: Monday=1 … Sunday=7, Friday=5
+    SECTION("WEEKDAY Friday mode 2") {
+        REQUIRE(eng.evaluate("=WEEKDAY(DATE(2024,3,15),2)").get<int64_t>() == 5);
+    }
+
+    SECTION("EDATE +1 month") {
+        // 2024-01-31 + 1 month = 2024-02-29 (leap year clamp)
+        REQUIRE(eng.evaluate("=DAY(EDATE(DATE(2024,1,31),1))").get<int64_t>() == 29);
+    }
+
+    SECTION("EOMONTH end of Feb 2024") {
+        REQUIRE(eng.evaluate("=DAY(EOMONTH(DATE(2024,1,15),1))").get<int64_t>() == 29);
+    }
+}
+
+// =============================================================================
+// New Tests – Work-date functions
+// =============================================================================
+
+TEST_CASE("XLFormulaEngine – Work date functions", "[XLFormulaEngine]")
+{
+    XLFormulaEngine eng;
+
+    // 2024-01-01 (Monday) + 5 workdays = 2024-01-08 (Monday, serial 45299)
+    SECTION("WORKDAY 5 from Monday") {
+        auto result = eng.evaluate("=WORKDAY(DATE(2024,1,1),5)").get<double>();
+        // 2024-01-08
+        REQUIRE(result == Catch::Approx(45299.0));
+    }
+
+    // NETWORKDAYS from Mon 2024-01-01 to Fri 2024-01-05 = 5
+    SECTION("NETWORKDAYS Mon to Fri = 5") {
+        REQUIRE(eng.evaluate("=NETWORKDAYS(DATE(2024,1,1),DATE(2024,1,5))").get<int64_t>() == 5);
+    }
+
+    // NETWORKDAYS reversed (end before start) = negative
+    SECTION("NETWORKDAYS reversed") {
+        REQUIRE(eng.evaluate("=NETWORKDAYS(DATE(2024,1,5),DATE(2024,1,1))").get<int64_t>() == -5);
+    }
+}
+
+// =============================================================================
+// New Tests – Financial functions
+// =============================================================================
+
+TEST_CASE("XLFormulaEngine – Financial functions", "[XLFormulaEngine]")
+{
+    XLFormulaEngine eng;
+
+    // PMT(0.5%, 360, -100000) ≈ 599.5505 (monthly mortgage)
+    SECTION("PMT mortgage") {
+        REQUIRE(eng.evaluate("=PMT(0.005,360,-100000)").get<double>() == Catch::Approx(599.5505).epsilon(0.001));
+    }
+
+    // FV(5%, 10, -100, 0) ≈ 1257.79
+    SECTION("FV annuity") {
+        REQUIRE(eng.evaluate("=FV(0.05,10,-100)").get<double>() == Catch::Approx(1257.789).epsilon(0.001));
+    }
+
+    // PV(5%, 10, -100, 0) ≈ 772.17
+    SECTION("PV annuity") {
+        REQUIRE(eng.evaluate("=PV(0.05,10,-100)").get<double>() == Catch::Approx(772.1735).epsilon(0.001));
+    }
+
+    // NPV(10%, {100, 200, 300}) = 100/1.1 + 200/1.21 + 300/1.331 ≈ 481.59
+    SECTION("NPV three cashflows") {
+        auto resolver = makeMapResolver({{"A1", XLCellValue(100.0)}, {"A2", XLCellValue(200.0)}, {"A3", XLCellValue(300.0)}});
+        REQUIRE(eng.evaluate("=NPV(0.1,A1:A3)", resolver).get<double>() == Catch::Approx(481.5942).epsilon(0.001));
+    }
+}
+
+// =============================================================================
+// New Tests – Math extended
+// =============================================================================
+
+TEST_CASE("XLFormulaEngine – Math extended", "[XLFormulaEngine]")
+{
+    XLFormulaEngine eng;
+
+    // SUMPRODUCT with resolver
+    SECTION("SUMPRODUCT two ranges") {
+        auto resolver = makeMapResolver({
+            {"A1", XLCellValue(1.0)}, {"A2", XLCellValue(2.0)}, {"A3", XLCellValue(3.0)},
+            {"B1", XLCellValue(4.0)}, {"B2", XLCellValue(5.0)}, {"B3", XLCellValue(6.0)},
+        });
+        // 1*4 + 2*5 + 3*6 = 32
+        REQUIRE(eng.evaluate("=SUMPRODUCT(A1:A3,B1:B3)", resolver).get<double>() == Catch::Approx(32.0));
+    }
+
+    SECTION("CEILING")   { REQUIRE(eng.evaluate("=CEILING(2.3,0.5)").get<double>() == Catch::Approx(2.5)); }
+    SECTION("FLOOR")     { REQUIRE(eng.evaluate("=FLOOR(2.7,0.5)").get<double>()   == Catch::Approx(2.5)); }
+    SECTION("LOG base 2"){ REQUIRE(eng.evaluate("=LOG(8,2)").get<double>()         == Catch::Approx(3.0)); }
+    SECTION("LOG10")     { REQUIRE(eng.evaluate("=LOG(1000,10)").get<double>()     == Catch::Approx(3.0)); }
+    SECTION("EXP")       { REQUIRE(eng.evaluate("=EXP(1)").get<double>()           == Catch::Approx(2.71828).epsilon(0.0001)); }
+    SECTION("SIGN pos")  { REQUIRE(eng.evaluate("=SIGN(5)").get<int64_t>()         == 1); }
+    SECTION("SIGN neg")  { REQUIRE(eng.evaluate("=SIGN(-3)").get<int64_t>()        == -1); }
+    SECTION("SIGN zero") { REQUIRE(eng.evaluate("=SIGN(0)").get<int64_t>()         == 0); }
+}
+
+// =============================================================================
+// New Tests – Text extended
+// =============================================================================
+
+TEST_CASE("XLFormulaEngine – Text extended", "[XLFormulaEngine]")
+{
+    XLFormulaEngine eng;
+
+    SECTION("FIND case-sensitive") {
+        REQUIRE(eng.evaluate("=FIND(\"xl\",\"OpenXLSX\")").type() == XLValueType::Error); // not found (case)
+    }
+    SECTION("FIND found") {
+        REQUIRE(eng.evaluate("=FIND(\"XL\",\"OpenXLSX\")").get<int64_t>() == 5);
+    }
+    SECTION("SEARCH case-insensitive") {
+        REQUIRE(eng.evaluate("=SEARCH(\"xl\",\"OpenXLSX\")").get<int64_t>() == 5);
+    }
+    SECTION("SUBSTITUTE all") {
+        REQUIRE(eng.evaluate("=SUBSTITUTE(\"aabbaa\",\"a\",\"x\")").get<std::string>() == "xxbbxx");
+    }
+    SECTION("SUBSTITUTE instance 1") {
+        REQUIRE(eng.evaluate("=SUBSTITUTE(\"aabbaa\",\"a\",\"x\",1)").get<std::string>() == "xabbaa");
+    }
+    SECTION("REPLACE") {
+        REQUIRE(eng.evaluate("=REPLACE(\"OpenXLSX\",5,4,\"calc\")").get<std::string>() == "Opencalc");
+    }
+    SECTION("REPT") {
+        REQUIRE(eng.evaluate("=REPT(\"ab\",3)").get<std::string>() == "ababab");
+    }
+    SECTION("EXACT true") {
+        REQUIRE(eng.evaluate("=EXACT(\"Hello\",\"Hello\")").get<bool>() == true);
+    }
+    SECTION("EXACT case") {
+        REQUIRE(eng.evaluate("=EXACT(\"hello\",\"Hello\")").get<bool>() == false);
+    }
+    SECTION("T string") {
+        REQUIRE(eng.evaluate("=T(\"hi\")").get<std::string>() == "hi");
+    }
+    SECTION("T number returns empty") {
+        REQUIRE(eng.evaluate("=T(42)").get<std::string>() == "");
+    }
+    SECTION("VALUE") {
+        REQUIRE(eng.evaluate("=VALUE(\"3.14\")").get<double>() == Catch::Approx(3.14));
+    }
+    SECTION("TEXTJOIN") {
+        REQUIRE(eng.evaluate("=TEXTJOIN(\"-\",TRUE,\"A\",\"B\",\"C\")").get<std::string>() == "A-B-C");
+    }
+    SECTION("TEXTJOIN ignore empty") {
+        REQUIRE(eng.evaluate("=TEXTJOIN(\"-\",TRUE,\"A\",\"\",\"C\")").get<std::string>() == "A-C");
+    }
+    SECTION("PROPER") {
+        REQUIRE(eng.evaluate("=PROPER(\"hello world\")").get<std::string>() == "Hello World");
+    }
+    SECTION("CLEAN removes control chars") {
+        // Can't easily embed control chars in formula, just verify non-control passthrough
+        REQUIRE(eng.evaluate("=CLEAN(\"hello\")").get<std::string>() == "hello");
+    }
+}
+
+// =============================================================================
+// New Tests – Statistical / Conditional
+// =============================================================================
+
+TEST_CASE("XLFormulaEngine – Statistical extended", "[XLFormulaEngine]")
+{
+    XLFormulaEngine eng;
+
+    // Data: A1=1, A2=3, A3=5, A4=7, A5=9 in resolver
+    auto resolver = makeMapResolver({
+        {"A1", XLCellValue(1.0)}, {"A2", XLCellValue(3.0)}, {"A3", XLCellValue(5.0)},
+        {"A4", XLCellValue(7.0)}, {"A5", XLCellValue(9.0)},
+        {"B1", XLCellValue(10.0)}, {"B2", XLCellValue(20.0)}, {"B3", XLCellValue(30.0)},
+        {"B4", XLCellValue(40.0)}, {"B5", XLCellValue(50.0)},
+    });
+
+    SECTION("COUNTIF > 3") {
+        REQUIRE(eng.evaluate("=COUNTIF(A1:A5,\">3\")", resolver).get<int64_t>() == 3); // 5,7,9
+    }
+    SECTION("SUMIF > 3") {
+        REQUIRE(eng.evaluate("=SUMIF(A1:A5,\">3\",B1:B5)", resolver).get<double>() == Catch::Approx(120.0)); // 30+40+50
+    }
+    SECTION("AVERAGEIF > 3") {
+        REQUIRE(eng.evaluate("=AVERAGEIF(A1:A5,\">3\",B1:B5)", resolver).get<double>() == Catch::Approx(40.0)); // (30+40+50)/3
+    }
+    SECTION("RANK descending") {
+        // Value=5 in [1,3,5,7,9]: rank desc = 3
+        REQUIRE(eng.evaluate("=RANK(5,A1:A5,0)", resolver).get<int64_t>() == 3);
+    }
+    SECTION("LARGE k=2") {
+        // Sorted desc: 9,7,5,3,1 → k=2 is 7
+        REQUIRE(eng.evaluate("=LARGE(A1:A5,2)", resolver).get<double>() == Catch::Approx(7.0));
+    }
+    SECTION("SMALL k=2") {
+        // Sorted asc: 1,3,5,7,9 → k=2 is 3
+        REQUIRE(eng.evaluate("=SMALL(A1:A5,2)", resolver).get<double>() == Catch::Approx(3.0));
+    }
+    SECTION("STDEV sample") {
+        // stddev of {1,3,5,7,9} = sqrt(10) ≈ 3.162
+        REQUIRE(eng.evaluate("=STDEV(A1:A5)", resolver).get<double>() == Catch::Approx(3.1623).epsilon(0.001));
+    }
+    SECTION("VAR sample") {
+        // variance = 10
+        REQUIRE(eng.evaluate("=VAR(A1:A5)", resolver).get<double>() == Catch::Approx(10.0));
+    }
+    SECTION("MEDIAN odd") {
+        REQUIRE(eng.evaluate("=MEDIAN(A1:A5)", resolver).get<double>() == Catch::Approx(5.0));
+    }
+    SECTION("COUNTBLANK") {
+        auto res2 = makeMapResolver({{"A1", XLCellValue{}}, {"A2", XLCellValue(1.0)}, {"A3", XLCellValue{}}});
+        REQUIRE(eng.evaluate("=COUNTBLANK(A1:A3)", res2).get<int64_t>() == 2);
+    }
+}
+
+// =============================================================================
+// New Tests – Info extended
+// =============================================================================
+
+TEST_CASE("XLFormulaEngine – Info extended", "[XLFormulaEngine]")
+{
+    XLFormulaEngine eng;
+
+    SECTION("ISNA true")     { REQUIRE(eng.evaluate("=ISNA(MATCH(99,A1:A1,0))", makeMapResolver({{"A1", XLCellValue(1.0)}})).get<bool>() == true); }
+    SECTION("ISNA false")    { REQUIRE(eng.evaluate("=ISNA(1+1)").get<bool>() == false); }
+    SECTION("IFNA fallback") { REQUIRE(eng.evaluate("=IFNA(MATCH(99,A1:A1,0),\"none\")", makeMapResolver({{"A1", XLCellValue(1.0)}})).get<std::string>() == "none"); }
+    SECTION("ISLOGICAL true"){ REQUIRE(eng.evaluate("=ISLOGICAL(TRUE)").get<bool>() == true); }
+    SECTION("ISLOGICAL false"){ REQUIRE(eng.evaluate("=ISLOGICAL(42)").get<bool>() == false); }
+}
+
+// =============================================================================
+// New Tests – SUMPRODUCT scalar
+// =============================================================================
+
+TEST_CASE("XLFormulaEngine – SUMPRODUCT edge cases", "[XLFormulaEngine]")
+{
+    XLFormulaEngine eng;
+
+    SECTION("SUMPRODUCT single array = SUM") {
+        auto resolver = makeMapResolver({{"A1", XLCellValue(2.0)}, {"A2", XLCellValue(3.0)}, {"A3", XLCellValue(4.0)}});
+        REQUIRE(eng.evaluate("=SUMPRODUCT(A1:A3)", resolver).get<double>() == Catch::Approx(9.0));
+    }
+}

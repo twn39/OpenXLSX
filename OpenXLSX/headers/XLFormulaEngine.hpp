@@ -312,6 +312,66 @@ namespace OpenXLSX
         static XLCellValue fnIsblank(const std::vector<std::vector<XLCellValue>>& args);
         static XLCellValue fnIserror(const std::vector<std::vector<XLCellValue>>& args);
         static XLCellValue fnIstext(const std::vector<std::vector<XLCellValue>>& args);
+
+        // ---- Date / Time ----
+        static XLCellValue fnToday(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnNow(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnDate(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnYear(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnMonth(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnDay(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnWeekday(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnEdate(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnEomonth(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnWorkday(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnNetworkdays(const std::vector<std::vector<XLCellValue>>& args);
+
+        // ---- Financial ----
+        static XLCellValue fnPmt(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnFv(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnPv(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnNpv(const std::vector<std::vector<XLCellValue>>& args);
+
+        // ---- Math extended ----
+        static XLCellValue fnSumproduct(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnCeil(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnFloor(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnLog(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnLog10(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnExp(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnSign(const std::vector<std::vector<XLCellValue>>& args);
+
+        // ---- Text extended ----
+        static XLCellValue fnFind(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnSearch(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnSubstitute(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnReplace(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnRept(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnExact(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnT(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnValue(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnTextjoin(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnClean(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnProper(const std::vector<std::vector<XLCellValue>>& args);
+
+        // ---- Statistical / Conditional ----
+        static XLCellValue fnSumif(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnCountif(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnSumifs(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnCountifs(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnAverageif(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnRank(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnLarge(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnSmall(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnStdev(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnVar(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnMedian(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnCountblank(const std::vector<std::vector<XLCellValue>>& args);
+
+        // ---- Info extended ----
+        static XLCellValue fnIsna(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnIfna(const std::vector<std::vector<XLCellValue>>& args);
+        static XLCellValue fnIslogical(const std::vector<std::vector<XLCellValue>>& args);
     };
 
 }    // namespace OpenXLSX
