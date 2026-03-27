@@ -73,10 +73,25 @@ namespace OpenXLSX
                     if (type == XLChartType::Pie3D) is3D = true;
                     break;
                 case XLChartType::Scatter:
+                case XLChartType::ScatterLine:
+                case XLChartType::ScatterLineMarker:
+                case XLChartType::ScatterSmooth:
+                case XLChartType::ScatterSmoothMarker:
+                case XLChartType::ScatterMarker: {
                     chartNode = plotArea.append_child("c:scatterChart");
-                    chartNode.append_child("c:scatterStyle").append_attribute("val").set_value("lineMarker");
+                    const char* scatterStyle = "lineMarker";
+                    switch (type) {
+                        case XLChartType::ScatterLine:        scatterStyle = "line"; break;
+                        case XLChartType::ScatterLineMarker:  scatterStyle = "lineMarker"; break;
+                        case XLChartType::ScatterSmooth:      scatterStyle = "smooth"; break;
+                        case XLChartType::ScatterSmoothMarker:scatterStyle = "smoothMarker"; break;
+                        case XLChartType::ScatterMarker:      scatterStyle = "marker"; break;
+                        default:                              scatterStyle = "lineMarker"; break;
+                    }
+                    chartNode.append_child("c:scatterStyle").append_attribute("val").set_value(scatterStyle);
                     chartNode.append_child("c:varyColors").append_attribute("val").set_value("0");
                     break;
+                }
                 case XLChartType::Area:
                 case XLChartType::AreaStacked:
                 case XLChartType::AreaPercentStacked:
@@ -100,6 +115,13 @@ namespace OpenXLSX
                     chartNode.append_child("c:varyColors").append_attribute("val").set_value("1");
                     chartNode.append_child("c:holeSize").append_attribute("val").set_value("75");
                     hasAxes = false;
+                    break;
+                case XLChartType::Bubble:
+                    // Bubble chart uses valAx for both axes (like scatter)
+                    chartNode = plotArea.append_child("c:bubbleChart");
+                    chartNode.append_child("c:varyColors").append_attribute("val").set_value("0");
+                    chartNode.append_child("c:bubbleScale").append_attribute("val").set_value("100");
+                    chartNode.append_child("c:showNegBubbles").append_attribute("val").set_value("0");
                     break;
                 case XLChartType::Radar:
                 case XLChartType::RadarFilled:
@@ -239,7 +261,13 @@ namespace OpenXLSX
             case XLChartType::Line3D: return "c:line3DChart";
             case XLChartType::Pie: return "c:pieChart";
             case XLChartType::Pie3D: return "c:pie3DChart";
-            case XLChartType::Scatter: return "c:scatterChart";
+            case XLChartType::Scatter:
+            case XLChartType::ScatterLine:
+            case XLChartType::ScatterLineMarker:
+            case XLChartType::ScatterSmooth:
+            case XLChartType::ScatterSmoothMarker:
+            case XLChartType::ScatterMarker: return "c:scatterChart";
+            case XLChartType::Bubble: return "c:bubbleChart";
             case XLChartType::Area:
             case XLChartType::AreaStacked:
             case XLChartType::AreaPercentStacked: return "c:areaChart";
@@ -401,7 +429,20 @@ namespace OpenXLSX
 
         const uint32_t idx = seriesCount();
 
-        XMLNode serNode = chartNode.append_child("c:ser");
+        XMLNode insertBefore;
+        for (XMLNode child : chartNode.children()) {
+            std::string_view n = child.name();
+            if (n != "c:barDir" && n != "c:grouping" && n != "c:varyColors" && 
+                n != "c:scatterStyle" && n != "c:radarStyle" && n != "c:wireframe" && 
+                n != "c:shape" && n != "c:ser") {
+                insertBefore = child;
+                break;
+            }
+        }
+        XMLNode serNode;
+        if (!insertBefore.empty()) serNode = chartNode.insert_child_before("c:ser", insertBefore);
+        else serNode = chartNode.append_child("c:ser");
+
         serNode.append_child("c:idx").append_attribute("val").set_value(idx);
         serNode.append_child("c:order").append_attribute("val").set_value(idx);
 
@@ -870,4 +911,260 @@ namespace OpenXLSX
 
     XLChartSeries XLChart::addSeries(const XLWorksheet& wks, const XLCellRange& values, const XLCellRange& categories, std::string_view title, std::optional<XLChartType> targetChartType, bool useSecondaryAxis) {
         return addSeries(buildAbsoluteChartReference(wks, values), title, buildAbsoluteChartReference(wks, categories), targetChartType, useSecondaryAxis);
+    }
+
+// ─────────────────────────────────────────────────────────
+//  Shared helper: write c:spPr / a:solidFill / a:srgbClr
+// ─────────────────────────────────────────────────────────
+namespace {
+    /// Write a solid-fill color node under the given container node.
+    /// Creates c:spPr (or a:spPr), a:solidFill, a:srgbClr with val=hexRGB.
+    /// Clears any previous solidFill first so calls are idempotent.
+    void setSpPrSolidFill(XMLNode container, std::string_view hexRGB, bool includeLine = true)
+    {
+        XMLNode spPr = container.child("c:spPr");
+        if (spPr.empty()) {
+            // For c:ser, spPr must come before dPt, dLbls, cat, val, etc.
+            if (std::string_view(container.name()) == "c:ser") {
+                XMLNode insertBefore;
+                for (XMLNode child : container.children()) {
+                    std::string_view n = child.name();
+                    if (n != "c:idx" && n != "c:order" && n != "c:tx") {
+                        insertBefore = child;
+                        break;
+                    }
+                }
+                if (!insertBefore.empty()) spPr = container.insert_child_before("c:spPr", insertBefore);
+                else spPr = container.append_child("c:spPr");
+            } else {
+                spPr = container.append_child("c:spPr");
+            }
+        }
+
+        // Remove existing fill children so this call is idempotent
+        spPr.remove_child("a:noFill");
+        spPr.remove_child("a:solidFill");
+
+        XMLNode solidFill = spPr.prepend_child("a:solidFill");
+        XMLNode srgbClr   = solidFill.append_child("a:srgbClr");
+        srgbClr.append_attribute("val").set_value(std::string(hexRGB).c_str());
+
+        // Also set the outline color so the series looks consistent
+        if (includeLine) {
+            XMLNode ln = spPr.child("a:ln");
+            if (ln.empty()) ln = spPr.append_child("a:ln");
+            ln.remove_child("a:noFill");
+            ln.remove_child("a:solidFill");
+            XMLNode lnFill    = ln.prepend_child("a:solidFill");
+            XMLNode lnSrgbClr = lnFill.append_child("a:srgbClr");
+            lnSrgbClr.append_attribute("val").set_value(std::string(hexRGB).c_str());
+        }
+    }
+} // anonymous namespace
+
+// ─────────────────────────────────────────────────────────
+//  XLChartSeries – P1.1: setColor
+// ─────────────────────────────────────────────────────────
+    XLChartSeries& XLChartSeries::setColor(std::string_view hexRGB)
+    {
+        if (m_node.empty()) return *this;
+        setSpPrSolidFill(m_node, hexRGB, /*includeLine=*/true);
+        return *this;
+    }
+
+// ─────────────────────────────────────────────────────────
+//  XLChartSeries – P1.2: setDataPointColor
+// ─────────────────────────────────────────────────────────
+    XLChartSeries& XLChartSeries::setDataPointColor(uint32_t pointIdx, std::string_view hexRGB)
+    {
+        if (m_node.empty()) return *this;
+
+        // Find or create a c:dPt node with matching c:idx
+        XMLNode existingDpt;
+        for (auto child : m_node.children("c:dPt")) {
+            if (child.child("c:idx").attribute("val").as_uint() == pointIdx) {
+                existingDpt = child;
+                break;
+            }
+        }
+
+        if (existingDpt.empty()) {
+            // Insert c:dPt before the first non-metadata child (c:dLbls / c:cat / c:val etc.)
+            XMLNode insertBefore;
+            for (auto child : m_node.children()) {
+                std::string_view n = child.name();
+                if (n != "c:idx" && n != "c:order" && n != "c:tx" && n != "c:spPr" && n != "c:dPt") {
+                    insertBefore = child;
+                    break;
+                }
+            }
+            if (!insertBefore.empty())
+                existingDpt = m_node.insert_child_before("c:dPt", insertBefore);
+            else
+                existingDpt = m_node.append_child("c:dPt");
+
+            XMLNode idxNode = existingDpt.append_child("c:idx");
+            idxNode.append_attribute("val").set_value(pointIdx);
+        }
+
+        // Apply color via spPr (no outline for individual points)
+        setSpPrSolidFill(existingDpt, hexRGB, /*includeLine=*/false);
+        return *this;
+    }
+
+// ─────────────────────────────────────────────────────────
+//  XLAxis – P1.4: setNumberFormat
+// ─────────────────────────────────────────────────────────
+    void XLAxis::setNumberFormat(std::string_view formatCode, bool sourceLinked)
+    {
+        if (m_node.empty()) return;
+
+        XMLNode numFmt = m_node.child("c:numFmt");
+        if (numFmt.empty()) {
+            // Insert after axPos/delete but before other elements
+            numFmt = appendAndGetNode(m_node, "c:numFmt", XLAxisNodeOrder);
+        }
+
+        // Set or overwrite attributes
+        auto setOrCreate = [](XMLNode node, const char* attrName, const char* val) {
+            XMLAttribute attr = node.attribute(attrName);
+            if (attr.empty()) node.append_attribute(attrName).set_value(val);
+            else              attr.set_value(val);
+        };
+
+        setOrCreate(numFmt, "formatCode",   std::string(formatCode).c_str());
+        setOrCreate(numFmt, "sourceLinked", sourceLinked ? "1" : "0");
+    }
+
+// ─────────────────────────────────────────────────────────
+//  XLChart – P1.3: setGapWidth / setOverlap
+// ─────────────────────────────────────────────────────────
+    void XLChart::setGapWidth(uint32_t percent)
+    {
+        XMLNode chartNode = getChartNode(xmlDocument());
+        if (chartNode.empty()) return;
+
+        XMLNode node = chartNode.child("c:gapWidth");
+        if (node.empty()) {
+            XMLNode axId = chartNode.child("c:axId");
+            if (!axId.empty()) node = chartNode.insert_child_before("c:gapWidth", axId);
+            else node = chartNode.append_child("c:gapWidth");
+        }
+
+        XMLAttribute attr = node.attribute("val");
+        if (attr.empty()) node.append_attribute("val").set_value(percent);
+        else              attr.set_value(percent);
+    }
+
+    void XLChart::setOverlap(int32_t percent)
+    {
+        XMLNode chartNode = getChartNode(xmlDocument());
+        if (chartNode.empty()) return;
+
+        XMLNode node = chartNode.child("c:overlap");
+        if (node.empty()) {
+            // override or create before axId
+            XMLNode axId = chartNode.child("c:axId");
+            if (!axId.empty()) node = chartNode.insert_child_before("c:overlap", axId);
+            else node = chartNode.append_child("c:overlap");
+        }
+
+        XMLAttribute attr = node.attribute("val");
+        std::string val   = std::to_string(percent);
+        if (attr.empty()) node.append_attribute("val").set_value(val.c_str());
+        else              attr.set_value(val.c_str());
+    }
+
+// ─────────────────────────────────────────────────────────
+//  XLChart – P2.1/2.2: background colors
+// ─────────────────────────────────────────────────────────
+    void XLChart::setPlotAreaColor(std::string_view hexRGB)
+    {
+        XMLNode plotArea = xmlDocument().document_element().child("c:chart").child("c:plotArea");
+        if (plotArea.empty()) return;
+        setSpPrSolidFill(plotArea, hexRGB, /*includeLine=*/false);
+    }
+
+    void XLChart::setChartAreaColor(std::string_view hexRGB)
+    {
+        // c:chartSpace is the document root
+        XMLNode chartSpace = xmlDocument().document_element();
+        if (chartSpace.empty()) return;
+        setSpPrSolidFill(chartSpace, hexRGB, /*includeLine=*/false);
+    }
+
+// ─────────────────────────────────────────────────────────
+//  XLChart – P2.3: addBubbleSeries
+// ─────────────────────────────────────────────────────────
+    XLChartSeries XLChart::addBubbleSeries(std::string_view xValRef,
+                                            std::string_view yValRef,
+                                            std::string_view sizeRef,
+                                            std::string_view title)
+    {
+        // Bubble chart always targets c:bubbleChart; secondary axis not needed for simple usage
+        XMLNode chartNode = getOrCreateChartNode(xmlDocument(), XLChartType::Bubble, /*useSecondaryAxis=*/false);
+        if (chartNode.empty()) return XLChartSeries();
+
+        const uint32_t idx = seriesCount();
+
+        XMLNode insertBefore;
+        for (XMLNode child : chartNode.children()) {
+            std::string_view n = child.name();
+            if (n != "c:barDir" && n != "c:grouping" && n != "c:varyColors" && 
+                n != "c:scatterStyle" && n != "c:radarStyle" && n != "c:wireframe" && 
+                n != "c:shape" && n != "c:ser") {
+                insertBefore = child;
+                break;
+            }
+        }
+        XMLNode serNode;
+        if (!insertBefore.empty()) serNode = chartNode.insert_child_before("c:ser", insertBefore);
+        else serNode = chartNode.append_child("c:ser");
+
+        serNode.append_child("c:idx").append_attribute("val").set_value(idx);
+        serNode.append_child("c:order").append_attribute("val").set_value(idx);
+
+        // Title
+        if (!title.empty()) {
+            XMLNode txNode = serNode.append_child("c:tx");
+            if (title.find('!') != std::string_view::npos)
+                txNode.append_child("c:strRef").append_child("c:f").text().set(std::string(title).c_str());
+            else
+                txNode.append_child("c:v").text().set(std::string(title).c_str());
+        }
+
+        // X values
+        if (!xValRef.empty()) {
+            XMLNode xValNode = serNode.append_child("c:xVal");
+            xValNode.append_child("c:numRef").append_child("c:f").text().set(std::string(xValRef).c_str());
+        }
+
+        // Y values
+        {
+            XMLNode yValNode = serNode.append_child("c:yVal");
+            yValNode.append_child("c:numRef").append_child("c:f").text().set(std::string(yValRef).c_str());
+        }
+
+        // Bubble sizes
+        if (!sizeRef.empty()) {
+            XMLNode sizeNode = serNode.append_child("c:bubbleSize");
+            sizeNode.append_child("c:numRef").append_child("c:f").text().set(std::string(sizeRef).c_str());
+        }
+
+        // Bubble3D defaults to false
+        serNode.append_child("c:bubble3D").append_attribute("val").set_value("0");
+
+        return XLChartSeries(serNode);
+    }
+
+    XLChartSeries XLChart::addBubbleSeries(const XLWorksheet& wks,
+                                            const XLCellRange& xValues,
+                                            const XLCellRange& yValues,
+                                            const XLCellRange& sizes,
+                                            std::string_view title)
+    {
+        return addBubbleSeries(buildAbsoluteChartReference(wks, xValues),
+                               buildAbsoluteChartReference(wks, yValues),
+                               buildAbsoluteChartReference(wks, sizes),
+                               title);
     }

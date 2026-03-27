@@ -369,3 +369,198 @@ TEST_CASE("Chart Cell Range API", "[XLChart][Range]")
         }
     }
 }
+
+TEST_CASE("Chart Phase1 Phase2 Features", "[XLChart][Phase12]")
+{
+    auto containsOneOf = [](const std::string& xml, std::initializer_list<std::string> candidates) {
+        for (const auto& c : candidates)
+            if (xml.find(c) != std::string::npos) return true;
+        return false;
+    };
+
+    SECTION("P1.1 Series Color")
+    {
+        const std::string fname = "test_p1_series_color.xlsx";
+        {
+            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            for (int i = 1; i <= 3; ++i) wks.cell(i, 1).value() = i * 10;
+            auto chart = wks.addChart(XLChartType::Bar, "ColorTest", 1, 3, 400, 300);
+            chart.addSeries("Sheet1!$A$1:$A$3").setColor("FF0000");
+            doc.save(); doc.close();
+        }
+        {
+            XLChartTestDoc td; td.open(fname);
+            std::string xml = td.getRawXml("xl/charts/chart1.xml");
+            REQUIRE(xml.find("c:spPr") != std::string::npos);
+            bool hasColor = xml.find("FF0000") != std::string::npos || xml.find("ff0000") != std::string::npos;
+            REQUIRE(hasColor);
+            td.close();
+        }
+        std::filesystem::remove(fname);
+    }
+
+    SECTION("P1.2 Data Point Color")
+    {
+        const std::string fname = "test_p1_datapoint_color.xlsx";
+        {
+            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            for (int i = 1; i <= 5; ++i) wks.cell(i, 1).value() = i;
+            auto chart = wks.addChart(XLChartType::Bar, "DPColor", 1, 3, 400, 300);
+            chart.addSeries("Sheet1!$A$1:$A$5")
+                 .setDataPointColor(0, "00B050")
+                 .setDataPointColor(4, "FF0000");
+            doc.save(); doc.close();
+        }
+        {
+            XLChartTestDoc td; td.open(fname);
+            std::string xml = td.getRawXml("xl/charts/chart1.xml");
+            REQUIRE(xml.find("c:dPt") != std::string::npos);
+            bool hasGreen = xml.find("00B050") != std::string::npos || xml.find("00b050") != std::string::npos;
+            bool hasRed   = xml.find("FF0000") != std::string::npos || xml.find("ff0000") != std::string::npos;
+            REQUIRE(hasGreen); REQUIRE(hasRed);
+            td.close();
+        }
+        std::filesystem::remove(fname);
+    }
+
+    SECTION("P1.3 Gap Width and Overlap")
+    {
+        const std::string fname = "test_p1_gap_overlap.xlsx";
+        {
+            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            for (int i = 1; i <= 3; ++i) wks.cell(i, 1).value() = i;
+            auto chart = wks.addChart(XLChartType::Bar, "GapTest", 1, 3, 400, 300);
+            chart.addSeries("Sheet1!$A$1:$A$3");
+            chart.setGapWidth(200);
+            chart.setOverlap(-20);
+            doc.save(); doc.close();
+        }
+        {
+            XLChartTestDoc td; td.open(fname);
+            std::string xml = td.getRawXml("xl/charts/chart1.xml");
+            bool hasGap     = containsOneOf(xml, {"c:gapWidth val=\"200\"", "c:gapWidth val=\"200\" />"});
+            bool hasOverlap = containsOneOf(xml, {"c:overlap val=\"-20\"",  "c:overlap val=\"-20\" />"});
+            REQUIRE(hasGap); REQUIRE(hasOverlap);
+            td.close();
+        }
+        std::filesystem::remove(fname);
+    }
+
+    SECTION("P1.4 Axis Number Format")
+    {
+        const std::string fname = "test_p1_axis_numfmt.xlsx";
+        {
+            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            for (int i = 1; i <= 3; ++i) wks.cell(i, 1).value() = i * 0.1;
+            auto chart = wks.addChart(XLChartType::Bar, "NumFmtTest", 1, 3, 400, 300);
+            chart.addSeries("Sheet1!$A$1:$A$3");
+            chart.yAxis().setNumberFormat("0.00%");
+            doc.save(); doc.close();
+        }
+        {
+            XLChartTestDoc td; td.open(fname);
+            std::string xml = td.getRawXml("xl/charts/chart1.xml");
+            REQUIRE(xml.find("0.00%") != std::string::npos);
+            REQUIRE(xml.find("c:numFmt") != std::string::npos);
+            td.close();
+        }
+        std::filesystem::remove(fname);
+    }
+
+    SECTION("P1.5 Scatter Sub-type ScatterSmooth")
+    {
+        const std::string fname = "test_p1_scatter_smooth.xlsx";
+        {
+            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            for (int i = 1; i <= 4; ++i) { wks.cell(i,1).value()=i; wks.cell(i,2).value()=i*i; }
+            auto chart = wks.addChart(XLChartType::ScatterSmooth, "SmoothScatter", 1, 4, 400, 300);
+            chart.addSeries("Sheet1!$B$1:$B$4", "", "Sheet1!$A$1:$A$4");
+            doc.save(); doc.close();
+        }
+        {
+            XLChartTestDoc td; td.open(fname);
+            std::string xml = td.getRawXml("xl/charts/chart1.xml");
+            REQUIRE(xml.find("c:scatterChart") != std::string::npos);
+            REQUIRE(xml.find("val=\"smooth\"") != std::string::npos);
+            td.close();
+        }
+        std::filesystem::remove(fname);
+    }
+
+    SECTION("P2.1 Plot Area Color")
+    {
+        const std::string fname = "test_p2_plotarea_color.xlsx";
+        {
+            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            for (int i = 1; i <= 3; ++i) wks.cell(i, 1).value() = i;
+            auto chart = wks.addChart(XLChartType::Bar, "PlotAreaColor", 1, 3, 400, 300);
+            chart.addSeries("Sheet1!$A$1:$A$3");
+            chart.setPlotAreaColor("E8F4F8");
+            doc.save(); doc.close();
+        }
+        {
+            XLChartTestDoc td; td.open(fname);
+            std::string xml = td.getRawXml("xl/charts/chart1.xml");
+            bool hasColor = xml.find("E8F4F8") != std::string::npos || xml.find("e8f4f8") != std::string::npos;
+            REQUIRE(hasColor);
+            td.close();
+        }
+        std::filesystem::remove(fname);
+    }
+
+    SECTION("P2.2 Chart Area Color")
+    {
+        const std::string fname = "test_p2_chartarea_color.xlsx";
+        {
+            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            for (int i = 1; i <= 3; ++i) wks.cell(i, 1).value() = i;
+            auto chart = wks.addChart(XLChartType::Bar, "ChartAreaColor", 1, 3, 400, 300);
+            chart.addSeries("Sheet1!$A$1:$A$3");
+            chart.setChartAreaColor("F5F5F5");
+            doc.save(); doc.close();
+        }
+        {
+            XLChartTestDoc td; td.open(fname);
+            std::string xml = td.getRawXml("xl/charts/chart1.xml");
+            bool hasColor = xml.find("F5F5F5") != std::string::npos || xml.find("f5f5f5") != std::string::npos;
+            REQUIRE(hasColor);
+            td.close();
+        }
+        std::filesystem::remove(fname);
+    }
+
+    SECTION("P2.3 Bubble Chart")
+    {
+        const std::string fname = "test_p2_bubble.xlsx";
+        {
+            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            for (int i = 1; i <= 4; ++i) {
+                wks.cell(i,1).value()=i*10; wks.cell(i,2).value()=i*5; wks.cell(i,3).value()=i;
+            }
+            auto chart = wks.addChart(XLChartType::Bubble, "BubbleTest", 1, 5, 500, 350);
+            chart.setTitle("Market Bubbles");
+            chart.addBubbleSeries("Sheet1!$A$1:$A$4","Sheet1!$B$1:$B$4","Sheet1!$C$1:$C$4","S1");
+            doc.save(); doc.close();
+        }
+        {
+            XLChartTestDoc td; td.open(fname);
+            std::string xml = td.getRawXml("xl/charts/chart1.xml");
+            REQUIRE(xml.find("c:bubbleChart")    != std::string::npos);
+            REQUIRE(xml.find("c:xVal")           != std::string::npos);
+            REQUIRE(xml.find("c:yVal")           != std::string::npos);
+            REQUIRE(xml.find("c:bubbleSize")     != std::string::npos);
+            REQUIRE(xml.find("Sheet1!$A$1:$A$4") != std::string::npos);
+            REQUIRE(xml.find("Sheet1!$C$1:$C$4") != std::string::npos);
+            td.close();
+        }
+        std::filesystem::remove(fname);
+    }
+}

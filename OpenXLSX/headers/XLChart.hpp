@@ -24,6 +24,12 @@ namespace OpenXLSX
         Pie,
         Pie3D,
         Scatter,
+        ScatterLine,           ///< Scatter with straight lines, no markers
+        ScatterLineMarker,     ///< Scatter with straight lines and markers
+        ScatterSmooth,         ///< Scatter with smooth lines, no markers
+        ScatterSmoothMarker,   ///< Scatter with smooth lines and markers
+        ScatterMarker,         ///< Scatter with markers only, no lines
+        Bubble,                ///< Bubble chart (needs addBubbleSeries)
         Area,
         AreaStacked,
         AreaPercentStacked,
@@ -113,36 +119,39 @@ class OPENXLSX_EXPORT XLChartSeries
         XLChartSeries& setTitle(std::string_view title);
         XLChartSeries& setSmooth(bool smooth);
         XLChartSeries& setMarkerStyle(XLMarkerStyle style);
-        
+
+        /**
+         * @brief Set the fill and line color of this data series.
+         * @param hexRGB Six-character hex color string, e.g. "FF0000" for red.
+         */
+        XLChartSeries& setColor(std::string_view hexRGB);
+
+        /**
+         * @brief Override the color of a single data point within this series.
+         * @param pointIdx Zero-based index of the data point.
+         * @param hexRGB  Six-character hex color string.
+         */
+        XLChartSeries& setDataPointColor(uint32_t pointIdx, std::string_view hexRGB);
+
         /**
          * @brief Enable and configure data labels for this series.
-         * @param showValue Set to true to show the value on the labels.
-         * @param showCategoryName Set to true to show the category name on the labels.
-         * @param showPercent Set to true to show the percentage on the labels (mainly for pie charts).
+         * @param showValue     Show the cell value on each label.
+         * @param showCategoryName Show the category name.
+         * @param showPercent   Show percentage (mainly for pie/doughnut charts).
          */
         XLChartSeries& setDataLabels(bool showValue, bool showCategoryName = false, bool showPercent = false);
 
-    
         /**
-         * @brief Add a trendline to this series
-         * @param type The type of trendline
-         * @param name Optional name for the trendline
-         * @param order Polynomial order (2-6) if type is Polynomial
-         * @param period Moving average period if type is MovingAverage
+         * @brief Add a trendline to this series.
          */
+        XLChartSeries& addTrendline(XLTrendlineType type, std::string_view name = "", uint8_t order = 2, uint8_t period = 2);
 
         /**
-         * @brief Add error bars to this series
-         * @param direction X or Y axis error bars
-         * @param type Both, Minus, Plus
-         * @param valType The calculation method (Fixed, Percentage, StdDev, etc.)
-         * @param value The value to apply (e.g. 5 for 5%, or 5 for FixedValue 5)
+         * @brief Add error bars to this series.
          */
         XLChartSeries& addErrorBars(XLErrorBarDirection direction, XLErrorBarType type, XLErrorBarValueType valType, double value = 0.0);
 
-        XLChartSeries& addTrendline(XLTrendlineType type, std::string_view name = "", uint8_t order = 2, uint8_t period = 2);
-
-private:
+    private:
         XMLNode m_node;
     };
 
@@ -166,37 +175,24 @@ private:
         explicit XLAxis(const XMLNode& node);
 
         void setTitle(std::string_view title);
-        
+
         void setMinBounds(double min);
         void clearMinBounds();
-        
+
         void setMaxBounds(double max);
         void clearMaxBounds();
-        
+
         void setMajorGridlines(bool show);
         void setMinorGridlines(bool show);
 
-    
         /**
-         * @brief Add a trendline to this series
-         * @param type The type of trendline
-         * @param name Optional name for the trendline
-         * @param order Polynomial order (2-6) if type is Polynomial
-         * @param period Moving average period if type is MovingAverage
+         * @brief Set the number format for axis tick labels.
+         * @param formatCode    Excel number format code, e.g. "0.00%" or "#,##0".
+         * @param sourceLinked  If true, the format follows the source data format.
          */
+        void setNumberFormat(std::string_view formatCode, bool sourceLinked = false);
 
-        /**
-         * @brief Add error bars to this series
-         * @param direction X or Y axis error bars
-         * @param type Both, Minus, Plus
-         * @param valType The calculation method (Fixed, Percentage, StdDev, etc.)
-         * @param value The value to apply (e.g. 5 for 5%, or 5 for FixedValue 5)
-         */
-        XLChartSeries& addErrorBars(XLErrorBarDirection direction, XLErrorBarType type, XLErrorBarValueType valType, double value = 0.0);
-
-        XLChartSeries& addTrendline(XLTrendlineType type, std::string_view name = "", uint8_t order = 2, uint8_t period = 2);
-
-private:
+    private:
         XMLNode m_node;
     };
 
@@ -241,31 +237,45 @@ private:
         XLChart& operator=(XLChart&& other) noexcept = default;
 
         /**
-         * @brief Add a data series to the chart
+         * @brief Add a data series to the chart.
          * @param valuesRef A cell reference to the data values (e.g. "Sheet1!$B$1:$B$10")
-         * @param title A literal string or cell reference for the series name (e.g. "Revenue" or "Sheet1!$B$1")
-         * @param categoriesRef A cell reference for the X-axis categories (e.g. "Sheet1!$A$1:$A$10")
+         * @param title A literal string or cell reference for the series name.
+         * @param categoriesRef A cell reference for the X-axis categories.
          */
         XLChartSeries addSeries(const XLWorksheet& wks, const XLCellRange& values, std::string_view title = "", std::optional<XLChartType> targetChartType = std::nullopt, bool useSecondaryAxis = false);
         XLChartSeries addSeries(const XLWorksheet& wks, const XLCellRange& values, const XLCellRange& categories, std::string_view title = "", std::optional<XLChartType> targetChartType = std::nullopt, bool useSecondaryAxis = false);
-
         XLChartSeries addSeries(std::string_view valuesRef, std::string_view title = "", std::string_view categoriesRef = "", std::optional<XLChartType> targetChartType = std::nullopt, bool useSecondaryAxis = false);
 
         /**
-         * @brief Set the chart title
-         * @param title The title text
+         * @brief Add a bubble chart series with explicit X, Y, and size ranges.
+         * @param xValRef   Cell reference for X values (e.g. "Sheet1!$A$2:$A$10").
+         * @param yValRef   Cell reference for Y values.
+         * @param sizeRef   Cell reference for bubble sizes.
+         * @param title     Optional series name.
+         */
+        XLChartSeries addBubbleSeries(std::string_view xValRef,
+                                      std::string_view yValRef,
+                                      std::string_view sizeRef,
+                                      std::string_view title = "");
+
+        XLChartSeries addBubbleSeries(const XLWorksheet& wks,
+                                      const XLCellRange& xValues,
+                                      const XLCellRange& yValues,
+                                      const XLCellRange& sizes,
+                                      std::string_view title = "");
+
+        /**
+         * @brief Set the chart title.
          */
         void setTitle(std::string_view title);
 
         /**
-         * @brief Set the built-in chart style ID
-         * @param styleId The numeric ID of the chart style (e.g. 2 for simple standard, 42 for modern UI). Max 48.
+         * @brief Set the built-in chart style ID (1–48).
          */
         void setStyle(uint8_t styleId);
 
         /**
-         * @brief Set the legend position or hide it
-         * @param position The legend position
+         * @brief Set the legend position or hide it.
          */
         void setLegendPosition(XLLegendPosition position);
 
@@ -278,31 +288,47 @@ private:
          * @brief Get the Y-axis (typically left value axis).
          */
         [[nodiscard]] XLAxis yAxis() const;
-        
-        [[nodiscard]] XLAxis axis(std::string_view position) const;
 
+        [[nodiscard]] XLAxis axis(std::string_view position) const;
 
         /**
          * @brief Configure the display of data labels on the chart.
-         * @param showValue Whether to show the data value.
-         * @param showCategory Whether to show the category name.
-         * @param showPercent Whether to show the percentage (useful for Pie/Doughnut charts).
          */
         void setShowDataLabels(bool showValue, bool showCategory = false, bool showPercent = false);
 
         /**
          * @brief Set whether a specific series should be rendered with a smooth line.
-         * @param seriesIndex The zero-based index of the series.
-         * @param smooth True to enable smooth lines, false otherwise.
          */
         void setSeriesSmooth(uint32_t seriesIndex, bool smooth);
 
         /**
          * @brief Set the marker style for a specific series.
-         * @param seriesIndex The zero-based index of the series.
-         * @param style The marker style to apply.
          */
         void setSeriesMarker(uint32_t seriesIndex, XLMarkerStyle style);
+
+        /**
+         * @brief Set the gap width between bar/column clusters.
+         * @param percent Gap expressed as a percentage of bar width (0–500, default 150).
+         */
+        void setGapWidth(uint32_t percent);
+
+        /**
+         * @brief Set the overlap between bars/columns within a cluster.
+         * @param percent Overlap in percent (−100 to 100). Positive = overlap, negative = gap.
+         */
+        void setOverlap(int32_t percent);
+
+        /**
+         * @brief Fill the chart plot area with a solid color.
+         * @param hexRGB Six-character hex color, e.g. "F2F2F2".
+         */
+        void setPlotAreaColor(std::string_view hexRGB);
+
+        /**
+         * @brief Fill the outermost chart space background with a solid color.
+         * @param hexRGB Six-character hex color.
+         */
+        void setChartAreaColor(std::string_view hexRGB);
 
 
 
