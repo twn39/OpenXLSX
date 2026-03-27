@@ -1,0 +1,27 @@
+name: Create GitHub Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on tags starting with v (e.g., v1.5.0)
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to create a release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: OpenXLSX-NX ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
