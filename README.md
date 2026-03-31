@@ -1,6 +1,7 @@
 # OpenXLSX-NX
 
 [![OpenXLSX CI](https://github.com/twn39/OpenXLSX/actions/workflows/ci.yml/badge.svg)](https://github.com/twn39/OpenXLSX/actions/workflows/ci.yml)
+[![GitHub Pages](https://github.com/twn39/OpenXLSX/actions/workflows/doxygen-pages.yml/badge.svg)](https://twn39.github.io/OpenXLSX-NX/)
 
 **OpenXLSX-NX** (Next Generation) is an advanced, high-performance C++ library for reading, writing, creating, and modifying Microsoft Excel® files in the `.xlsx` format. It is designed to be fast, cross-platform, and has minimal external dependencies.
 
