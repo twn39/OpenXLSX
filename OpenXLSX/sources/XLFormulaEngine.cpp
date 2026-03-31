@@ -74,21 +74,23 @@ namespace
         return s;
     }
 
-    // Flatten a vector-of-vectors into one vector
-    std::vector<XLCellValue> flatten(const std::vector<std::vector<XLCellValue>>& args)
+
+    // Collect numeric values from a list of arguments directly
+    std::vector<double> numerics(const std::vector<XLFormulaArg>& args)
     {
-        std::vector<XLCellValue> out;
-        for (const auto& vec : args)
-            for (const auto& v : vec)
-                out.push_back(v);
+        std::vector<double> out;
+        for (const auto& arg : args)
+            for (const auto& v : arg)
+                if (isNumeric(v))
+                    out.push_back(toDouble(v));
         return out;
     }
 
-    // Collect numeric values from a flat list
-    std::vector<double> numerics(const std::vector<XLCellValue>& flat)
+    // Collect numeric values from a single argument
+    std::vector<double> numerics(const XLFormulaArg& arg)
     {
         std::vector<double> out;
-        for (const auto& v : flat)
+        for (const auto& v : arg)
             if (isNumeric(v))
                 out.push_back(toDouble(v));
         return out;
@@ -451,17 +453,15 @@ std::unique_ptr<XLASTNode> XLFormulaParser::parseFuncCall(std::string name, Pars
 // Range expansion helper
 // =============================================================================
 
-std::vector<XLCellValue> XLFormulaEngine::expandRange(std::string_view rangeRef,
+XLFormulaArg XLFormulaEngine::expandRange(std::string_view rangeRef,
                                                         const XLCellResolver& resolver)
 {
-    std::vector<XLCellValue> result;
-    if (!resolver) return result;
+    if (!resolver) return XLFormulaArg();
 
     auto colonPos = rangeRef.find(':');
     if (colonPos == std::string_view::npos) {
         // Single cell
-        result.push_back(resolver(rangeRef));
-        return result;
+        return XLFormulaArg(resolver(rangeRef));
     }
 
     std::string startRef(rangeRef.substr(0, colonPos));
@@ -475,27 +475,31 @@ std::vector<XLCellValue> XLFormulaEngine::expandRange(std::string_view rangeRef,
         if (r1 > r2) std::swap(r1, r2);
         if (c1 > c2) std::swap(c1, c2);
 
-        for (uint32_t r = r1; r <= r2; ++r)
-            for (uint16_t c = c1; c <= c2; ++c)
-                result.push_back(resolver(XLCellReference(r, c).address()));
+        std::string sheetName;
+        auto exclPos = startRef.find('!');
+        if (exclPos != std::string::npos) {
+            sheetName = startRef.substr(0, exclPos);
+        }
+
+        return XLFormulaArg(r1, r2, c1, c2, std::move(sheetName), &resolver);
     } catch (...) {
-        XLCellValue err; err.setError("#REF!"); result.push_back(err);
+        XLCellValue err; err.setError("#REF!");
+        return XLFormulaArg(std::move(err));
     }
-    return result;
 }
 
 // =============================================================================
 // Evaluator – expandArg
 // =============================================================================
 
-std::vector<XLCellValue> XLFormulaEngine::expandArg(const XLASTNode& argNode,
+XLFormulaArg XLFormulaEngine::expandArg(const XLASTNode& argNode,
                                                       const XLCellResolver& resolver) const
 {
     if (argNode.kind == XLNodeKind::Range)
         return expandRange(argNode.text, resolver);
 
-    // Evaluate normally and wrap in a single-element vector
-    return { evalNode(argNode, resolver) };
+    // Evaluate normally and wrap in a single-element scalar
+    return XLFormulaArg(evalNode(argNode, resolver));
 }
 
 // =============================================================================
@@ -518,7 +522,7 @@ XLCellValue XLFormulaEngine::evalNode(const XLASTNode& node, const XLCellResolve
         case XLNodeKind::Range: {
             // Range used as scalar = first cell value
             auto vals = expandRange(node.text, resolver);
-            return vals.empty() ? XLCellValue{} : vals.front();
+            return vals.empty() ? XLCellValue{} : vals[0];
         }
 
         case XLNodeKind::UnaryOp: {
@@ -613,7 +617,7 @@ XLCellValue XLFormulaEngine::evalNode(const XLASTNode& node, const XLCellResolve
             if (it == m_functions.end()) return errName();
 
             // Build per-arg vectors (ranges are expanded, scalars wrapped)
-            std::vector<std::vector<XLCellValue>> argVecs;
+            std::vector<XLFormulaArg> argVecs;
             argVecs.reserve(node.children.size());
             for (const auto& child : node.children)
                 argVecs.push_back(expandArg(*child, resolver));
@@ -683,6 +687,8 @@ void XLFormulaEngine::registerBuiltins()
     m_functions["COUNT"]       = fnCount;
     m_functions["COUNTA"]      = fnCounta;
     m_functions["IF"]          = fnIf;
+    m_functions["IFS"]         = fnIfs;
+    m_functions["SWITCH"]      = fnSwitch;
     m_functions["AND"]         = fnAnd;
     m_functions["OR"]          = fnOr;
     m_functions["NOT"]         = fnNot;
@@ -697,6 +703,7 @@ void XLFormulaEngine::registerBuiltins()
     m_functions["POWER"]       = fnPower;
     m_functions["VLOOKUP"]     = fnVlookup;
     m_functions["HLOOKUP"]     = fnHlookup;
+    m_functions["XLOOKUP"]     = fnXlookup;
     m_functions["INDEX"]       = fnIndex;
     m_functions["MATCH"]       = fnMatch;
     m_functions["CONCATENATE"] = fnConcatenate;
@@ -783,53 +790,59 @@ void XLFormulaEngine::registerBuiltins()
 // Built-in: Math / Statistical
 // =============================================================================
 
-XLCellValue XLFormulaEngine::fnSum(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnSum(const std::vector<XLFormulaArg>& args)
 {
     double total = 0.0;
-    for (const auto& v : numerics(flatten(args))) total += v;
+    for (const auto& v : numerics(args)) total += v;
     return XLCellValue(total);
 }
 
-XLCellValue XLFormulaEngine::fnAverage(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnAverage(const std::vector<XLFormulaArg>& args)
 {
-    auto nums = numerics(flatten(args));
+    auto nums = numerics(args);
     if (nums.empty()) return errDiv0();
     double total = 0.0;
     for (double v : nums) total += v;
     return XLCellValue(total / static_cast<double>(nums.size()));
 }
 
-XLCellValue XLFormulaEngine::fnMin(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnMin(const std::vector<XLFormulaArg>& args)
 {
-    auto nums = numerics(flatten(args));
+    auto nums = numerics(args);
     if (nums.empty()) return XLCellValue(0.0);
     return XLCellValue(*std::min_element(nums.begin(), nums.end()));
 }
 
-XLCellValue XLFormulaEngine::fnMax(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnMax(const std::vector<XLFormulaArg>& args)
 {
-    auto nums = numerics(flatten(args));
+    auto nums = numerics(args);
     if (nums.empty()) return XLCellValue(0.0);
     return XLCellValue(*std::max_element(nums.begin(), nums.end()));
 }
 
-XLCellValue XLFormulaEngine::fnCount(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnCount(const std::vector<XLFormulaArg>& args)
 {
     int64_t cnt = 0;
-    for (const auto& v : flatten(args))
-        if (isNumeric(v)) ++cnt;
+    for (const auto& arg : args) {
+        for (const auto& v : arg) {
+            if (isNumeric(v)) ++cnt;
+        }
+    }
     return XLCellValue(cnt);
 }
 
-XLCellValue XLFormulaEngine::fnCounta(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnCounta(const std::vector<XLFormulaArg>& args)
 {
     int64_t cnt = 0;
-    for (const auto& v : flatten(args))
-        if (!isEmpty(v)) ++cnt;
+    for (const auto& arg : args) {
+        for (const auto& v : arg) {
+            if (!isEmpty(v)) ++cnt;
+        }
+    }
     return XLCellValue(cnt);
 }
 
-XLCellValue XLFormulaEngine::fnAbs(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnAbs(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     const auto& v = args[0][0];
@@ -837,7 +850,7 @@ XLCellValue XLFormulaEngine::fnAbs(const std::vector<std::vector<XLCellValue>>& 
     return XLCellValue(std::abs(toDouble(v)));
 }
 
-XLCellValue XLFormulaEngine::fnSqrt(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnSqrt(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     double d = toDouble(args[0][0]);
@@ -845,14 +858,14 @@ XLCellValue XLFormulaEngine::fnSqrt(const std::vector<std::vector<XLCellValue>>&
     return XLCellValue(std::sqrt(d));
 }
 
-XLCellValue XLFormulaEngine::fnInt(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnInt(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     if (!isNumeric(args[0][0])) return errValue();
     return XLCellValue(static_cast<int64_t>(std::floor(toDouble(args[0][0]))));
 }
 
-XLCellValue XLFormulaEngine::fnRound(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnRound(const std::vector<XLFormulaArg>& args)
 {
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
     double num    = toDouble(args[0][0]);
@@ -861,7 +874,7 @@ XLCellValue XLFormulaEngine::fnRound(const std::vector<std::vector<XLCellValue>>
     return XLCellValue(std::round(num * factor) / factor);
 }
 
-XLCellValue XLFormulaEngine::fnRoundup(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnRoundup(const std::vector<XLFormulaArg>& args)
 {
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
     double num    = toDouble(args[0][0]);
@@ -870,7 +883,7 @@ XLCellValue XLFormulaEngine::fnRoundup(const std::vector<std::vector<XLCellValue
     return XLCellValue(num >= 0 ? std::ceil(num * factor) / factor : std::floor(num * factor) / factor);
 }
 
-XLCellValue XLFormulaEngine::fnRounddown(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnRounddown(const std::vector<XLFormulaArg>& args)
 {
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
     double num    = toDouble(args[0][0]);
@@ -879,7 +892,7 @@ XLCellValue XLFormulaEngine::fnRounddown(const std::vector<std::vector<XLCellVal
     return XLCellValue(num >= 0 ? std::floor(num * factor) / factor : std::ceil(num * factor) / factor);
 }
 
-XLCellValue XLFormulaEngine::fnMod(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnMod(const std::vector<XLFormulaArg>& args)
 {
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
     double n = toDouble(args[0][0]), d = toDouble(args[1][0]);
@@ -887,7 +900,7 @@ XLCellValue XLFormulaEngine::fnMod(const std::vector<std::vector<XLCellValue>>& 
     return XLCellValue(std::fmod(n, d));
 }
 
-XLCellValue XLFormulaEngine::fnPower(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnPower(const std::vector<XLFormulaArg>& args)
 {
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
     return XLCellValue(std::pow(toDouble(args[0][0]), toDouble(args[1][0])));
@@ -897,7 +910,7 @@ XLCellValue XLFormulaEngine::fnPower(const std::vector<std::vector<XLCellValue>>
 // Built-in: Logical
 // =============================================================================
 
-XLCellValue XLFormulaEngine::fnIf(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnIf(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     const auto& cond = args[0][0];
@@ -910,25 +923,29 @@ XLCellValue XLFormulaEngine::fnIf(const std::vector<std::vector<XLCellValue>>& a
     else       return (args.size() > 2 && !args[2].empty()) ? args[2][0] : XLCellValue(false);
 }
 
-XLCellValue XLFormulaEngine::fnAnd(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnAnd(const std::vector<XLFormulaArg>& args)
 {
-    for (const auto& v : flatten(args)) {
-        if (!isNumeric(v) && v.type() != XLValueType::Boolean) return errValue();
-        if (!toDouble(v)) return XLCellValue(false);
+    for (const auto& arg : args) {
+        for (const auto& v : arg) {
+            if (!isNumeric(v) && v.type() != XLValueType::Boolean) return errValue();
+            if (!toDouble(v)) return XLCellValue(false);
+        }
     }
     return XLCellValue(true);
 }
 
-XLCellValue XLFormulaEngine::fnOr(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnOr(const std::vector<XLFormulaArg>& args)
 {
-    for (const auto& v : flatten(args)) {
-        if (!isNumeric(v) && v.type() != XLValueType::Boolean) return errValue();
-        if (toDouble(v)) return XLCellValue(true);
+    for (const auto& arg : args) {
+        for (const auto& v : arg) {
+            if (!isNumeric(v) && v.type() != XLValueType::Boolean) return errValue();
+            if (toDouble(v)) return XLCellValue(true);
+        }
     }
     return XLCellValue(false);
 }
 
-XLCellValue XLFormulaEngine::fnNot(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnNot(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     const auto& v = args[0][0];
@@ -936,17 +953,69 @@ XLCellValue XLFormulaEngine::fnNot(const std::vector<std::vector<XLCellValue>>& 
     return XLCellValue(!static_cast<bool>(toDouble(v)));
 }
 
-XLCellValue XLFormulaEngine::fnIferror(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnIferror(const std::vector<XLFormulaArg>& args)
 {
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
     return isError(args[0][0]) ? args[1][0] : args[0][0];
+}
+
+XLCellValue XLFormulaEngine::fnIfs(const std::vector<XLFormulaArg>& args)
+{
+    // IFS(condition1, value1, [condition2, value2], ...)
+    if (args.size() % 2 != 0 || args.empty()) return errValue(); // Requires pairs
+
+    for (std::size_t i = 0; i < args.size(); i += 2) {
+        if (args[i].empty()) return errValue();
+        const auto& cond = args[i][0];
+        bool test = false;
+        if (cond.type() == XLValueType::Boolean)       test = cond.get<bool>();
+        else if (isNumeric(cond))                      test = (toDouble(cond) != 0.0);
+        else if (cond.type() == XLValueType::String)   test = !cond.get<std::string>().empty();
+
+        if (test) {
+            return args[i+1].empty() ? XLCellValue() : args[i+1][0];
+        }
+    }
+    return errNA(); // If no condition is met, Excel returns #N/A
+}
+
+XLCellValue XLFormulaEngine::fnSwitch(const std::vector<XLFormulaArg>& args)
+{
+    // SWITCH(expression, value1, result1, [default_or_value2, result2], ... [default])
+    if (args.size() < 3) return errValue();
+    
+    if (args[0].empty()) return errValue();
+    const auto& expr = args[0][0];
+
+    std::size_t i = 1;
+    while (i + 1 < args.size()) {
+        if (args[i].empty()) return errValue();
+        const auto& val = args[i][0];
+        
+        bool match = false;
+        if (isNumeric(expr) && isNumeric(val)) match = (toDouble(expr) == toDouble(val));
+        else if (expr.type() == XLValueType::String && val.type() == XLValueType::String) match = (toString(expr) == toString(val));
+        else if (expr.type() == XLValueType::Boolean && val.type() == XLValueType::Boolean) match = (expr.get<bool>() == val.get<bool>());
+
+        if (match) {
+            return args[i+1].empty() ? XLCellValue() : args[i+1][0];
+        }
+        i += 2;
+    }
+
+    // Check if there is a default value at the end
+    if (i < args.size()) {
+        return args[i].empty() ? XLCellValue() : args[i][0];
+    }
+    
+    return errNA();
 }
 
 // =============================================================================
 // Built-in: Lookup
 // =============================================================================
 
-XLCellValue XLFormulaEngine::fnVlookup(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnVlookup(const std::vector<XLFormulaArg>& args)
 {
     // VLOOKUP(lookup_value, table_array, col_index, [exact_match])
     if (args.size() < 3 || args[0].empty() || args[1].empty() || args[2].empty())
@@ -1009,7 +1078,7 @@ XLCellValue XLFormulaEngine::fnVlookup(const std::vector<std::vector<XLCellValue
     return errNA();
 }
 
-XLCellValue XLFormulaEngine::fnHlookup(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnHlookup(const std::vector<XLFormulaArg>& args)
 {
     // HLOOKUP(lookup_value, table_array, row_index, [exact_match])
     if (args.size() < 3 || args[0].empty() || args[1].empty() || args[2].empty())
@@ -1047,7 +1116,125 @@ XLCellValue XLFormulaEngine::fnHlookup(const std::vector<std::vector<XLCellValue
     return errNA();
 }
 
-XLCellValue XLFormulaEngine::fnIndex(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnXlookup(const std::vector<XLFormulaArg>& args)
+{
+    // XLOOKUP(lookup_value, lookup_array, return_array, [if_not_found], [match_mode], [search_mode])
+    if (args.size() < 3 || args[0].empty() || args[1].empty() || args[2].empty()) return errValue();
+
+    const auto& lookupVal = args[0][0];
+    const auto& lookupArr = args[1];
+    const auto& returnArr = args[2];
+
+    int matchMode  = (args.size() > 4 && !args[4].empty()) ? static_cast<int>(toDouble(args[4][0])) : 0;
+    int searchMode = (args.size() > 5 && !args[5].empty()) ? static_cast<int>(toDouble(args[5][0])) : 1;
+
+    int bestMatchIdx = -1;
+
+    auto compareValues = [matchMode](const XLCellValue& key, const XLCellValue& val) -> double {
+        if (isNumeric(key) && isNumeric(val)) {
+            return toDouble(key) - toDouble(val);
+        } else {
+            // For exact matches, if types mismatch entirely, don't loosely convert them unless they're both strings
+            if (matchMode == 0 && (isNumeric(key) != isNumeric(val))) {
+                return std::numeric_limits<double>::infinity(); // Force failure
+            }
+
+            std::string sKey = toString(key);
+            std::string sVal = toString(val);
+            std::transform(sKey.begin(), sKey.end(), sKey.begin(), ::tolower);
+            std::transform(sVal.begin(), sVal.end(), sVal.begin(), ::tolower);
+            int cmp = sKey.compare(sVal);
+            return cmp < 0 ? -1.0 : (cmp > 0 ? 1.0 : 0.0);
+        }
+    };
+
+    if (searchMode == 2 || searchMode == -2) {
+        // Binary search (2 = ascending, -2 = descending)
+        int low = 0;
+        int high = static_cast<int>(lookupArr.size()) - 1;
+
+        while (low <= high) {
+            int mid = low + (high - low) / 2;
+            const auto& key = lookupArr[static_cast<std::size_t>(mid)];
+            double diff = compareValues(key, lookupVal);
+
+            if (diff == 0.0) {
+                bestMatchIdx = mid;
+                break; // Exact match found
+            }
+
+            if (searchMode == 2) { // Ascending array
+                if (diff < 0) { // key < lookupVal
+                    if (matchMode == -1) bestMatchIdx = mid; // Candidate for exact or next smaller
+                    low = mid + 1;
+                } else { // key > lookupVal
+                    if (matchMode == 1) bestMatchIdx = mid;  // Candidate for exact or next larger
+                    high = mid - 1;
+                }
+            } else { // Descending array (searchMode == -2)
+                if (diff < 0) { // key < lookupVal
+                    if (matchMode == -1) bestMatchIdx = mid; // Candidate for exact or next smaller
+                    high = mid - 1; // smaller values are to the left in descending
+                } else { // key > lookupVal
+                    if (matchMode == 1) bestMatchIdx = mid;  // Candidate for exact or next larger
+                    low = mid + 1; // larger values are to the left, so smaller-than-current are right
+                }
+            }
+        }
+    } else {
+        // Linear search (1 = first-to-last, -1 = last-to-first)
+        int startIdx = (searchMode == -1) ? static_cast<int>(lookupArr.size()) - 1 : 0;
+        int endIdx   = (searchMode == -1) ? -1 : static_cast<int>(lookupArr.size());
+        int step     = (searchMode == -1) ? -1 : 1;
+
+        double bestDiff = std::numeric_limits<double>::infinity();
+
+        for (int i = startIdx; i != endIdx; i += step) {
+            const auto& key = lookupArr[static_cast<std::size_t>(i)];
+
+            if (matchMode == 0) { // Exact match
+                if (compareValues(key, lookupVal) == 0.0) {
+                    bestMatchIdx = i;
+                    break;
+                }
+            } else if (matchMode == -1) { // Exact match or next smaller item
+                double diff = compareValues(lookupVal, key); // lookupVal - key
+                if (diff == 0.0) {
+                    bestMatchIdx = i;
+                    break;
+                } else if (diff > 0 && diff < bestDiff) {
+                    bestDiff     = diff;
+                    bestMatchIdx = i;
+                }
+            } else if (matchMode == 1) { // Exact match or next larger item
+                double diff = compareValues(key, lookupVal); // key - lookupVal
+                if (diff == 0.0) {
+                    bestMatchIdx = i;
+                    break;
+                } else if (diff > 0 && diff < bestDiff) {
+                    bestDiff     = diff;
+                    bestMatchIdx = i;
+                }
+            }
+            // wildcard match_mode (2) is not fully implemented here yet
+        }
+    }
+
+    if (bestMatchIdx != -1) {
+        if (static_cast<std::size_t>(bestMatchIdx) < returnArr.size()) {
+            return returnArr[static_cast<std::size_t>(bestMatchIdx)];
+        }
+        return errRef(); // Return array smaller than lookup array
+    }
+
+    // Not found
+    if (args.size() > 3 && !args[3].empty()) {
+        return args[3][0];
+    }
+    return errNA();
+}
+
+XLCellValue XLFormulaEngine::fnIndex(const std::vector<XLFormulaArg>& args)
 {
     // INDEX(array, row_num, [col_num])
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1065,7 +1252,7 @@ XLCellValue XLFormulaEngine::fnIndex(const std::vector<std::vector<XLCellValue>>
     return arr[idx];
 }
 
-XLCellValue XLFormulaEngine::fnMatch(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnMatch(const std::vector<XLFormulaArg>& args)
 {
     // MATCH(lookup_value, lookup_array, [match_type])
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1102,20 +1289,24 @@ XLCellValue XLFormulaEngine::fnMatch(const std::vector<std::vector<XLCellValue>>
 // Built-in: Text
 // =============================================================================
 
-XLCellValue XLFormulaEngine::fnConcatenate(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnConcatenate(const std::vector<XLFormulaArg>& args)
 {
     std::string result;
-    for (const auto& v : flatten(args)) result += toString(v);
+    for (const auto& arg : args) {
+        for (const auto& v : arg) {
+            result += toString(v);
+        }
+    }
     return XLCellValue(result);
 }
 
-XLCellValue XLFormulaEngine::fnLen(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnLen(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     return XLCellValue(static_cast<int64_t>(toString(args[0][0]).size()));
 }
 
-XLCellValue XLFormulaEngine::fnLeft(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnLeft(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     std::string s = toString(args[0][0]);
@@ -1124,7 +1315,7 @@ XLCellValue XLFormulaEngine::fnLeft(const std::vector<std::vector<XLCellValue>>&
     return XLCellValue(s.substr(0, static_cast<std::size_t>(n)));
 }
 
-XLCellValue XLFormulaEngine::fnRight(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnRight(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     std::string s = toString(args[0][0]);
@@ -1136,7 +1327,7 @@ XLCellValue XLFormulaEngine::fnRight(const std::vector<std::vector<XLCellValue>>
     return XLCellValue(s.substr(static_cast<std::size_t>(start)));
 }
 
-XLCellValue XLFormulaEngine::fnMid(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnMid(const std::vector<XLFormulaArg>& args)
 {
     if (args.size() < 3 || args[0].empty() || args[1].empty() || args[2].empty()) return errValue();
     std::string s = toString(args[0][0]);
@@ -1147,7 +1338,7 @@ XLCellValue XLFormulaEngine::fnMid(const std::vector<std::vector<XLCellValue>>& 
                                  static_cast<std::size_t>(count)));
 }
 
-XLCellValue XLFormulaEngine::fnUpper(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnUpper(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     std::string s = toString(args[0][0]);
@@ -1155,7 +1346,7 @@ XLCellValue XLFormulaEngine::fnUpper(const std::vector<std::vector<XLCellValue>>
     return XLCellValue(s);
 }
 
-XLCellValue XLFormulaEngine::fnLower(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnLower(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     std::string s = toString(args[0][0]);
@@ -1163,13 +1354,13 @@ XLCellValue XLFormulaEngine::fnLower(const std::vector<std::vector<XLCellValue>>
     return XLCellValue(s);
 }
 
-XLCellValue XLFormulaEngine::fnTrim(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnTrim(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     return XLCellValue(strTrim(toString(args[0][0])));
 }
 
-XLCellValue XLFormulaEngine::fnText(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnText(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     // Simplified: just convert to string (format string ignored)
@@ -1180,25 +1371,25 @@ XLCellValue XLFormulaEngine::fnText(const std::vector<std::vector<XLCellValue>>&
 // Built-in: Info
 // =============================================================================
 
-XLCellValue XLFormulaEngine::fnIsnumber(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnIsnumber(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return XLCellValue(false);
     return XLCellValue(isNumeric(args[0][0]));
 }
 
-XLCellValue XLFormulaEngine::fnIsblank(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnIsblank(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return XLCellValue(true);
     return XLCellValue(isEmpty(args[0][0]));
 }
 
-XLCellValue XLFormulaEngine::fnIserror(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnIserror(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return XLCellValue(false);
     return XLCellValue(isError(args[0][0]));
 }
 
-XLCellValue XLFormulaEngine::fnIstext(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnIstext(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return XLCellValue(false);
     return XLCellValue(args[0][0].type() == XLValueType::String);
@@ -1312,17 +1503,17 @@ namespace
     }
 }   // anonymous namespace (date/criteria helpers)
 
-XLCellValue XLFormulaEngine::fnToday(const std::vector<std::vector<XLCellValue>>&)
+XLCellValue XLFormulaEngine::fnToday(const std::vector<XLFormulaArg>&)
 {
     return XLCellValue(XLDateTime::now().serial() - std::fmod(XLDateTime::now().serial(), 1.0));
 }
 
-XLCellValue XLFormulaEngine::fnNow(const std::vector<std::vector<XLCellValue>>&)
+XLCellValue XLFormulaEngine::fnNow(const std::vector<XLFormulaArg>&)
 {
     return XLCellValue(XLDateTime::now().serial());
 }
 
-XLCellValue XLFormulaEngine::fnDate(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnDate(const std::vector<XLFormulaArg>& args)
 {
     if (args.size() < 3 || args[0].empty() || args[1].empty() || args[2].empty()) return errValue();
     std::tm t{};
@@ -1332,25 +1523,25 @@ XLCellValue XLFormulaEngine::fnDate(const std::vector<std::vector<XLCellValue>>&
     return XLCellValue(tmToSerial(t));
 }
 
-XLCellValue XLFormulaEngine::fnYear(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnYear(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty() || !isNumeric(args[0][0])) return errValue();
     return XLCellValue(static_cast<int64_t>(serialToTm(toDouble(args[0][0])).tm_year + 1900));
 }
 
-XLCellValue XLFormulaEngine::fnMonth(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnMonth(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty() || !isNumeric(args[0][0])) return errValue();
     return XLCellValue(static_cast<int64_t>(serialToTm(toDouble(args[0][0])).tm_mon + 1));
 }
 
-XLCellValue XLFormulaEngine::fnDay(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnDay(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty() || !isNumeric(args[0][0])) return errValue();
     return XLCellValue(static_cast<int64_t>(serialToTm(toDouble(args[0][0])).tm_mday));
 }
 
-XLCellValue XLFormulaEngine::fnWeekday(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnWeekday(const std::vector<XLFormulaArg>& args)
 {
     // WEEKDAY(serial, [return_type])
     // return_type 1 (default): 1=Sunday … 7=Saturday
@@ -1366,7 +1557,7 @@ XLCellValue XLFormulaEngine::fnWeekday(const std::vector<std::vector<XLCellValue
     }
 }
 
-XLCellValue XLFormulaEngine::fnEdate(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnEdate(const std::vector<XLFormulaArg>& args)
 {
     // EDATE(start_date, months) – same day, N months later
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1383,7 +1574,7 @@ XLCellValue XLFormulaEngine::fnEdate(const std::vector<std::vector<XLCellValue>>
     return XLCellValue(tmToSerial(t));
 }
 
-XLCellValue XLFormulaEngine::fnEomonth(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnEomonth(const std::vector<XLFormulaArg>& args)
 {
     // EOMONTH(start_date, months) – last day of month, N months later
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1397,7 +1588,7 @@ XLCellValue XLFormulaEngine::fnEomonth(const std::vector<std::vector<XLCellValue
     return XLCellValue(tmToSerial(t));
 }
 
-XLCellValue XLFormulaEngine::fnWorkday(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnWorkday(const std::vector<XLFormulaArg>& args)
 {
     // WORKDAY(start_date, days, [holidays])
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1422,7 +1613,7 @@ XLCellValue XLFormulaEngine::fnWorkday(const std::vector<std::vector<XLCellValue
     return XLCellValue(current);
 }
 
-XLCellValue XLFormulaEngine::fnNetworkdays(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnNetworkdays(const std::vector<XLFormulaArg>& args)
 {
     // NETWORKDAYS(start_date, end_date, [holidays])
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1451,7 +1642,7 @@ XLCellValue XLFormulaEngine::fnNetworkdays(const std::vector<std::vector<XLCellV
 // Built-in: Financial
 // =============================================================================
 
-XLCellValue XLFormulaEngine::fnPmt(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnPmt(const std::vector<XLFormulaArg>& args)
 {
     // PMT(rate, nper, pv, [fv=0], [type=0])
     // Payment = (pv*(1+r)^n*r + fv*r) / ((1+r*type)*((1+r)^n - 1))   when r≠0
@@ -1468,7 +1659,7 @@ XLCellValue XLFormulaEngine::fnPmt(const std::vector<std::vector<XLCellValue>>& 
     return XLCellValue(pmt);
 }
 
-XLCellValue XLFormulaEngine::fnFv(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnFv(const std::vector<XLFormulaArg>& args)
 {
     // FV(rate, nper, pmt, [pv=0], [type=0])
     if (args.size() < 3 || args[0].empty() || args[1].empty() || args[2].empty()) return errValue();
@@ -1484,7 +1675,7 @@ XLCellValue XLFormulaEngine::fnFv(const std::vector<std::vector<XLCellValue>>& a
     return XLCellValue(fv);
 }
 
-XLCellValue XLFormulaEngine::fnPv(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnPv(const std::vector<XLFormulaArg>& args)
 {
     // PV(rate, nper, pmt, [fv=0], [type=0])
     if (args.size() < 3 || args[0].empty() || args[1].empty() || args[2].empty()) return errValue();
@@ -1500,7 +1691,7 @@ XLCellValue XLFormulaEngine::fnPv(const std::vector<std::vector<XLCellValue>>& a
     return XLCellValue(pv);
 }
 
-XLCellValue XLFormulaEngine::fnNpv(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnNpv(const std::vector<XLFormulaArg>& args)
 {
     // NPV(rate, value1, value2, ...) – all values flattened, 1-based periods
     if (args.size() < 2 || args[0].empty()) return errValue();
@@ -1519,7 +1710,7 @@ XLCellValue XLFormulaEngine::fnNpv(const std::vector<std::vector<XLCellValue>>& 
 // Built-in: Math extended
 // =============================================================================
 
-XLCellValue XLFormulaEngine::fnSumproduct(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnSumproduct(const std::vector<XLFormulaArg>& args)
 {
     // SUMPRODUCT(array1, array2, …) – element-wise multiplication then sum
     if (args.empty()) return XLCellValue(0.0);
@@ -1535,7 +1726,7 @@ XLCellValue XLFormulaEngine::fnSumproduct(const std::vector<std::vector<XLCellVa
     return XLCellValue(total);
 }
 
-XLCellValue XLFormulaEngine::fnCeil(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnCeil(const std::vector<XLFormulaArg>& args)
 {
     // CEILING(number, significance)
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1545,7 +1736,7 @@ XLCellValue XLFormulaEngine::fnCeil(const std::vector<std::vector<XLCellValue>>&
     return XLCellValue(std::ceil(num / sig) * sig);
 }
 
-XLCellValue XLFormulaEngine::fnFloor(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnFloor(const std::vector<XLFormulaArg>& args)
 {
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
     double num = toDouble(args[0][0]);
@@ -1554,7 +1745,7 @@ XLCellValue XLFormulaEngine::fnFloor(const std::vector<std::vector<XLCellValue>>
     return XLCellValue(std::floor(num / sig) * sig);
 }
 
-XLCellValue XLFormulaEngine::fnLog(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnLog(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     double num  = toDouble(args[0][0]);
@@ -1563,7 +1754,7 @@ XLCellValue XLFormulaEngine::fnLog(const std::vector<std::vector<XLCellValue>>& 
     return XLCellValue(std::log(num) / std::log(base));
 }
 
-XLCellValue XLFormulaEngine::fnLog10(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnLog10(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     double num = toDouble(args[0][0]);
@@ -1571,13 +1762,13 @@ XLCellValue XLFormulaEngine::fnLog10(const std::vector<std::vector<XLCellValue>>
     return XLCellValue(std::log10(num));
 }
 
-XLCellValue XLFormulaEngine::fnExp(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnExp(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     return XLCellValue(std::exp(toDouble(args[0][0])));
 }
 
-XLCellValue XLFormulaEngine::fnSign(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnSign(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     double v = toDouble(args[0][0]);
@@ -1591,7 +1782,7 @@ XLCellValue XLFormulaEngine::fnSign(const std::vector<std::vector<XLCellValue>>&
 // Built-in: Text extended
 // =============================================================================
 
-XLCellValue XLFormulaEngine::fnFind(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnFind(const std::vector<XLFormulaArg>& args)
 {
     // FIND(find_text, within_text, [start_num=1]) – case-sensitive, no wildcards
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1604,7 +1795,7 @@ XLCellValue XLFormulaEngine::fnFind(const std::vector<std::vector<XLCellValue>>&
     return XLCellValue(static_cast<int64_t>(pos + 1));
 }
 
-XLCellValue XLFormulaEngine::fnSearch(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnSearch(const std::vector<XLFormulaArg>& args)
 {
     // SEARCH(find_text, within_text, [start_num=1]) – case-insensitive
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1619,7 +1810,7 @@ XLCellValue XLFormulaEngine::fnSearch(const std::vector<std::vector<XLCellValue>
     return XLCellValue(static_cast<int64_t>(pos + 1));
 }
 
-XLCellValue XLFormulaEngine::fnSubstitute(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnSubstitute(const std::vector<XLFormulaArg>& args)
 {
     // SUBSTITUTE(text, old_text, new_text, [instance_num])
     if (args.size() < 3 || args[0].empty() || args[1].empty() || args[2].empty()) return errValue();
@@ -1645,7 +1836,7 @@ XLCellValue XLFormulaEngine::fnSubstitute(const std::vector<std::vector<XLCellVa
     return XLCellValue(result);
 }
 
-XLCellValue XLFormulaEngine::fnReplace(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnReplace(const std::vector<XLFormulaArg>& args)
 {
     // REPLACE(old_text, start_num, num_chars, new_text)
     if (args.size() < 4 || args[0].empty() || args[1].empty() || args[2].empty() || args[3].empty()) return errValue();
@@ -1661,7 +1852,7 @@ XLCellValue XLFormulaEngine::fnReplace(const std::vector<std::vector<XLCellValue
     return XLCellValue(s);
 }
 
-XLCellValue XLFormulaEngine::fnRept(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnRept(const std::vector<XLFormulaArg>& args)
 {
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
     std::string s = toString(args[0][0]);
@@ -1673,21 +1864,21 @@ XLCellValue XLFormulaEngine::fnRept(const std::vector<std::vector<XLCellValue>>&
     return XLCellValue(result);
 }
 
-XLCellValue XLFormulaEngine::fnExact(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnExact(const std::vector<XLFormulaArg>& args)
 {
     // EXACT(text1, text2) – case-sensitive comparison
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
     return XLCellValue(toString(args[0][0]) == toString(args[1][0]));
 }
 
-XLCellValue XLFormulaEngine::fnT(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnT(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return XLCellValue(std::string(""));
     const auto& v = args[0][0];
     return v.type() == XLValueType::String ? v : XLCellValue(std::string(""));
 }
 
-XLCellValue XLFormulaEngine::fnValue(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnValue(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return errValue();
     if (isNumeric(args[0][0])) return XLCellValue(toDouble(args[0][0]));
@@ -1700,7 +1891,7 @@ XLCellValue XLFormulaEngine::fnValue(const std::vector<std::vector<XLCellValue>>
     return errValue();
 }
 
-XLCellValue XLFormulaEngine::fnTextjoin(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnTextjoin(const std::vector<XLFormulaArg>& args)
 {
     // TEXTJOIN(delimiter, ignore_empty, text1, text2, ...)
     if (args.size() < 3 || args[0].empty() || args[1].empty()) return errValue();
@@ -1720,7 +1911,7 @@ XLCellValue XLFormulaEngine::fnTextjoin(const std::vector<std::vector<XLCellValu
     return XLCellValue(result);
 }
 
-XLCellValue XLFormulaEngine::fnClean(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnClean(const std::vector<XLFormulaArg>& args)
 {
     // CLEAN – remove non-printable characters (< 0x20)
     if (args.empty() || args[0].empty()) return errValue();
@@ -1730,7 +1921,7 @@ XLCellValue XLFormulaEngine::fnClean(const std::vector<std::vector<XLCellValue>>
     return XLCellValue(s);
 }
 
-XLCellValue XLFormulaEngine::fnProper(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnProper(const std::vector<XLFormulaArg>& args)
 {
     // PROPER – Title Case
     if (args.empty() || args[0].empty()) return errValue();
@@ -1748,7 +1939,7 @@ XLCellValue XLFormulaEngine::fnProper(const std::vector<std::vector<XLCellValue>
 // Built-in: Statistical / Conditional
 // =============================================================================
 
-XLCellValue XLFormulaEngine::fnSumif(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnSumif(const std::vector<XLFormulaArg>& args)
 {
     // SUMIF(range, criteria, [sum_range])
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1765,7 +1956,7 @@ XLCellValue XLFormulaEngine::fnSumif(const std::vector<std::vector<XLCellValue>>
     return XLCellValue(total);
 }
 
-XLCellValue XLFormulaEngine::fnCountif(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnCountif(const std::vector<XLFormulaArg>& args)
 {
     // COUNTIF(range, criteria)
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1776,7 +1967,7 @@ XLCellValue XLFormulaEngine::fnCountif(const std::vector<std::vector<XLCellValue
     return XLCellValue(cnt);
 }
 
-XLCellValue XLFormulaEngine::fnSumifs(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnSumifs(const std::vector<XLFormulaArg>& args)
 {
     // SUMIFS(sum_range, crit_range1, crit1, crit_range2, crit2, ...)
     if (args.size() < 3 || args[0].empty()) return errValue();
@@ -1794,7 +1985,7 @@ XLCellValue XLFormulaEngine::fnSumifs(const std::vector<std::vector<XLCellValue>
     return XLCellValue(total);
 }
 
-XLCellValue XLFormulaEngine::fnCountifs(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnCountifs(const std::vector<XLFormulaArg>& args)
 {
     // COUNTIFS(crit_range1, crit1, crit_range2, crit2, ...)
     if (args.size() < 2) return errValue();
@@ -1812,7 +2003,7 @@ XLCellValue XLFormulaEngine::fnCountifs(const std::vector<std::vector<XLCellValu
     return XLCellValue(cnt);
 }
 
-XLCellValue XLFormulaEngine::fnAverageif(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnAverageif(const std::vector<XLFormulaArg>& args)
 {
     // AVERAGEIF(range, criteria, [average_range])
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1833,7 +2024,7 @@ XLCellValue XLFormulaEngine::fnAverageif(const std::vector<std::vector<XLCellVal
     return XLCellValue(total / static_cast<double>(cnt));
 }
 
-XLCellValue XLFormulaEngine::fnRank(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnRank(const std::vector<XLFormulaArg>& args)
 {
     // RANK(number, ref, [order=0])
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1848,7 +2039,7 @@ XLCellValue XLFormulaEngine::fnRank(const std::vector<std::vector<XLCellValue>>&
     return XLCellValue(rank);
 }
 
-XLCellValue XLFormulaEngine::fnLarge(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnLarge(const std::vector<XLFormulaArg>& args)
 {
     // LARGE(array, k)
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1859,7 +2050,7 @@ XLCellValue XLFormulaEngine::fnLarge(const std::vector<std::vector<XLCellValue>>
     return XLCellValue(nums[static_cast<std::size_t>(static_cast<std::ptrdiff_t>(nums.size()) - k)]);
 }
 
-XLCellValue XLFormulaEngine::fnSmall(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnSmall(const std::vector<XLFormulaArg>& args)
 {
     // SMALL(array, k)
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
@@ -1870,10 +2061,10 @@ XLCellValue XLFormulaEngine::fnSmall(const std::vector<std::vector<XLCellValue>>
     return XLCellValue(nums[static_cast<std::size_t>(k - 1)]);
 }
 
-XLCellValue XLFormulaEngine::fnStdev(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnStdev(const std::vector<XLFormulaArg>& args)
 {
     // STDEV (sample) – two-pass for numerical stability
-    auto nums = numerics(flatten(args));
+    auto nums = numerics(args);
     if (nums.size() < 2) return errDiv0();
     double mean = std::accumulate(nums.begin(), nums.end(), 0.0) / static_cast<double>(nums.size());
     double sq   = 0.0;
@@ -1881,10 +2072,10 @@ XLCellValue XLFormulaEngine::fnStdev(const std::vector<std::vector<XLCellValue>>
     return XLCellValue(std::sqrt(sq / static_cast<double>(nums.size() - 1)));
 }
 
-XLCellValue XLFormulaEngine::fnVar(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnVar(const std::vector<XLFormulaArg>& args)
 {
     // VAR (sample variance)
-    auto nums = numerics(flatten(args));
+    auto nums = numerics(args);
     if (nums.size() < 2) return errDiv0();
     double mean = std::accumulate(nums.begin(), nums.end(), 0.0) / static_cast<double>(nums.size());
     double sq   = 0.0;
@@ -1892,9 +2083,9 @@ XLCellValue XLFormulaEngine::fnVar(const std::vector<std::vector<XLCellValue>>& 
     return XLCellValue(sq / static_cast<double>(nums.size() - 1));
 }
 
-XLCellValue XLFormulaEngine::fnMedian(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnMedian(const std::vector<XLFormulaArg>& args)
 {
-    auto nums = numerics(flatten(args));
+    auto nums = numerics(args);
     if (nums.empty()) return errNum();
     std::sort(nums.begin(), nums.end());
     std::size_t n = nums.size();
@@ -1902,11 +2093,14 @@ XLCellValue XLFormulaEngine::fnMedian(const std::vector<std::vector<XLCellValue>
     return XLCellValue((nums[n / 2 - 1] + nums[n / 2]) / 2.0);
 }
 
-XLCellValue XLFormulaEngine::fnCountblank(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnCountblank(const std::vector<XLFormulaArg>& args)
 {
     int64_t cnt = 0;
-    for (const auto& v : flatten(args))
-        if (isEmpty(v) || (v.type() == XLValueType::String && v.get<std::string>().empty())) ++cnt;
+    for (const auto& arg : args) {
+        for (const auto& v : arg) {
+            if (isEmpty(v) || (v.type() == XLValueType::String && v.get<std::string>().empty())) ++cnt;
+        }
+    }
     return XLCellValue(cnt);
 }
 
@@ -1914,7 +2108,7 @@ XLCellValue XLFormulaEngine::fnCountblank(const std::vector<std::vector<XLCellVa
 // Built-in: Info extended
 // =============================================================================
 
-XLCellValue XLFormulaEngine::fnIsna(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnIsna(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return XLCellValue(false);
     const auto& v = args[0][0];
@@ -1922,7 +2116,7 @@ XLCellValue XLFormulaEngine::fnIsna(const std::vector<std::vector<XLCellValue>>&
     return XLCellValue(v.get<std::string>() == "#N/A");
 }
 
-XLCellValue XLFormulaEngine::fnIfna(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnIfna(const std::vector<XLFormulaArg>& args)
 {
     if (args.size() < 2 || args[0].empty() || args[1].empty()) return errValue();
     const auto& v = args[0][0];
@@ -1930,7 +2124,7 @@ XLCellValue XLFormulaEngine::fnIfna(const std::vector<std::vector<XLCellValue>>&
     return v;
 }
 
-XLCellValue XLFormulaEngine::fnIslogical(const std::vector<std::vector<XLCellValue>>& args)
+XLCellValue XLFormulaEngine::fnIslogical(const std::vector<XLFormulaArg>& args)
 {
     if (args.empty() || args[0].empty()) return XLCellValue(false);
     return XLCellValue(args[0][0].type() == XLValueType::Boolean);

@@ -148,6 +148,9 @@ TEST_CASE("XLFormulaEngine – Logical functions", "[XLFormulaEngine]")
 
     SECTION("IF true")   { REQUIRE(eng.evaluate("=IF(1>0,\"yes\",\"no\")").get<std::string>() == "yes"); }
     SECTION("IF false")  { REQUIRE(eng.evaluate("=IF(0,\"yes\",\"no\")").get<std::string>() == "no"); }
+    SECTION("IFS")       { REQUIRE(eng.evaluate("=IFS(1=0,\"no\",1=1,\"yes\")").get<std::string>() == "yes"); }
+    SECTION("SWITCH")    { REQUIRE(eng.evaluate("=SWITCH(2,1,\"one\",2,\"two\",\"other\")").get<std::string>() == "two"); }
+    SECTION("SWITCH default") { REQUIRE(eng.evaluate("=SWITCH(3,1,\"one\",2,\"two\",\"other\")").get<std::string>() == "other"); }
     SECTION("AND true")  { REQUIRE(eng.evaluate("=AND(1,1,1)").get<bool>() == true); }
     SECTION("AND false") { REQUIRE(eng.evaluate("=AND(1,0,1)").get<bool>() == false); }
     SECTION("OR true")   { REQUIRE(eng.evaluate("=OR(0,0,1)").get<bool>() == true); }
@@ -215,6 +218,90 @@ TEST_CASE("XLFormulaEngine – VLOOKUP", "[XLFormulaEngine]")
     }
     SECTION("VLOOKUP not found") {
         REQUIRE(eng.evaluate("=VLOOKUP(99,A1:B3,2,0)", resolver).type() == XLValueType::Error);
+    }
+}
+
+TEST_CASE("XLFormulaEngine – XLOOKUP", "[XLFormulaEngine]")
+{
+    XLFormulaEngine eng;
+    auto resolver = makeMapResolver({
+        {"A1", XLCellValue("apple")},  {"B1", XLCellValue(10.0)},
+        {"A2", XLCellValue("banana")}, {"B2", XLCellValue(20.0)},
+        {"A3", XLCellValue("cherry")}, {"B3", XLCellValue(30.0)},
+
+        {"C1", XLCellValue(10.0)}, {"D1", XLCellValue("ten")},
+        {"C2", XLCellValue(20.0)}, {"D2", XLCellValue("twenty")},
+        {"C3", XLCellValue(30.0)}, {"D3", XLCellValue("thirty")},
+        {"C4", XLCellValue(40.0)}, {"D4", XLCellValue("forty")},
+        
+        {"E1", XLCellValue(40.0)}, {"F1", XLCellValue("forty")},
+        {"E2", XLCellValue(30.0)}, {"F2", XLCellValue("thirty")},
+        {"E3", XLCellValue(20.0)}, {"F3", XLCellValue("twenty")},
+        {"E4", XLCellValue(10.0)}, {"F4", XLCellValue("ten")},
+
+        // Edge Case 3: Case insensitivity test
+        {"G1", XLCellValue("APPLE")}, {"H1", XLCellValue(1.0)},
+        {"G2", XLCellValue("BaNaNa")}, {"H2", XLCellValue(2.0)},
+
+        // Edge case 4: Type mismatch in exact match
+        {"I1", XLCellValue(100.0)}, {"J1", XLCellValue("Numeric")},
+        {"I2", XLCellValue("100")}, {"J2", XLCellValue("String")},
+    });
+    
+    SECTION("XLOOKUP exact match") {
+        REQUIRE(eng.evaluate("=XLOOKUP(\"banana\", A1:A3, B1:B3)", resolver).get<double>() == Catch::Approx(20.0));
+    }
+    SECTION("XLOOKUP not found default") {
+        REQUIRE(eng.evaluate("=XLOOKUP(\"date\", A1:A3, B1:B3, \"Missing\")", resolver).get<std::string>() == "Missing");
+    }
+    SECTION("XLOOKUP not found no default") {
+        REQUIRE(eng.evaluate("=XLOOKUP(\"date\", A1:A3, B1:B3)", resolver).type() == XLValueType::Error);
+    }
+
+    // Binary search (search_mode 2) - Ascending array
+    SECTION("XLOOKUP binary search exact (mode 2)") {
+        REQUIRE(eng.evaluate("=XLOOKUP(30, C1:C4, D1:D4, \"Err\", 0, 2)", resolver).get<std::string>() == "thirty");
+    }
+    SECTION("XLOOKUP binary search exact-or-next-smaller (mode 2)") {
+        REQUIRE(eng.evaluate("=XLOOKUP(25, C1:C4, D1:D4, \"Err\", -1, 2)", resolver).get<std::string>() == "twenty");
+    }
+    SECTION("XLOOKUP binary search exact-or-next-larger (mode 2)") {
+        REQUIRE(eng.evaluate("=XLOOKUP(25, C1:C4, D1:D4, \"Err\", 1, 2)", resolver).get<std::string>() == "thirty");
+    }
+
+    // Binary search (search_mode -2) - Descending array
+    SECTION("XLOOKUP binary search exact (mode -2)") {
+        REQUIRE(eng.evaluate("=XLOOKUP(30, E1:E4, F1:F4, \"Err\", 0, -2)", resolver).get<std::string>() == "thirty");
+    }
+    SECTION("XLOOKUP binary search exact-or-next-smaller (mode -2)") {
+        REQUIRE(eng.evaluate("=XLOOKUP(25, E1:E4, F1:F4, \"Err\", -1, -2)", resolver).get<std::string>() == "twenty");
+    }
+    SECTION("XLOOKUP binary search exact-or-next-larger (mode -2)") {
+        REQUIRE(eng.evaluate("=XLOOKUP(25, E1:E4, F1:F4, \"Err\", 1, -2)", resolver).get<std::string>() == "thirty");
+    }
+
+    SECTION("XLOOKUP case insensitive") {
+        REQUIRE(eng.evaluate("=XLOOKUP(\"apple\", G1:G2, H1:H2)", resolver).get<double>() == Catch::Approx(1.0));
+        REQUIRE(eng.evaluate("=XLOOKUP(\"banana\", G1:G2, H1:H2)", resolver).get<double>() == Catch::Approx(2.0));
+    }
+
+    SECTION("XLOOKUP type mismatch (number vs string)") {
+        REQUIRE(eng.evaluate("=XLOOKUP(100, I1:I2, J1:J2)", resolver).get<std::string>() == "Numeric");
+        REQUIRE(eng.evaluate("=XLOOKUP(\"100\", I1:I2, J1:J2)", resolver).get<std::string>() == "String");
+    }
+
+    SECTION("XLOOKUP unequal or missing return array bounds") {
+        auto res = eng.evaluate("=XLOOKUP(\"banana\", A1:A3, B1:B1)", resolver);
+        REQUIRE(res.type() == XLValueType::Error); // Return array smaller than lookup array throws error
+    }
+    
+    SECTION("XLOOKUP match mode 1 (Next Larger) edge cases") {
+        // Next larger than 25 is 30
+        REQUIRE(eng.evaluate("=XLOOKUP(25, C1:C4, D1:D4, \"Err\", 1)", resolver).get<std::string>() == "thirty");
+        // Next larger than 45 does not exist -> return default
+        REQUIRE(eng.evaluate("=XLOOKUP(45, C1:C4, D1:D4, \"Err\", 1)", resolver).get<std::string>() == "Err");
+        // Next larger than 45 with NO default -> #N/A
+        REQUIRE(eng.evaluate("=XLOOKUP(45, C1:C4, D1:D4, , 1)", resolver).type() == XLValueType::Error);
     }
 }
 
