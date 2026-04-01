@@ -2,6 +2,7 @@
 #include <catch2/catch_all.hpp>
 #include <filesystem>
 #include <iostream>
+#include <fstream>
 
 using namespace OpenXLSX;
 
@@ -37,6 +38,19 @@ TEST_CASE("Image Insert Advanced API Tests", "[XLImageInsert]")
             if (name.find("xl/media/image") != std::string::npos && name.find(".png") != std::string::npos) { hasPng = true; }
         }
         REQUIRE(hasPng);
+        
+        // Test Image Extraction
+        auto images2 = wks2.images();
+        REQUIRE(images2.size() == 1);
+        auto imgBinary = images2[0].imageBinary();
+        REQUIRE(imgBinary.size() > 0);
+        // Save to disk to verify 
+        std::ofstream out("extracted_test.png", std::ios::binary);
+        out.write(reinterpret_cast<const char*>(imgBinary.data()), imgBinary.size());
+        out.close();
+        REQUIRE(std::filesystem::exists("extracted_test.png"));
+        REQUIRE(std::filesystem::file_size("extracted_test.png") == imgBinary.size());
+        
         doc2.close();
     }
 

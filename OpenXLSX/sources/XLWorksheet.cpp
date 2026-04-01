@@ -660,8 +660,36 @@ void XLWorksheet::autoFitColumn(uint16_t columnNumber)
         auto c = cell(r, columnNumber);
         if (c.value().type() != XLValueType::Empty) {
             std::string text = c.value().getString();
-            // Basic estimation: ~1.2 units per character for default 11pt Calibri
-            float estimatedWidth = static_cast<float>(text.length()) * 1.2f;
+            
+            // Basic estimation algorithm counting UTF-8 glyphs rather than raw bytes.
+            // CJK characters (3 bytes usually) typically render wider (approx 2.0 Excel units)
+            // ASCII characters render narrower (approx 1.1 Excel units for Calibri 11)
+            float estimatedWidth = 0.0f;
+            for (size_t i = 0; i < text.length();) {
+                unsigned char byte = text[i];
+                if ((byte & 0x80) == 0) {
+                    // ASCII
+                    estimatedWidth += 1.1f;
+                    i += 1;
+                } else if ((byte & 0xE0) == 0xC0) {
+                    // 2-byte sequence
+                    estimatedWidth += 1.5f;
+                    i += 2;
+                } else if ((byte & 0xF0) == 0xE0) {
+                    // 3-byte sequence (Typical for CJK)
+                    estimatedWidth += 2.1f;
+                    i += 3;
+                } else if ((byte & 0xF8) == 0xF0) {
+                    // 4-byte sequence (Emojis, rare symbols)
+                    estimatedWidth += 2.5f;
+                    i += 4;
+                } else {
+                    // Invalid UTF-8, just step forward
+                    estimatedWidth += 1.0f;
+                    i += 1;
+                }
+            }
+            
             if (estimatedWidth > maxWidth) { maxWidth = estimatedWidth; }
         }
     }

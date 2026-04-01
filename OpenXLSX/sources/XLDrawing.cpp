@@ -750,9 +750,9 @@ XLRelationships& XLDrawing::relationships()
     return *m_relationships;
 }
 
-XLDrawingItem::XLDrawingItem() : m_anchorNode() {}
+XLDrawingItem::XLDrawingItem() : m_anchorNode(), m_parentDoc(nullptr) {}
 
-XLDrawingItem::XLDrawingItem(const XMLNode& node) : m_anchorNode(node) {}
+XLDrawingItem::XLDrawingItem(const XMLNode& node, XLDocument* parentDoc) : m_anchorNode(node), m_parentDoc(parentDoc) {}
 
 std::string XLDrawingItem::name() const
 { return m_anchorNode.child("xdr:pic").child("xdr:nvPicPr").child("xdr:cNvPr").attribute("name").value(); }
@@ -760,12 +760,21 @@ std::string XLDrawingItem::name() const
 std::string XLDrawingItem::description() const
 { return m_anchorNode.child("xdr:pic").child("xdr:nvPicPr").child("xdr:cNvPr").attribute("descr").value(); }
 
-uint32_t XLDrawingItem::row() const { return m_anchorNode.child("xdr:from").child("xdr:row").text().as_uint(); }
+uint32_t XLDrawingItem::row() const { 
+    if (!m_anchorNode.child("xdr:from").empty()) { return m_anchorNode.child("xdr:from").child("xdr:row").text().as_uint(); }
+    if (!m_anchorNode.child("xdr:row").empty()) { return m_anchorNode.child("xdr:row").text().as_uint(); }
+    return 0;
+}
 
-uint32_t XLDrawingItem::col() const { return m_anchorNode.child("xdr:from").child("xdr:col").text().as_uint(); }
+uint32_t XLDrawingItem::col() const { 
+    if (!m_anchorNode.child("xdr:from").empty()) { return m_anchorNode.child("xdr:from").child("xdr:col").text().as_uint(); }
+    if (!m_anchorNode.child("xdr:col").empty()) { return m_anchorNode.child("xdr:col").text().as_uint(); }
+    return 0;
+}
 
 uint32_t XLDrawingItem::width() const
 {
+    if (m_anchorNode.child("xdr:ext").empty()) return 0;
     uint64_t         emus = 0;
     std::string_view str  = m_anchorNode.child("xdr:ext").attribute("cx").value();
     std::from_chars(str.data(), str.data() + str.size(), emus);
@@ -774,6 +783,7 @@ uint32_t XLDrawingItem::width() const
 
 uint32_t XLDrawingItem::height() const
 {
+    if (m_anchorNode.child("xdr:ext").empty()) return 0;
     uint64_t         emus = 0;
     std::string_view str  = m_anchorNode.child("xdr:ext").attribute("cy").value();
     std::from_chars(str.data(), str.data() + str.size(), emus);
@@ -782,6 +792,49 @@ uint32_t XLDrawingItem::height() const
 
 std::string XLDrawingItem::relationshipId() const
 { return m_anchorNode.child("xdr:pic").child("xdr:blipFill").child("a:blip").attribute("r:embed").value(); }
+
+std::vector<uint8_t> XLDrawingItem::imageBinary() const
+{
+    std::vector<uint8_t> buffer;
+    if (!m_parentDoc) return buffer;
+    
+    std::string relId = relationshipId();
+    if (relId.empty()) return buffer;
+
+    std::string targetPath;
+    for (const auto& entry : m_parentDoc->archive().entryNames()) {
+        if (entry.find("_rels") != std::string::npos && entry.find("drawing") != std::string::npos) {
+            std::string relsContent = m_parentDoc->archive().getEntry(entry);
+            if (relsContent.find(relId) != std::string::npos) {
+                pugi::xml_document relsDoc;
+                relsDoc.load_string(relsContent.c_str());
+                for (const auto& rel : relsDoc.document_element().children("Relationship")) {
+                    if (std::string(rel.attribute("Id").value()) == relId) {
+                        targetPath = rel.attribute("Target").value();
+                        break;
+                    }
+                }
+            }
+        }
+        if (!targetPath.empty()) break;
+    }
+
+    if (targetPath.empty()) return buffer;
+
+    if (targetPath.find("../") == 0) {
+        targetPath = "xl/" + targetPath.substr(3);
+    } else if (targetPath.find("/") == 0) {
+        targetPath = targetPath.substr(1);
+    } else {
+        targetPath = "xl/drawings/" + targetPath;
+    }
+
+    if (!m_parentDoc->archive().hasEntry(targetPath)) return buffer;
+
+    std::string binData = m_parentDoc->archive().getEntry(targetPath);
+    buffer.assign(binData.begin(), binData.end());
+    return buffer;
+}
 
 uint32_t XLDrawing::imageCount() const
 {
@@ -802,7 +855,7 @@ XLDrawingItem XLDrawing::image(uint32_t index) const
         std::string nodeName = child.name();
         if (nodeName == "xdr:oneCellAnchor" or nodeName == "xdr:twoCellAnchor" or nodeName == "xdr:absoluteAnchor") {
             if (!child.child("xdr:pic").empty()) {
-                if (count == index) { return XLDrawingItem(child); }
+                if (count == index) { return XLDrawingItem(child, const_cast<XLDocument*>(&parentDoc())); }
                 count++;
             }
         }

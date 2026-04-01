@@ -1,6 +1,8 @@
 #ifndef OPENXLSX_XLCONSTANTS_HPP
 #define OPENXLSX_XLCONSTANTS_HPP
 
+#include <cstdint>
+
 namespace OpenXLSX
 {
     inline constexpr uint16_t MAX_COLS = 16'384;

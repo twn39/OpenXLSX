@@ -302,7 +302,7 @@ namespace OpenXLSX
     {
     public:
         XLDrawingItem();
-        explicit XLDrawingItem(const XMLNode& node);
+        explicit XLDrawingItem(const XMLNode& node, XLDocument* parentDoc = nullptr);
         XLDrawingItem(const XLDrawingItem& other)                = default;
         XLDrawingItem(XLDrawingItem&& other) noexcept            = default;
         ~XLDrawingItem()                                         = default;
@@ -316,9 +316,16 @@ namespace OpenXLSX
         uint32_t    width() const;     // in pixels (converted from EMUs)
         uint32_t    height() const;    // in pixels (converted from EMUs)
         std::string relationshipId() const;
+        
+        /**
+         * @brief Extracts the raw binary data of the image from the Excel zip archive.
+         * @return A byte vector containing the raw image (e.g., PNG, JPEG). Returns empty if the parent document is null.
+         */
+        std::vector<uint8_t> imageBinary() const;
 
     private:
         mutable XMLNode m_anchorNode;
+        XLDocument*     m_parentDoc{nullptr};
     };
 
     /**
