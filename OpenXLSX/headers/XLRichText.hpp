@@ -22,29 +22,29 @@ namespace OpenXLSX
         explicit XLRichTextRun(const std::string& text) : m_text(text) {}
 
         const std::string& text() const { return m_text; }
-        void               setText(const std::string& text) { m_text = text; }
+        XLRichTextRun&     setText(const std::string& text) { m_text = text; return *this; }
 
         // Font properties
         std::optional<std::string> fontName() const { return m_fontName; }
-        void                       setFontName(const std::string& name) { m_fontName = name; }
+        XLRichTextRun&             setFontName(const std::string& name) { m_fontName = name; return *this; }
 
         std::optional<size_t> fontSize() const { return m_fontSize; }
-        void                  setFontSize(size_t size) { m_fontSize = size; }
+        XLRichTextRun&        setFontSize(size_t size) { m_fontSize = size; return *this; }
 
         std::optional<XLColor> fontColor() const { return m_fontColor; }
-        void                   setFontColor(const XLColor& color) { m_fontColor = color; }
+        XLRichTextRun&         setFontColor(const XLColor& color) { m_fontColor = color; return *this; }
 
         std::optional<bool> bold() const { return m_bold; }
-        void                setBold(bool bold) { m_bold = bold; }
+        XLRichTextRun&      setBold(bool bold = true) { m_bold = bold; return *this; }
 
         std::optional<bool> italic() const { return m_italic; }
-        void                setItalic(bool italic) { m_italic = italic; }
+        XLRichTextRun&      setItalic(bool italic = true) { m_italic = italic; return *this; }
 
         std::optional<bool> underline() const { return m_underline; }
-        void                setUnderline(bool underline) { m_underline = underline; }
+        XLRichTextRun&      setUnderline(bool underline = true) { m_underline = underline; return *this; }
 
         std::optional<bool> strikethrough() const { return m_strikethrough; }
-        void                setStrikethrough(bool strikethrough) { m_strikethrough = strikethrough; }
+        XLRichTextRun&      setStrikethrough(bool strikethrough = true) { m_strikethrough = strikethrough; return *this; }
 
     private:
         std::string                m_text;
@@ -66,7 +66,8 @@ namespace OpenXLSX
         XLRichText() = default;
         explicit XLRichText(const std::string& plainText) { m_runs.emplace_back(plainText); }
 
-        void                              addRun(const XLRichTextRun& run) { m_runs.push_back(run); }
+        XLRichText&                       addRun(const XLRichTextRun& run) { m_runs.push_back(run); return *this; }
+        XLRichTextRun&                    addRun(const std::string& text) { m_runs.emplace_back(text); return m_runs.back(); }
         const std::vector<XLRichTextRun>& runs() const { return m_runs; }
         std::vector<XLRichTextRun>&       runs() { return m_runs; }
 
