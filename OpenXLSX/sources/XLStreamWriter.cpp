@@ -103,7 +103,8 @@ namespace OpenXLSX {
     //  only when the buffer reaches kFlushThreshold.  This reduces the number
     //  of fstream write() syscalls dramatically vs. one write per cell.
     // ─────────────────────────────────────────────────────────────────────────
-    void XLStreamWriter::appendRow(const std::vector<XLCellValue>& values)
+    template<typename T>
+    void XLStreamWriter::appendRowImpl(const std::vector<T>& items)
     {
         if (!isStreamActive()) throw XLInternalError("Stream writer is not active");
 
@@ -112,8 +113,18 @@ namespace OpenXLSX {
         m_writeBuffer += "\">";
 
         uint16_t colIdx = 1;
-        for (const auto& val : values) {
-            if (val.type() != XLValueType::Empty) {
+        for (const auto& item : items) {
+            const XLCellValue* valPtr = nullptr;
+            std::optional<XLStyleIndex> styleIdx = std::nullopt;
+
+            if constexpr (std::is_same_v<T, XLCellValue>) {
+                valPtr = &item;
+            } else {
+                valPtr = &item.value;
+                styleIdx = item.styleIndex;
+            }
+
+            if (valPtr->type() != XLValueType::Empty) {
                 const std::string colStr = columnToString(colIdx);
 
                 m_writeBuffer += "<c r=\"";
@@ -121,34 +132,40 @@ namespace OpenXLSX {
                 m_writeBuffer += std::to_string(m_currentRow);
                 m_writeBuffer += '"';
 
-                switch (val.type()) {
+                if (styleIdx.has_value() && styleIdx.value() != XLDefaultCellFormat && styleIdx.value() != XLInvalidStyleIndex) {
+                    m_writeBuffer += " s=\"";
+                    m_writeBuffer += std::to_string(styleIdx.value());
+                    m_writeBuffer += '"';
+                }
+
+                switch (valPtr->type()) {
                     case XLValueType::String:
                         m_writeBuffer += R"( t="inlineStr"><is><t xml:space="preserve">)";
-                        appendEscaped(m_writeBuffer, val.get<std::string>());
+                        appendEscaped(m_writeBuffer, valPtr->get<std::string>());
                         m_writeBuffer += "</t></is></c>";
                         break;
 
                     case XLValueType::Boolean:
                         m_writeBuffer += R"( t="b"><v>)";
-                        m_writeBuffer += (val.get<bool>() ? '1' : '0');
+                        m_writeBuffer += (valPtr->get<bool>() ? '1' : '0');
                         m_writeBuffer += "</v></c>";
                         break;
 
                     case XLValueType::Integer:
                         m_writeBuffer += R"( t="n"><v>)";
-                        m_writeBuffer += std::to_string(val.get<int64_t>());
+                        m_writeBuffer += std::to_string(valPtr->get<int64_t>());
                         m_writeBuffer += "</v></c>";
                         break;
 
                     case XLValueType::Float:
                         m_writeBuffer += R"( t="n"><v>)";
-                        m_writeBuffer += XLCellValue(val).getString();
+                        m_writeBuffer += XLCellValue(*valPtr).getString();
                         m_writeBuffer += "</v></c>";
                         break;
 
                     default:
                         m_writeBuffer += "><v>";
-                        appendEscaped(m_writeBuffer, XLCellValue(val).getString());
+                        appendEscaped(m_writeBuffer, XLCellValue(*valPtr).getString());
                         m_writeBuffer += "</v></c>";
                         break;
                 }
@@ -160,6 +177,16 @@ namespace OpenXLSX {
         ++m_currentRow;
 
         if (m_writeBuffer.size() >= kFlushThreshold) flushWriteBuffer();
+    }
+
+    void XLStreamWriter::appendRow(const std::vector<XLCellValue>& values)
+    {
+        appendRowImpl(values);
+    }
+
+    void XLStreamWriter::appendRow(const std::vector<XLStreamCell>& cells)
+    {
+        appendRowImpl(cells);
     }
 
     void XLStreamWriter::close()
