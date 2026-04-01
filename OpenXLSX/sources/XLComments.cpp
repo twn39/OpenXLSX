@@ -342,7 +342,7 @@ void XLComments::setupVmlShape(const std::string& cellRef,
         try {
             cShape = shape(cellRef);    // for existing comments, try to access existing shape
         }
-        catch (XLException const& e) {
+        catch (XLException const&) {
             newShapeNeeded = true;    // not found: create fresh
         }
     }

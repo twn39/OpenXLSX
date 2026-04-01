@@ -107,8 +107,8 @@ namespace OpenXLSX
                                "\"/>"
                                "<tableColumns count=\"" +
                                std::to_string(colCount) + "\">";
-        for (uint32_t i = 0; i < colCount; ++i) {
-            std::string h = m_worksheet->cell(start.row(), start.column() + i).value().getString();
+        for (uint16_t i = 0; i < colCount; ++i) {
+            std::string h = m_worksheet->cell(start.row(), static_cast<uint16_t>(start.column() + i)).value().getString();
             if (h.empty()) h = "Column" + std::to_string(i + 1);
             tableXml += "<tableColumn id=\"" + std::to_string(i + 1) + "\" name=\"" + h + "\"/>";
         }
