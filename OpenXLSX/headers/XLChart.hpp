@@ -5,6 +5,7 @@
 #include "XLConstants.hpp"
 #include "XLXmlFile.hpp"
 
+#include <optional>
 #include <string>
 #include <string_view>
 
