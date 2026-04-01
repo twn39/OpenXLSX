@@ -159,6 +159,44 @@ TEST_CASE("XLRowColInsertDelete Tests", "[XLRowColInsertDelete]")
         doc.close();
     }
 
+    SECTION("deleteRow edge cases: collapsing and destruction of mergeCells")
+    {
+        XLDocument doc;
+        doc.create("./testInsDelRow_mergeEdgeCases.xlsx", XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
+
+        // 1. Merge cell that will be partially deleted (shrink/collapse)
+        wks.mergeCells("A1:A5");   // 5 rows tall
+        
+        // 2. Merge cell that will be entirely engulfed and destroyed
+        wks.mergeCells("C3:D4");   // 2 rows tall, exists entirely within the blast radius
+        
+        // 3. Merge cell overlapping the bottom edge of the deletion
+        wks.mergeCells("F4:G6");   // 3 rows tall
+
+        // Delete row 3 and 4 (count = 2)
+        wks.deleteRow(3, 2);
+
+        // A1:A5 should collapse by 2 rows -> A1:A3
+        REQUIRE(wks.merges().mergeExists("A1:A3"));
+        REQUIRE_FALSE(wks.merges().mergeExists("A1:A5"));
+
+        // C3:D4 was entirely inside rows 3-4, it should be annihilated
+        REQUIRE_FALSE(wks.merges().mergeExists("C3:D4"));
+        // Ensure it didn't mutate into a 0-height or negative-height invalid merge
+        REQUIRE_FALSE(wks.merges().mergeExists("C3:D2")); 
+        REQUIRE_FALSE(wks.merges().mergeExists("C3:D3"));
+
+        // F4:G6 had its top half deleted and bottom half shifted up. 
+        // Original rows: 4, 5, 6. Deleted 3, 4. 
+        // Row 4 is gone. Row 5 becomes 3. Row 6 becomes 4.
+        // It should collapse into F3:G4.
+        REQUIRE(wks.merges().mergeExists("F3:G4"));
+        REQUIRE_FALSE(wks.merges().mergeExists("F4:G6"));
+
+        doc.close();
+    }
+
     SECTION("insertRow updates mergeCells at/below insertion point")
     {
         XLDocument doc;

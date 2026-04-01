@@ -43,7 +43,7 @@ namespace {
 
 namespace OpenXLSX {
 
-    XLStreamWriter::XLStreamWriter(XLWorksheet* /*worksheet*/)
+    XLStreamWriter::XLStreamWriter(XLWorksheet* worksheet)
         : m_tempPath(std::filesystem::temp_directory_path() /
                      (std::string("openxlsx_stream_") +
                       std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) +
@@ -54,6 +54,7 @@ namespace OpenXLSX {
                       }() +
                       ".xml")),
           m_stream(m_tempPath, std::ios::binary),
+          m_currentRow(worksheet ? worksheet->rowCount() + 1 : 1),
           m_active(true)
     {
         if (!m_stream.is_open())

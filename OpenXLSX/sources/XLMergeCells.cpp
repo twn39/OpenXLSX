@@ -269,24 +269,30 @@ void XLMergeCells::shiftRows(int32_t delta, uint32_t fromRow)
                 deleteMerge(idx);
                 continue;
             }
-            if (r.top >= fromRow) {
-                // top is inside band, bottom is below → pull top to fromRow
+            
+            // Adjust top
+            if (r.top > delEnd) {
+                r.top = static_cast<uint32_t>(static_cast<int32_t>(r.top) + delta);
+            } else if (r.top >= fromRow && r.top <= delEnd) {
                 r.top = fromRow;
             }
-            // clip bottom if it falls inside the deleted band
-            if (r.bottom <= delEnd) {
-                r.bottom = fromRow;  // will be validated below
-            } else {
+
+            // Adjust bottom
+            if (r.bottom > delEnd) {
                 r.bottom = static_cast<uint32_t>(static_cast<int32_t>(r.bottom) + delta);
+            } else if (r.bottom >= fromRow && r.bottom <= delEnd) {
+                r.bottom = fromRow - 1; // It shrinks, but it will be checked below for validity
             }
-            if (r.top >= r.bottom && !(r.top == r.bottom)) {
+
+            if (r.top >= r.bottom && r.top == r.bottom && r.left == r.right) {
+                // Shrunk to a 1x1 cell -> no longer a merge cell
+                deleteMerge(idx);
+                continue;
+            } else if (r.top > r.bottom) {
                 deleteMerge(idx);
                 continue;
             }
-            // If top was below fromRow but not in band, slide it
-            if (r.top > fromRow && r.top > delEnd) {
-                r.top = static_cast<uint32_t>(static_cast<int32_t>(r.top) + delta);
-            }
+            
         } else {
             // Insertion: push everything at/below fromRow down
             if (r.top >= fromRow)

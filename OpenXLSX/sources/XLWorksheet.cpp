@@ -625,10 +625,6 @@ XLStreamWriter XLWorksheet::streamWriter()
     if (sheetData.empty()) {
         sheetData = appendAndGetNode(root, "sheetData", m_nodeOrder);
     }
-    
-    while (sheetData.first_child()) {
-        sheetData.remove_child(sheetData.first_child());
-    }
 
     struct StringWriter : pugi::xml_writer {
         std::string result;
@@ -649,14 +645,22 @@ XLStreamWriter XLWorksheet::streamWriter()
         topHalf = xmlStr.substr(0, pos) + "<sheetData>";
         bottomHalf = "</sheetData>" + xmlStr.substr(pos + 12);
     } else {
-        pos = xmlStr.find("<sheetData></sheetData>");
+        pos = xmlStr.find("</sheetData>");
         if (pos != std::string::npos) {
-            topHalf = xmlStr.substr(0, pos) + "<sheetData>";
-            bottomHalf = "</sheetData>" + xmlStr.substr(pos + 23);
+            // We have existing rows: <sheetData><row ... /></sheetData>
+            // So we take everything UP TO </sheetData> as topHalf, allowing stream to append inside sheetData.
+            topHalf = xmlStr.substr(0, pos);
+            bottomHalf = xmlStr.substr(pos); // starts with </sheetData>
         } else {
-            size_t endTag = xmlStr.find("</worksheet>");
-            topHalf = xmlStr.substr(0, endTag) + "<sheetData>";
-            bottomHalf = "</sheetData></worksheet>";
+            pos = xmlStr.find("<sheetData></sheetData>");
+            if (pos != std::string::npos) {
+                topHalf = xmlStr.substr(0, pos) + "<sheetData>";
+                bottomHalf = "</sheetData>" + xmlStr.substr(pos + 23);
+            } else {
+                size_t endTag = xmlStr.find("</worksheet>");
+                topHalf = xmlStr.substr(0, endTag) + "<sheetData>";
+                bottomHalf = "</sheetData></worksheet>";
+            }
         }
     }
     

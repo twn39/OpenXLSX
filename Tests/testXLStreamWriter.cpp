@@ -7,6 +7,40 @@ using namespace OpenXLSX;
 
 TEST_CASE("Stream Writer Functional and OOXML Tests", "[XLStreamWriter]")
 {
+    SECTION("Edge Case: StreamWriter Formatting and Merging")
+    {
+        // This is a test that acts as a blueprint/TODO for what we need to support
+        // Currently, XLStreamWriter does not support styles or merges natively.
+        // If we implement them later, this test will validate it.
+        XLDocument doc;
+        doc.create("./testXLStreamWriter_Formatting.xlsx", XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
+        
+        // Let's ensure creating a writer doesn't destroy existing format
+        wks.cell("A1").value() = "Header";
+        wks.mergeCells("A1:C1");
+        XLStyle style;
+        style.font.bold = true;
+        style.fill.pattern = XLPatternSolid;
+        style.fill.fgColor = XLColor(255, 0, 0);
+        wks.cell("A1").setStyle(style);
+
+        {
+            auto writer = wks.streamWriter();
+            writer.appendRow({1, 2, 3}); // Should write to Row 2 automatically or append
+        }
+        doc.save();
+        doc.close();
+
+        XLDocument doc2;
+        doc2.open("./testXLStreamWriter_Formatting.xlsx");
+        auto wks2 = doc2.workbook().worksheet("Sheet1");
+        
+        REQUIRE(wks2.cell("A1").value().getString() == "Header");
+        REQUIRE(wks2.merges().mergeExists("A1:C1") == true);
+        REQUIRE(wks2.cell("A1").cellFormat() != 0);
+    }
+
     SECTION("Functional and Type Mapping")
     {
         XLDocument doc;
