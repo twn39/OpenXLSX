@@ -38,11 +38,28 @@ TEST_CASE("Cross-Engine Compatibility", "[Compatibility]")
 
             auto wks = doc.workbook().worksheet("TestSheet");
             
-            // 1. Verify content
+            // 1. Verify Basic Values
             REQUIRE(wks.cell("A1").value().get<std::string>().find("Hello from") != std::string::npos);
             REQUIRE(wks.cell("A2").value().get<int64_t>() == 42);
             REQUIRE(wks.cell("A3").value().get<double>() == Catch::Approx(3.1415));
+            
+            // Note: Date/Time might be read as a float (Excel serial date) depending on OpenXLSX parsing, 
+            // but we at least ensure it doesn't crash and has a value.
+            REQUIRE(wks.cell("A4").value().type() != XLValueType::Empty);
+            
+            // Formulas
+            REQUIRE(wks.cell("A5").hasFormula() == true);
+            REQUIRE(wks.cell("A5").formula().get().find("SUM") != std::string::npos);
+
+            // Styling presence check
             REQUIRE(wks.cell("B1").value().get<std::string>() == "Styled");
+
+            // Merged Cells check
+            REQUIRE(wks.cell("C1").value().get<std::string>() == "Merged Area");
+
+            // Second Sheet
+            auto wks2_orig = doc.workbook().worksheet("SecondSheet");
+            REQUIRE(wks2_orig.cell("A1").value().get<std::string>() == "Data in second sheet");
 
             // 2. Modify content
             wks.cell("C1").value() = "Modified by OpenXLSX";
