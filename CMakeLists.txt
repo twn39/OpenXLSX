@@ -148,8 +148,8 @@ endif()
 #=======================================================================================================================
 if(OPENXLSX_BUILD_TESTS)
     file(GLOB TEST_SOURCES Tests/testXL*.cpp)
-    # Exclude fuzzer from regular Catch2 tests
-    list(FILTER TEST_SOURCES EXCLUDE REGEX "testXLFormulaFuzzer\\.cpp")
+    # Exclude fuzzer and demo from regular Catch2 tests
+    list(FILTER TEST_SOURCES EXCLUDE REGEX "(testXLFormulaFuzzer|testXLComprehensiveDemo)\\.cpp")
     
     add_executable(OpenXLSXTests ${TEST_SOURCES})
     target_link_libraries(OpenXLSXTests PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
@@ -188,6 +188,9 @@ if(OPENXLSX_BUILD_TESTS)
     # Demo Application
     add_executable(OpenXLSXDemo Tests/testXLComprehensiveDemo.cpp)
     target_link_libraries(OpenXLSXDemo PRIVATE OpenXLSX::OpenXLSX)
+
+    add_executable(OpenXLSXStreamDemo Tests/testXLStreamStylesDemo.cpp)
+    target_link_libraries(OpenXLSXStreamDemo PRIVATE OpenXLSX::OpenXLSX)
 endif()
 
 #=======================================================================================================================
