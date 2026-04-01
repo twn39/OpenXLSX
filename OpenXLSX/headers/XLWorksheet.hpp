@@ -1,38 +1,38 @@
 #include <optional>
 
 #ifndef OPENXLSX_XLWORKSHEET_HPP
-#define OPENXLSX_XLWORKSHEET_HPP
+#    define OPENXLSX_XLWORKSHEET_HPP
 
-#include <vector>
-#include <string>
-#include <string_view>
-#include "OpenXLSX-Exports.hpp"
-#include "XLSheetBase.hpp"
-#include "XLConstants.hpp"
+#    include "OpenXLSX-Exports.hpp"
+#    include "XLConstants.hpp"
+#    include "XLSheetBase.hpp"
+#    include <string>
+#    include <string_view>
+#    include <vector>
 
-#include "XLCell.hpp"
-#include "XLCellRange.hpp"
-#include "XLCellReference.hpp"
-#include "XLRow.hpp"
-#include "XLColumn.hpp"
-#include "XLMergeCells.hpp"
-#include "XLDataValidation.hpp"
-#include "XLTables.hpp"
-#include "XLSparkline.hpp"
-#include "XLDrawing.hpp"
-#include "XLComments.hpp"
-#include "XLRelationships.hpp"
-#include "XLConditionalFormatting.hpp"
-#include "XLPageSetup.hpp"
-#include "XLChart.hpp"
-#include "XLStreamWriter.hpp"
-#include "XLStreamReader.hpp"
-#include "XLPivotTable.hpp"
-#include "XLImageOptions.hpp"
+#    include "XLCell.hpp"
+#    include "XLCellRange.hpp"
+#    include "XLCellReference.hpp"
+#    include "XLChart.hpp"
+#    include "XLColumn.hpp"
+#    include "XLComments.hpp"
+#    include "XLConditionalFormatting.hpp"
+#    include "XLDataValidation.hpp"
+#    include "XLDrawing.hpp"
+#    include "XLImageOptions.hpp"
+#    include "XLMergeCells.hpp"
+#    include "XLPageSetup.hpp"
+#    include "XLPivotTable.hpp"
+#    include "XLRelationships.hpp"
+#    include "XLRow.hpp"
+#    include "XLSparkline.hpp"
+#    include "XLStreamReader.hpp"
+#    include "XLStreamWriter.hpp"
+#    include "XLTables.hpp"
 
 namespace OpenXLSX
 {
-        const std::vector<std::string_view> XLWorksheetNodeOrder = {    // worksheet XML root node required child sequence
+    const std::vector<std::string_view> XLWorksheetNodeOrder = {    // worksheet XML root node required child sequence
         "sheetPr",
         "dimension",
         "sheetViews",
@@ -72,8 +72,7 @@ namespace OpenXLSX
         "webPublishItems",
         "tableParts",
         "pivotTables",
-        "extLst"
-    };
+        "extLst"};
 
     const std::vector<std::string_view> XLSheetViewNodeOrder = {    // worksheet XML <sheetView> child sequence
         "pane",
@@ -118,7 +117,6 @@ namespace OpenXLSX
          */
         XLStreamReader streamReader() const;
 
-
         XLCellAssignable findCell(const std::string& ref) const;
         XLCellAssignable findCell(const XLCellReference& ref) const;
         XLCellAssignable findCell(uint32_t rowNumber, uint16_t columnNumber) const;
@@ -127,8 +125,6 @@ namespace OpenXLSX
         std::optional<XLCell> peekCell(const XLCellReference& ref) const;
         std::optional<XLCell> peekCell(uint32_t rowNumber, uint16_t columnNumber) const;
         std::optional<XLCell> peekCell(XLRowIndex row, XLColIndex col) const { return peekCell(row.val, col.val); }
-
-
 
         XLCellRange range() const;
         XLCellRange range(const XLCellReference& topLeft, const XLCellReference& bottomRight) const;
@@ -158,9 +154,7 @@ namespace OpenXLSX
                                                                    typename std::iterator_traits<typename T::iterator>::iterator_category>,
                                              T>>
         void appendRow(const T& values)
-        {
-            row(rowCount() + 1).values() = values;
-        }
+        { row(rowCount() + 1).values() = values; }
 
         XLColumn column(uint16_t columnNumber) const;
         XLColumn column(std::string const& columnRef) const;
@@ -173,12 +167,12 @@ namespace OpenXLSX
         void groupRows(uint32_t rowFirst, uint32_t rowLast, uint8_t outlineLevel = 1, bool collapsed = false);
         void groupColumns(uint16_t colFirst, uint16_t colLast, uint8_t outlineLevel = 1, bool collapsed = false);
 
-        void setAutoFilter(const XLCellRange& range);
-        void clearAutoFilter();
-        bool hasAutoFilter() const;
-        std::string autoFilter() const;
+        void         setAutoFilter(const XLCellRange& range);
+        void         clearAutoFilter();
+        bool         hasAutoFilter() const;
+        std::string  autoFilter() const;
         XLAutoFilter autofilterObject() const;
-        
+
         /**
          * @brief Set the sort state for the worksheet.
          * @param ref The cell range to apply the sort state to (e.g. "A1:C10").
@@ -189,13 +183,14 @@ namespace OpenXLSX
 
         /**
          * @brief Evaluates the current autoFilter conditions and hides rows that do not match the criteria.
-         * Note: Only basic text/value matching and some simple custom filters are evaluated. Complex dynamic filters might not be supported.
+         * Note: Only basic text/value matching and some simple custom filters are evaluated. Complex dynamic filters might not be
+         * supported.
          */
         void applyAutoFilter();
 
         XLCellReference lastCell() const noexcept;
-        uint16_t columnCount() const noexcept;
-        uint32_t rowCount() const noexcept;
+        uint16_t        columnCount() const noexcept;
+        uint32_t        rowCount() const noexcept;
 
         bool deleteRow(uint32_t rowNumber);
 
@@ -238,37 +233,36 @@ namespace OpenXLSX
         void updateSheetName(const std::string& oldName, const std::string& newName);
         void updateDimension();
 
-        XLMergeCells& merges();
+        XLMergeCells&      merges();
         XLDataValidations& dataValidations();
 
         XLCellRange mergeCells(XLCellRange const& rangeToMerge, bool emptyHiddenCells = false);
         XLCellRange mergeCells(const std::string& rangeReference, bool emptyHiddenCells = false);
-        void unmergeCells(XLCellRange const& rangeToMerge);
-        void unmergeCells(const std::string& rangeReference);
+        void        unmergeCells(XLCellRange const& rangeToMerge);
+        void        unmergeCells(const std::string& rangeReference);
 
         XLStyleIndex getColumnFormat(uint16_t column) const;
         XLStyleIndex getColumnFormat(const std::string& column) const;
-        bool setColumnFormat(uint16_t column, XLStyleIndex cellFormatIndex);
-        bool setColumnFormat(const std::string& column, XLStyleIndex cellFormatIndex);
+        bool         setColumnFormat(uint16_t column, XLStyleIndex cellFormatIndex);
+        bool         setColumnFormat(const std::string& column, XLStyleIndex cellFormatIndex);
 
         XLStyleIndex getRowFormat(uint16_t row) const;
-        bool setRowFormat(uint32_t row, XLStyleIndex cellFormatIndex);
+        bool         setRowFormat(uint32_t row, XLStyleIndex cellFormatIndex);
 
         XLConditionalFormats conditionalFormats() const;
-        void addConditionalFormatting(const std::string& sqref, const XLCfRule& rule);
-        void addConditionalFormatting(const std::string& sqref, const XLCfRule& rule, const XLDxf& dxf);
-        void addConditionalFormatting(const XLCellRange& range, const XLCfRule& rule);
-        void addConditionalFormatting(const XLCellRange& range, const XLCfRule& rule, const XLDxf& dxf);
+        void                 addConditionalFormatting(const std::string& sqref, const XLCfRule& rule);
+        void                 addConditionalFormatting(const std::string& sqref, const XLCfRule& rule, const XLDxf& dxf);
+        void                 addConditionalFormatting(const XLCellRange& range, const XLCfRule& rule);
+        void                 addConditionalFormatting(const XLCellRange& range, const XLCfRule& rule, const XLDxf& dxf);
 
         void removeConditionalFormatting(const std::string& sqref);
         void removeConditionalFormatting(const XLCellRange& range);
         void clearAllConditionalFormatting();
 
-        XLPageMargins pageMargins() const;
+        XLPageMargins  pageMargins() const;
         XLPrintOptions printOptions() const;
-        XLPageSetup pageSetup() const;
+        XLPageSetup    pageSetup() const;
         XLHeaderFooter headerFooter() const;
-
 
         /**
          * @brief Set the print area for this worksheet.
@@ -346,7 +340,7 @@ namespace OpenXLSX
         bool selectUnlockedCellsAllowed() const;
 
         std::string passwordHash() const;
-        bool passwordIsSet() const;
+        bool        passwordIsSet() const;
         std::string sheetProtectionSummary() const;
 
         /**
@@ -364,7 +358,13 @@ namespace OpenXLSX
         bool hasTables() const;
 
         XLDrawing& drawing();
-        void addImage(const std::string& name, const std::string& data, uint32_t row, uint32_t col, uint32_t width, uint32_t height, const XLImageOptions& options = XLImageOptions());
+        void       addImage(const std::string&    name,
+                            const std::string&    data,
+                            uint32_t              row,
+                            uint32_t              col,
+                            uint32_t              width,
+                            uint32_t              height,
+                            const XLImageOptions& options = XLImageOptions());
 
         /**
          * @brief Insert an image at the specified cell with original dimensions (automatic parsing).
@@ -381,7 +381,10 @@ namespace OpenXLSX
          * @param columnName The exact name of the table column to filter.
          * @param options The visual and naming options for the slicer.
          */
-        void addTableSlicer(std::string_view cellReference, const XLTable& table, std::string_view columnName, const XLSlicerOptions& options = XLSlicerOptions());
+        void addTableSlicer(std::string_view       cellReference,
+                            const XLTable&         table,
+                            std::string_view       columnName,
+                            const XLSlicerOptions& options = XLSlicerOptions());
 
         /**
          * @brief Add a slicer connected to a Pivot Table.
@@ -390,8 +393,10 @@ namespace OpenXLSX
          * @param columnName The exact name of the pivot field (source column name) to filter.
          * @param options The visual and naming options for the slicer.
          */
-        void addPivotSlicer(std::string_view cellReference, const XLPivotTable& pivotTable, std::string_view columnName, const XLSlicerOptions& options = XLSlicerOptions());
-
+        void addPivotSlicer(std::string_view       cellReference,
+                            const XLPivotTable&    pivotTable,
+                            std::string_view       columnName,
+                            const XLSlicerOptions& options = XLSlicerOptions());
 
         void insertImage(const std::string& cellReference, const std::string& imagePath);
 
@@ -404,10 +409,9 @@ namespace OpenXLSX
         void insertImage(const std::string& cellReference, const std::string& imagePath, const XLImageOptions& options);
         void addScaledImage(const std::string& name, const std::string& data, uint32_t row, uint32_t col, double scalingFactor = 1.0);
         std::vector<XLDrawingItem> images();
-        
+
         XLChart addChart(XLChartType type, std::string_view name, uint32_t row, uint32_t col, uint32_t width, uint32_t height);
         XLChart addChart(XLChartType type, const XLChartAnchor& anchor);
-
 
         /**
          * @brief Create and add a pivot table to this worksheet.
@@ -416,9 +420,8 @@ namespace OpenXLSX
          */
         XLPivotTable addPivotTable(const XLPivotTableOptions& options);
 
-
         XLVmlDrawing& vmlDrawing();
-        XLComments& comments();
+        XLComments&   comments();
         /**
          * @brief Add a comment to a cell seamlessly.
          * @param cellRef The cell reference (e.g. A1).
@@ -429,26 +432,26 @@ namespace OpenXLSX
 
         XLTableCollection& tables();
 
-        void addHyperlink(std::string_view cellRef, std::string_view url, std::string_view tooltip = "");
-        void addInternalHyperlink(std::string_view cellRef, std::string_view location, std::string_view tooltip = "");
-        [[nodiscard]] bool hasHyperlink(std::string_view cellRef) const;
+        void                      addHyperlink(std::string_view cellRef, std::string_view url, std::string_view tooltip = "");
+        void                      addInternalHyperlink(std::string_view cellRef, std::string_view location, std::string_view tooltip = "");
+        [[nodiscard]] bool        hasHyperlink(std::string_view cellRef) const;
         [[nodiscard]] std::string getHyperlink(std::string_view cellRef) const;
-        void removeHyperlink(std::string_view cellRef);
+        void                      removeHyperlink(std::string_view cellRef);
 
         [[nodiscard]] bool hasPanes() const;
-        void freezePanes(uint16_t column, uint32_t row);
-        
+        void               freezePanes(uint16_t column, uint32_t row);
+
         /**
          * @brief Freeze panes at the specified top-left cell.
          * This is a highly ergonomic method. E.g. freezePanes("B2") freezes Row 1 and Column A.
          * @param topLeftCell The cell reference where the scrolling data should start.
          */
         void freezePanes(const std::string& topLeftCell);
-        
+
         void splitPanes(double xSplit, double ySplit, std::string_view topLeftCell = "", XLPane activePane = XLPane::BottomRight);
         void clearPanes();
 
-        void setZoom(uint16_t scale);
+        void                   setZoom(uint16_t scale);
         [[nodiscard]] uint16_t zoom() const;
 
         void insertRowBreak(uint32_t row);
@@ -457,15 +460,15 @@ namespace OpenXLSX
         [[nodiscard]] static std::string makeInternalLocation(std::string_view sheetName, std::string_view cellRef);
 
     private:
-        uint16_t sheetXmlNumber() const;
+        uint16_t         sheetXmlNumber() const;
         XLRelationships& relationships();
 
         XLColor getColor_impl() const;
-        void setColor_impl(const XLColor& color);
-        bool isSelected_impl() const;
-        void setSelected_impl(bool selected);
-        bool isActive_impl() const;
-        bool setActive_impl();
+        void    setColor_impl(const XLColor& color);
+        bool    isSelected_impl() const;
+        void    setSelected_impl(bool selected);
+        bool    isActive_impl() const;
+        bool    setActive_impl();
 
         XMLNode prepareSheetViewForPanes();
 
@@ -476,14 +479,12 @@ namespace OpenXLSX
 
         /// Rewrite a single cell address string (e.g. "B3") applying row/col offsets.
         /// Absolute-reference components (prefixed with '$') are left unchanged.
-        [[nodiscard]] static std::string shiftCellRef(std::string_view ref,
-                                                       int32_t rowDelta, int32_t colDelta,
-                                                       uint32_t fromRow, uint16_t fromCol);
+        [[nodiscard]] static std::string
+            shiftCellRef(std::string_view ref, int32_t rowDelta, int32_t colDelta, uint32_t fromRow, uint16_t fromCol);
 
         /// Tokenize a formula and rewrite every CellRef/Range token using shiftCellRef.
-        [[nodiscard]] static std::string shiftFormulaRefs(std::string_view formula,
-                                                           int32_t rowDelta, int32_t colDelta,
-                                                           uint32_t fromRow, uint16_t fromCol);
+        [[nodiscard]] static std::string
+            shiftFormulaRefs(std::string_view formula, int32_t rowDelta, int32_t colDelta, uint32_t fromRow, uint16_t fromCol);
 
         /// Shift <row r=N> and <c r="XN"> attributes in sheetData.
         void shiftSheetDataRows(int32_t delta, uint32_t fromRow);
@@ -507,15 +508,15 @@ namespace OpenXLSX
         void shiftAutoFilter(int32_t rowDelta, int32_t colDelta, uint32_t fromRow, uint16_t fromCol);
 
     private:
-        XLRelationships   m_relationships{};
-        XLMergeCells      m_merges{};
-        XLDataValidations m_dataValidations{};
-        XLDrawing         m_drawing{};
-        XLVmlDrawing      m_vmlDrawing{};
-        XLComments        m_comments{};
-        XLTableCollection m_tables{};
+        XLRelationships                                    m_relationships{};
+        XLMergeCells                                       m_merges{};
+        XLDataValidations                                  m_dataValidations{};
+        XLDrawing                                          m_drawing{};
+        XLVmlDrawing                                       m_vmlDrawing{};
+        XLComments                                         m_comments{};
+        XLTableCollection                                  m_tables{};
         inline static const std::vector<std::string_view>& m_nodeOrder = XLWorksheetNodeOrder;
     };
-}
+}    // namespace OpenXLSX
 
 #endif

@@ -1,29 +1,26 @@
 // ===== External Includes ===== //
 #include <cstdint>
-#include <gsl/gsl>
 #include <fmt/format.h>
-#include <memory>     
+#include <gsl/gsl>
+#include <memory>
 #include <pugixml.hpp>
-#include <stdexcept>   
-#include <string>      
-#include <vector>      
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLColor.hpp"
 #include "XLDocument.hpp"
 #include "XLException.hpp"
 #include "XLStyles.hpp"
-#include "XLUtilities.hpp"
 #include "XLStyles_Internal.hpp"
+#include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
 
 // ===== XLDxf, formerly XLDiffCellFormat
 
-XLDxf::XLDxf() : m_xmlDocument(std::make_unique<XMLDocument>())
-{
-    m_dxfNode = m_xmlDocument->append_child("dxf");
-}
+XLDxf::XLDxf() : m_xmlDocument(std::make_unique<XMLDocument>()) { m_dxfNode = m_xmlDocument->append_child("dxf"); }
 
 XLDxf::XLDxf(const XMLNode& node) : m_dxfNode(node) {}
 
@@ -146,20 +143,11 @@ XLDxfs::XLDxfs(const XMLNode& dxfs) : m_dxfsNode(dxfs)
     }
 }
 
-XLDxfs::~XLDxfs()
-{
-    m_dxfs.clear();   
-}
+XLDxfs::~XLDxfs() { m_dxfs.clear(); }
 
-XLDxfs::XLDxfs(const XLDxfs& other)
-    : m_dxfsNode(other.m_dxfsNode),
-      m_dxfs(other.m_dxfs)
-{}
+XLDxfs::XLDxfs(const XLDxfs& other) : m_dxfsNode(other.m_dxfsNode), m_dxfs(other.m_dxfs) {}
 
-XLDxfs::XLDxfs(XLDxfs&& other)
-    : m_dxfsNode(std::move(other.m_dxfsNode)),
-      m_dxfs(std::move(other.m_dxfs))
-{}
+XLDxfs::XLDxfs(XLDxfs&& other) : m_dxfsNode(std::move(other.m_dxfsNode)), m_dxfs(std::move(other.m_dxfs)) {}
 
 XLDxfs& XLDxfs::operator=(const XLDxfs& other)
 {
@@ -190,8 +178,8 @@ XLDxf XLDxfs::dxfByIndex(XLStyleIndex index) const
 
 XLStyleIndex XLDxfs::create(XLDxf copyFrom, std::string_view styleEntriesPrefix)
 {
-    XLStyleIndex index = count();   
-    XMLNode      newNode{};         
+    XLStyleIndex index = count();
+    XMLNode      newNode{};
 
     // ===== Append new node prior to final whitespaces, if any
     XMLNode lastDxf = m_dxfsNode.last_child_of_type(pugi::node_element);
@@ -203,19 +191,17 @@ XLStyleIndex XLDxfs::create(XLDxf copyFrom, std::string_view styleEntriesPrefix)
         using namespace std::literals::string_literals;
         throw XLException("XLDxfs::"s + __func__ + ": failed to append a new dxf node"s);
     }
-    if (styleEntriesPrefix.length() > 0)   
-        m_dxfsNode.insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());   
+    if (styleEntriesPrefix.length() > 0)
+        m_dxfsNode.insert_child_before(pugi::node_pcdata, newNode).set_value(std::string(styleEntriesPrefix).c_str());
 
     XLDxf newDxf(newNode);
-    if (copyFrom.node().empty()) {   
+    if (copyFrom.node().empty()) {
         // no-op: differential cell format entries have NO default values
     }
     else
-        copyXMLNode(newNode, copyFrom.node());   
+        copyXMLNode(newNode, copyFrom.node());
 
     m_dxfs.push_back(newDxf);
-    appendAndSetAttribute(m_dxfsNode, "count", std::to_string(m_dxfs.size()));   
+    appendAndSetAttribute(m_dxfsNode, "count", std::to_string(m_dxfs.size()));
     return index;
 }
-

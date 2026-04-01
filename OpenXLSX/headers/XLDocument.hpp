@@ -12,15 +12,16 @@
 #include <gsl/gsl>
 #include <list>
 #include <map>
+#include <memory>          // std::unique_ptr
+#include <shared_mutex>    // std::shared_mutex
 #include <string>
 #include <string_view>
 #include <unordered_map>    // O(1) shared string lookup
-#include <memory>       // std::unique_ptr
-#include <shared_mutex>     // std::shared_mutex
 
 // ===== OpenXLSX Includes ===== //
 #include "IZipArchive.hpp"
 #include "OpenXLSX-Exports.hpp"
+#include "XLChart.hpp"
 #include "XLCommandQuery.hpp"
 #include "XLComments.hpp"
 #include "XLContentTypes.hpp"
@@ -28,13 +29,12 @@
 #include "XLProperties.hpp"
 #include "XLRelationships.hpp"
 #include "XLSharedStrings.hpp"
+#include "XLStringArena.hpp"
 #include "XLStyles.hpp"
 #include "XLTables.hpp"
 #include "XLWorkbook.hpp"
 #include "XLXmlData.hpp"
 #include "XLZipArchive.hpp"
-#include "XLChart.hpp"
-#include "XLStringArena.hpp"
 
 namespace OpenXLSX
 {
@@ -102,15 +102,15 @@ namespace OpenXLSX
         explicit XLDocument(std::string_view docPath, const IZipArchive& zipArchive = XLZipArchive());
 
         /**
-         * @brief Legacy string constructor. Maintained to resolve ambiguity with IZipArchive's template constructor 
+         * @brief Legacy string constructor. Maintained to resolve ambiguity with IZipArchive's template constructor
          * when passing string literals or std::string.
          */
         explicit XLDocument(const std::string& docPath, const IZipArchive& zipArchive = XLZipArchive());
 
-        XLDocument(const XLDocument& other) = delete;
+        XLDocument(const XLDocument& other)     = delete;
         XLDocument(XLDocument&& other) noexcept = default;
         ~XLDocument();
-        XLDocument& operator=(const XLDocument& other) = delete;
+        XLDocument& operator=(const XLDocument& other)     = delete;
         XLDocument& operator=(XLDocument&& other) noexcept = default;
 
         void showWarnings();
@@ -123,7 +123,7 @@ namespace OpenXLSX
         void open(std::string_view fileName);
 
         /**
-         * @brief Initialize a new .xlsx package from a built-in template. 
+         * @brief Initialize a new .xlsx package from a built-in template.
          * @param fileName Target path for the new package.
          * @param forceOverwrite Prevents accidental data loss unless explicitly requested via XLForceOverwrite.
          */
@@ -179,7 +179,7 @@ namespace OpenXLSX
         /**
          * @brief Provides access to custom properties (metadata) that can be set for the document.
          */
-        [[nodiscard]] 
+        [[nodiscard]]
         /**
          * @brief Check if the loaded document contains a VBA macro project (e.g. xl/vbaProject.bin)
          * @return true if macro project exists
@@ -201,7 +201,7 @@ namespace OpenXLSX
         [[nodiscard]] uint32_t nextTableId() const;
 
         /**
-         * @brief Get the underlying workbook object, containing worksheets and global data state. 
+         * @brief Get the underlying workbook object, containing worksheets and global data state.
          * [[nodiscard]] prevents side-effect-free querying errors.
          */
         [[nodiscard]] XLWorkbook workbook() const;
@@ -254,20 +254,22 @@ namespace OpenXLSX
         XLVmlDrawing    sheetVmlDrawing(uint16_t sheetXmlNo);
         XLComments      sheetComments(uint16_t sheetXmlNo);
         XLTables        sheetTables(uint16_t sheetXmlNo);
-        
-        class XLChart   createChart(XLChartType type = XLChartType::Bar);
 
-        class XLPivotTable createPivotTable();
+        class XLChart createChart(XLChartType type = XLChartType::Bar);
+
+        class XLPivotTable           createPivotTable();
         class XLPivotCacheDefinition createPivotCacheDefinition();
-        class XLPivotCacheRecords createPivotCacheRecords(std::string_view cacheDefPath);
+        class XLPivotCacheRecords    createPivotCacheRecords(std::string_view cacheDefPath);
 
         std::string createTableSlicerCache(uint32_t tableId, uint32_t tableColumnId, std::string_view name, std::string_view sourceName);
 
-        std::string createPivotSlicerCache(uint32_t pivotCacheId, uint32_t sheetId, std::string_view pivotTableName, std::string_view name, std::string_view sourceName);
+        std::string createPivotSlicerCache(uint32_t         pivotCacheId,
+                                           uint32_t         sheetId,
+                                           std::string_view pivotTableName,
+                                           std::string_view name,
+                                           std::string_view sourceName);
 
         std::string createSlicer(std::string_view name, std::string_view cacheName, std::string_view caption);
-
-
 
         /**
          * @brief Insert image into the archive's media folder. Uses string_view for zero-copy data transfer.
@@ -330,13 +332,13 @@ namespace OpenXLSX
         void setSavingDeclaration(XLXmlSavingDeclaration const& savingDeclaration);
 
         /**
-         * @brief Access the workbook's central Shared String Table (SST). 
+         * @brief Access the workbook's central Shared String Table (SST).
          * The SST reduces file size by deduplicating text across the entire package.
          */
         [[nodiscard]] const XLSharedStrings& sharedStrings() const { return m_sharedStrings; }
 
         /**
-         * @brief Prune unused strings from the SST and reindex referencing cells. 
+         * @brief Prune unused strings from the SST and reindex referencing cells.
          * Essential for minimizing file size and memory footprint in long-lived or large documents.
          */
         void cleanupSharedStrings();
@@ -348,13 +350,12 @@ namespace OpenXLSX
 
     public:
         /**
-         * @brief Fetch raw XML content for a specific package path. 
+         * @brief Fetch raw XML content for a specific package path.
          * Used internally for lazily loading components on demand, or for advanced testing/inspection.
          */
         [[nodiscard]] std::string extractXmlFromArchive(std::string_view path);
 
     protected:
-
         /**
          * @brief Provide access to managed XML data nodes, enabling centralized XML state management.
          * doNotThrow allows safe querying when a component's presence is uncertain.
@@ -362,7 +363,6 @@ namespace OpenXLSX
         [[nodiscard]] XLXmlData*       getXmlData(std::string_view path, bool doNotThrow = false);
         [[nodiscard]] const XLXmlData* getXmlData(std::string_view path, bool doNotThrow = false) const;
         [[nodiscard]] bool             hasXmlData(std::string_view path) const;
-
 
     public:
         /**
@@ -383,16 +383,15 @@ namespace OpenXLSX
             uint16_t    baseCol;
         };
 
-        mutable std::list<XLXmlData>                     m_data{};
-        mutable XLStringArena                            m_sharedStringArena{};
-        mutable std::vector<std::string_view>            m_sharedStringCache{};
-        mutable FlatHashMap<std::string_view, int32_t>   m_sharedStringIndex{};
-        mutable std::unique_ptr<std::shared_mutex>       m_sharedStringMutex{std::make_unique<std::shared_mutex>()};
-        mutable std::unique_ptr<std::shared_mutex>       m_docMutex{std::make_unique<std::shared_mutex>()};
-        mutable XLSharedStrings                          m_sharedStrings{};
-        mutable std::map<void*, std::unordered_map<uint32_t, SharedFormula>>
-            m_sharedFormulas{};
-        std::map<std::string, std::string> m_unhandledEntries{};
+        mutable std::list<XLXmlData>                                         m_data{};
+        mutable XLStringArena                                                m_sharedStringArena{};
+        mutable std::vector<std::string_view>                                m_sharedStringCache{};
+        mutable FlatHashMap<std::string_view, int32_t>                       m_sharedStringIndex{};
+        mutable std::unique_ptr<std::shared_mutex>                           m_sharedStringMutex{std::make_unique<std::shared_mutex>()};
+        mutable std::unique_ptr<std::shared_mutex>                           m_docMutex{std::make_unique<std::shared_mutex>()};
+        mutable XLSharedStrings                                              m_sharedStrings{};
+        mutable std::map<void*, std::unordered_map<uint32_t, SharedFormula>> m_sharedFormulas{};
+        std::map<std::string, std::string>                                   m_unhandledEntries{};
 
         bool m_formulaNeedsRecalculation{false};
 

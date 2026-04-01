@@ -10,27 +10,27 @@ TEST_CASE("Stream Writer Advanced Features", "[XLStreamWriter][Styles]")
     doc.create("stream_style_test.xlsx", XLForceOverwrite);
 
     XLStyle s1;
-    s1.font.bold = true;
+    s1.font.bold  = true;
     s1.font.color = XLColor("FF0000");
-    auto style1 = doc.styles().findOrCreateStyle(s1);
+    auto style1   = doc.styles().findOrCreateStyle(s1);
 
     XLStyle s2;
     s2.font.italic = true;
-    s2.font.color = XLColor("0000FF");
-    auto style2 = doc.styles().findOrCreateStyle(s2);
+    s2.font.color  = XLColor("0000FF");
+    auto style2    = doc.styles().findOrCreateStyle(s2);
 
-    auto wks = doc.workbook().worksheet("Sheet1");
+    auto wks    = doc.workbook().worksheet("Sheet1");
     auto stream = wks.streamWriter();
 
     // 1. Basic appendRow (Unstyled via vector<XLCellValue>)
-    std::vector<XLCellValue> headerRow = { "Header 1", "Header 2", "Header 3" };
+    std::vector<XLCellValue> headerRow = {"Header 1", "Header 2", "Header 3"};
     stream.appendRow(headerRow);
 
     // 2. Styled appendRow (via vector<XLStreamCell>)
     stream.appendRow({
         XLStreamCell("Red Bold", style1),
         XLStreamCell("Blue Italic", style2),
-        XLStreamCell("Unstyled Value") // uses default
+        XLStreamCell("Unstyled Value")    // uses default
     });
 
     stream.close();
@@ -43,13 +43,13 @@ TEST_CASE("Stream Writer Advanced Features", "[XLStreamWriter][Styles]")
     auto wks2 = doc2.workbook().worksheet("Sheet1");
 
     REQUIRE(wks2.cell("A1").value().get<std::string>() == "Header 1");
-    
+
     REQUIRE(wks2.cell("A2").value().get<std::string>() == "Red Bold");
     REQUIRE(wks2.cell("A2").cellFormat() == style1);
-    
+
     REQUIRE(wks2.cell("B2").value().get<std::string>() == "Blue Italic");
     REQUIRE(wks2.cell("B2").cellFormat() == style2);
-    
+
     REQUIRE(wks2.cell("C2").value().get<std::string>() == "Unstyled Value");
     REQUIRE(wks2.cell("C2").cellFormat() == XLDefaultCellFormat);
 

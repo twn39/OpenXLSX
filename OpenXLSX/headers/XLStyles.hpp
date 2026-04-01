@@ -9,11 +9,11 @@
 
 // ===== External Includes ===== //
 #include <cstdint>    // uint32_t etc
+#include <optional>
 #include <string>
 #include <string_view>    // std::string_view
 #include <unordered_map>
 #include <vector>
-#include <optional>
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
@@ -621,9 +621,9 @@ namespace OpenXLSX
          */
         XLStyleIndex findOrCreate(XLFont copyFrom, std::string_view styleEntriesPrefix = XLDefaultStyleEntriesPrefix);
 
-    private:                                  // ---------- Private Member Variables ---------- //
-        std::unique_ptr<XMLNode> m_fontsNode; /**< An XMLNode object with the fonts item */
-        std::vector<XLFont>      m_fonts;
+    private:                                                               // ---------- Private Member Variables ---------- //
+        std::unique_ptr<XMLNode>                              m_fontsNode; /**< An XMLNode object with the fonts item */
+        std::vector<XLFont>                                   m_fonts;
         mutable std::unordered_map<std::string, XLStyleIndex> m_fingerprintCache; /**< fingerprint -> index dedup cache */
     };
 
@@ -1093,9 +1093,9 @@ namespace OpenXLSX
          */
         XLStyleIndex findOrCreate(XLFill copyFrom, std::string_view styleEntriesPrefix = XLDefaultStyleEntriesPrefix);
 
-    private:                                  // ---------- Private Member Variables ---------- //
-        std::unique_ptr<XMLNode> m_fillsNode; /**< An XMLNode object with the fills item */
-        std::vector<XLFill>      m_fills;
+    private:                                                               // ---------- Private Member Variables ---------- //
+        std::unique_ptr<XMLNode>                              m_fillsNode; /**< An XMLNode object with the fills item */
+        std::vector<XLFill>                                   m_fills;
         mutable std::unordered_map<std::string, XLStyleIndex> m_fingerprintCache; /**< fingerprint -> index dedup cache */
     };
 
@@ -1298,14 +1298,14 @@ namespace OpenXLSX
         XLBorder& setDiagonalUp(bool set = true);
         XLBorder& setDiagonalDown(bool set = true);
         XLBorder& setOutline(bool set = true);
-        bool setLine(XLLineType lineType, XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
-        bool setLeft(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
-        bool setRight(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
-        bool setTop(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
-        bool setBottom(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
-        bool setDiagonal(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
-        bool setVertical(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
-        bool setHorizontal(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
+        bool      setLine(XLLineType lineType, XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
+        bool      setLeft(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
+        bool      setRight(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
+        bool      setTop(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
+        bool      setBottom(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
+        bool      setDiagonal(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
+        bool      setVertical(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
+        bool      setHorizontal(XLLineStyle lineStyle, XLColor lineColor, double lineTint = 0.0);
 
         /**
          * @brief Return a string summary of the font properties
@@ -1401,9 +1401,9 @@ namespace OpenXLSX
          */
         XLStyleIndex findOrCreate(XLBorder copyFrom, std::string_view styleEntriesPrefix = XLDefaultStyleEntriesPrefix);
 
-    private:                                    // ---------- Private Member Variables ---------- //
-        std::unique_ptr<XMLNode> m_bordersNode; /**< An XMLNode object with the borders item */
-        std::vector<XLBorder>    m_borders;
+    private:                                                                 // ---------- Private Member Variables ---------- //
+        std::unique_ptr<XMLNode>                              m_bordersNode; /**< An XMLNode object with the borders item */
+        std::vector<XLBorder>                                 m_borders;
         mutable std::unordered_map<std::string, XLStyleIndex> m_fingerprintCache; /**< fingerprint -> index dedup cache */
     };
 
@@ -1471,7 +1471,8 @@ namespace OpenXLSX
 
         /**
          * @brief Get text rotation
-         * @return A value indicating rotation: 0 to 90 is counter-clockwise, 90 to 180 is 90 degrees offset clockwise (e.g. 180 = 90 deg clockwise), 255 is vertical text.
+         * @return A value indicating rotation: 0 to 90 is counter-clockwise, 90 to 180 is 90 degrees offset clockwise (e.g. 180 = 90 deg
+         * clockwise), 255 is vertical text.
          */
         uint16_t textRotation() const;
 
@@ -1828,10 +1829,10 @@ namespace OpenXLSX
          */
         XLStyleIndex findOrCreate(XLCellFormat copyFrom, std::string_view styleEntriesPrefix = XLDefaultStyleEntriesPrefix);
 
-    private:                                         // ---------- Private Member Variables ---------- //
-        std::unique_ptr<XMLNode>  m_cellFormatsNode; /**< An XMLNode object with the cell formats item */
-        std::vector<XLCellFormat> m_cellFormats;
-        bool                      m_permitXfId{false};
+    private:                                                                     // ---------- Private Member Variables ---------- //
+        std::unique_ptr<XMLNode>                              m_cellFormatsNode; /**< An XMLNode object with the cell formats item */
+        std::vector<XLCellFormat>                             m_cellFormats;
+        bool                                                  m_permitXfId{false};
         mutable std::unordered_map<std::string, XLStyleIndex> m_fingerprintCache; /**< fingerprint -> index dedup cache */
     };
 
@@ -2150,8 +2151,8 @@ namespace OpenXLSX
         XMLNode node() const { return m_dxfNode; }
 
     private:
-        std::unique_ptr<XMLDocument> m_xmlDocument;     /**< An XMLDocument object for standalone use */
-        mutable XMLNode              m_dxfNode;         /**< An XMLNode object with the dxf item */
+        std::unique_ptr<XMLDocument> m_xmlDocument; /**< An XMLDocument object for standalone use */
+        mutable XMLNode              m_dxfNode;     /**< An XMLNode object with the dxf item */
     };
 
     /**
@@ -2235,8 +2236,8 @@ namespace OpenXLSX
         XLStyleIndex create(XLDxf copyFrom = XLDxf{}, std::string_view styleEntriesPrefix = XLDefaultStyleEntriesPrefix);
 
     private:
-        mutable XMLNode      m_dxfsNode;       /**< An XMLNode object with the dxfs item */
-        std::vector<XLDxf>   m_dxfs;
+        mutable XMLNode    m_dxfsNode; /**< An XMLNode object with the dxfs item */
+        std::vector<XLDxf> m_dxfs;
     };
 
     /**
@@ -2264,7 +2265,9 @@ namespace OpenXLSX
          * be silenced
          * @param stylesPrefix Prefix any newly created root style nodes with this text as pugi::node_pcdata
          */
-        explicit XLStyles(gsl::not_null<XLXmlData*> xmlData, bool suppressWarnings = false, std::string_view stylesPrefix = XLDefaultStylesPrefix);
+        explicit XLStyles(gsl::not_null<XLXmlData*> xmlData,
+                          bool                      suppressWarnings = false,
+                          std::string_view          stylesPrefix     = XLDefaultStylesPrefix);
 
         /**
          * @brief Destructor
@@ -2373,9 +2376,9 @@ namespace OpenXLSX
          * @param numFmtId Optional number format index
          * @return The XLStyleIndex in cellXfs that corresponds to this named style.
          */
-        XLStyleIndex addNamedStyle(std::string_view name,
-                                   std::optional<XLStyleIndex> fontId = std::nullopt,
-                                   std::optional<XLStyleIndex> fillId = std::nullopt,
+        XLStyleIndex addNamedStyle(std::string_view            name,
+                                   std::optional<XLStyleIndex> fontId   = std::nullopt,
+                                   std::optional<XLStyleIndex> fillId   = std::nullopt,
                                    std::optional<XLStyleIndex> borderId = std::nullopt,
                                    std::optional<XLStyleIndex> numFmtId = std::nullopt);
 

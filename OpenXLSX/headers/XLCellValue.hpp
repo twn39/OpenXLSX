@@ -24,12 +24,11 @@
 #include "XLRichText.hpp"
 #include "XLXmlParser.hpp"
 
-typedef std::variant<std::string, int64_t, double, bool, OpenXLSX::XLRichText>
-    XLCellValueType;
+typedef std::variant<std::string, int64_t, double, bool, OpenXLSX::XLRichText> XLCellValueType;
 
 namespace OpenXLSX
 {
-class XLCellValueProxy;
+    class XLCellValueProxy;
     class XLCell;
 
     /**
@@ -78,7 +77,7 @@ class XLCellValueProxy;
      */
     class OPENXLSX_EXPORT XLCellValue
     {
-friend class XLCellValueProxy;    // to allow access to m_value
+        friend class XLCellValueProxy;    // to allow access to m_value
 
         // Comparison operators between XLCellValue objects
         friend bool          operator==(const XLCellValue& lhs, const XLCellValue& rhs);
@@ -90,19 +89,23 @@ friend class XLCellValueProxy;    // to allow access to m_value
         friend std::ostream& operator<<(std::ostream& os, const XLCellValue& value);
         friend std::hash<OpenXLSX::XLCellValue>;
 
-#define OPENXLSX_XLCELLVALUE_FRIEND_STRING_OP(OP, FUNCTOR) \
-        friend bool operator OP(const XLCellValue& lhs, std::string_view rhs) { \
-            if (std::holds_alternative<std::string>(lhs.m_value)) return FUNCTOR<>{}(std::string_view(std::get<std::string>(lhs.m_value)), rhs); \
-            return false; \
-        } \
-        friend bool operator OP(std::string_view lhs, const XLCellValue& rhs) { \
-            if (std::holds_alternative<std::string>(rhs.m_value)) return FUNCTOR<>{}(lhs, std::string_view(std::get<std::string>(rhs.m_value))); \
-            return false; \
-        } \
-        friend bool operator OP(const XLCellValue& lhs, const char* rhs) { return lhs OP std::string_view(rhs); } \
-        friend bool operator OP(const char* lhs, const XLCellValue& rhs) { return std::string_view(lhs) OP rhs; } \
-        friend bool operator OP(const XLCellValue& lhs, const std::string& rhs) { return lhs OP std::string_view(rhs); } \
-        friend bool operator OP(const std::string& lhs, const XLCellValue& rhs) { return std::string_view(lhs) OP rhs; }
+#define OPENXLSX_XLCELLVALUE_FRIEND_STRING_OP(OP, FUNCTOR)                                                           \
+    friend bool operator OP(const XLCellValue& lhs, std::string_view rhs)                                            \
+    {                                                                                                                \
+        if (std::holds_alternative<std::string>(lhs.m_value))                                                        \
+            return FUNCTOR<>{}(std::string_view(std::get<std::string>(lhs.m_value)), rhs);                           \
+        return false;                                                                                                \
+    }                                                                                                                \
+    friend bool operator OP(std::string_view lhs, const XLCellValue& rhs)                                            \
+    {                                                                                                                \
+        if (std::holds_alternative<std::string>(rhs.m_value))                                                        \
+            return FUNCTOR<>{}(lhs, std::string_view(std::get<std::string>(rhs.m_value)));                           \
+        return false;                                                                                                \
+    }                                                                                                                \
+    friend bool operator OP(const XLCellValue& lhs, const char* rhs) { return lhs OP std::string_view(rhs); }        \
+    friend bool operator OP(const char* lhs, const XLCellValue& rhs) { return std::string_view(lhs) OP rhs; }        \
+    friend bool operator OP(const XLCellValue& lhs, const std::string& rhs) { return lhs OP std::string_view(rhs); } \
+    friend bool operator OP(const std::string& lhs, const XLCellValue& rhs) { return std::string_view(lhs) OP rhs; }
 
         OPENXLSX_XLCELLVALUE_FRIEND_STRING_OP(==, std::equal_to)
         OPENXLSX_XLCELLVALUE_FRIEND_STRING_OP(!=, std::not_equal_to)
@@ -114,7 +117,7 @@ friend class XLCellValueProxy;    // to allow access to m_value
 #undef OPENXLSX_XLCELLVALUE_FRIEND_STRING_OP
 
     public:
-/**
+        /**
          * @brief Default constructor
          */
         XLCellValue();
@@ -404,7 +407,7 @@ friend class XLCellValueProxy;    // to allow access to m_value
         const char* typeAsString() const;
 
     private:
-XLCellValueType m_value{std::string("")};   /**< The value contained in the cell. */
+        XLCellValueType m_value{std::string("")};   /**< The value contained in the cell. */
         XLValueType     m_type{XLValueType::Empty}; /**< The value type of the cell. */
     };
 
@@ -420,7 +423,7 @@ XLCellValueType m_value{std::string("")};   /**< The value contained in the cell
         friend class XLDocument;    // for reindexing shared strings
 
     public:
-/**
+        /**
          * @brief Destructor
          */
         ~XLCellValueProxy();
@@ -588,7 +591,7 @@ XLCellValueType m_value{std::string("")};   /**< The value contained in the cell
         }
 
     private:
-/**
+        /**
          * @brief Constructor
          * @param cell Pointer to the parent XLCell object.
          * @param cellNode Pointer to the corresponding XMLNode object.
@@ -662,8 +665,8 @@ XLCellValueType m_value{std::string("")};   /**< The value contained in the cell
          * @return true if newIndex could be set
          * @return false if newIndex < 0 or value is not already a shared string
          */
-        bool setStringIndex(int32_t newIndex);
-XLCell*  m_cell;     /**< Pointer to the owning XLCell object. */
+        bool     setStringIndex(int32_t newIndex);
+        XLCell*  m_cell;     /**< Pointer to the owning XLCell object. */
         XMLNode* m_cellNode; /**< Pointer to corresponding XML cell node. */
     };
 
@@ -674,17 +677,22 @@ XLCell*  m_cell;     /**< Pointer to the owning XLCell object. */
 namespace OpenXLSX
 {
     // Utility for cross-type comparison
-    template <typename Op>
-    struct XLCompareVisitor {
-        template <typename T, typename U>
-        bool operator()(const T& lhs, const U& rhs) const {
+    template<typename Op>
+    struct XLCompareVisitor
+    {
+        template<typename T, typename U>
+        bool operator()(const T& lhs, const U& rhs) const
+        {
             if constexpr (std::is_arithmetic_v<T> && std::is_arithmetic_v<U> && !std::is_same_v<T, bool> && !std::is_same_v<U, bool>) {
                 return Op{}(lhs, rhs);
-            } else if constexpr (std::is_same_v<T, bool> && std::is_same_v<U, bool>) {
+            }
+            else if constexpr (std::is_same_v<T, bool> && std::is_same_v<U, bool>) {
                 return Op{}(lhs, rhs);
-            } else if constexpr (std::is_same_v<T, std::string> && std::is_same_v<U, std::string>) {
+            }
+            else if constexpr (std::is_same_v<T, std::string> && std::is_same_v<U, std::string>) {
                 return Op{}(lhs, rhs);
-            } else {
+            }
+            else {
                 return false;
             }
         }
@@ -694,40 +702,46 @@ namespace OpenXLSX
      * @param lhs
      * @param rhs
      */
-    inline bool operator==(const XLCellValue& lhs, const XLCellValue& rhs) { return std::visit(XLCompareVisitor<std::equal_to<>>{}, lhs.m_value, rhs.m_value); }
+    inline bool operator==(const XLCellValue& lhs, const XLCellValue& rhs)
+    { return std::visit(XLCompareVisitor<std::equal_to<>>{}, lhs.m_value, rhs.m_value); }
 
     /**
      * @param lhs
      * @param rhs
      */
-    inline bool operator!=(const XLCellValue& lhs, const XLCellValue& rhs) { return std::visit(XLCompareVisitor<std::not_equal_to<>>{}, lhs.m_value, rhs.m_value); }
+    inline bool operator!=(const XLCellValue& lhs, const XLCellValue& rhs)
+    { return std::visit(XLCompareVisitor<std::not_equal_to<>>{}, lhs.m_value, rhs.m_value); }
 
     /**
      * @param lhs
      * @param rhs
      */
-    inline bool operator<(const XLCellValue& lhs, const XLCellValue& rhs) { return std::visit(XLCompareVisitor<std::less<>>{}, lhs.m_value, rhs.m_value); }
+    inline bool operator<(const XLCellValue& lhs, const XLCellValue& rhs)
+    { return std::visit(XLCompareVisitor<std::less<>>{}, lhs.m_value, rhs.m_value); }
 
     /**
      * @param lhs
      * @param rhs
      */
-    inline bool operator>(const XLCellValue& lhs, const XLCellValue& rhs) { return std::visit(XLCompareVisitor<std::greater<>>{}, lhs.m_value, rhs.m_value); }
+    inline bool operator>(const XLCellValue& lhs, const XLCellValue& rhs)
+    { return std::visit(XLCompareVisitor<std::greater<>>{}, lhs.m_value, rhs.m_value); }
 
     /**
      * @param lhs
      * @param rhs
      */
-    inline bool operator<=(const XLCellValue& lhs, const XLCellValue& rhs) { return std::visit(XLCompareVisitor<std::less_equal<>>{}, lhs.m_value, rhs.m_value); }
+    inline bool operator<=(const XLCellValue& lhs, const XLCellValue& rhs)
+    { return std::visit(XLCompareVisitor<std::less_equal<>>{}, lhs.m_value, rhs.m_value); }
 
     /**
      * @param lhs
      * @param rhs
      */
-    inline bool operator>=(const XLCellValue& lhs, const XLCellValue& rhs) { return std::visit(XLCompareVisitor<std::greater_equal<>>{}, lhs.m_value, rhs.m_value); }
+    inline bool operator>=(const XLCellValue& lhs, const XLCellValue& rhs)
+    { return std::visit(XLCompareVisitor<std::greater_equal<>>{}, lhs.m_value, rhs.m_value); }
 
     /**
-         * @param os
+     * @param os
      * @param value
      */
     inline std::ostream& operator<<(std::ostream& os, const XLCellValue& value)

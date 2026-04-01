@@ -5,8 +5,8 @@
 // ===== OpenXLSX Includes ===== //
 #include "XLCell.hpp"
 #include "XLCellRange.hpp"
-#include "XLUtilities.hpp"
 #include "XLDocument.hpp"
+#include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
 
@@ -70,7 +70,6 @@ XLCell& XLCell::operator=(XLCell&& other) noexcept
 
 void XLCell::copyFrom(XLCell const& other)
 {
-    
     if (!m_cellNode) {
         // copyFrom invoked by empty XLCell: create a new cell with reference & m_cellNode from other
         m_cellNode      = std::make_unique<XMLNode>(*other.m_cellNode);
@@ -96,8 +95,9 @@ void XLCell::copyFrom(XLCell const& other)
         XMLAttribute currentAttr = m_cellNode->first_attribute();
         while (not currentAttr.empty()) {
             XMLAttribute nextAttr = currentAttr.next_attribute();    // get a handle on next attribute before potentially removing attr
-            if (std::string_view(currentAttr.name()) != "r") m_cellNode->remove_attribute(currentAttr);    // remove all but the cell reference
-            currentAttr = nextAttr;    // advance to previously stored next attribute
+            if (std::string_view(currentAttr.name()) != "r")
+                m_cellNode->remove_attribute(currentAttr);    // remove all but the cell reference
+            currentAttr = nextAttr;                           // advance to previously stored next attribute
         }
         // ===== Copy all XML attributes that are not the cell reference ("r")
         for (auto attr = other.m_cellNode->first_attribute(); not attr.empty(); attr = attr.next_attribute())
@@ -205,12 +205,12 @@ void XLCell::clear(uint32_t keep)
     // ===== Clear attributes
     XMLAttribute attr = m_cellNode->first_attribute();
     while (not attr.empty()) {
-        XMLAttribute nextAttr = attr.next_attribute();
+        XMLAttribute     nextAttr = attr.next_attribute();
         std::string_view attrName(attr.name());
-        if ((attrName == "r")                                   // if this is cell reference (must always remain untouched)
+        if ((attrName == "r")                                    // if this is cell reference (must always remain untouched)
             or ((keep & XLKeepCellStyle) and attrName == "s")    // or style shall be kept & this is style
             or ((keep & XLKeepCellType) and attrName == "t"))    // or type shall be kept & this is type
-            attr = XMLAttribute{};                              // empty attribute won't get deleted
+            attr = XMLAttribute{};                               // empty attribute won't get deleted
         // ===== Remove all non-kept attributes
         if (not attr.empty()) m_cellNode->remove_attribute(attr);
         attr = nextAttr;    // advance to previously determined next cell node attribute
@@ -225,7 +225,7 @@ void XLCell::clear(uint32_t keep)
             std::string_view nodeName(node.name());
             if (((keep & XLKeepCellValue) and nodeName == "v")          // if value shall be kept & this is value
                 or ((keep & XLKeepCellFormula) and nodeName == "f"))    // or formula shall be kept & this is formula
-                node = XMLNode{};                                      // empty node won't get deleted
+                node = XMLNode{};                                       // empty node won't get deleted
         }
         // ===== Remove all non-kept cell node children
         if (not node.empty()) m_cellNode->remove_child(node);
@@ -250,20 +250,23 @@ bool XLCell::isEqual(const XLCell& lhs, const XLCell& rhs) { return *lhs.m_cellN
 /**
  * @details Applies a high-level XLStyle object by resolving it into the underlying OpenXLSX XLStyles system.
  */
-XLCell& XLCell::setStyle(const XLStyle& style) {
+XLCell& XLCell::setStyle(const XLStyle& style)
+{
     // Cells don't have direct access to document, but m_sharedStrings inherits from XLXmlFile which has parentDoc()
-    auto& doc = const_cast<XLDocument&>(m_sharedStrings.get().parentDoc());
+    auto& doc    = const_cast<XLDocument&>(m_sharedStrings.get().parentDoc());
     auto& styles = doc.styles();
-    
+
     // Create a new format (In a more advanced implementation, we would search for an existing matching format first)
     auto formatId = styles.cellFormats().create();
-    auto format = styles.cellFormats().cellFormatByIndex(formatId);
-    
+    auto format   = styles.cellFormats().cellFormatByIndex(formatId);
+
     // 1. Handle Font
-    if (style.font.name || style.font.size || style.font.color || style.font.bold || style.font.italic || style.font.underline || style.font.strikethrough) {
+    if (style.font.name || style.font.size || style.font.color || style.font.bold || style.font.italic || style.font.underline ||
+        style.font.strikethrough)
+    {
         auto fontId = styles.fonts().create();
-        auto font = styles.fonts().fontByIndex(fontId);
-        
+        auto font   = styles.fonts().fontByIndex(fontId);
+
         if (style.font.name) font.setFontName(*style.font.name);
         if (style.font.size) font.setFontSize(*style.font.size);
         if (style.font.color) font.setFontColor(*style.font.color);
@@ -271,40 +274,42 @@ XLCell& XLCell::setStyle(const XLStyle& style) {
         if (style.font.italic) font.setItalic(*style.font.italic);
         if (style.font.underline && *style.font.underline) font.setUnderline(XLUnderlineSingle);
         if (style.font.strikethrough) font.setStrikethrough(*style.font.strikethrough);
-        
+
         format.setFontIndex(fontId);
         format.setApplyFont(true);
     }
-    
+
     // 2. Handle Fill
     if (style.fill.pattern || style.fill.fgColor || style.fill.bgColor) {
         auto fillId = styles.fills().create();
-        auto fill = styles.fills().fillByIndex(fillId);
-        
-        if (style.fill.pattern) fill.setPatternType(*style.fill.pattern);
-        else fill.setPatternType(XLPatternSolid); // Default to solid if colors are provided
-        
+        auto fill   = styles.fills().fillByIndex(fillId);
+
+        if (style.fill.pattern)
+            fill.setPatternType(*style.fill.pattern);
+        else
+            fill.setPatternType(XLPatternSolid);    // Default to solid if colors are provided
+
         if (style.fill.fgColor) fill.setColor(*style.fill.fgColor);
         if (style.fill.bgColor) fill.setBackgroundColor(*style.fill.bgColor);
-        
+
         format.setFillIndex(fillId);
         format.setApplyFill(true);
     }
-    
+
     // 3. Handle Borders
     if (style.border.left.style || style.border.right.style || style.border.top.style || style.border.bottom.style) {
         auto borderId = styles.borders().create();
-        auto border = styles.borders().borderByIndex(borderId);
-        
+        auto border   = styles.borders().borderByIndex(borderId);
+
         if (style.border.left.style) border.setLeft(*style.border.left.style, style.border.left.color.value_or(XLColor("000000")));
         if (style.border.right.style) border.setRight(*style.border.right.style, style.border.right.color.value_or(XLColor("000000")));
         if (style.border.top.style) border.setTop(*style.border.top.style, style.border.top.color.value_or(XLColor("000000")));
         if (style.border.bottom.style) border.setBottom(*style.border.bottom.style, style.border.bottom.color.value_or(XLColor("000000")));
-        
+
         format.setBorderIndex(borderId);
         format.setApplyBorder(true);
     }
-    
+
     // 4. Handle Alignment
     if (style.alignment.horizontal || style.alignment.vertical || style.alignment.wrapText) {
         auto alignment = format.alignment(XLCreateIfMissing);
@@ -313,29 +318,26 @@ XLCell& XLCell::setStyle(const XLStyle& style) {
         if (style.alignment.wrapText) alignment.setWrapText(*style.alignment.wrapText);
         format.setApplyAlignment(true);
     }
-    
+
     // 5. Handle Number Format
     if (style.numberFormat) {
         // Find or create the number format ID
-        auto& numFormats = styles.numberFormats();
-        uint32_t numFmtId = 0;
-        
+        auto&    numFormats = styles.numberFormats();
+        uint32_t numFmtId   = 0;
+
         // Simple search for existing format
         bool found = false;
         for (size_t i = 0; i < numFormats.count(); ++i) {
             auto nf = numFormats.numberFormatByIndex(i);
             if (nf.formatCode() == *style.numberFormat) {
                 numFmtId = nf.numberFormatId();
-                found = true;
+                found    = true;
                 break;
             }
         }
-        
-        if (!found) {
-            numFmtId = styles.createNumberFormat(*style.numberFormat);
-        }
 
-        
+        if (!found) { numFmtId = styles.createNumberFormat(*style.numberFormat); }
+
         format.setNumberFormatId(numFmtId);
         format.setApplyNumberFormat(true);
     }

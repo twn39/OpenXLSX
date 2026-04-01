@@ -6,25 +6,28 @@ namespace OpenXLSX
     inline constexpr uint16_t MAX_COLS = 16'384;
     inline constexpr uint32_t MAX_ROWS = 1'048'576;
 
-    struct XLRowIndex {
+    struct XLRowIndex
+    {
         uint32_t val;
         explicit XLRowIndex(uint32_t v) : val(v) {}
         operator uint32_t() const { return val; }
     };
 
-    struct XLColIndex {
+    struct XLColIndex
+    {
         uint16_t val;
         explicit XLColIndex(uint16_t v) : val(v) {}
         operator uint16_t() const { return val; }
     };
 
-    inline namespace IndexLiterals {
+    inline namespace IndexLiterals
+    {
         inline XLRowIndex operator""_row(unsigned long long v) { return XLRowIndex(static_cast<uint32_t>(v)); }
         inline XLColIndex operator""_col(unsigned long long v) { return XLColIndex(static_cast<uint16_t>(v)); }
-    }
+    }    // namespace IndexLiterals
 
-
-    class XLDistance {
+    class XLDistance
+    {
     public:
         XLDistance() = default;
         static XLDistance Pixels(uint32_t px) { return XLDistance(static_cast<uint64_t>(px) * 9525); }
@@ -36,15 +39,15 @@ namespace OpenXLSX
 
         [[nodiscard]] uint64_t getEMU() const { return m_emu; }
         [[nodiscard]] uint32_t getPixels() const { return static_cast<uint32_t>(m_emu / 9525); }
-        [[nodiscard]] double getInches() const { return static_cast<double>(m_emu) / 914400.0; }
-
+        [[nodiscard]] double   getInches() const { return static_cast<double>(m_emu) / 914400.0; }
 
     private:
         explicit XLDistance(uint64_t emu) : m_emu(emu) {}
-        uint64_t m_emu {0};
+        uint64_t m_emu{0};
     };
 
-    inline namespace DistanceLiterals {
+    inline namespace DistanceLiterals
+    {
         inline XLDistance operator""_px(unsigned long long px) { return XLDistance::Pixels(static_cast<uint32_t>(px)); }
         inline XLDistance operator""_cm(long double cm) { return XLDistance::Centimeters(static_cast<double>(cm)); }
         inline XLDistance operator""_cm(unsigned long long cm) { return XLDistance::Centimeters(static_cast<double>(cm)); }
@@ -55,8 +58,7 @@ namespace OpenXLSX
         inline XLDistance operator""_pt(long double pt) { return XLDistance::Points(static_cast<double>(pt)); }
         inline XLDistance operator""_pt(unsigned long long pt) { return XLDistance::Points(static_cast<double>(pt)); }
 
-    }
-
+    }    // namespace DistanceLiterals
 
     // anchoring a comment shape below these values was not possible in LibreOffice - TBC with MS Office
     inline constexpr uint16_t MAX_SHAPE_ANCHOR_COLUMN = 13067;    // column "SHO"

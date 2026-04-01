@@ -110,27 +110,27 @@ TEST_CASE("High-Level XLStyle Facade Integration", "[XLStyle]")
     XLDocument doc;
     doc.create("./testXLStyleFacade.xlsx", XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
-    
+
     XLStyle style;
-    style.font.bold = true;
+    style.font.bold   = true;
     style.font.italic = true;
-    style.font.color = XLColor("FF0000");
-    style.font.size = 14;
-    
+    style.font.color  = XLColor("FF0000");
+    style.font.size   = 14;
+
     style.fill.pattern = XLPatternSolid;
-    style.fill.fgColor = XLColor("00FF00"); // green
-    
+    style.fill.fgColor = XLColor("00FF00");    // green
+
     style.alignment.horizontal = XLAlignCenter;
-    style.alignment.wrapText = true;
-    
+    style.alignment.wrapText   = true;
+
     style.border.left.style = XLLineStyleThin;
     style.border.left.color = XLColor("0000FF");
-    
+
     style.numberFormat = "#,##0.00";
-    
+
     wks.cell("A1").value() = 1234.56;
     wks.cell("A1").setStyle(style);
-    
+
     doc.save();
     doc.close();
 
@@ -139,10 +139,10 @@ TEST_CASE("High-Level XLStyle Facade Integration", "[XLStyle]")
     doc2.open("./testXLStyleFacade.xlsx");
     auto wks2 = doc2.workbook().worksheet("Sheet1");
     auto cell = wks2.cell("A1");
-    
+
     auto& styles = doc2.styles();
-    auto format = styles.cellFormats().cellFormatByIndex(cell.cellFormat());
-    
+    auto  format = styles.cellFormats().cellFormatByIndex(cell.cellFormat());
+
     // Verify Font
     REQUIRE(format.applyFont() == true);
     auto font = styles.fonts().fontByIndex(format.fontIndex());
@@ -161,7 +161,7 @@ TEST_CASE("High-Level XLStyle Facade Integration", "[XLStyle]")
     REQUIRE(format.applyAlignment() == true);
     REQUIRE(format.alignment().horizontal() == XLAlignCenter);
     REQUIRE(format.alignment().wrapText() == true);
-    
+
     // Verify Border
     REQUIRE(format.applyBorder() == true);
     auto border = styles.borders().borderByIndex(format.borderIndex());

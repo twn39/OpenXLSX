@@ -53,13 +53,14 @@ TEST_CASE("XLSharedStrings Tests", "[XLSharedStrings]")
     }
 }
 
-TEST_CASE("Shared Strings Index Cache Coherency", "[SharedStrings][Bugfix]") {
+TEST_CASE("Shared Strings Index Cache Coherency", "[SharedStrings][Bugfix]")
+{
     XLDocument doc;
     doc.create("SharedStrings_Cache_Test.xlsx", XLForceOverwrite);
-    auto wks = doc.workbook().worksheet("Sheet1");
+    auto wks               = doc.workbook().worksheet("Sheet1");
     wks.cell("A1").value() = "Hello World";
-    auto ss = doc.sharedStrings();
-    int32_t idx = ss.getStringIndex("Hello World");
+    auto    ss             = doc.sharedStrings();
+    int32_t idx            = ss.getStringIndex("Hello World");
     REQUIRE(idx >= 0);
     REQUIRE(ss.stringExists("Hello World") == true);
     ss.clearString(idx);
@@ -80,9 +81,7 @@ TEST_CASE("SharedStrings Lazy DOM and Reservation", "[XLSharedStrings]")
         constexpr int kCount = 1000;
         ss.reserveStrings(kCount);
 
-        for (int i = 0; i < kCount; ++i) {
-            ss.getOrCreateStringIndex("Key " + std::to_string(i));
-        }
+        for (int i = 0; i < kCount; ++i) { ss.getOrCreateStringIndex("Key " + std::to_string(i)); }
 
         REQUIRE(ss.stringCount() == kCount);
         REQUIRE(std::string(ss.getString(0)) == "Key 0");
@@ -115,9 +114,7 @@ TEST_CASE("SharedStrings Lazy DOM and Reservation", "[XLSharedStrings]")
             auto wks = doc.workbook().worksheet("Sheet1");
 
             // Write strings via the cell API (goes through appendString/lazy DOM)
-            for (int i = 0; i < 50; ++i) {
-                wks.cell(1, i + 1).value() = "Cell " + std::to_string(i);
-            }
+            for (int i = 0; i < 50; ++i) { wks.cell(1, i + 1).value() = "Cell " + std::to_string(i); }
 
             doc.save();
             doc.close();

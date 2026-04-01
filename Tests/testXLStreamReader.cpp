@@ -1,5 +1,5 @@
-#include <catch2/catch_test_macros.hpp>
 #include "OpenXLSX.hpp"
+#include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
 using namespace OpenXLSX;
@@ -16,7 +16,7 @@ TEST_CASE("Streaming Reader Functional Tests", "[XLStreamReader]")
         writer.appendRow({"String", 123, 45.6, true, "Special <>&\""});
         writer.appendRow({XLCellValue(), "Skipped First"});
         writer.close();
-        
+
         doc.save();
         doc.close();
     }
@@ -44,7 +44,7 @@ TEST_CASE("Streaming Reader Functional Tests", "[XLStreamReader]")
     REQUIRE(row2[1].get<std::string>() == "Skipped First");
 
     REQUIRE(reader.hasNext() == false);
-    
+
     doc.close();
 }
 TEST_CASE("Streaming Reader Skipping Empty Rows and Cells", "[XLStreamReader]")
@@ -52,19 +52,19 @@ TEST_CASE("Streaming Reader Skipping Empty Rows and Cells", "[XLStreamReader]")
     {
         XLDocument doc;
         doc.create("./testXLStreamReader_skip.xlsx", XLForceOverwrite);
-        auto wks = doc.workbook().worksheet("Sheet1");
+        auto wks               = doc.workbook().worksheet("Sheet1");
         wks.cell("A1").value() = 1;
         wks.cell("C1").value() = 2;
-        wks.cell("B3").value() = 3; // Skips row 2, and skips col A in row 3
+        wks.cell("B3").value() = 3;    // Skips row 2, and skips col A in row 3
         doc.save();
         doc.close();
     }
 
     XLDocument doc;
     doc.open("./testXLStreamReader_skip.xlsx");
-    auto wks = doc.workbook().worksheet("Sheet1");
+    auto wks    = doc.workbook().worksheet("Sheet1");
     auto reader = wks.streamReader();
-    
+
     REQUIRE(reader.hasNext() == true);
     auto row1 = reader.nextRow();
     REQUIRE(reader.currentRow() == 1);
@@ -88,11 +88,9 @@ TEST_CASE("Streaming Reader Large File Test", "[XLStreamReader]")
     {
         XLDocument doc;
         doc.create("./testXLStreamReader_large.xlsx", XLForceOverwrite);
-        auto wks = doc.workbook().worksheet("Sheet1");
+        auto wks    = doc.workbook().worksheet("Sheet1");
         auto writer = wks.streamWriter();
-        for (int i = 0; i < 10000; i++) {
-            writer.appendRow({"Row", i, i * 1.5, true});
-        }
+        for (int i = 0; i < 10000; i++) { writer.appendRow({"Row", i, i * 1.5, true}); }
         writer.close();
         doc.save();
         doc.close();
@@ -100,9 +98,9 @@ TEST_CASE("Streaming Reader Large File Test", "[XLStreamReader]")
 
     XLDocument doc;
     doc.open("./testXLStreamReader_large.xlsx");
-    auto wks = doc.workbook().worksheet("Sheet1");
+    auto wks    = doc.workbook().worksheet("Sheet1");
     auto reader = wks.streamReader();
-    
+
     int count = 0;
     while (reader.hasNext()) {
         auto row = reader.nextRow();

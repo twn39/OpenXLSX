@@ -49,10 +49,10 @@ namespace OpenXLSX
          */
         explicit XLCellIterator(const XLCellRange& cellRange, XLIteratorLocation loc, std::vector<XLStyleIndex> const* colStyles);
 
-        ~XLCellIterator() = default;
-        XLCellIterator(const XLCellIterator& other) = default;
-        XLCellIterator(XLCellIterator&& other) noexcept = default;
-        XLCellIterator& operator=(const XLCellIterator& other) = default;
+        ~XLCellIterator()                                          = default;
+        XLCellIterator(const XLCellIterator& other)                = default;
+        XLCellIterator(XLCellIterator&& other) noexcept            = default;
+        XLCellIterator& operator=(const XLCellIterator& other)     = default;
         XLCellIterator& operator=(XLCellIterator&& other) noexcept = default;
 
     private:
@@ -96,17 +96,17 @@ namespace OpenXLSX
         [[nodiscard]] std::string address() const;
 
     private:
-        mutable XMLNode    m_dataNode;
-        XLCellReference    m_topLeft;
-        XLCellReference    m_bottomRight;
-        XLSharedStringsRef m_sharedStrings;
-        bool               m_endReached;
-        mutable XMLNode    m_hintNode; /**< Cached node to speed up subsequent row/cell lookups. */
-        mutable uint32_t   m_hintRow;
-        mutable XLCell     m_currentCell;
-        mutable CellStatus m_currentCellStatus;
-        uint32_t           m_currentRow;
-        uint16_t           m_currentColumn;
+        mutable XMLNode                  m_dataNode;
+        XLCellReference                  m_topLeft;
+        XLCellReference                  m_bottomRight;
+        XLSharedStringsRef               m_sharedStrings;
+        bool                             m_endReached;
+        mutable XMLNode                  m_hintNode; /**< Cached node to speed up subsequent row/cell lookups. */
+        mutable uint32_t                 m_hintRow;
+        mutable XLCell                   m_currentCell;
+        mutable CellStatus               m_currentCellStatus;
+        uint32_t                         m_currentRow;
+        uint16_t                         m_currentColumn;
         std::vector<XLStyleIndex> const* m_colStyles;
     };
 

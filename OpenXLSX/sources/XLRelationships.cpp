@@ -3,7 +3,7 @@
 #include <cstdint>    // uint32_t
 #include <cstring>    // strlen
 #include <gsl/gsl>
-#include <memory>     // std::make_unique
+#include <memory>    // std::make_unique
 #include <pugixml.hpp>
 #include <random>       // std::mt19937, std::random_device
 #include <stdexcept>    // std::invalid_argument
@@ -19,7 +19,7 @@
 using namespace OpenXLSX;
 
 namespace
-{                             // anonymous namespace: do not export these symbols
+{                                          // anonymous namespace: do not export these symbols
     thread_local bool RandomIDs{false};    // default: use sequential IDs
     thread_local bool RandomizerInitialized{
         false};    // will be initialized by GetNewRelsID, if XLRand32 / XLRand64 are used elsewhere, user should invoke XLInitRandom
@@ -81,12 +81,12 @@ namespace
     XLRelationshipType GetRelationshipTypeFromString(std::string_view typeString)
     {
         auto matches = [typeString](std::string_view domain, std::string_view path) -> bool {
-            if (typeString.length() == domain.length() + path.length() &&
-                typeString.substr(0, domain.length()) == domain &&
-                typeString.substr(domain.length()) == path) {
+            if (typeString.length() == domain.length() + path.length() && typeString.substr(0, domain.length()) == domain &&
+                typeString.substr(domain.length()) == path)
+            {
                 return true;
             }
-            if (typeString.length() > 15) { // length of "/relationships/"
+            if (typeString.length() > 15) {    // length of "/relationships/"
                 auto pos = typeString.find("/relationships/");
                 if (pos != std::string_view::npos) return typeString.substr(pos) == path;
             }
@@ -110,7 +110,8 @@ namespace
         if (matches(relationshipDomainOpenXml2006, "/relationships/printerSettings")) return XLRelationshipType::PrinterSettings;
         if (matches(relationshipDomainOpenXml2006, "/relationships/vmlDrawing")) return XLRelationshipType::VMLDrawing;
         if (matches(relationshipDomainOpenXml2006, "/relationships/ctrlProp")) return XLRelationshipType::ControlProperties;
-        if (matches(relationshipDomainOpenXml2006CoreProps, "/relationships/metadata/core-properties")) return XLRelationshipType::CoreProperties;
+        if (matches(relationshipDomainOpenXml2006CoreProps, "/relationships/metadata/core-properties"))
+            return XLRelationshipType::CoreProperties;
         if (matches(relationshipDomainMicrosoft2006, "/relationships/vbaProject")) return XLRelationshipType::VBAProject;
         if (matches(relationshipDomainOpenXml2006, "/relationships/pivotTable")) return XLRelationshipType::PivotTable;
         if (matches(relationshipDomainOpenXml2006, "/relationships/pivotCacheDefinition")) return XLRelationshipType::PivotCacheDefinition;
@@ -208,12 +209,12 @@ namespace
             if (!RandomizerInitialized) InitRandom();
             return Rand64();
         }
-        
+
         XMLNode  relationship = relationshipsNode.first_child_of_type(pugi::node_element);
         uint64_t newId        = 1;
         while (!relationship.empty()) {
             std::string_view idVal = relationship.attribute("Id").value();
-            if (idVal.length() > 3) { // skip "rId"
+            if (idVal.length() > 3) {    // skip "rId"
                 uint64_t id;
                 auto [ptr, ec] = std::from_chars(idVal.data() + 3, idVal.data() + idVal.size(), id);
                 if (ec == std::errc()) {
@@ -247,12 +248,12 @@ std::string XLRelationshipItem::id() const { return m_relationshipNode.attribute
 bool XLRelationshipItem::empty() const { return m_relationshipNode.empty(); }
 
 /**
- * @details Creates a XLRelationships object. The pathTo will be verified and stored 
+ * @details Creates a XLRelationships object. The pathTo will be verified and stored
  * to resolve relationship targets as absolute paths within the XLSX archive.
  */
 XLRelationships::XLRelationships(gsl::not_null<XLXmlData*> xmlData, std::string pathTo) : XLXmlFile(xmlData)
 {
-    constexpr std::string_view relFolder = "_rels/";    // all relationships are stored in a (sub-)folder named "_rels/"
+    constexpr std::string_view relFolder    = "_rels/";    // all relationships are stored in a (sub-)folder named "_rels/"
     constexpr size_t           relFolderLen = relFolder.length();
 
     const bool   addFirstSlash = (pathTo[0] != '/');    // if first character of pathTo is NOT a slash, then addFirstSlash = true
@@ -286,7 +287,8 @@ XLRelationshipItem XLRelationships::relationshipById(std::string_view id) const
 XLRelationshipItem XLRelationships::relationshipByTarget(std::string_view target, bool throwIfNotFound) const
 {
     // Rationale: Convert to absolute path and normalize to resolve . and .. entries for consistent comparison.
-    const std::string absoluteTarget = eliminateDotAndDotDotFromPath(!target.empty() && target.front() == '/' ? target : m_path + std::string(target));
+    const std::string absoluteTarget =
+        eliminateDotAndDotDotFromPath(!target.empty() && target.front() == '/' ? target : m_path + std::string(target));
 
     XMLNode relationshipNode = xmlDocument().document_element().first_child_of_type(pugi::node_element);
     while (!relationshipNode.empty()) {
@@ -309,7 +311,7 @@ XLRelationshipItem XLRelationships::relationshipByTarget(std::string_view target
 std::vector<XLRelationshipItem> XLRelationships::relationships() const
 {
     std::vector<XLRelationshipItem> result;
-    XMLNode item = xmlDocument().document_element().first_child_of_type(pugi::node_element);
+    XMLNode                         item = xmlDocument().document_element().first_child_of_type(pugi::node_element);
     while (!item.empty()) {
         result.emplace_back(item);
         item = item.next_sibling_of_type(pugi::node_element);
@@ -318,7 +320,10 @@ std::vector<XLRelationshipItem> XLRelationships::relationships() const
 }
 
 void XLRelationships::deleteRelationship(std::string_view relID)
-{ xmlDocument().document_element().remove_child(xmlDocument().document_element().find_child_by_attribute("Id", std::string(relID).c_str())); }
+{
+    xmlDocument().document_element().remove_child(
+        xmlDocument().document_element().find_child_by_attribute("Id", std::string(relID).c_str()));
+}
 
 void XLRelationships::deleteRelationship(const XLRelationshipItem& item) { deleteRelationship(item.id()); }
 
@@ -328,7 +333,7 @@ void XLRelationships::deleteRelationship(const XLRelationshipItem& item) { delet
 XLRelationshipItem XLRelationships::addRelationship(XLRelationshipType type, std::string_view target, bool isExternal)
 {
     const std::string typeString = OpenXLSX_XLRelationships::GetStringFromType(type);
-    const std::string id = GetNewRelsIDString(xmlDocument().document_element());
+    const std::string id         = GetNewRelsIDString(xmlDocument().document_element());
 
     XMLNode lastRelationship = xmlDocument().document_element().last_child_of_type(pugi::node_element);
     XMLNode node{};
@@ -343,7 +348,7 @@ XLRelationshipItem XLRelationships::addRelationship(XLRelationshipType type, std
         XMLNode insertBefore       = node;
         while (copyWhitespaceFrom.previous_sibling().type() == pugi::node_pcdata) {
             copyWhitespaceFrom = copyWhitespaceFrom.previous_sibling();
-            insertBefore = xmlDocument().document_element().insert_child_before(pugi::node_pcdata, insertBefore);
+            insertBefore       = xmlDocument().document_element().insert_child_before(pugi::node_pcdata, insertBefore);
             insertBefore.set_value(copyWhitespaceFrom.value());
         }
     }

@@ -1,13 +1,13 @@
-#include <algorithm>
-#include <charconv>
-#include <sstream>
-#include <fmt/format.h>
-#include <pugixml.hpp>
 #include "XLWorksheet.hpp"
-#include "XLUtilities.hpp"
 #include "XLCellRange.hpp"
 #include "XLDocument.hpp"
 #include "XLException.hpp"
+#include "XLUtilities.hpp"
+#include <algorithm>
+#include <charconv>
+#include <fmt/format.h>
+#include <pugixml.hpp>
+#include <sstream>
 
 using namespace OpenXLSX;
 
@@ -21,13 +21,13 @@ XLWorksheet::XLWorksheet(XLXmlData* xmlData) : XLSheetBase(xmlData)
         while (not currentNode.empty()) {
             uint16_t min{};
             uint16_t max{};
-            
+
             std::string_view minStr = currentNode.attribute("min").value();
             std::string_view maxStr = currentNode.attribute("max").value();
-            
+
             auto resMin = std::from_chars(minStr.data(), minStr.data() + minStr.size(), min);
             auto resMax = std::from_chars(maxStr.data(), maxStr.data() + maxStr.size(), max);
-            
+
             if (resMin.ec != std::errc() || resMax.ec != std::errc()) {
                 throw XLInternalError("Worksheet column min and/or max attributes are invalid.");
             }
@@ -51,37 +51,37 @@ XLWorksheet::XLWorksheet(XLXmlData* xmlData) : XLSheetBase(xmlData)
 
 XLWorksheet::XLWorksheet(const XLWorksheet& other) : XLSheetBase<XLWorksheet>(other)
 {
-    m_relationships = other.m_relationships;
-    m_merges        = other.m_merges;
+    m_relationships   = other.m_relationships;
+    m_merges          = other.m_merges;
     m_dataValidations = other.m_dataValidations;
-    m_drawing       = other.m_drawing;
-    m_vmlDrawing    = other.m_vmlDrawing;
-    m_comments      = other.m_comments;
-    m_tables        = other.m_tables;
+    m_drawing         = other.m_drawing;
+    m_vmlDrawing      = other.m_vmlDrawing;
+    m_comments        = other.m_comments;
+    m_tables          = other.m_tables;
 }
 
 XLWorksheet::XLWorksheet(XLWorksheet&& other) : XLSheetBase<XLWorksheet>(std::move(other))
 {
-    m_relationships = std::move(other.m_relationships);
-    m_merges        = std::move(other.m_merges);
+    m_relationships   = std::move(other.m_relationships);
+    m_merges          = std::move(other.m_merges);
     m_dataValidations = std::move(other.m_dataValidations);
-    m_drawing       = std::move(other.m_drawing);
-    m_vmlDrawing    = std::move(other.m_vmlDrawing);
-    m_comments      = std::move(other.m_comments);
-    m_tables        = std::move(other.m_tables);
+    m_drawing         = std::move(other.m_drawing);
+    m_vmlDrawing      = std::move(other.m_vmlDrawing);
+    m_comments        = std::move(other.m_comments);
+    m_tables          = std::move(other.m_tables);
 }
 
 XLWorksheet& XLWorksheet::operator=(const XLWorksheet& other)
 {
     if (&other != this) {
         XLSheetBase<XLWorksheet>::operator=(other);
-        m_relationships = other.m_relationships;
-        m_merges        = other.m_merges;
+        m_relationships   = other.m_relationships;
+        m_merges          = other.m_merges;
         m_dataValidations = other.m_dataValidations;
-        m_drawing       = other.m_drawing;
-        m_vmlDrawing    = other.m_vmlDrawing;
-        m_comments      = other.m_comments;
-        m_tables        = other.m_tables;
+        m_drawing         = other.m_drawing;
+        m_vmlDrawing      = other.m_vmlDrawing;
+        m_comments        = other.m_comments;
+        m_tables          = other.m_tables;
     }
     return *this;
 }
@@ -90,13 +90,13 @@ XLWorksheet& XLWorksheet::operator=(XLWorksheet&& other)
 {
     if (&other != this) {
         XLSheetBase<XLWorksheet>::operator=(std::move(other));
-        m_relationships = std::move(other.m_relationships);
-        m_merges        = std::move(other.m_merges);
+        m_relationships   = std::move(other.m_relationships);
+        m_merges          = std::move(other.m_merges);
         m_dataValidations = std::move(other.m_dataValidations);
-        m_drawing       = std::move(other.m_drawing);
-        m_vmlDrawing    = std::move(other.m_vmlDrawing);
-        m_comments      = std::move(other.m_comments);
-        m_tables        = std::move(other.m_tables);
+        m_drawing         = std::move(other.m_drawing);
+        m_vmlDrawing      = std::move(other.m_vmlDrawing);
+        m_comments        = std::move(other.m_comments);
+        m_tables          = std::move(other.m_tables);
     }
     return *this;
 }
@@ -149,27 +149,20 @@ XLCellRange XLWorksheet::range(std::string const& topLeft, std::string const& bo
 XLCellRange XLWorksheet::range(std::string const& rangeReference) const
 {
     size_t pos = rangeReference.find_first_of(':');
-    if (pos == std::string::npos) {
-        return range(rangeReference, rangeReference);
-    }
-    std::string topLeft = rangeReference.substr(0, pos);
+    if (pos == std::string::npos) { return range(rangeReference, rangeReference); }
+    std::string topLeft     = rangeReference.substr(0, pos);
     std::string bottomRight = rangeReference.substr(pos + 1);
 
-    bool topIsCol = std::all_of(topLeft.begin(), topLeft.end(), [](unsigned char c){ return std::isalpha(c); });
-    bool bottomIsCol = std::all_of(bottomRight.begin(), bottomRight.end(), [](unsigned char c){ return std::isalpha(c); });
-    if (topIsCol && bottomIsCol) {
-        return range(topLeft + "1", bottomRight + std::to_string(OpenXLSX::MAX_ROWS));
-    }
+    bool topIsCol    = std::all_of(topLeft.begin(), topLeft.end(), [](unsigned char c) { return std::isalpha(c); });
+    bool bottomIsCol = std::all_of(bottomRight.begin(), bottomRight.end(), [](unsigned char c) { return std::isalpha(c); });
+    if (topIsCol && bottomIsCol) { return range(topLeft + "1", bottomRight + std::to_string(OpenXLSX::MAX_ROWS)); }
 
-    bool topIsRow = std::all_of(topLeft.begin(), topLeft.end(), [](unsigned char c){ return std::isdigit(c); });
-    bool bottomIsRow = std::all_of(bottomRight.begin(), bottomRight.end(), [](unsigned char c){ return std::isdigit(c); });
-    if (topIsRow && bottomIsRow) {
-        return range("A" + topLeft, XLCellReference::columnAsString(OpenXLSX::MAX_COLS) + bottomRight);
-    }
+    bool topIsRow    = std::all_of(topLeft.begin(), topLeft.end(), [](unsigned char c) { return std::isdigit(c); });
+    bool bottomIsRow = std::all_of(bottomRight.begin(), bottomRight.end(), [](unsigned char c) { return std::isdigit(c); });
+    if (topIsRow && bottomIsRow) { return range("A" + topLeft, XLCellReference::columnAsString(OpenXLSX::MAX_COLS) + bottomRight); }
 
     return range(topLeft, bottomRight);
 }
-
 
 XLRowRange XLWorksheet::rows() const
 {
@@ -188,11 +181,7 @@ XLRowRange XLWorksheet::rows(uint32_t rowCount) const
 XLRowRange XLWorksheet::rows(uint32_t firstRow, uint32_t lastRow) const
 { return XLRowRange(xmlDocument().document_element().child("sheetData"), firstRow, lastRow, parentDoc().sharedStrings()); }
 
-void XLWorksheet::appendRow(const std::vector<XLCellValue>& values)
-{
-    row(rowCount() + 1).values() = values;
-}
-
+void XLWorksheet::appendRow(const std::vector<XLCellValue>& values) { row(rowCount() + 1).values() = values; }
 
 XLRow XLWorksheet::row(uint32_t rowNumber) const
 { return XLRow{getRowNode(xmlDocument().document_element().child("sheetData"), rowNumber), parentDoc().sharedStrings()}; }
@@ -201,7 +190,8 @@ XLColumn XLWorksheet::column(uint16_t columnNumber) const
 {
     using namespace std::literals::string_literals;
     if (columnNumber < 1 or columnNumber > OpenXLSX::MAX_COLS)
-        throw XLException("XLWorksheet::column: columnNumber "s + std::to_string(columnNumber) + " is outside allowed range [1;"s + std::to_string(MAX_COLS) + "]"s);
+        throw XLException("XLWorksheet::column: columnNumber "s + std::to_string(columnNumber) + " is outside allowed range [1;"s +
+                          std::to_string(MAX_COLS) + "]"s);
 
     if (xmlDocument().document_element().child("cols").empty())
         xmlDocument().document_element().insert_child_before("cols", xmlDocument().document_element().child("sheetData"));
@@ -229,7 +219,8 @@ XLColumn XLWorksheet::column(uint16_t columnNumber) const
         while (not columnNode.empty() and columnNode.attribute("min").as_int() != columnNumber)
             columnNode = columnNode.previous_sibling_of_type(pugi::node_element);
         if (columnNode.empty())
-            throw XLInternalError("XLWorksheet::"s + __func__ + ": column node for index "s + std::to_string(columnNumber) + "not found after splitting column nodes"s);
+            throw XLInternalError("XLWorksheet::"s + __func__ + ": column node for index "s + std::to_string(columnNumber) +
+                                  "not found after splitting column nodes"s);
     }
     else if (not columnNode.empty() and minColumn > columnNumber) {
         columnNode                                 = xmlDocument().document_element().child("cols").insert_child_before("col", columnNode);
@@ -248,7 +239,8 @@ XLColumn XLWorksheet::column(uint16_t columnNumber) const
 
     if (columnNode.empty()) {
         using namespace std::literals::string_literals;
-        throw XLInternalError("XLWorksheet::"s + __func__ + ": was unable to find or create node for column "s + std::to_string(columnNumber));
+        throw XLInternalError("XLWorksheet::"s + __func__ + ": was unable to find or create node for column "s +
+                              std::to_string(columnNumber));
     }
     return XLColumn(columnNode);
 }
@@ -281,36 +273,31 @@ XLAutoFilter XLWorksheet::autofilterObject() const
 
 void XLWorksheet::addSortCondition(const std::string& ref, uint16_t colId, bool descending)
 {
-    XMLNode rootNode = xmlDocument().document_element();
+    XMLNode rootNode       = xmlDocument().document_element();
     XMLNode autoFilterNode = rootNode.child("autoFilter");
     if (autoFilterNode.empty()) {
-        autoFilterNode = appendAndGetNode(rootNode, "autoFilter", m_nodeOrder);
+        autoFilterNode                         = appendAndGetNode(rootNode, "autoFilter", m_nodeOrder);
         autoFilterNode.append_attribute("ref") = ref.c_str();
     }
-    
+
     XMLNode sortStateNode = autoFilterNode.child("sortState");
-    if (sortStateNode.empty()) {
-        sortStateNode = autoFilterNode.append_child("sortState");
-    }
-    
+    if (sortStateNode.empty()) { sortStateNode = autoFilterNode.append_child("sortState"); }
+
     // Set or update the ref attribute on sortState
-    if (sortStateNode.attribute("ref").empty()) {
-        sortStateNode.append_attribute("ref") = ref.c_str();
-    } else {
+    if (sortStateNode.attribute("ref").empty()) { sortStateNode.append_attribute("ref") = ref.c_str(); }
+    else {
         sortStateNode.attribute("ref") = ref.c_str();
     }
 
     // The ref string for a specific column should be just that column in the range, excluding the header
-    std::string colRef = XLCellReference::columnAsString(XLCellReference(ref.substr(0, ref.find(':'))).column() + colId) + 
-                         std::to_string(XLCellReference(ref.substr(0, ref.find(':'))).row() + 1) + ":" + 
-                         XLCellReference::columnAsString(XLCellReference(ref.substr(0, ref.find(':'))).column() + colId) + 
+    std::string colRef = XLCellReference::columnAsString(XLCellReference(ref.substr(0, ref.find(':'))).column() + colId) +
+                         std::to_string(XLCellReference(ref.substr(0, ref.find(':'))).row() + 1) + ":" +
+                         XLCellReference::columnAsString(XLCellReference(ref.substr(0, ref.find(':'))).column() + colId) +
                          std::to_string(XLCellReference(ref.substr(ref.find(':') + 1)).row());
 
-    XMLNode sortConditionNode = sortStateNode.append_child("sortCondition");
+    XMLNode sortConditionNode                 = sortStateNode.append_child("sortCondition");
     sortConditionNode.append_attribute("ref") = colRef.c_str();
-    if (descending) {
-        sortConditionNode.append_attribute("descending") = "1";
-    }
+    if (descending) { sortConditionNode.append_attribute("descending") = "1"; }
 }
 
 void XLWorksheet::applyAutoFilter()
@@ -322,12 +309,12 @@ void XLWorksheet::applyAutoFilter()
     if (ref.empty()) return;
 
     XLCellRange filterRange = range(XLCellReference(ref.substr(0, ref.find(':'))), XLCellReference(ref.substr(ref.find(':') + 1)));
-    
+
     // Default assumption is that the first row is the header row
     uint32_t firstRow = filterRange.topLeft().row();
-    uint32_t lastRow = filterRange.bottomRight().row();
+    uint32_t lastRow  = filterRange.bottomRight().row();
     uint16_t firstCol = filterRange.topLeft().column();
-    uint16_t lastCol = filterRange.bottomRight().column();
+    uint16_t lastCol  = filterRange.bottomRight().column();
 
     // Iterate through all rows in the data area (skipping header)
     for (uint32_t rowIdx = firstRow + 1; rowIdx <= lastRow; ++rowIdx) {
@@ -336,7 +323,7 @@ void XLWorksheet::applyAutoFilter()
         // Check each column's filter conditions
         for (uint16_t colIdx = firstCol; colIdx <= lastCol; ++colIdx) {
             uint16_t filterColId = colIdx - firstCol;
-            
+
             // Optimization: check if there are actually any filter conditions
             XMLNode realColNode;
             for (auto child : xmlDocument().document_element().child("autoFilter").children("filterColumn")) {
@@ -346,10 +333,10 @@ void XLWorksheet::applyAutoFilter()
                 }
             }
 
-            if (realColNode.empty()) continue; // No filters on this column
+            if (realColNode.empty()) continue;    // No filters on this column
 
-            std::string cellValue = cell(rowIdx, colIdx).value().getString();
-            bool colMatches = false;
+            std::string cellValue  = cell(rowIdx, colIdx).value().getString();
+            bool        colMatches = false;
 
             // 1. Basic Value Filters (<filters><filter val="..."/></filters>)
             XMLNode filtersNode = realColNode.child("filters");
@@ -360,9 +347,10 @@ void XLWorksheet::applyAutoFilter()
                         break;
                     }
                 }
-            } else {
+            }
+            else {
                 // If there are no basic filters, but custom filters exist, default to match until proven otherwise
-                colMatches = true; 
+                colMatches = true;
             }
 
             // Note: We skip complex custom filter logic (>, <, and/or) in this basic implementation
@@ -374,9 +362,8 @@ void XLWorksheet::applyAutoFilter()
             }
         }
 
-        if (rowMatches) {
-            row(rowIdx).setHidden(false);
-        } else {
+        if (rowMatches) { row(rowIdx).setHidden(false); }
+        else {
             row(rowIdx).setHidden(true);
         }
     }
@@ -447,23 +434,20 @@ void XLWorksheet::updateSheetName(const std::string& oldName, const std::string&
 
 void XLWorksheet::updateDimension()
 {
-    uint32_t rows = rowCount();
-    uint16_t cols = columnCount();
-    auto rootNode = xmlDocument().document_element();
-    auto dimensionNode = rootNode.child("dimension");
+    uint32_t rows          = rowCount();
+    uint16_t cols          = columnCount();
+    auto     rootNode      = xmlDocument().document_element();
+    auto     dimensionNode = rootNode.child("dimension");
     if (dimensionNode.empty()) dimensionNode = rootNode.prepend_child("dimension");
     dimensionNode.remove_children();
-    if (rows == 0 || cols == 0) {
-        dimensionNode.attribute("ref").set_value("A1");
-    } else {
-        std::string ref = "A1:" + XLCellReference::columnAsString(cols) + std::to_string(rows);
-        auto attr = dimensionNode.attribute("ref");
+    if (rows == 0 || cols == 0) { dimensionNode.attribute("ref").set_value("A1"); }
+    else {
+        std::string ref  = "A1:" + XLCellReference::columnAsString(cols) + std::to_string(rows);
+        auto        attr = dimensionNode.attribute("ref");
         if (attr.empty()) attr = dimensionNode.append_attribute("ref");
         attr.set_value(ref.c_str());
     }
 }
-
-
 
 std::string XLWorksheet::makeInternalLocation(std::string_view sheetName, std::string_view cellRef)
 {
@@ -494,8 +478,8 @@ uint16_t XLWorksheet::sheetXmlNumber() const
     size_t pos2 = pos;
     while (std::isdigit(xmlPath[pos2])) ++pos2;
     if (pos2 == pos or xmlPath.substr(pos2) != ".xml") return 0;
-    
-    uint16_t num = 0;
+
+    uint16_t         num = 0;
     std::string_view numStr(xmlPath.data() + pos, pos2 - pos);
     std::from_chars(numStr.data(), numStr.data() + numStr.size(), num);
     return num;
@@ -511,11 +495,10 @@ std::optional<XLCell> XLWorksheet::peekCell(uint32_t rowNumber, uint16_t columnN
     return XLCell(cellNode, parentDoc().sharedStrings());
 }
 
-
 void XLWorksheet::addSparkline(const std::string& location, const std::string& dataRange, XLSparklineType type)
 {
     XMLNode rootNode = xmlDocument().document_element();
-    
+
     // Ensure x14 namespace is registered at the root worksheet level
     if (rootNode.attribute("xmlns:x14").empty()) {
         rootNode.append_attribute("xmlns:x14") = "http://schemas.microsoft.com/office/spreadsheetml/2009/9/main";
@@ -525,63 +508,60 @@ void XLWorksheet::addSparkline(const std::string& location, const std::string& d
     auto ignorableAttr = rootNode.attribute("mc:Ignorable");
     if (!ignorableAttr.empty()) {
         std::string ignorable = ignorableAttr.value();
-        if (ignorable.find("x14 ") == std::string::npos && 
-            ignorable.find(" x14") == std::string::npos && 
-            ignorable != "x14") {
+        if (ignorable.find("x14 ") == std::string::npos && ignorable.find(" x14") == std::string::npos && ignorable != "x14") {
             ignorableAttr.set_value((ignorable + " x14").c_str());
         }
-    } else {
+    }
+    else {
         rootNode.append_attribute("mc:Ignorable") = "x14ac x14";
     }
 
     XMLNode extLst = rootNode.child("extLst");
-    if (extLst.empty()) {
-        extLst = appendAndGetNode(rootNode, "extLst", m_nodeOrder);
-    }
+    if (extLst.empty()) { extLst = appendAndGetNode(rootNode, "extLst", m_nodeOrder); }
 
     XMLNode extNode = extLst.find_child_by_attribute("ext", "uri", "{05C60535-1F16-4fd2-B633-F4F36F0B64E0}");
     if (extNode.empty()) {
-        extNode = extLst.append_child("ext");
+        extNode                         = extLst.append_child("ext");
         extNode.append_attribute("uri") = "{05C60535-1F16-4fd2-B633-F4F36F0B64E0}";
     }
 
     XMLNode sparklineGroups = extNode.child("x14:sparklineGroups");
     if (sparklineGroups.empty()) {
-        sparklineGroups = extNode.append_child("x14:sparklineGroups");
+        sparklineGroups                              = extNode.append_child("x14:sparklineGroups");
         sparklineGroups.append_attribute("xmlns:xm") = "http://schemas.microsoft.com/office/excel/2006/main";
     }
 
-    XMLNode sparklineGroup = sparklineGroups.append_child("x14:sparklineGroup");
+    XMLNode sparklineGroup                                 = sparklineGroups.append_child("x14:sparklineGroup");
     sparklineGroup.append_attribute("displayEmptyCellsAs") = "gap";
-    
+
     // Default standard colors
-    XMLNode colorSeries = sparklineGroup.append_child("x14:colorSeries");
+    XMLNode colorSeries                   = sparklineGroup.append_child("x14:colorSeries");
     colorSeries.append_attribute("theme") = "4";
-    colorSeries.append_attribute("tint") = "-0.499984740745262";
-    
-    XMLNode colorNegative = sparklineGroup.append_child("x14:colorNegative");
+    colorSeries.append_attribute("tint")  = "-0.499984740745262";
+
+    XMLNode colorNegative                   = sparklineGroup.append_child("x14:colorNegative");
     colorNegative.append_attribute("theme") = "5";
 
     // Required colorAxis node
-    XMLNode colorAxis = sparklineGroup.append_child("x14:colorAxis");
+    XMLNode colorAxis                 = sparklineGroup.append_child("x14:colorAxis");
     colorAxis.append_attribute("rgb") = "FF000000";
-    
-    XMLNode colorMarkers = sparklineGroup.append_child("x14:colorMarkers");
+
+    XMLNode colorMarkers                   = sparklineGroup.append_child("x14:colorMarkers");
     colorMarkers.append_attribute("theme") = "4";
-    colorMarkers.append_attribute("tint") = "-0.499984740745262";
+    colorMarkers.append_attribute("tint")  = "-0.499984740745262";
 
-    XMLNode colorFirst = sparklineGroup.append_child("x14:colorFirst");
+    XMLNode colorFirst                   = sparklineGroup.append_child("x14:colorFirst");
     colorFirst.append_attribute("theme") = "4";
-    colorFirst.append_attribute("tint") = "0.39997558519241921";
+    colorFirst.append_attribute("tint")  = "0.39997558519241921";
 
-    XMLNode colorLast = sparklineGroup.append_child("x14:colorLast");
+    XMLNode colorLast                   = sparklineGroup.append_child("x14:colorLast");
     colorLast.append_attribute("theme") = "4";
-    colorLast.append_attribute("tint") = "0.39997558519241921";
+    colorLast.append_attribute("tint")  = "0.39997558519241921";
 
-    XMLNode colorHigh = sparklineGroup.append_child("x14:colorHigh");
+    XMLNode colorHigh                   = sparklineGroup.append_child("x14:colorHigh");
     colorHigh.append_attribute("theme") = "4";
 
-    XMLNode colorLow = sparklineGroup.append_child("x14:colorLow");
+    XMLNode colorLow                   = sparklineGroup.append_child("x14:colorLow");
     colorLow.append_attribute("theme") = "4";
 
     XLSparkline sparkline(sparklineGroup);
@@ -593,91 +573,84 @@ void XLWorksheet::addSparkline(const std::string& location, const std::string& d
     if (formattedRange.find('!') == std::string::npos) {
         std::string sName = name();
         // Quote sheet name if it contains spaces
-        if (sName.find(' ') != std::string::npos) {
-            formattedRange = "'" + sName + "'!" + dataRange;
-        } else {
+        if (sName.find(' ') != std::string::npos) { formattedRange = "'" + sName + "'!" + dataRange; }
+        else {
             formattedRange = sName + "!" + dataRange;
         }
     }
     sparkline.setDataRange(formattedRange);
 }
 
-XLStreamReader XLWorksheet::streamReader() const
-{
-    return XLStreamReader(this);
-}
+XLStreamReader XLWorksheet::streamReader() const { return XLStreamReader(this); }
 
 XLStreamWriter XLWorksheet::streamWriter()
 {
     if (m_xmlData->m_isStreamed && !m_xmlData->m_streamFilePath.empty()) {
         std::error_code ec;
-        if (std::filesystem::exists(m_xmlData->m_streamFilePath, ec)) {
-            std::filesystem::remove(m_xmlData->m_streamFilePath, ec);
-        }
+        if (std::filesystem::exists(m_xmlData->m_streamFilePath, ec)) { std::filesystem::remove(m_xmlData->m_streamFilePath, ec); }
         m_xmlData->m_streamFilePath.clear();
         m_xmlData->m_isStreamed = false;
     }
 
-    XMLDocument& doc = xmlDocument();
-    XMLNode root = doc.document_element();
-    XMLNode sheetData = root.child("sheetData");
-    
-    if (sheetData.empty()) {
-        sheetData = appendAndGetNode(root, "sheetData", m_nodeOrder);
-    }
+    XMLDocument& doc       = xmlDocument();
+    XMLNode      root      = doc.document_element();
+    XMLNode      sheetData = root.child("sheetData");
 
-    struct StringWriter : pugi::xml_writer {
+    if (sheetData.empty()) { sheetData = appendAndGetNode(root, "sheetData", m_nodeOrder); }
+
+    struct StringWriter : pugi::xml_writer
+    {
         std::string result;
-        void write(const void* data, size_t size) override {
-            result.append(static_cast<const char*>(data), size);
-        }
+        void        write(const void* data, size_t size) override { result.append(static_cast<const char*>(data), size); }
     } sw;
-    
+
     doc.save(sw, "", pugi::format_raw | pugi::format_no_declaration);
     std::string xmlStr = sw.result;
-    
-    std::string topHalf = "";
+
+    std::string topHalf    = "";
     std::string bottomHalf = "";
-    
+
     // Split accurately
     size_t pos = xmlStr.find("<sheetData/>");
     if (pos != std::string::npos) {
-        topHalf = xmlStr.substr(0, pos) + "<sheetData>";
+        topHalf    = xmlStr.substr(0, pos) + "<sheetData>";
         bottomHalf = "</sheetData>" + xmlStr.substr(pos + 12);
-    } else {
+    }
+    else {
         pos = xmlStr.find("</sheetData>");
         if (pos != std::string::npos) {
             // We have existing rows: <sheetData><row ... /></sheetData>
             // So we take everything UP TO </sheetData> as topHalf, allowing stream to append inside sheetData.
-            topHalf = xmlStr.substr(0, pos);
-            bottomHalf = xmlStr.substr(pos); // starts with </sheetData>
-        } else {
+            topHalf    = xmlStr.substr(0, pos);
+            bottomHalf = xmlStr.substr(pos);    // starts with </sheetData>
+        }
+        else {
             pos = xmlStr.find("<sheetData></sheetData>");
             if (pos != std::string::npos) {
-                topHalf = xmlStr.substr(0, pos) + "<sheetData>";
+                topHalf    = xmlStr.substr(0, pos) + "<sheetData>";
                 bottomHalf = "</sheetData>" + xmlStr.substr(pos + 23);
-            } else {
+            }
+            else {
                 size_t endTag = xmlStr.find("</worksheet>");
-                topHalf = xmlStr.substr(0, endTag) + "<sheetData>";
-                bottomHalf = "</sheetData></worksheet>";
+                topHalf       = xmlStr.substr(0, endTag) + "<sheetData>";
+                bottomHalf    = "</sheetData></worksheet>";
             }
         }
     }
-    
+
     XLStreamWriter writer(this);
     writer.m_bottomHalf = bottomHalf;
-    
+
     if (writer.m_stream.is_open()) {
         std::string header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
         writer.m_stream << header << topHalf;
     }
-    
-    m_xmlData->m_isStreamed = true;
+
+    m_xmlData->m_isStreamed     = true;
     m_xmlData->m_streamFilePath = writer.getTempFilePath();
-    
+
     return writer;
 }
-
 
 void XLWorksheet::autoFitColumn(uint16_t columnNumber)
 {
@@ -689,17 +662,15 @@ void XLWorksheet::autoFitColumn(uint16_t columnNumber)
             std::string text = c.value().getString();
             // Basic estimation: ~1.2 units per character for default 11pt Calibri
             float estimatedWidth = static_cast<float>(text.length()) * 1.2f;
-            if (estimatedWidth > maxWidth) {
-                maxWidth = estimatedWidth;
-            }
+            if (estimatedWidth > maxWidth) { maxWidth = estimatedWidth; }
         }
     }
-    
+
     // Add padding and cap width
     maxWidth += 1.5f;
     if (maxWidth > 255.0f) maxWidth = 255.0f;
-    if (maxWidth < 8.43f) maxWidth = 8.43f; // Default width
-    
+    if (maxWidth < 8.43f) maxWidth = 8.43f;    // Default width
+
     column(columnNumber).setWidth(maxWidth);
 }
 
@@ -715,38 +686,41 @@ void XLWorksheet::autoFitColumn(uint16_t columnNumber)
  * Supported formats: "A1", "$A1", "A$1", "$A$1", and sheet-qualified "Sheet1!A1".
  * If the address contains '!' the sheet prefix is preserved verbatim.
  */
-std::string XLWorksheet::shiftCellRef(std::string_view ref,
-                                       int32_t rowDelta, int32_t colDelta,
-                                       uint32_t fromRow, uint16_t fromCol)
+std::string XLWorksheet::shiftCellRef(std::string_view ref, int32_t rowDelta, int32_t colDelta, uint32_t fromRow, uint16_t fromCol)
 {
     // Handle sheet-qualified refs like "Sheet1!A1" or "'My Sheet'!B5"
-    std::string sheetPrefix;
+    std::string      sheetPrefix;
     std::string_view localRef = ref;
-    auto bangPos = ref.rfind('!');
+    auto             bangPos  = ref.rfind('!');
     if (bangPos != std::string_view::npos) {
         sheetPrefix = std::string(ref.substr(0, bangPos + 1));
         localRef    = ref.substr(bangPos + 1);
     }
 
     // Parse: optional '$' + column letters + optional '$' + row digits
-    std::size_t i = 0;
-    bool absCol = false;
-    if (i < localRef.size() && localRef[i] == '$') { absCol = true; ++i; }
+    std::size_t i      = 0;
+    bool        absCol = false;
+    if (i < localRef.size() && localRef[i] == '$') {
+        absCol = true;
+        ++i;
+    }
 
     std::size_t colStart = i;
     while (i < localRef.size() && std::isalpha(static_cast<unsigned char>(localRef[i]))) ++i;
     std::size_t colEnd = i;    // localRef[colStart..colEnd) = column letters
 
     bool absRow = false;
-    if (i < localRef.size() && localRef[i] == '$') { absRow = true; ++i; }
+    if (i < localRef.size() && localRef[i] == '$') {
+        absRow = true;
+        ++i;
+    }
 
     std::size_t rowStart = i;
     while (i < localRef.size() && std::isdigit(static_cast<unsigned char>(localRef[i]))) ++i;
     std::size_t rowEnd = i;
 
     // If we couldn't parse a complete cell address just return unchanged
-    if (colEnd == colStart || rowEnd == rowStart || i != localRef.size())
-        return std::string(ref);
+    if (colEnd == colStart || rowEnd == rowStart || i != localRef.size()) return std::string(ref);
 
     std::string colStr(localRef.substr(colStart, colEnd - colStart));
     std::string rowStr(localRef.substr(rowStart, rowEnd - rowStart));
@@ -780,15 +754,13 @@ std::string XLWorksheet::shiftCellRef(std::string_view ref,
  * function names, operators).  This is a lightweight round-trip transformer —
  * it does not evaluate the formula.
  */
-std::string XLWorksheet::shiftFormulaRefs(std::string_view formula,
-                                            int32_t rowDelta, int32_t colDelta,
-                                            uint32_t fromRow, uint16_t fromCol)
+std::string XLWorksheet::shiftFormulaRefs(std::string_view formula, int32_t rowDelta, int32_t colDelta, uint32_t fromRow, uint16_t fromCol)
 {
     if (formula.empty()) return {};
     std::string out;
     out.reserve(formula.size() + 16);
 
-    std::size_t i = 0;
+    std::size_t       i   = 0;
     const std::size_t len = formula.size();
 
     while (i < len) {
@@ -796,29 +768,39 @@ std::string XLWorksheet::shiftFormulaRefs(std::string_view formula,
 
         // Pass string literals unchanged
         if (c == '"') {
-            out += c; ++i;
+            out += c;
+            ++i;
             while (i < len) {
                 if (formula[i] == '"') {
-                    out += formula[i]; ++i;
-                    if (i < len && formula[i] == '"') { out += formula[i]; ++i; }  // escaped quote
-                    else break;
-                } else { out += formula[i]; ++i; }
+                    out += formula[i];
+                    ++i;
+                    if (i < len && formula[i] == '"') {
+                        out += formula[i];
+                        ++i;
+                    }    // escaped quote
+                    else
+                        break;
+                }
+                else {
+                    out += formula[i];
+                    ++i;
+                }
             }
             continue;
         }
 
         // Potential cell reference: starts with '$' or an alpha char.
         // The preceding character must NOT be alpha/digit (i.e. not inside a name).
-        bool prevIsAlnum = (i > 0 && std::isalnum(static_cast<unsigned char>(formula[i-1])));
+        bool prevIsAlnum = (i > 0 && std::isalnum(static_cast<unsigned char>(formula[i - 1])));
 
         if (!prevIsAlnum && (c == '$' || std::isalpha(static_cast<unsigned char>(c)))) {
             // Collect the candidate token: letters/digits/$/'!'
             std::size_t start = i;
-            if (i < len && formula[i] == '$') ++i;                           // leading $
+            if (i < len && formula[i] == '$') ++i;    // leading $
             std::size_t colLetterStart = i;
             while (i < len && std::isalpha(static_cast<unsigned char>(formula[i]))) ++i;
             std::size_t colLetterEnd = i;
-            if (i < len && formula[i] == '$') ++i;                           // optional $ before row
+            if (i < len && formula[i] == '$') ++i;    // optional $ before row
             std::size_t rowDigitStart = i;
             while (i < len && std::isdigit(static_cast<unsigned char>(formula[i]))) ++i;
             std::size_t rowDigitEnd = i;
@@ -833,7 +815,7 @@ std::string XLWorksheet::shiftFormulaRefs(std::string_view formula,
                 std::string_view candidate = formula.substr(start, i - start);
                 // Check if this is a range (has ':' following it)
                 if (i < len && formula[i] == ':') {
-                    ++i;  // consume ':'
+                    ++i;    // consume ':'
                     std::size_t start2 = i;
                     if (i < len && formula[i] == '$') ++i;
                     while (i < len && std::isalpha(static_cast<unsigned char>(formula[i]))) ++i;
@@ -844,17 +826,19 @@ std::string XLWorksheet::shiftFormulaRefs(std::string_view formula,
                     out += shiftCellRef(candidate, rowDelta, colDelta, fromRow, fromCol);
                     out += ':';
                     out += shiftCellRef(candidate2, rowDelta, colDelta, fromRow, fromCol);
-                } else {
+                }
+                else {
                     // Check for 'Name!ref' — if the alpha segment contains '!' we should not shift
-                    if (candidate.find('!') != std::string_view::npos
-                        || colLetterEnd - colLetterStart > 3) {
+                    if (candidate.find('!') != std::string_view::npos || colLetterEnd - colLetterStart > 3) {
                         // Not a simple cell ref (function name or cross-sheet — already captured)
                         out += candidate;
-                    } else {
+                    }
+                    else {
                         out += shiftCellRef(candidate, rowDelta, colDelta, fromRow, fromCol);
                     }
                 }
-            } else {
+            }
+            else {
                 // Not a cell ref (function name, TRUE/FALSE, etc.) — emit verbatim
                 out += formula.substr(start, i - start);
             }
@@ -890,21 +874,19 @@ void XLWorksheet::shiftSheetDataRows(int32_t delta, uint32_t fromRow)
         // Step 2: slide remaining rows down by |delta| (i.e. subtract |delta|)
         XMLNode rowNode = sheetData.first_child_of_type(pugi::node_element);
         while (!rowNode.empty()) {
-            auto r = static_cast<uint32_t>(rowNode.attribute("r").as_ullong());
+            auto    r    = static_cast<uint32_t>(rowNode.attribute("r").as_ullong());
             XMLNode next = rowNode.next_sibling_of_type(pugi::node_element);
             if (r >= fromRow) {
                 uint32_t newR = static_cast<uint32_t>(static_cast<int32_t>(r) + delta);
                 rowNode.attribute("r").set_value(newR);
                 // Update each cell in this row
-                for (XMLNode cellNode = rowNode.first_child_of_type(pugi::node_element);
-                     !cellNode.empty();
-                     cellNode = cellNode.next_sibling_of_type(pugi::node_element))
+                for (XMLNode cellNode = rowNode.first_child_of_type(pugi::node_element); !cellNode.empty();
+                     cellNode         = cellNode.next_sibling_of_type(pugi::node_element))
                 {
                     std::string_view cellRef = cellNode.attribute("r").value();
                     // Extract column letters (before digits) and append new row number
                     std::size_t pos = 0;
-                    while (pos < cellRef.size() && !std::isdigit(static_cast<unsigned char>(cellRef[pos])) && cellRef[pos] != '$')
-                        ++pos;
+                    while (pos < cellRef.size() && !std::isdigit(static_cast<unsigned char>(cellRef[pos])) && cellRef[pos] != '$') ++pos;
                     // skip possible '$' before row digits
                     if (pos < cellRef.size() && cellRef[pos] == '$') ++pos;
                     std::string colPart;
@@ -924,19 +906,17 @@ void XLWorksheet::shiftSheetDataRows(int32_t delta, uint32_t fromRow)
         XMLNode lastRow = sheetData.last_child_of_type(pugi::node_element);
         XMLNode rowNode = lastRow;
         while (!rowNode.empty()) {
-            auto r = static_cast<uint32_t>(rowNode.attribute("r").as_ullong());
+            auto    r    = static_cast<uint32_t>(rowNode.attribute("r").as_ullong());
             XMLNode prev = rowNode.previous_sibling_of_type(pugi::node_element);
             if (r >= fromRow) {
                 uint32_t newR = static_cast<uint32_t>(static_cast<int32_t>(r) + delta);
                 rowNode.attribute("r").set_value(newR);
-                for (XMLNode cellNode = rowNode.first_child_of_type(pugi::node_element);
-                     !cellNode.empty();
-                     cellNode = cellNode.next_sibling_of_type(pugi::node_element))
+                for (XMLNode cellNode = rowNode.first_child_of_type(pugi::node_element); !cellNode.empty();
+                     cellNode         = cellNode.next_sibling_of_type(pugi::node_element))
                 {
                     std::string_view cellRef = cellNode.attribute("r").value();
-                    std::size_t pos = 0;
-                    while (pos < cellRef.size() && !std::isdigit(static_cast<unsigned char>(cellRef[pos])) && cellRef[pos] != '$')
-                        ++pos;
+                    std::size_t      pos     = 0;
+                    while (pos < cellRef.size() && !std::isdigit(static_cast<unsigned char>(cellRef[pos])) && cellRef[pos] != '$') ++pos;
                     if (pos < cellRef.size() && cellRef[pos] == '$') ++pos;
                     std::string colPart;
                     for (std::size_t k = 0; k < pos; ++k)
@@ -960,27 +940,24 @@ void XLWorksheet::shiftSheetDataCols(int32_t delta, uint16_t fromCol)
     XMLNode sheetData = xmlDocument().document_element().child("sheetData");
     if (sheetData.empty()) return;
 
-    for (XMLNode rowNode = sheetData.first_child_of_type(pugi::node_element);
-         !rowNode.empty();
-         rowNode = rowNode.next_sibling_of_type(pugi::node_element))
+    for (XMLNode rowNode = sheetData.first_child_of_type(pugi::node_element); !rowNode.empty();
+         rowNode         = rowNode.next_sibling_of_type(pugi::node_element))
     {
         // Collect cells that need shifting into a vector (to avoid iterator invalidation)
         std::vector<std::pair<XMLNode, std::string>> updates;
-        for (XMLNode cellNode = (delta > 0
-                                 ? rowNode.last_child_of_type(pugi::node_element)   // reverse for insert
-                                 : rowNode.first_child_of_type(pugi::node_element));
+        for (XMLNode cellNode = (delta > 0 ? rowNode.last_child_of_type(pugi::node_element)    // reverse for insert
+                                           : rowNode.first_child_of_type(pugi::node_element));
              !cellNode.empty();
-             cellNode = (delta > 0
-                         ? cellNode.previous_sibling_of_type(pugi::node_element)
-                         : cellNode.next_sibling_of_type(pugi::node_element)))
+             cellNode =
+                 (delta > 0 ? cellNode.previous_sibling_of_type(pugi::node_element) : cellNode.next_sibling_of_type(pugi::node_element)))
         {
             std::string_view cellRef = cellNode.attribute("r").value();
             // Extract column number
             // cellRef may have leading '$' for absolute refs — strip for column extraction
-            const char* p = cellRef.data();
-            bool absCol = (*p == '$');
+            const char* p      = cellRef.data();
+            bool        absCol = (*p == '$');
             if (absCol) ++p;
-            uint16_t col = 0;
+            uint16_t    col        = 0;
             const char* digitStart = p;
             while (*digitStart && std::isalpha(static_cast<unsigned char>(*digitStart))) ++digitStart;
             col = XLCellReference::columnAsNumber(std::string(p, digitStart - p));
@@ -994,12 +971,11 @@ void XLWorksheet::shiftSheetDataCols(int32_t delta, uint16_t fromCol)
                 std::string newRef;
                 if (absCol) newRef += '$';
                 newRef += XLCellReference::columnAsString(static_cast<uint16_t>(newCol));
-                newRef += std::string(digitStart);  // row digits (including possible '$' if absRow)
+                newRef += std::string(digitStart);    // row digits (including possible '$' if absRow)
                 updates.emplace_back(cellNode, newRef);
             }
         }
-        for (auto& [node, ref] : updates)
-            node.attribute("r").set_value(ref.c_str());
+        for (auto& [node, ref] : updates) node.attribute("r").set_value(ref.c_str());
     }
 
     shiftColsNode(delta, fromCol);
@@ -1010,21 +986,15 @@ void XLWorksheet::shiftColsNode(int32_t delta, uint16_t fromCol)
     XMLNode colsNode = xmlDocument().document_element().child("cols");
     if (colsNode.empty()) return;
 
-    for (XMLNode colNode = (delta > 0
-                            ? colsNode.last_child_of_type(pugi::node_element)
-                            : colsNode.first_child_of_type(pugi::node_element));
+    for (XMLNode colNode = (delta > 0 ? colsNode.last_child_of_type(pugi::node_element) : colsNode.first_child_of_type(pugi::node_element));
          !colNode.empty();
-         colNode = (delta > 0
-                    ? colNode.previous_sibling_of_type(pugi::node_element)
-                    : colNode.next_sibling_of_type(pugi::node_element)))
+         colNode = (delta > 0 ? colNode.previous_sibling_of_type(pugi::node_element) : colNode.next_sibling_of_type(pugi::node_element)))
     {
         auto minVal = static_cast<uint16_t>(colNode.attribute("min").as_uint());
         auto maxVal = static_cast<uint16_t>(colNode.attribute("max").as_uint());
         if (maxVal < fromCol) continue;
-        if (minVal >= fromCol)
-            colNode.attribute("min").set_value(static_cast<uint16_t>(static_cast<int32_t>(minVal) + delta));
-        if (maxVal >= fromCol)
-            colNode.attribute("max").set_value(static_cast<uint16_t>(static_cast<int32_t>(maxVal) + delta));
+        if (minVal >= fromCol) colNode.attribute("min").set_value(static_cast<uint16_t>(static_cast<int32_t>(minVal) + delta));
+        if (maxVal >= fromCol) colNode.attribute("max").set_value(static_cast<uint16_t>(static_cast<int32_t>(maxVal) + delta));
     }
 }
 
@@ -1034,20 +1004,17 @@ void XLWorksheet::shiftFormulas(int32_t rowDelta, int32_t colDelta, uint32_t fro
     XMLNode sheetData = xmlDocument().document_element().child("sheetData");
     if (sheetData.empty()) return;
 
-    for (XMLNode rowNode = sheetData.first_child_of_type(pugi::node_element);
-         !rowNode.empty();
-         rowNode = rowNode.next_sibling_of_type(pugi::node_element))
+    for (XMLNode rowNode = sheetData.first_child_of_type(pugi::node_element); !rowNode.empty();
+         rowNode         = rowNode.next_sibling_of_type(pugi::node_element))
     {
-        for (XMLNode cellNode = rowNode.first_child_of_type(pugi::node_element);
-             !cellNode.empty();
-             cellNode = cellNode.next_sibling_of_type(pugi::node_element))
+        for (XMLNode cellNode = rowNode.first_child_of_type(pugi::node_element); !cellNode.empty();
+             cellNode         = cellNode.next_sibling_of_type(pugi::node_element))
         {
             XMLNode fNode = cellNode.child("f");
             if (!fNode.empty()) {
                 std::string formula = fNode.text().get();
                 std::string shifted = shiftFormulaRefs(formula, rowDelta, colDelta, fromRow, fromCol);
-                if (shifted != formula)
-                    fNode.text().set(shifted.c_str());
+                if (shifted != formula) fNode.text().set(shifted.c_str());
             }
         }
     }
@@ -1065,7 +1032,7 @@ void XLWorksheet::shiftDrawingAnchors(int32_t rowDelta, int32_t colDelta, uint32
     XMLNode root = m_drawing.xmlDocument().document_element();
     if (root.empty()) return;
 
-    // Shift 0-based thresholds  
+    // Shift 0-based thresholds
     uint32_t fromRow0 = (fromRow > 0) ? fromRow - 1 : 0;
     uint16_t fromCol0 = (fromCol > 0) ? fromCol - 1 : 0;
 
@@ -1095,9 +1062,8 @@ void XLWorksheet::shiftDrawingAnchors(int32_t rowDelta, int32_t colDelta, uint32
         }
     };
 
-    for (XMLNode anchor = root.first_child_of_type(pugi::node_element);
-         !anchor.empty();
-         anchor = anchor.next_sibling_of_type(pugi::node_element))
+    for (XMLNode anchor = root.first_child_of_type(pugi::node_element); !anchor.empty();
+         anchor         = anchor.next_sibling_of_type(pugi::node_element))
     {
         shiftAnchorNode(anchor);
     }
@@ -1113,17 +1079,14 @@ void XLWorksheet::shiftDataValidations(int32_t rowDelta, int32_t colDelta, uint3
     XMLNode dvNode = xmlDocument().document_element().child("dataValidations");
     if (dvNode.empty()) return;
 
-    for (XMLNode dv = dvNode.first_child_of_type(pugi::node_element);
-         !dv.empty();
-         dv = dv.next_sibling_of_type(pugi::node_element))
-    {
+    for (XMLNode dv = dvNode.first_child_of_type(pugi::node_element); !dv.empty(); dv = dv.next_sibling_of_type(pugi::node_element)) {
         XMLAttribute sqrefAttr = dv.attribute("sqref");
         if (sqrefAttr.empty()) continue;
 
-        std::string sqref = sqrefAttr.value();
+        std::string        sqref = sqrefAttr.value();
         std::istringstream ss(sqref);
-        std::string segment;
-        std::string newSqref;
+        std::string        segment;
+        std::string        newSqref;
         while (std::getline(ss, segment, ' ')) {
             if (segment.empty()) continue;
             if (!newSqref.empty()) newSqref += ' ';
@@ -1132,12 +1095,12 @@ void XLWorksheet::shiftDataValidations(int32_t rowDelta, int32_t colDelta, uint3
                 newSqref += shiftCellRef(segment.substr(0, colon), rowDelta, colDelta, fromRow, fromCol);
                 newSqref += ':';
                 newSqref += shiftCellRef(segment.substr(colon + 1), rowDelta, colDelta, fromRow, fromCol);
-            } else {
+            }
+            else {
                 newSqref += shiftCellRef(segment, rowDelta, colDelta, fromRow, fromCol);
             }
         }
-        if (!newSqref.empty())
-            sqrefAttr.set_value(newSqref.c_str());
+        if (!newSqref.empty()) sqrefAttr.set_value(newSqref.c_str());
     }
 }
 
@@ -1150,13 +1113,14 @@ void XLWorksheet::shiftAutoFilter(int32_t rowDelta, int32_t colDelta, uint32_t f
     XMLAttribute refAttr = afNode.attribute("ref");
     if (refAttr.empty()) return;
 
-    std::string ref = refAttr.value();
-    auto colon = ref.find(':');
+    std::string ref   = refAttr.value();
+    auto        colon = ref.find(':');
     std::string newRef;
     if (colon != std::string::npos) {
-        newRef = shiftCellRef(ref.substr(0, colon), rowDelta, colDelta, fromRow, fromCol)
-               + ":" + shiftCellRef(ref.substr(colon + 1), rowDelta, colDelta, fromRow, fromCol);
-    } else {
+        newRef = shiftCellRef(ref.substr(0, colon), rowDelta, colDelta, fromRow, fromCol) + ":" +
+                 shiftCellRef(ref.substr(colon + 1), rowDelta, colDelta, fromRow, fromCol);
+    }
+    else {
         newRef = shiftCellRef(ref, rowDelta, colDelta, fromRow, fromCol);
     }
     refAttr.set_value(newRef.c_str());
@@ -1169,8 +1133,7 @@ void XLWorksheet::shiftAutoFilter(int32_t rowDelta, int32_t colDelta, uint32_t f
 bool XLWorksheet::insertRow(uint32_t rowNumber, uint32_t count)
 {
     using namespace std::literals::string_literals;
-    if (rowNumber < 1 || count == 0)
-        throw XLInputError("XLWorksheet::insertRow: rowNumber must be >= 1 and count > 0"s);
+    if (rowNumber < 1 || count == 0) throw XLInputError("XLWorksheet::insertRow: rowNumber must be >= 1 and count > 0"s);
 
     auto delta = static_cast<int32_t>(count);
 
@@ -1178,8 +1141,7 @@ bool XLWorksheet::insertRow(uint32_t rowNumber, uint32_t count)
     shiftSheetDataRows(delta, rowNumber);
 
     // Shift all subsystems
-    if (m_merges.valid())
-        m_merges.shiftRows(delta, rowNumber);
+    if (m_merges.valid()) m_merges.shiftRows(delta, rowNumber);
 
     shiftFormulas(delta, 0, rowNumber, 1);
     shiftDrawingAnchors(delta, 0, rowNumber, 1);
@@ -1192,14 +1154,12 @@ bool XLWorksheet::insertRow(uint32_t rowNumber, uint32_t count)
 bool XLWorksheet::deleteRow(uint32_t rowNumber, uint32_t count)
 {
     using namespace std::literals::string_literals;
-    if (rowNumber < 1 || count == 0)
-        throw XLInputError("XLWorksheet::deleteRow: rowNumber must be >= 1 and count > 0"s);
+    if (rowNumber < 1 || count == 0) throw XLInputError("XLWorksheet::deleteRow: rowNumber must be >= 1 and count > 0"s);
 
     auto delta = -static_cast<int32_t>(count);
 
     // Step 1: physically remove the target row nodes
-    for (uint32_t r = rowNumber; r < rowNumber + count; ++r)
-        deleteRow(r);  // existing 1-argument version
+    for (uint32_t r = rowNumber; r < rowNumber + count; ++r) deleteRow(r);    // existing 1-argument version
 
     // Step 2: slide subsequent rows up (fromRow = rowNumber + count because those
     //         are rows that survived and now need to move up by `count`)
@@ -1207,8 +1167,7 @@ bool XLWorksheet::deleteRow(uint32_t rowNumber, uint32_t count)
 
     // Step 3: shift all subsystems (fromRow = rowNumber: affects everything from the first
     //         deleted row onward)
-    if (m_merges.valid())
-        m_merges.shiftRows(delta, rowNumber);
+    if (m_merges.valid()) m_merges.shiftRows(delta, rowNumber);
 
     shiftFormulas(delta, 0, rowNumber + count, 1);
     shiftDrawingAnchors(delta, 0, rowNumber + count, 1);
@@ -1221,15 +1180,13 @@ bool XLWorksheet::deleteRow(uint32_t rowNumber, uint32_t count)
 bool XLWorksheet::insertColumn(uint16_t colNumber, uint16_t count)
 {
     using namespace std::literals::string_literals;
-    if (colNumber < 1 || count == 0)
-        throw XLInputError("XLWorksheet::insertColumn: colNumber must be >= 1 and count > 0"s);
+    if (colNumber < 1 || count == 0) throw XLInputError("XLWorksheet::insertColumn: colNumber must be >= 1 and count > 0"s);
 
     auto delta = static_cast<int32_t>(count);
 
     shiftSheetDataCols(delta, colNumber);
 
-    if (m_merges.valid())
-        m_merges.shiftCols(delta, colNumber);
+    if (m_merges.valid()) m_merges.shiftCols(delta, colNumber);
 
     shiftFormulas(0, delta, 1, colNumber);
     shiftDrawingAnchors(0, delta, 1, colNumber);
@@ -1242,42 +1199,36 @@ bool XLWorksheet::insertColumn(uint16_t colNumber, uint16_t count)
 bool XLWorksheet::deleteColumn(uint16_t colNumber, uint16_t count)
 {
     using namespace std::literals::string_literals;
-    if (colNumber < 1 || count == 0)
-        throw XLInputError("XLWorksheet::deleteColumn: colNumber must be >= 1 and count > 0"s);
+    if (colNumber < 1 || count == 0) throw XLInputError("XLWorksheet::deleteColumn: colNumber must be >= 1 and count > 0"s);
 
     auto delta = -static_cast<int32_t>(count);
 
     // Remove cells in deleted columns from all rows
     XMLNode sheetData = xmlDocument().document_element().child("sheetData");
     if (!sheetData.empty()) {
-        for (XMLNode rowNode = sheetData.first_child_of_type(pugi::node_element);
-             !rowNode.empty();
-             rowNode = rowNode.next_sibling_of_type(pugi::node_element))
+        for (XMLNode rowNode = sheetData.first_child_of_type(pugi::node_element); !rowNode.empty();
+             rowNode         = rowNode.next_sibling_of_type(pugi::node_element))
         {
             std::vector<XMLNode> toRemove;
-            for (XMLNode cellNode = rowNode.first_child_of_type(pugi::node_element);
-                 !cellNode.empty();
-                 cellNode = cellNode.next_sibling_of_type(pugi::node_element))
+            for (XMLNode cellNode = rowNode.first_child_of_type(pugi::node_element); !cellNode.empty();
+                 cellNode         = cellNode.next_sibling_of_type(pugi::node_element))
             {
                 std::string_view cellRef = cellNode.attribute("r").value();
-                const char* p = cellRef.data();
+                const char*      p       = cellRef.data();
                 if (*p == '$') ++p;
                 const char* digitStart = p;
                 while (*digitStart && std::isalpha(static_cast<unsigned char>(*digitStart))) ++digitStart;
                 uint16_t col = XLCellReference::columnAsNumber(std::string(p, digitStart - p));
-                if (col >= colNumber && col < static_cast<uint16_t>(colNumber + count))
-                    toRemove.push_back(cellNode);
+                if (col >= colNumber && col < static_cast<uint16_t>(colNumber + count)) toRemove.push_back(cellNode);
             }
-            for (auto& node : toRemove)
-                rowNode.remove_child(node);
+            for (auto& node : toRemove) rowNode.remove_child(node);
         }
     }
 
     // Slide remaining columns left
     shiftSheetDataCols(delta, colNumber + count);
 
-    if (m_merges.valid())
-        m_merges.shiftCols(delta, colNumber);
+    if (m_merges.valid()) m_merges.shiftCols(delta, colNumber);
 
     shiftFormulas(0, delta, 1, colNumber + count);
     shiftDrawingAnchors(0, delta, 1, colNumber + count);
@@ -1286,4 +1237,3 @@ bool XLWorksheet::deleteColumn(uint16_t colNumber, uint16_t count)
 
     return true;
 }
-

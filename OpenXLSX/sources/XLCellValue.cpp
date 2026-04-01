@@ -252,20 +252,16 @@ XLValueType XLCellValueProxy::type() const
     std::string_view typeAttr = m_cellNode->attribute("t").value();
 
     // ===== If a Type attribute is not present, but a value node is, the cell contains a number.
-    if (typeAttr.empty() || (typeAttr == "n" && not m_cellNode->child("v").empty()))
-    {
+    if (typeAttr.empty() || (typeAttr == "n" && not m_cellNode->child("v").empty())) {
         std::string_view numberString = m_cellNode->child("v").text().get();
-        if (numberString.find('.') != std::string_view::npos ||
-            numberString.find("E-") != std::string_view::npos ||
+        if (numberString.find('.') != std::string_view::npos || numberString.find("E-") != std::string_view::npos ||
             numberString.find("e-") != std::string_view::npos)
             return XLValueType::Float;
         return XLValueType::Integer;
     }
 
     // ===== If the cell is of type "s", the cell contains a shared string.
-    if (typeAttr == "s") {
-        return XLValueType::String;
-    }
+    if (typeAttr == "s") { return XLValueType::String; }
 
     // ===== If the cell is of type "inlineStr", the cell contains an inline string.
     if (typeAttr == "inlineStr") {
@@ -629,5 +625,5 @@ int32_t XLCellValueProxy::stringIndex() const
 bool XLCellValueProxy::setStringIndex(int32_t newIndex)
 {
     if (newIndex < 0 or std::string_view(m_cellNode->attribute("t").value()) != "s") return false;    // cell value is not a shared string
-    return m_cellNode->child("v").text().set(newIndex);                                        // set the shared string index directly
+    return m_cellNode->child("v").text().set(newIndex);    // set the shared string index directly
 }

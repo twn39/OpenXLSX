@@ -17,8 +17,8 @@
 #include "XLCellValue.hpp"
 #include "XLFormula.hpp"
 #include "XLSharedStrings.hpp"
-#include "XLStyles.hpp"    // XLStyleIndex
 #include "XLStyle.hpp"
+#include "XLStyles.hpp"    // XLStyleIndex
 
 namespace OpenXLSX
 {
@@ -44,7 +44,7 @@ namespace OpenXLSX
         friend bool operator!=(const XLCell& lhs, const XLCell& rhs);
 
     public:
-/**
+        /**
          * @brief Default constructor. Constructs a null object.
          */
         XLCell();
@@ -198,8 +198,8 @@ namespace OpenXLSX
          * @param rhs
          * @return
          */
-        static bool isEqual(const XLCell& lhs, const XLCell& rhs);
-std::unique_ptr<XMLNode> m_cellNode;      /**< A pointer to the root XMLNode for the cell. */
+        static bool              isEqual(const XLCell& lhs, const XLCell& rhs);
+        std::unique_ptr<XMLNode> m_cellNode;      /**< A pointer to the root XMLNode for the cell. */
         XLSharedStringsRef       m_sharedStrings; /**< */
         XLCellValueProxy         m_valueProxy;    /**< */
         XLFormulaProxy           m_formulaProxy;  /**< */
@@ -267,14 +267,14 @@ std::unique_ptr<XMLNode> m_cellNode;      /**< A pointer to the root XMLNode for
 namespace OpenXLSX
 {
     /**
-         * @param lhs
+     * @param lhs
      * @param rhs
      * @return
      */
     inline bool operator==(const XLCell& lhs, const XLCell& rhs) { return XLCell::isEqual(lhs, rhs); }
 
     /**
-         * @param lhs
+     * @param lhs
      * @param rhs
      * @return
      */
@@ -290,11 +290,20 @@ namespace OpenXLSX
     {
         XLCellValue val = c.value();
         switch (val.type()) {
-            case XLValueType::Integer: os << val.get<int64_t>(); break;
-            case XLValueType::Float:   os << val.get<double>(); break;
-            case XLValueType::Boolean: os << (val.get<bool>() ? "true" : "false"); break;
-            case XLValueType::Empty:   break;
-            default:                   os << c.getString(); break;
+            case XLValueType::Integer:
+                os << val.get<int64_t>();
+                break;
+            case XLValueType::Float:
+                os << val.get<double>();
+                break;
+            case XLValueType::Boolean:
+                os << (val.get<bool>() ? "true" : "false");
+                break;
+            case XLValueType::Empty:
+                break;
+            default:
+                os << c.getString();
+                break;
         }
         return os;
     }
@@ -309,11 +318,20 @@ namespace OpenXLSX
     {
         XLCellValue val = c.value();
         switch (val.type()) {
-            case XLValueType::Integer: os << val.get<int64_t>(); break;
-            case XLValueType::Float:   os << val.get<double>(); break;
-            case XLValueType::Boolean: os << (val.get<bool>() ? "true" : "false"); break;
-            case XLValueType::Empty:   break;
-            default:                   os << c.getString(); break;
+            case XLValueType::Integer:
+                os << val.get<int64_t>();
+                break;
+            case XLValueType::Float:
+                os << val.get<double>();
+                break;
+            case XLValueType::Boolean:
+                os << (val.get<bool>() ? "true" : "false");
+                break;
+            case XLValueType::Empty:
+                break;
+            default:
+                os << c.getString();
+                break;
         }
         return os;
     }

@@ -1,5 +1,5 @@
-#include <catch2/catch_test_macros.hpp>
 #include "OpenXLSX.hpp"
+#include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
 using namespace OpenXLSX;
@@ -15,11 +15,11 @@ TEST_CASE("Dynamic Pivot Table Generation", "[XLPivotTable]")
     wks.cell("A1").value() = "Region";
     wks.cell("B1").value() = "Product";
     wks.cell("C1").value() = "Sales";
-    
+
     wks.cell("A2").value() = "North";
     wks.cell("B2").value() = "Apples";
     wks.cell("C2").value() = 100;
-    
+
     wks.cell("A3").value() = "South";
     wks.cell("B3").value() = "Bananas";
     wks.cell("C3").value() = 300;
@@ -29,10 +29,10 @@ TEST_CASE("Dynamic Pivot Table Generation", "[XLPivotTable]")
     wks.cell("C4").value() = 150;
 
     XLPivotTableOptions options;
-    options.name = "Pivot1";
+    options.name        = "Pivot1";
     options.sourceRange = "Sheet1!A1:C4";
-    options.targetCell = "E1";
-    
+    options.targetCell  = "E1";
+
     options.rows.push_back({"Region", XLPivotSubtotal::Sum, ""});
     options.columns.push_back({"Product", XLPivotSubtotal::Sum, ""});
     options.data.push_back({"Sales", XLPivotSubtotal::Sum, "Total Sales"});
@@ -46,53 +46,54 @@ TEST_CASE("Dynamic Pivot Table Generation", "[XLPivotTable]")
     // === Read-back and OOXML Verification ===
     XLDocument doc2;
     doc2.open("./PivotTest.xlsx");
-    
+
     // Verify XML structure in Pivot Cache Definition
     std::string cacheDefXmlStr = doc2.extractXmlFromArchive("xl/pivotCache/pivotCacheDefinition1.xml");
-    
+
     // Check root node attributes indicating dynamic refresh
     REQUIRE(cacheDefXmlStr.find("saveData=\"0\"") != std::string::npos);
     REQUIRE(cacheDefXmlStr.find("refreshOnLoad=\"1\"") != std::string::npos);
-    
+
     // Check dynamically analyzed fields from worksheet headers
     REQUIRE(cacheDefXmlStr.find("<cacheFields count=\"3\">") != std::string::npos);
     REQUIRE(cacheDefXmlStr.find("<cacheField name=\"Region\" numFmtId=\"0\">") != std::string::npos);
     REQUIRE(cacheDefXmlStr.find("<cacheField name=\"Product\" numFmtId=\"0\">") != std::string::npos);
     REQUIRE(cacheDefXmlStr.find("<cacheField name=\"Sales\" numFmtId=\"0\">") != std::string::npos);
-    
+
     // Check proper missing item placeholders to avoid Excel corruption
     bool hasMissingItems = cacheDefXmlStr.find("<sharedItems containsBlank=\"1\" count=\"0\"><m/></sharedItems>") != std::string::npos ||
-                           cacheDefXmlStr.find("<m />") != std::string::npos ||
-                           cacheDefXmlStr.find("<m/>") != std::string::npos;
+                           cacheDefXmlStr.find("<m />") != std::string::npos || cacheDefXmlStr.find("<m/>") != std::string::npos;
     REQUIRE(hasMissingItems);
 
     // Verify XML structure in Pivot Table Definition
     std::string ptDefXmlStr = doc2.extractXmlFromArchive("xl/pivotTables/pivotTable1.xml");
-    
+
     // Location and layout
     REQUIRE(ptDefXmlStr.find("<location ref=\"E1\"") != std::string::npos);
-    
+
     // Check axis mapping and specific element omission formatting
-    REQUIRE(ptDefXmlStr.find("<pivotField axis=\"axisRow\"") != std::string::npos); // Region
-    REQUIRE(ptDefXmlStr.find("<pivotField axis=\"axisCol\"") != std::string::npos); // Product
+    REQUIRE(ptDefXmlStr.find("<pivotField axis=\"axisRow\"") != std::string::npos);    // Region
+    REQUIRE(ptDefXmlStr.find("<pivotField axis=\"axisCol\"") != std::string::npos);    // Product
     bool hasDataField = ptDefXmlStr.find("<pivotField dataField=\"1\" showAll=\"0\" />") != std::string::npos ||
                         ptDefXmlStr.find("<pivotField dataField=\"1\" showAll=\"0\"/>") != std::string::npos;
-    REQUIRE(hasDataField); // Sales
-    
+    REQUIRE(hasDataField);    // Sales
+
     // Check proper field mappings
     REQUIRE(ptDefXmlStr.find("<rowFields count=\"1\">") != std::string::npos);
-    bool hasRowField = ptDefXmlStr.find("<field x=\"0\" />") != std::string::npos || ptDefXmlStr.find("<field x=\"0\"/>") != std::string::npos;
+    bool hasRowField =
+        ptDefXmlStr.find("<field x=\"0\" />") != std::string::npos || ptDefXmlStr.find("<field x=\"0\"/>") != std::string::npos;
     REQUIRE(hasRowField);
 
     REQUIRE(ptDefXmlStr.find("<colFields count=\"1\">") != std::string::npos);
-    bool hasColField = ptDefXmlStr.find("<field x=\"1\" />") != std::string::npos || ptDefXmlStr.find("<field x=\"1\"/>") != std::string::npos;
+    bool hasColField =
+        ptDefXmlStr.find("<field x=\"1\" />") != std::string::npos || ptDefXmlStr.find("<field x=\"1\"/>") != std::string::npos;
     REQUIRE(hasColField);
-    
+
     // Check correct empty items node handling (fixes Excel warning)
     REQUIRE(ptDefXmlStr.find("<colItems count=\"1\">") != std::string::npos);
     bool hasEmptyItem = ptDefXmlStr.find("<i />") != std::string::npos || ptDefXmlStr.find("<i/>") != std::string::npos;
     REQUIRE(hasEmptyItem);
-    
+
     // Check custom data name overriding
     bool hasTotalSales = ptDefXmlStr.find("<dataField name=\"Total Sales\" fld=\"2\" />") != std::string::npos ||
                          ptDefXmlStr.find("<dataField name=\"Total Sales\" fld=\"2\"/>") != std::string::npos;
@@ -100,7 +101,6 @@ TEST_CASE("Dynamic Pivot Table Generation", "[XLPivotTable]")
 
     doc2.close();
 }
-
 
 TEST_CASE("Pivot Table Advanced: Slicers and RefreshOnLoad", "[XLPivotTable]")
 {
@@ -117,22 +117,28 @@ TEST_CASE("Pivot Table Advanced: Slicers and RefreshOnLoad", "[XLPivotTable]")
 
     doc.workbook().addWorksheet("Pivot");
     auto pivotWks = doc.workbook().worksheet("Pivot");
-    
+
     XLPivotTableOptions opts;
-    opts.name = "MyPivot";
+    opts.name        = "MyPivot";
     opts.sourceRange = "Sheet1!A1:B3";
-    opts.targetCell = "A1";
-    XLPivotField rf; rf.name = "Region"; opts.rows.push_back(rf);
-    XLPivotField df; df.name = "Sales"; df.customName = "Sum of Sales"; df.subtotal = XLPivotSubtotal::Sum; opts.data.push_back(df);
-    
+    opts.targetCell  = "A1";
+    XLPivotField rf;
+    rf.name = "Region";
+    opts.rows.push_back(rf);
+    XLPivotField df;
+    df.name       = "Sales";
+    df.customName = "Sum of Sales";
+    df.subtotal   = XLPivotSubtotal::Sum;
+    opts.data.push_back(df);
+
     auto pt = pivotWks.addPivotTable(opts);
-    
+
     // Set refresh on load
     pt.setRefreshOnLoad(true);
 
     // Add a Slicer bound to the Pivot Table
     XLSlicerOptions sOpts;
-    sOpts.name = "Region";
+    sOpts.name    = "Region";
     sOpts.caption = "Region Filter";
     pivotWks.addPivotSlicer("D1", pt, "Region", sOpts);
 
@@ -145,7 +151,7 @@ TEST_CASE("Pivot Table Advanced: Slicers and RefreshOnLoad", "[XLPivotTable]")
     REQUIRE(ptWks2.hasDrawing() == true);
 
     // Deep Validation 1: Worksheet extLst must have A8765BA9 for Pivot Slicers
-    auto wksNode = ptWks2.xmlDocument().document_element();
+    auto wksNode   = ptWks2.xmlDocument().document_element();
     auto wksExtLst = wksNode.child("extLst");
     REQUIRE(!wksExtLst.empty());
     auto wksExt = wksExtLst.find_child_by_attribute("uri", "{A8765BA9-456A-4dab-B4F3-ACF838C121DE}");
@@ -153,7 +159,7 @@ TEST_CASE("Pivot Table Advanced: Slicers and RefreshOnLoad", "[XLPivotTable]")
     REQUIRE(!wksExt.child("x14:slicerList").empty());
 
     // Deep Validation 2: Workbook extLst must have BBE1A952 for Pivot Slicer Caches
-    auto wbkNode = doc2.workbook().xmlDocument().document_element();
+    auto wbkNode   = doc2.workbook().xmlDocument().document_element();
     auto wbkExtLst = wbkNode.child("extLst");
     REQUIRE(!wbkExtLst.empty());
     auto wbkExt = wbkExtLst.find_child_by_attribute("uri", "{BBE1A952-AA13-448e-AADC-164F8A28A991}");
@@ -161,27 +167,28 @@ TEST_CASE("Pivot Table Advanced: Slicers and RefreshOnLoad", "[XLPivotTable]")
     REQUIRE(!wbkExt.child("x14:slicerCaches").empty());
 
     // --- NEW: Deep Archive XML content format validation ---
-    
+
     // 1. Validate PivotCacheDefinition contains the required x14:pivotCacheDefinition extLst (The root cause of the bug)
     auto pcNode = wbkNode.child("pivotCaches").child("pivotCache");
     REQUIRE(!pcNode.empty());
-    std::string pcRId = pcNode.attribute("r:id").value();
+    std::string pcRId  = pcNode.attribute("r:id").value();
     std::string pcPath = doc2.workbookRelationships().relationshipById(pcRId).target();
     if (pcPath[0] != '/') pcPath = "/xl/" + pcPath;
-    
-    std::string pcDefStr = doc2.archive().getEntry(pcPath.substr(1)); // drop leading slash
+
+    std::string pcDefStr = doc2.archive().getEntry(pcPath.substr(1));    // drop leading slash
     REQUIRE(!pcDefStr.empty());
     XMLDocument pcDefDoc;
     pcDefDoc.load_string(pcDefStr.c_str());
     auto pcDefRoot = pcDefDoc.document_element();
     REQUIRE(std::string(pcDefRoot.name()) == "pivotCacheDefinition");
-    
+
     auto pcDefExtLst = pcDefRoot.child("extLst");
     REQUIRE(!pcDefExtLst.empty());
     auto pcDefExt = pcDefExtLst.find_child_by_attribute("uri", "{725AE2AE-9491-48be-B2B4-4EB974FC3084}");
     REQUIRE(!pcDefExt.empty());
     REQUIRE(!pcDefExt.child("x14:pivotCacheDefinition").empty());
-    REQUIRE(std::string(pcDefExt.child("x14:pivotCacheDefinition").attribute("pivotCacheId").value()) == pcNode.attribute("cacheId").value());
+    REQUIRE(std::string(pcDefExt.child("x14:pivotCacheDefinition").attribute("pivotCacheId").value()) ==
+            pcNode.attribute("cacheId").value());
 
     // 2. Validate SlicerCache XML formatting
     std::string slicerCacheStr = doc2.archive().getEntry("xl/slicerCaches/slicerCache1.xml");
@@ -227,14 +234,14 @@ TEST_CASE("Pivot Table Advanced: Slicers and RefreshOnLoad", "[XLPivotTable]")
     XMLDocument drwDoc;
     drwDoc.load_string(drawingStr.c_str());
     auto drwRoot = drwDoc.document_element();
-    
+
     bool foundA14Choice = false;
     for (auto anchor : drwRoot.children("xdr:twoCellAnchor")) {
         auto altContent = anchor.child("mc:AlternateContent");
         if (!altContent.empty()) {
             auto choice = altContent.child("mc:Choice");
             if (!choice.empty() && std::string(choice.attribute("Requires").value()) == "a14") {
-                foundA14Choice = true;
+                foundA14Choice    = true;
                 auto graphicFrame = choice.child("xdr:graphicFrame");
                 REQUIRE(!graphicFrame.empty());
                 auto sleSlicer = graphicFrame.child("a:graphic").child("a:graphicData").child("sle:slicer");
@@ -244,7 +251,6 @@ TEST_CASE("Pivot Table Advanced: Slicers and RefreshOnLoad", "[XLPivotTable]")
         }
     }
     REQUIRE(foundA14Choice == true);
-
 
     // Test double save for robustness
     doc2.saveAs("./PivotSlicerTest_SaveAs.xlsx", XLForceOverwrite);

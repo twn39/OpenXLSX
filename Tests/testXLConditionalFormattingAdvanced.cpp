@@ -1,10 +1,11 @@
-#include <catch2/catch_test_macros.hpp>
 #include <OpenXLSX.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
 using namespace OpenXLSX;
 
-TEST_CASE("Conditional Formatting Advanced Features and OOXML Validation", "[ConditionalFormatting][OOXML]") {
+TEST_CASE("Conditional Formatting Advanced Features and OOXML Validation", "[ConditionalFormatting][OOXML]")
+{
     XLDocument doc;
     doc.create("CF_Advanced_OOXML_Test.xlsx", XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
@@ -12,9 +13,9 @@ TEST_CASE("Conditional Formatting Advanced Features and OOXML Validation", "[Con
     // 1. Setup Test Rules and Styles
     XLDxf dxfRed;
     dxfRed.font().setFontColor(XLColor("FFFF0000"));
-    
+
     // IconSet Rule (should generate 3 cfvo children automatically)
-    auto iconRule = XLIconSetRule("3TrafficLights1", false, true); // hide value, reverse
+    auto iconRule = XLIconSetRule("3TrafficLights1", false, true);    // hide value, reverse
     wks.addConditionalFormatting("A1:A10", iconRule);
 
     // Top10 Rule (rank=5, percent=true, bottom=false)
@@ -29,9 +30,9 @@ TEST_CASE("Conditional Formatting Advanced Features and OOXML Validation", "[Con
     auto uniqueRule = XLDuplicateValuesRule(true);
     wks.addConditionalFormatting("D1:D10", uniqueRule);
 
-    // Contains/NotContains Text 
+    // Contains/NotContains Text
     auto containsRule = XLContainsTextRule("Error");
-    containsRule.addFormula("NOT(ISERROR(SEARCH(\"Error\",E1)))"); // Explicit formula
+    containsRule.addFormula("NOT(ISERROR(SEARCH(\"Error\",E1)))");    // Explicit formula
     wks.addConditionalFormatting("E1:E10", containsRule);
 
     auto notContainsRule = XLNotContainsTextRule("Success");
@@ -48,9 +49,7 @@ TEST_CASE("Conditional Formatting Advanced Features and OOXML Validation", "[Con
     REQUIRE(cfList.count() == 8);
 
     // Validate Priority assignments (should be global 1 to 8)
-    for (size_t i = 0; i < cfList.count(); ++i) {
-        REQUIRE(cfList[i].cfRules()[0].priority() == i + 1);
-    }
+    for (size_t i = 0; i < cfList.count(); ++i) { REQUIRE(cfList[i].cfRules()[0].priority() == i + 1); }
 
     // 3. Validate OOXML Structural Integrity
     // IconSet checks
@@ -71,7 +70,7 @@ TEST_CASE("Conditional Formatting Advanced Features and OOXML Validation", "[Con
     REQUIRE(std::string(top10Node.attribute("type").value()) == "top10");
     REQUIRE(std::string(top10Node.attribute("rank").value()) == "5");
     REQUIRE(std::string(top10Node.attribute("percent").value()) == "1");
-    REQUIRE(top10Node.attribute("bottom").empty() == true); // Should be omitted since it's false
+    REQUIRE(top10Node.attribute("bottom").empty() == true);    // Should be omitted since it's false
 
     // AboveAverage checks
     auto avgNode = cfList[2].cfRules()[0].node();
@@ -95,7 +94,7 @@ TEST_CASE("Conditional Formatting Advanced Features and OOXML Validation", "[Con
     wks.removeConditionalFormatting("E1:E10");
     cfList = wks.conditionalFormats();
     REQUIRE(cfList.count() == 7);
-    
+
     // Ensure the remaining rules are the correct ones
     REQUIRE(cfList[4].sqref() == "F1:F10");
     REQUIRE(cfList[4].cfRules()[0].type() == XLCfType::NotContainsText);
@@ -103,7 +102,7 @@ TEST_CASE("Conditional Formatting Advanced Features and OOXML Validation", "[Con
     wks.clearAllConditionalFormatting();
     cfList = wks.conditionalFormats();
     REQUIRE(cfList.count() == 0);
-    
+
     // Ensure the XML actually doesn't have the elements anymore
     REQUIRE(wks.xmlDocument().document_element().child("conditionalFormatting").empty() == true);
 

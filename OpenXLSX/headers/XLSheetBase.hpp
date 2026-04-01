@@ -1,16 +1,16 @@
 #ifndef OPENXLSX_XLSHEETBASE_HPP
 #define OPENXLSX_XLSHEETBASE_HPP
 
-#include <cstdint>
-#include <mutex>
-#include <shared_mutex>
-#include <string>
-#include <type_traits>
 #include "OpenXLSX-Exports.hpp"
 #include "XLColor.hpp"
 #include "XLCommandQuery.hpp"
 #include "XLDocument.hpp"
 #include "XLXmlFile.hpp"
+#include <cstdint>
+#include <mutex>
+#include <shared_mutex>
+#include <string>
+#include <type_traits>
 
 namespace OpenXLSX
 {
@@ -128,7 +128,7 @@ namespace OpenXLSX
         void setVisibility(XLSheetState state)
         {
             std::unique_lock<std::shared_mutex> lock(parentDoc().mutex());
-            auto stateString = std::string();
+            auto                                stateString = std::string();
             switch (state) {
                 case XLSheetState::Visible:
                     stateString = "visible";
@@ -245,6 +245,6 @@ namespace OpenXLSX
 
     private:    // ---------- Private Member Variables ---------- //
     };
-}
+}    // namespace OpenXLSX
 
 #endif

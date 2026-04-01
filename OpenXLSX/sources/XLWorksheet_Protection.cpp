@@ -1,91 +1,137 @@
-#include <string>
 #include <fmt/format.h>
+#include <string>
 
-#include "XLWorksheet.hpp"
 #include "XLUtilities.hpp"
+#include "XLWorksheet.hpp"
 
 using namespace OpenXLSX;
 
 bool XLWorksheet::protectSheet(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "sheet", (set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "sheet", (set ? "true" : "false"), XLKeepAttributes, m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::protectObjects(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "objects", (set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "objects", (set ? "true" : "false"), XLKeepAttributes, m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::protectScenarios(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "scenarios", (set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "scenarios", (set ? "true" : "false"), XLKeepAttributes, m_nodeOrder)
+               .empty() == false;
 }
 
 bool XLWorksheet::allowInsertColumns(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "insertColumns", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode,
+                                     "sheetProtection",
+                                     "insertColumns",
+                                     (!set ? "true" : "false"),
+                                     XLKeepAttributes,
+                                     m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::allowInsertRows(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "insertRows", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "insertRows", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::allowDeleteColumns(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "deleteColumns", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode,
+                                     "sheetProtection",
+                                     "deleteColumns",
+                                     (!set ? "true" : "false"),
+                                     XLKeepAttributes,
+                                     m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::allowDeleteRows(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "deleteRows", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "deleteRows", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::allowFormatCells(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "formatCells", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "formatCells", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::allowFormatColumns(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "formatColumns", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode,
+                                     "sheetProtection",
+                                     "formatColumns",
+                                     (!set ? "true" : "false"),
+                                     XLKeepAttributes,
+                                     m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::allowFormatRows(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "formatRows", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "formatRows", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::allowInsertHyperlinks(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "insertHyperlinks", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode,
+                                     "sheetProtection",
+                                     "insertHyperlinks",
+                                     (!set ? "true" : "false"),
+                                     XLKeepAttributes,
+                                     m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::allowSort(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "sort", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "sort", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::allowAutoFilter(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "autoFilter", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "autoFilter", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::allowPivotTables(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "pivotTables", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "pivotTables", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::allowSelectLockedCells(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "selectLockedCells", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode,
+                                     "sheetProtection",
+                                     "selectLockedCells",
+                                     (!set ? "true" : "false"),
+                                     XLKeepAttributes,
+                                     m_nodeOrder)
+               .empty() == false;
 }
 bool XLWorksheet::allowSelectUnlockedCells(bool set)
 {
     XMLNode sheetNode = xmlDocument().document_element();
-    return appendAndSetNodeAttribute(sheetNode, "sheetProtection", "selectUnlockedCells", (!set ? "true" : "false"), XLKeepAttributes, m_nodeOrder).empty() == false;
+    return appendAndSetNodeAttribute(sheetNode,
+                                     "sheetProtection",
+                                     "selectUnlockedCells",
+                                     (!set ? "true" : "false"),
+                                     XLKeepAttributes,
+                                     m_nodeOrder)
+               .empty() == false;
 }
 
 bool XLWorksheet::setPasswordHash(std::string hash)
@@ -207,7 +253,24 @@ bool XLWorksheet::passwordIsSet() const { return !passwordHash().empty(); }
 
 std::string XLWorksheet::sheetProtectionSummary() const
 {
-    return fmt::format("sheet: {}, objects: {}, scenarios: {}, insertColumns: {}, insertRows: {}, deleteColumns: {}, deleteRows: {}, formatCells: {}, formatColumns: {}, formatRows: {}, insertHyperlinks: {}, sort: {}, autoFilter: {}, pivotTables: {}, selectLockedCells: {}, selectUnlockedCells: {}, passwordHash: \"{}\"",
-                       sheetProtected() ? "true" : "false", objectsProtected() ? "true" : "false", scenariosProtected() ? "true" : "false", insertColumnsAllowed() ? "allowed" : "protected", insertRowsAllowed() ? "allowed" : "protected", deleteColumnsAllowed() ? "allowed" : "protected", deleteRowsAllowed() ? "allowed" : "protected", formatCellsAllowed() ? "allowed" : "protected", formatColumnsAllowed() ? "allowed" : "protected", formatRowsAllowed() ? "allowed" : "protected", insertHyperlinksAllowed() ? "allowed" : "protected", sortAllowed() ? "allowed" : "protected", autoFilterAllowed() ? "allowed" : "protected", pivotTablesAllowed() ? "allowed" : "protected", selectLockedCellsAllowed() ? "allowed" : "protected", selectUnlockedCellsAllowed() ? "allowed" : "protected", passwordHash());
+    return fmt::format("sheet: {}, objects: {}, scenarios: {}, insertColumns: {}, insertRows: {}, deleteColumns: {}, deleteRows: {}, "
+                       "formatCells: {}, formatColumns: {}, formatRows: {}, insertHyperlinks: {}, sort: {}, autoFilter: {}, pivotTables: "
+                       "{}, selectLockedCells: {}, selectUnlockedCells: {}, passwordHash: \"{}\"",
+                       sheetProtected() ? "true" : "false",
+                       objectsProtected() ? "true" : "false",
+                       scenariosProtected() ? "true" : "false",
+                       insertColumnsAllowed() ? "allowed" : "protected",
+                       insertRowsAllowed() ? "allowed" : "protected",
+                       deleteColumnsAllowed() ? "allowed" : "protected",
+                       deleteRowsAllowed() ? "allowed" : "protected",
+                       formatCellsAllowed() ? "allowed" : "protected",
+                       formatColumnsAllowed() ? "allowed" : "protected",
+                       formatRowsAllowed() ? "allowed" : "protected",
+                       insertHyperlinksAllowed() ? "allowed" : "protected",
+                       sortAllowed() ? "allowed" : "protected",
+                       autoFilterAllowed() ? "allowed" : "protected",
+                       pivotTablesAllowed() ? "allowed" : "protected",
+                       selectLockedCellsAllowed() ? "allowed" : "protected",
+                       selectUnlockedCellsAllowed() ? "allowed" : "protected",
+                       passwordHash());
 }
-

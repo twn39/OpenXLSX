@@ -3,8 +3,8 @@
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
-#include "XLXmlParser.hpp"
 #include "XLConstants.hpp"
+#include "XLXmlParser.hpp"
 
 namespace OpenXLSX
 {
@@ -22,27 +22,27 @@ namespace OpenXLSX
         XLPageMargins() = default;
         explicit XLPageMargins(const XMLNode& node);
 
-        double left() const;
+        double         left() const;
         XLPageMargins& setLeft(double value);
         XLPageMargins& setLeft(XLDistance value);
 
-        double right() const;
+        double         right() const;
         XLPageMargins& setRight(double value);
         XLPageMargins& setRight(XLDistance value);
 
-        double top() const;
+        double         top() const;
         XLPageMargins& setTop(double value);
         XLPageMargins& setTop(XLDistance value);
 
-        double bottom() const;
+        double         bottom() const;
         XLPageMargins& setBottom(double value);
         XLPageMargins& setBottom(XLDistance value);
 
-        double header() const;
+        double         header() const;
         XLPageMargins& setHeader(double value);
         XLPageMargins& setHeader(XLDistance value);
 
-        double footer() const;
+        double         footer() const;
         XLPageMargins& setFooter(double value);
         XLPageMargins& setFooter(XLDistance value);
 
@@ -88,39 +88,38 @@ namespace OpenXLSX
         explicit XLHeaderFooter(const XMLNode& node);
 
         [[nodiscard]] bool differentFirst() const;
-        void setDifferentFirst(bool value);
+        void               setDifferentFirst(bool value);
 
         [[nodiscard]] bool differentOddEven() const;
-        void setDifferentOddEven(bool value);
+        void               setDifferentOddEven(bool value);
 
         [[nodiscard]] bool scaleWithDoc() const;
-        void setScaleWithDoc(bool value);
+        void               setScaleWithDoc(bool value);
 
         [[nodiscard]] bool alignWithMargins() const;
-        void setAlignWithMargins(bool value);
+        void               setAlignWithMargins(bool value);
 
         [[nodiscard]] std::string oddHeader() const;
-        void setOddHeader(std::string_view value);
+        void                      setOddHeader(std::string_view value);
 
         [[nodiscard]] std::string oddFooter() const;
-        void setOddFooter(std::string_view value);
+        void                      setOddFooter(std::string_view value);
 
         [[nodiscard]] std::string evenHeader() const;
-        void setEvenHeader(std::string_view value);
+        void                      setEvenHeader(std::string_view value);
 
         [[nodiscard]] std::string evenFooter() const;
-        void setEvenFooter(std::string_view value);
+        void                      setEvenFooter(std::string_view value);
 
         [[nodiscard]] std::string firstHeader() const;
-        void setFirstHeader(std::string_view value);
+        void                      setFirstHeader(std::string_view value);
 
         [[nodiscard]] std::string firstFooter() const;
-        void setFirstFooter(std::string_view value);
+        void                      setFirstFooter(std::string_view value);
 
     private:
         XMLNode m_node;
     };
-
 
     class OPENXLSX_EXPORT XLPageSetup
     {
@@ -128,32 +127,31 @@ namespace OpenXLSX
         XLPageSetup() = default;
         explicit XLPageSetup(const XMLNode& node);
 
-        uint32_t paperSize() const;
+        uint32_t     paperSize() const;
         XLPageSetup& setPaperSize(uint32_t value);
 
         XLPageOrientation orientation() const;
-        XLPageSetup& setOrientation(XLPageOrientation value);
+        XLPageSetup&      setOrientation(XLPageOrientation value);
 
-        uint32_t scale() const;
+        uint32_t     scale() const;
         XLPageSetup& setScale(uint32_t value);
 
-        uint32_t fitToWidth() const;
+        uint32_t     fitToWidth() const;
         XLPageSetup& setFitToWidth(uint32_t value);
 
-
-        uint32_t fitToHeight() const;
+        uint32_t     fitToHeight() const;
         XLPageSetup& setFitToHeight(uint32_t value);
 
         [[nodiscard]] std::string pageOrder() const;
-        XLPageSetup& setPageOrder(std::string_view value);
+        XLPageSetup&              setPageOrder(std::string_view value);
 
         [[nodiscard]] bool useFirstPageNumber() const;
-        XLPageSetup& setUseFirstPageNumber(bool value);
+        XLPageSetup&       setUseFirstPageNumber(bool value);
 
         [[nodiscard]] uint32_t firstPageNumber() const;
-        XLPageSetup& setFirstPageNumber(uint32_t value);
+        XLPageSetup&           setFirstPageNumber(uint32_t value);
 
-        bool blackAndWhite() const;
+        bool         blackAndWhite() const;
         XLPageSetup& setBlackAndWhite(bool value);
 
     private:

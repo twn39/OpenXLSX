@@ -8,24 +8,24 @@
 #endif    // _MSC_VER
 
 #include <deque>
-#include <functional>    // std::reference_wrapper
-#include <limits>        // std::numeric_limits
-#include <ostream>       // std::basic_ostream
+#include <functional>      // std::reference_wrapper
+#include <limits>          // std::numeric_limits
+#include <ostream>         // std::basic_ostream
+#include <shared_mutex>    // std::shared_mutex
 #include <string>
 #include <unordered_map>    // O(1) string lookup
-#include <shared_mutex>     // std::shared_mutex
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
-#include "XLXmlFile.hpp"
 #include "XLStringArena.hpp"
-#include <vector>
+#include "XLXmlFile.hpp"
 #include <string_view>
+#include <vector>
 
 namespace OpenXLSX
 {
     // Alias for flat hash map to allow easy substitution in the future
-    template <typename Key, typename Value>
+    template<typename Key, typename Value>
     using FlatHashMap = std::unordered_map<Key, Value>;
 
     constexpr size_t XLMaxSharedStrings = (std::numeric_limits<int32_t>::max)();    // pull request #261: wrapped max in parentheses to
@@ -106,10 +106,11 @@ namespace OpenXLSX
          * @brief return the amount of shared string entries currently in the cache
          * @return
          */
-        int32_t stringCount() const { 
+        int32_t stringCount() const
+        {
             if (m_mutex) {
                 std::shared_lock<std::shared_mutex> lock(*m_mutex);
-                return static_cast<int32_t>(m_stringCache->size()); 
+                return static_cast<int32_t>(m_stringCache->size());
             }
             return static_cast<int32_t>(m_stringCache->size());
         }
@@ -187,9 +188,10 @@ namespace OpenXLSX
 
     private:
         XLStringArena* m_stringArena{}; /** < String memory pool for contiguous zero-copy allocation */
-        std::vector<std::string_view>* m_stringCache{}; /** < Each string must have an unchanging memory address; hence the use of std::vector of views into arena */
+        std::vector<std::string_view>*
+            m_stringCache{}; /** < Each string must have an unchanging memory address; hence the use of std::vector of views into arena */
         FlatHashMap<std::string_view, int32_t>* m_stringIndex{}; /** < O(1) string -> index lookup */
-        std::shared_mutex* m_mutex{}; /** < Pointer to shared mutex for thread-safe operations */
+        std::shared_mutex*                      m_mutex{};       /** < Pointer to shared mutex for thread-safe operations */
 
         /**
          * @brief Tracks whether the pugi DOM is behind the string cache.

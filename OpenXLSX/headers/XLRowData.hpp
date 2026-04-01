@@ -283,8 +283,9 @@ namespace OpenXLSX
                 // ===== Then, prepend new cell nodes to current row node
                 auto colNo = values.size();
                 for (auto value = values.rbegin(); value != values.rend(); ++value) {    // NOLINT
-                    prependCellValue(*value, static_cast<uint16_t>(colNo));    // 2024-04-30: whitespace support: this is safe because only prependCellValue (with
-                                                        // whitespace support) touches the row data
+                    prependCellValue(*value,
+                                     static_cast<uint16_t>(colNo));    // 2024-04-30: whitespace support: this is safe because only
+                                                                       // prependCellValue (with whitespace support) touches the row data
                     --colNo;
                 }
             }

@@ -1,7 +1,7 @@
-#include <catch2/catch_test_macros.hpp>
 #include "OpenXLSX.hpp"
-#include <iostream>
+#include <catch2/catch_test_macros.hpp>
 #include <fstream>
+#include <iostream>
 
 using namespace OpenXLSX;
 
@@ -11,9 +11,9 @@ TEST_CASE("Macro Preservation (.xlsm)", "[XLMacro]")
     {
         XLDocument doc1;
         doc1.create("./DummyMacro.xlsm", XLForceOverwrite);
-        auto wks = doc1.workbook().worksheet("Sheet1");
+        auto wks               = doc1.workbook().worksheet("Sheet1");
         wks.cell("A1").value() = "Has Macro";
-        
+
         // Inject a fake vbaProject.bin into the archive via streamed file
         // We can create a tiny binary file
         std::ofstream binFile("dummy_vba.bin", std::ios::binary);
@@ -21,7 +21,7 @@ TEST_CASE("Macro Preservation (.xlsm)", "[XLMacro]")
         binFile.close();
 
         doc1.addStreamedFile("xl/vbaProject.bin", "dummy_vba.bin");
-        
+
         // Need to add relationship to workbook
         doc1.workbookRelationships().addRelationship(XLRelationshipType::VBAProject, "vbaProject.bin");
         doc1.save();
@@ -32,10 +32,10 @@ TEST_CASE("Macro Preservation (.xlsm)", "[XLMacro]")
         XLDocument doc2;
         doc2.open("./DummyMacro.xlsm");
         REQUIRE(doc2.hasMacro() == true);
-        
-        auto wks = doc2.workbook().worksheet("Sheet1");
+
+        auto wks               = doc2.workbook().worksheet("Sheet1");
         wks.cell("B1").value() = "Modified Data";
-        
+
         doc2.saveAs("./DummyMacro_Resaved.xlsm", XLForceOverwrite);
     }
 
@@ -44,11 +44,11 @@ TEST_CASE("Macro Preservation (.xlsm)", "[XLMacro]")
         XLDocument doc3;
         doc3.open("./DummyMacro_Resaved.xlsm");
         REQUIRE(doc3.hasMacro() == true);
-        
+
         // Extract it to memory to verify the payload is identical
         std::string payload = doc3.archive().getEntry("xl/vbaProject.bin");
         REQUIRE(payload == "FAKE_MACRO_PAYLOAD_12345");
-        
+
         // Check content types
         std::string ctStr = doc3.archive().getEntry("[Content_Types].xml");
         REQUIRE(ctStr.find("vbaProject") != std::string::npos);
@@ -68,7 +68,7 @@ TEST_CASE("Macro Extension Mutation and Sanitization", "[XLMacro][Security]")
     {
         XLDocument doc;
         doc.create("./MacroMutationSource.xlsm", XLForceOverwrite);
-        
+
         std::ofstream binFile("dummy_vba2.bin", std::ios::binary);
         binFile << "VIRUS_PAYLOAD";
         binFile.close();
@@ -98,23 +98,19 @@ TEST_CASE("Macro Extension Mutation and Sanitization", "[XLMacro][Security]")
 
         bool hasVbaProject = false;
         for (const auto& entry : doc.archive().entryNames()) {
-            if (entry.find("vbaProject") != std::string::npos) {
-                hasVbaProject = true;
-            }
+            if (entry.find("vbaProject") != std::string::npos) { hasVbaProject = true; }
         }
-        REQUIRE_FALSE(hasVbaProject); // Binary file must be annihilated
+        REQUIRE_FALSE(hasVbaProject);    // Binary file must be annihilated
 
         // Verify relationships are clean
         auto rels = doc.workbookRelationships().relationships();
-        for (const auto& rel : rels) {
-            REQUIRE(rel.type() != XLRelationshipType::VBAProject);
-        }
+        for (const auto& rel : rels) { REQUIRE(rel.type() != XLRelationshipType::VBAProject); }
 
         // Verify ContentTypes are clean
         std::string ctStr = doc.archive().getEntry("[Content_Types].xml");
         REQUIRE(ctStr.find("vbaProject") == std::string::npos);
     }
-    
+
     // Cleanup generated files
     std::remove("dummy_vba2.bin");
     std::remove("./MacroMutationSource.xlsm");
@@ -128,10 +124,10 @@ TEST_CASE("Macro Preservation (.xlsm) using external file", "[XLMacro]")
         XLDocument doc1;
         doc1.open("./Tests/excelize_macro.xlsm");
         REQUIRE(doc1.hasMacro() == true);
-        
-        auto wks = doc1.workbook().worksheet("Sheet1");
+
+        auto wks               = doc1.workbook().worksheet("Sheet1");
         wks.cell("A2").value() = "Modified by OpenXLSX";
-        
+
         doc1.saveAs("./Tests/excelize_macro_resaved.xlsm", XLForceOverwrite);
     }
 
@@ -139,16 +135,16 @@ TEST_CASE("Macro Preservation (.xlsm) using external file", "[XLMacro]")
         XLDocument doc2;
         doc2.open("./Tests/excelize_macro_resaved.xlsm");
         REQUIRE(doc2.hasMacro() == true);
-        
+
         std::string payload = doc2.archive().getEntry("xl/vbaProject.bin");
-        REQUIRE(payload.size() > 1000); // A real vbaProject.bin is usually several KB
+        REQUIRE(payload.size() > 1000);    // A real vbaProject.bin is usually several KB
 
         std::string ctStr = doc2.archive().getEntry("[Content_Types].xml");
         REQUIRE(ctStr.find("application/vnd.ms-excel.sheet.macroEnabled.main+xml") != std::string::npos);
         REQUIRE(ctStr.find("application/vnd.ms-office.vbaProject") != std::string::npos);
     }
 
-        {
+    {
         XLDocument doc_verify_source;
         doc_verify_source.open("./Tests/excelize_macro.xlsm");
         auto wks_src = doc_verify_source.workbook().worksheet("Sheet1");
@@ -157,4 +153,4 @@ TEST_CASE("Macro Preservation (.xlsm) using external file", "[XLMacro]")
     }
 
     std::remove("./Tests/excelize_macro_resaved.xlsm");
-    }
+}

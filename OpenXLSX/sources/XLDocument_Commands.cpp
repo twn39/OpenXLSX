@@ -1,20 +1,21 @@
 #include <algorithm>
-#include <vector>
-#include <string>
 #include <fmt/format.h>
+#include <string>
+#include <vector>
 
-#include "XLDocument.hpp"
-#include "XLSheet.hpp"
-#include "XLException.hpp"
 #include "XLContentTypes.hpp"
+#include "XLDocument.hpp"
+#include "XLException.hpp"
 #include "XLRelationships.hpp"
+#include "XLSheet.hpp"
 
 constexpr bool THROW_ON_INVALID = true;
 
 using namespace OpenXLSX;
 
 /**
- * @details Provides a centralized mutation interface for document-level changes. Abstracted as commands to decouple the UI/API layers from the internal DOM routing and dependency management logic.
+ * @details Provides a centralized mutation interface for document-level changes. Abstracted as commands to decouple the UI/API layers from
+ * the internal DOM routing and dependency management logic.
  */
 bool XLDocument::execCommand(const XLCommand& command)
 {
@@ -146,14 +147,13 @@ bool XLDocument::execCommand(const XLCommand& command)
         } break;
         case XLCommandType::AddChartsheet: {
             validateSheetName(command.getParam<std::string>("sheetName"), THROW_ON_INVALID);
-            const std::string emptyChartsheet{
-                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-                "<chartsheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\""
-                " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"
-                "<sheetViews>"
-                "<sheetView workbookViewId=\"0\" zoomToFit=\"1\"/>"
-                "</sheetViews>"
-                "</chartsheet>"};
+            const std::string emptyChartsheet{"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+                                              "<chartsheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\""
+                                              " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"
+                                              "<sheetViews>"
+                                              "<sheetView workbookViewId=\"0\" zoomToFit=\"1\"/>"
+                                              "</sheetViews>"
+                                              "</chartsheet>"};
             m_contentTypes.addOverride(command.getParam<std::string>("sheetPath"), XLContentType::Chartsheet);
             m_wbkRelationships.addRelationship(XLRelationshipType::Chartsheet, command.getParam<std::string>("sheetPath").substr(4));
             m_appProperties.appendSheetName(command.getParam<std::string>("sheetName"));
@@ -230,7 +230,8 @@ bool XLDocument::execCommand(const XLCommand& command)
 }
 
 /**
- * @details Provides a centralized read interface for querying document state. Decouples consumers from traversing the relationship graphs directly.
+ * @details Provides a centralized read interface for querying document state. Decouples consumers from traversing the relationship graphs
+ * directly.
  */
 XLQuery XLDocument::execQuery(const XLQuery& query) const
 {

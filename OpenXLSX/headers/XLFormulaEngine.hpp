@@ -23,7 +23,10 @@
 #include "XLCellValue.hpp"
 
 // Forward declare XLWorksheet so callers can use makeResolver without pulling the full header.
-namespace OpenXLSX { class XLWorksheet; }
+namespace OpenXLSX
+{
+    class XLWorksheet;
+}
 
 namespace OpenXLSX
 {
@@ -34,33 +37,32 @@ namespace OpenXLSX
     /**
      * @brief Kinds of tokens produced by the lexer.
      */
-    enum class XLTokenKind : uint8_t
-    {
-        Number,     ///< Numeric literal (integer or float)
-        String,     ///< Quoted string literal  "hello"
-        Bool,       ///< TRUE or FALSE keyword
-        CellRef,    ///< Cell reference  A1, $B$2, Sheet1!C3
-        Ident,      ///< Function name or named range
-        Plus,       ///< +
-        Minus,      ///< -
-        Star,       ///< *
-        Slash,      ///< /
-        Caret,      ///< ^  (power)
-        Percent,    ///< %
-        Amp,        ///< &  (string concat)
-        Eq,         ///< =
-        NEq,        ///< <>
-        Lt,         ///< <
-        Le,         ///< <=
-        Gt,         ///< >
-        Ge,         ///< >=
-        LParen,     ///< (
-        RParen,     ///< )
-        Comma,      ///< ,
-        Semicolon,  ///< ;  (alternative argument separator in some locales)
-        Colon,      ///< :  (used inside range references parsed by lexer)
-        End,        ///< Sentinel – end of input
-        Error       ///< Unrecognised character
+    enum class XLTokenKind : uint8_t {
+        Number,       ///< Numeric literal (integer or float)
+        String,       ///< Quoted string literal  "hello"
+        Bool,         ///< TRUE or FALSE keyword
+        CellRef,      ///< Cell reference  A1, $B$2, Sheet1!C3
+        Ident,        ///< Function name or named range
+        Plus,         ///< +
+        Minus,        ///< -
+        Star,         ///< *
+        Slash,        ///< /
+        Caret,        ///< ^  (power)
+        Percent,      ///< %
+        Amp,          ///< &  (string concat)
+        Eq,           ///< =
+        NEq,          ///< <>
+        Lt,           ///< <
+        Le,           ///< <=
+        Gt,           ///< >
+        Ge,           ///< >=
+        LParen,       ///< (
+        RParen,       ///< )
+        Comma,        ///< ,
+        Semicolon,    ///< ;  (alternative argument separator in some locales)
+        Colon,        ///< :  (used inside range references parsed by lexer)
+        End,          ///< Sentinel – end of input
+        Error         ///< Unrecognised character
     };
 
     /**
@@ -69,9 +71,9 @@ namespace OpenXLSX
     struct OPENXLSX_EXPORT XLToken
     {
         XLTokenKind kind{XLTokenKind::Error};
-        std::string text;   ///< Raw text of the token (number string, identifier, …)
-        double      number{0.0}; ///< Pre-parsed numeric value when kind == Number
-        bool        boolean{false}; ///< Pre-parsed bool when kind == Bool
+        std::string text;              ///< Raw text of the token (number string, identifier, …)
+        double      number{0.0};       ///< Pre-parsed numeric value when kind == Number
+        bool        boolean{false};    ///< Pre-parsed bool when kind == Bool
     };
 
     /**
@@ -99,8 +101,7 @@ namespace OpenXLSX
     // =========================================================================
 
     /** @brief Kind discriminator for AST nodes. */
-    enum class XLNodeKind : uint8_t
-    {
+    enum class XLNodeKind : uint8_t {
         Number,
         StringLit,
         BoolLit,
@@ -122,12 +123,12 @@ namespace OpenXLSX
 
         // ---- Leaf payloads ----
         double      number{0.0};
-        std::string text;       ///< string literal, cell-ref text, range text, identifier, error text
+        std::string text;    ///< string literal, cell-ref text, range text, identifier, error text
         bool        boolean{false};
-        XLTokenKind op{XLTokenKind::Error}; ///< operator for BinOp / UnaryOp
+        XLTokenKind op{XLTokenKind::Error};    ///< operator for BinOp / UnaryOp
 
         // ---- Children ----
-        std::vector<std::unique_ptr<XLASTNode>> children; ///< operands or function arguments
+        std::vector<std::unique_ptr<XLASTNode>> children;    ///< operands or function arguments
 
         explicit XLASTNode(XLNodeKind k) : kind(k) {}
 
@@ -165,8 +166,8 @@ namespace OpenXLSX
 
             [[nodiscard]] const XLToken& current() const;
             [[nodiscard]] const XLToken& peek(std::size_t offset = 1) const;
-            const XLToken& consume();
-            bool matchKind(XLTokenKind k);
+            const XLToken&               consume();
+            bool                         matchKind(XLTokenKind k);
         };
 
         static std::unique_ptr<XLASTNode> parseExpr(ParseContext& ctx, int minPrec = 0);
@@ -174,7 +175,7 @@ namespace OpenXLSX
         static std::unique_ptr<XLASTNode> parsePrimary(ParseContext& ctx);
         static std::unique_ptr<XLASTNode> parseFuncCall(std::string name, ParseContext& ctx);
 
-        static int precedence(XLTokenKind k);
+        static int  precedence(XLTokenKind k);
         static bool isRightAssoc(XLTokenKind k);
     };
 
@@ -208,50 +209,64 @@ namespace OpenXLSX
      * The engine is **thread-safe for concurrent evaluate() calls** after construction
      * (the function table is built once in the constructor and is read-only thereafter).
      */
-    
-    class OPENXLSX_EXPORT XLFormulaArg {
+
+    class OPENXLSX_EXPORT XLFormulaArg
+    {
     public:
         enum class Type { Empty, Scalar, Array, LazyRange };
+
     private:
-        Type m_type{Type::Empty};
-        XLCellValue m_scalar;
-        std::vector<XLCellValue> m_array;
-        uint32_t m_r1{0}, m_r2{0};
-        uint16_t m_c1{0}, m_c2{0};
-        std::string m_sheetName;
+        Type                                                m_type{Type::Empty};
+        XLCellValue                                         m_scalar;
+        std::vector<XLCellValue>                            m_array;
+        uint32_t                                            m_r1{0}, m_r2{0};
+        uint16_t                                            m_c1{0}, m_c2{0};
+        std::string                                         m_sheetName;
         const std::function<XLCellValue(std::string_view)>* m_resolver{nullptr};
 
     public:
         XLFormulaArg() = default;
         XLFormulaArg(XLCellValue v) : m_type(Type::Scalar), m_scalar(std::move(v)) {}
         XLFormulaArg(std::vector<XLCellValue> arr) : m_type(Type::Array), m_array(std::move(arr)) {}
-        XLFormulaArg(uint32_t r1, uint32_t r2, uint16_t c1, uint16_t c2, 
-                     std::string sheetName, 
+        XLFormulaArg(uint32_t                                            r1,
+                     uint32_t                                            r2,
+                     uint16_t                                            c1,
+                     uint16_t                                            c2,
+                     std::string                                         sheetName,
                      const std::function<XLCellValue(std::string_view)>* resolver)
-            : m_type(Type::LazyRange), m_r1(r1), m_r2(r2), m_c1(c1), m_c2(c2), 
-              m_sheetName(std::move(sheetName)), m_resolver(resolver) {}
+            : m_type(Type::LazyRange),
+              m_r1(r1),
+              m_r2(r2),
+              m_c1(c1),
+              m_c2(c2),
+              m_sheetName(std::move(sheetName)),
+              m_resolver(resolver)
+        {}
 
         Type type() const { return m_type; }
-        bool empty() const { 
+        bool empty() const
+        {
             if (m_type == Type::Empty) return true;
             if (m_type == Type::Scalar) return m_scalar.type() == XLValueType::Empty;
             if (m_type == Type::Array) return m_array.empty();
-            return m_r1 > m_r2 || m_c1 > m_c2; 
+            return m_r1 > m_r2 || m_c1 > m_c2;
         }
-        size_t size() const {
+        size_t size() const
+        {
             if (m_type == Type::Empty) return 0;
             if (m_type == Type::Scalar) return 1;
             if (m_type == Type::Array) return m_array.size();
             return static_cast<size_t>(m_r2 - m_r1 + 1) * static_cast<size_t>(m_c2 - m_c1 + 1);
         }
-        
-        XLCellValue operator[](size_t index) const {
+
+        XLCellValue operator[](size_t index) const
+        {
             if (m_type == Type::Scalar) return index == 0 ? m_scalar : XLCellValue();
             if (m_type == Type::Array) return index < m_array.size() ? m_array[index] : XLCellValue();
             if (m_type == Type::LazyRange) {
-                uint16_t w = m_c2 - m_c1 + 1;
-                uint32_t row = m_r1 + static_cast<uint32_t>(index / w);
-                uint16_t col = m_c1 + static_cast<uint16_t>(index % w);
+                uint16_t    w   = m_c2 - m_c1 + 1;
+                uint32_t    row = m_r1 + static_cast<uint32_t>(index / w);
+                uint16_t    col = m_c1 + static_cast<uint16_t>(index % w);
                 std::string ref = m_sheetName;
                 if (!ref.empty()) ref += "!";
                 ref += XLCellReference(row, col).address();
@@ -260,13 +275,19 @@ namespace OpenXLSX
             return XLCellValue();
         }
 
-        class Iterator {
+        class Iterator
+        {
             const XLFormulaArg* arg;
-            size_t index;
+            size_t              index;
+
         public:
             Iterator(const XLFormulaArg* a, size_t i) : arg(a), index(i) {}
             XLCellValue operator*() const { return (*arg)[index]; }
-            Iterator& operator++() { ++index; return *this; }
+            Iterator&   operator++()
+            {
+                ++index;
+                return *this;
+            }
             bool operator!=(const Iterator& other) const { return index != other.index; }
         };
         Iterator begin() const { return Iterator(this, 0); }
@@ -291,8 +312,7 @@ namespace OpenXLSX
          *        contains no cell references.
          * @return The computed XLCellValue; an error value on evaluation failure.
          */
-        [[nodiscard]] XLCellValue evaluate(std::string_view formula,
-                                           const XLCellResolver& resolver = {}) const;
+        [[nodiscard]] XLCellValue evaluate(std::string_view formula, const XLCellResolver& resolver = {}) const;
 
         /**
          * @brief Create a CellResolver that reads live values from an XLWorksheet.
@@ -308,34 +328,29 @@ namespace OpenXLSX
         /**
          * @brief Expand a range string "A1:B3" using the resolver into a flat value list.
          */
-        static XLFormulaArg expandRange(std::string_view rangeRef,
-                                                     const XLCellResolver& resolver);
+        static XLFormulaArg expandRange(std::string_view rangeRef, const XLCellResolver& resolver);
 
         /**
          * @brief Collect numeric values from a mixed argument list (scalars + range vectors).
          */
-        static std::vector<double> collectNumbers(
-            const std::vector<XLCellValue>& flat,
-            bool countBlanks = false);
+        static std::vector<double> collectNumbers(const std::vector<XLCellValue>& flat, bool countBlanks = false);
 
         /**
          * @brief Evaluate a single AST node recursively.
          * @throws XLFormulaError on unrecoverable error.
          */
-        [[nodiscard]] XLCellValue evalNode(const XLASTNode& node,
-                                           const XLCellResolver& resolver) const;
+        [[nodiscard]] XLCellValue evalNode(const XLASTNode& node, const XLCellResolver& resolver) const;
 
         /**
          * @brief Expand a function argument into a flat vector of XLCellValue.
          *        Handles both scalar values and ranges.
          */
-        [[nodiscard]] XLFormulaArg expandArg(const XLASTNode& argNode,
-                                                          const XLCellResolver& resolver) const;
+        [[nodiscard]] XLFormulaArg expandArg(const XLASTNode& argNode, const XLCellResolver& resolver) const;
 
         // ---- Built-in function table ----
         // Each entry maps an uppercase function name to its implementation.
-        using FuncArgs  = std::vector<XLCellValue>;     ///< all arguments flattened
-        using FuncImpl  = std::function<XLCellValue(const std::vector<XLFormulaArg>&)>;
+        using FuncArgs = std::vector<XLCellValue>;    ///< all arguments flattened
+        using FuncImpl = std::function<XLCellValue(const std::vector<XLFormulaArg>&)>;
         std::unordered_map<std::string, FuncImpl> m_functions;
 
         void registerBuiltins();

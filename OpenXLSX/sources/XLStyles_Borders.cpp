@@ -1,24 +1,25 @@
 // ===== External Includes ===== //
 #include <cstdint>
-#include <gsl/gsl>
 #include <fmt/format.h>
-#include <memory>     
+#include <gsl/gsl>
+#include <memory>
 #include <pugixml.hpp>
-#include <stdexcept>   
-#include <string>      
-#include <vector>      
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLColor.hpp"
 #include "XLDocument.hpp"
 #include "XLException.hpp"
 #include "XLStyles.hpp"
-#include "XLUtilities.hpp"
 #include "XLStyles_Internal.hpp"
+#include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
 
-namespace {
+namespace
+{
     constexpr EnumStringMap<XLLineType> XLLineTypeMap[] = {
         {"left", XLLineLeft},
         {"right", XLLineRight},
@@ -29,13 +30,9 @@ namespace {
         {"horizontal", XLLineHorizontal},
     };
 
-    [[maybe_unused]] XLLineType XLLineTypeFromString(std::string_view str) {
-        return EnumFromString(str, XLLineTypeMap, XLLineInvalid);
-    }
+    [[maybe_unused]] XLLineType XLLineTypeFromString(std::string_view str) { return EnumFromString(str, XLLineTypeMap, XLLineInvalid); }
 
-    const char* XLLineTypeToString(XLLineType val) {
-        return EnumToString(val, XLLineTypeMap, "(invalid)");
-    }
+    const char* XLLineTypeToString(XLLineType val) { return EnumToString(val, XLLineTypeMap, "(invalid)"); }
 
     constexpr EnumStringMap<XLLineStyle> XLLineStyleMap[] = {
         {"", XLLineStyleNone},
@@ -54,14 +51,10 @@ namespace {
         {"slantDashDot", XLLineStyleSlantDashDot},
     };
 
-    XLLineStyle XLLineStyleFromString(std::string_view str) {
-        return EnumFromString(str, XLLineStyleMap, XLLineStyleInvalid);
-    }
+    XLLineStyle XLLineStyleFromString(std::string_view str) { return EnumFromString(str, XLLineStyleMap, XLLineStyleInvalid); }
 
-    const char* XLLineStyleToString(XLLineStyle val) {
-        return EnumToString(val, XLLineStyleMap, "(invalid)");
-    }
-}
+    const char* XLLineStyleToString(XLLineStyle val) { return EnumToString(val, XLLineStyleMap, "(invalid)"); }
+}    // namespace
 
 XLLine::XLLine() : m_lineNode(std::make_unique<XMLNode>()) {}
 
@@ -93,10 +86,7 @@ XLDataBarColor XLLine::color() const
     return XLDataBarColor(color);
 }
 
-std::string XLLine::summary() const
-{
-    return fmt::format("line style is {}, {}", XLLineStyleToString(style()), color().summary());
-}
+std::string XLLine::summary() const { return fmt::format("line style is {}, {}", XLLineStyleToString(style()), color().summary()); }
 
 XLBorder::XLBorder() : m_borderNode(std::make_unique<XMLNode>()) {}
 
@@ -127,24 +117,34 @@ XLLine XLBorder::vertical() const { return XLLine(m_borderNode->child("vertical"
 XLLine XLBorder::horizontal() const { return XLLine(m_borderNode->child("horizontal")); }
 
 XLBorder& XLBorder::setDiagonalUp(bool set)
-{ appendAndSetAttribute(*m_borderNode, "diagonalUp", (set ? "true" : "false")).empty(); return *this; }
+{
+    appendAndSetAttribute(*m_borderNode, "diagonalUp", (set ? "true" : "false")).empty();
+    return *this;
+}
 XLBorder& XLBorder::setDiagonalDown(bool set)
-{ appendAndSetAttribute(*m_borderNode, "diagonalDown", (set ? "true" : "false")).empty(); return *this; }
-XLBorder& XLBorder::setOutline(bool set) { appendAndSetAttribute(*m_borderNode, "outline", (set ? "true" : "false")).empty(); return *this; }
+{
+    appendAndSetAttribute(*m_borderNode, "diagonalDown", (set ? "true" : "false")).empty();
+    return *this;
+}
+XLBorder& XLBorder::setOutline(bool set)
+{
+    appendAndSetAttribute(*m_borderNode, "outline", (set ? "true" : "false")).empty();
+    return *this;
+}
 bool XLBorder::setLine(XLLineType lineType, XLLineStyle lineStyle, XLColor lineColor, double lineTint)
 {
-    XMLNode lineNode = appendAndGetNode(*m_borderNode, XLLineTypeToString(lineType), m_nodeOrder);   
+    XMLNode lineNode = appendAndGetNode(*m_borderNode, XLLineTypeToString(lineType), m_nodeOrder);
     // 2024-12-19: non-existing lines are added using an ordered insert to address issue #304
     bool success = (lineNode.empty() == false);
     if (success) {
         const char* styleStr = XLLineStyleToString(lineStyle);
         if (styleStr && *styleStr)
-            success = (appendAndSetAttribute(lineNode, "style", styleStr).empty() == false);   
+            success = (appendAndSetAttribute(lineNode, "style", styleStr).empty() == false);
         else
             lineNode.remove_attribute("style");
     }
-    XMLNode colorNode{};                                                                                         
-    if (success) colorNode = appendAndGetNode(lineNode, "color");   
+    XMLNode colorNode{};
+    if (success) colorNode = appendAndGetNode(lineNode, "color");
     XLDataBarColor colorObject{colorNode};
     success = (colorNode.empty() == false);
     if (success) success = colorObject.setRgb(lineColor);
@@ -201,10 +201,7 @@ XLBorders::XLBorders(const XMLNode& borders) : m_bordersNode(std::make_unique<XM
     }
 }
 
-XLBorders::~XLBorders()
-{
-    m_borders.clear();   
-}
+XLBorders::~XLBorders() { m_borders.clear(); }
 
 XLBorders::XLBorders(const XLBorders& other) : m_bordersNode(std::make_unique<XMLNode>(*other.m_bordersNode)), m_borders(other.m_borders) {}
 
@@ -230,8 +227,8 @@ XLBorder XLBorders::borderByIndex(XLStyleIndex index) const
 
 XLStyleIndex XLBorders::create(XLBorder copyFrom, std::string_view styleEntriesPrefix)
 {
-    XLStyleIndex index = count();   
-    XMLNode      newNode{};         
+    XLStyleIndex index = count();
+    XMLNode      newNode{};
 
     // ===== Append new node prior to final whitespaces, if any
     XMLNode lastStyle = m_bordersNode->last_child_of_type(pugi::node_element);
@@ -243,12 +240,11 @@ XLStyleIndex XLBorders::create(XLBorder copyFrom, std::string_view styleEntriesP
         using namespace std::literals::string_literals;
         throw XLException("XLBorders::"s + __func__ + ": failed to append a new border node"s);
     }
-    if (styleEntriesPrefix.length() > 0)   
-        m_bordersNode->insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());   
+    if (styleEntriesPrefix.length() > 0)
+        m_bordersNode->insert_child_before(pugi::node_pcdata, newNode).set_value(std::string(styleEntriesPrefix).c_str());
 
     XLBorder newBorder(newNode);
-    if (copyFrom.m_borderNode->empty()) {   
+    if (copyFrom.m_borderNode->empty()) {
         // ===== Create a border with default values
         newBorder.setLeft(OpenXLSX::XLLineStyleNone, XLColor(OpenXLSX::XLDefaultFontColor));
         newBorder.setRight(OpenXLSX::XLLineStyleNone, XLColor(OpenXLSX::XLDefaultFontColor));
@@ -257,10 +253,10 @@ XLStyleIndex XLBorders::create(XLBorder copyFrom, std::string_view styleEntriesP
         newBorder.setDiagonal(OpenXLSX::XLLineStyleNone, XLColor(OpenXLSX::XLDefaultFontColor));
     }
     else
-        copyXMLNode(newNode, *copyFrom.m_borderNode);   
+        copyXMLNode(newNode, *copyFrom.m_borderNode);
 
     m_borders.push_back(newBorder);
-    appendAndSetAttribute(*m_bordersNode, "count", std::to_string(m_borders.size()));   
+    appendAndSetAttribute(*m_bordersNode, "count", std::to_string(m_borders.size()));
     return index;
 }
 

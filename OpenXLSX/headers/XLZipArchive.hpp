@@ -102,7 +102,6 @@ namespace OpenXLSX
          */
         void addEntryFromFile(std::string_view name, std::string_view filePath);
 
-
         /**
          * @brief
          * @param entryName

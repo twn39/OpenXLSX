@@ -1,5 +1,5 @@
-#include <catch2/catch_all.hpp>
 #include "OpenXLSX.hpp"
+#include <catch2/catch_all.hpp>
 #include <filesystem>
 #include <iostream>
 
@@ -15,15 +15,15 @@ TEST_CASE("Image Insert Advanced API Tests", "[XLImageInsert]")
     {
         // Should anchor to top-left of B2, auto-sizing to natural image dimensions.
         REQUIRE_NOTHROW(wks.insertImage("B2", "Tests/test.png"));
-        
+
         doc.save();
         doc.close();
 
         XLDocument doc2;
         REQUIRE_NOTHROW(doc2.open("testXLImageInsert.xlsx"));
-        auto wks2 = doc2.workbook().worksheet("Sheet1");
+        auto wks2   = doc2.workbook().worksheet("Sheet1");
         auto images = wks2.images();
-        REQUIRE(images.size() == 1); 
+        REQUIRE(images.size() == 1);
 
         // Verify underlying XML
         std::string drawingStr = doc2.archive().getEntry("xl/drawings/drawing1.xml");
@@ -31,12 +31,10 @@ TEST_CASE("Image Insert Advanced API Tests", "[XLImageInsert]")
         // B2 is col=1, row=1
         REQUIRE(drawingStr.find("<xdr:col>1</xdr:col>") != std::string::npos);
         REQUIRE(drawingStr.find("<xdr:row>1</xdr:row>") != std::string::npos);
-        
+
         bool hasPng = false;
         for (auto name : doc2.archive().entryNames()) {
-            if (name.find("xl/media/image") != std::string::npos && name.find(".png") != std::string::npos) {
-                hasPng = true;
-            }
+            if (name.find("xl/media/image") != std::string::npos && name.find(".png") != std::string::npos) { hasPng = true; }
         }
         REQUIRE(hasPng);
         doc2.close();
@@ -46,25 +44,27 @@ TEST_CASE("Image Insert Advanced API Tests", "[XLImageInsert]")
     {
         XLImageOptions opts;
         opts.positioning = XLImagePositioning::TwoCell;
-        opts.scaleX = 2.0;
-        opts.scaleY = 2.0;
+        opts.scaleX      = 2.0;
+        opts.scaleY      = 2.0;
         REQUIRE_NOTHROW(wks.insertImage("C5", "Tests/test.jpg", opts));
-        
+
         doc.save();
         doc.close();
 
         XLDocument doc2;
         REQUIRE_NOTHROW(doc2.open("testXLImageInsert.xlsx"));
-        
+
         std::string drawingStr = doc2.archive().getEntry("xl/drawings/drawing1.xml");
         REQUIRE(drawingStr.find("<xdr:twoCellAnchor>") != std::string::npos);
         // C5 is col=2, row=4 (0-based in drawing XML)
         REQUIRE(drawingStr.find("<xdr:col>2</xdr:col>") != std::string::npos);
         REQUIRE(drawingStr.find("<xdr:row>4</xdr:row>") != std::string::npos);
-        
+
         bool hasJpg = false;
         for (auto name : doc2.archive().entryNames()) {
-            if (name.find("xl/media/image") != std::string::npos && (name.find(".jpg") != std::string::npos || name.find(".jpeg") != std::string::npos)) {
+            if (name.find("xl/media/image") != std::string::npos &&
+                (name.find(".jpg") != std::string::npos || name.find(".jpeg") != std::string::npos))
+            {
                 hasJpg = true;
             }
         }
@@ -76,10 +76,10 @@ TEST_CASE("Image Insert Advanced API Tests", "[XLImageInsert]")
     {
         XLImageOptions opts;
         opts.positioning = XLImagePositioning::Absolute;
-        opts.offsetX = 50; // pixels
-        opts.offsetY = 60; // pixels
-        REQUIRE_NOTHROW(wks.insertImage("A1", "Tests/test.png", opts)); 
-        
+        opts.offsetX     = 50;    // pixels
+        opts.offsetY     = 60;    // pixels
+        REQUIRE_NOTHROW(wks.insertImage("A1", "Tests/test.png", opts));
+
         doc.save();
         doc.close();
 
@@ -89,7 +89,7 @@ TEST_CASE("Image Insert Advanced API Tests", "[XLImageInsert]")
         REQUIRE(drawingStr.find("<xdr:absoluteAnchor>") != std::string::npos);
         // 50 * 9525 = 476250 EMUs
         // 60 * 9525 = 571500 EMUs
-        bool hasOffset = (drawingStr.find("x=\"476250\" y=\"571500\"") != std::string::npos) || 
+        bool hasOffset = (drawingStr.find("x=\"476250\" y=\"571500\"") != std::string::npos) ||
                          (drawingStr.find("<xdr:pos x=\"476250\" y=\"571500\"") != std::string::npos);
         REQUIRE(hasOffset);
         doc2.close();

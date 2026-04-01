@@ -37,7 +37,7 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
 
         // Add a new custom number format
         uint32_t nf1 = styles.createNumberFormat("YYYY-MM-DD");
-        REQUIRE(nf1 >= 164); // Excel custom formats typically start at 164
+        REQUIRE(nf1 >= 164);    // Excel custom formats typically start at 164
 
         // Add another one
         uint32_t nf2 = styles.createNumberFormat("0.000%");
@@ -46,12 +46,12 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         // Add a duplicate to test deduplication
         uint32_t nf3 = styles.createNumberFormat("YYYY-MM-DD");
         REQUIRE(nf3 == nf1);
-        
+
         REQUIRE(styles.numberFormats().count() == initialCount + 2);
 
         doc.save();
         doc.close();
-        
+
         // Open it again to verify persistence
         XLDocument doc2;
         doc2.open("./testXLStylesCustomNumFmt.xlsx");
@@ -75,7 +75,7 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         font.setFontSize(14);
         font.setBold(true);
         font.setItalic(true);
-        font.setFontColor(XLColor(255, 128, 64, 32)); // ARGB
+        font.setFontColor(XLColor(255, 128, 64, 32));    // ARGB
         font.setUnderline(XLUnderlineDouble);
 
         REQUIRE(font.fontName() == "Courier New");
@@ -99,8 +99,8 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         auto   fill = fills[idx];
 
         fill.setPatternType(XLPatternSolid);
-        fill.setColor(XLColor(255, 255, 0, 0)); // Red
-        fill.setBackgroundColor(XLColor(255, 255, 255, 255)); // White
+        fill.setColor(XLColor(255, 255, 0, 0));                  // Red
+        fill.setBackgroundColor(XLColor(255, 255, 255, 255));    // White
 
         REQUIRE(fill.patternType() == XLPatternSolid);
         REQUIRE(fill.color().hex() == "FFFF0000");
@@ -172,11 +172,11 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         doc.create("./testXLStylesCellStyles.xlsx", XLForceOverwrite);
         auto styles = doc.styles();
 
-        auto cellStyles = styles.cellStyles();
+        auto   cellStyles   = styles.cellStyles();
         size_t initialCount = cellStyles.count();
 
-        size_t idx = cellStyles.create();
-        auto cellStyle = cellStyles[idx];
+        size_t idx       = cellStyles.create();
+        auto   cellStyle = cellStyles[idx];
 
         cellStyle.setName("My Custom Style");
         cellStyle.setXfId(0);
@@ -203,19 +203,19 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         doc.create("./testXLStylesDiffCellFormats.xlsx", XLForceOverwrite);
         auto styles = doc.styles();
 
-        auto diffCellFormats = styles.diffCellFormats();
-        size_t initialCount = diffCellFormats.count();
+        auto   diffCellFormats = styles.diffCellFormats();
+        size_t initialCount    = diffCellFormats.count();
 
-        size_t idx = diffCellFormats.create();
-        auto diffCellFormat = diffCellFormats[idx];
+        size_t idx            = diffCellFormats.create();
+        auto   diffCellFormat = diffCellFormats[idx];
 
         auto font = diffCellFormat.font();
         font.setBold(true);
-        font.setFontColor(XLColor(255, 255, 0, 0)); // Red
+        font.setFontColor(XLColor(255, 255, 0, 0));    // Red
 
         auto fill = diffCellFormat.fill();
         fill.setPatternType(XLPatternSolid);
-        fill.setBackgroundColor(XLColor(255, 0, 255, 0)); // Green
+        fill.setBackgroundColor(XLColor(255, 0, 255, 0));    // Green
 
         REQUIRE(diffCellFormats.count() == initialCount + 1);
         REQUIRE(diffCellFormat.font().bold() == true);
@@ -231,7 +231,7 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
     {
         XLDocument doc;
         doc.create("./testXLStylesDedup.xlsx", XLForceOverwrite);
-        auto styles    = doc.styles();
+        auto  styles   = doc.styles();
         auto& fontsRef = styles.fonts();
 
         // ===== Fonts: identical descriptors must return the same index =====
@@ -246,17 +246,17 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         size_t idxC = fontsRef.create();
         fontsRef[idxC].setFontName("Courier").setFontSize(12);
         size_t idxD = fontsRef.findOrCreate(fontsRef[idxC]);
-        REQUIRE(idxD == idxC);      // Courier 12 is distinct from Helvetica 14
+        REQUIRE(idxD == idxC);    // Courier 12 is distinct from Helvetica 14
         REQUIRE(idxD != idxA);
 
         // ===== Cell Formats: identical xf must deduplicate =====
-        auto& cellFmts = styles.cellFormats();
-        size_t xfA = cellFmts.create();
+        auto&  cellFmts = styles.cellFormats();
+        size_t xfA      = cellFmts.create();
         cellFmts[xfA].setFontIndex(idxA).setApplyFont(true);
 
         size_t xfB = cellFmts.findOrCreate(cellFmts[xfA]);
-        REQUIRE(xfB == xfA);                    // same structure → same index
-        REQUIRE(cellFmts.count() == xfA + 1);  // pool size is stable
+        REQUIRE(xfB == xfA);                     // same structure → same index
+        REQUIRE(cellFmts.count() == xfA + 1);    // pool size is stable
 
         doc.close();
         std::filesystem::remove("./testXLStylesDedup.xlsx");
@@ -269,8 +269,8 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
         auto styles = doc.styles();
 
         XLStyle s;
-        s.font.name = "Arial";
-        s.font.bold = true;
+        s.font.name    = "Arial";
+        s.font.bold    = true;
         s.fill.pattern = XLPatternSolid;
         s.fill.fgColor = XLColor("FFFF0000");    // red
 
@@ -282,8 +282,8 @@ TEST_CASE("XLStyles Tests", "[XLStyles]")
 
         // A different descriptor must produce a distinct index
         XLStyle s2;
-        s2.font.name = "Courier New";
-        s2.font.italic = true;
+        s2.font.name      = "Courier New";
+        s2.font.italic    = true;
         XLStyleIndex idx3 = styles.findOrCreateStyle(s2);
         REQUIRE(idx3 != idx1);
 

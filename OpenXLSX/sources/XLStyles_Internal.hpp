@@ -11,7 +11,8 @@
 #include "XLException.hpp"
 #include "XLXmlParser.hpp"
 
-namespace OpenXLSX {
+namespace OpenXLSX
+{
 
     inline void copyXMLNode(XMLNode& destination, const XMLNode& source)
     {
@@ -54,13 +55,15 @@ namespace OpenXLSX {
     }
 
     template<typename E>
-    struct EnumStringMap {
+    struct EnumStringMap
+    {
         std::string_view str;
-        E val;
+        E                val;
     };
 
     template<typename E, size_t N>
-    constexpr E EnumFromString(std::string_view str, const EnumStringMap<E> (&mapping)[N], E invalidVal) {
+    constexpr E EnumFromString(std::string_view str, const EnumStringMap<E> (&mapping)[N], E invalidVal)
+    {
         for (const auto& kv : mapping) {
             if (kv.str == str) return kv.val;
         }
@@ -68,7 +71,8 @@ namespace OpenXLSX {
     }
 
     template<typename E, size_t N>
-    constexpr const char* EnumToString(E val, const EnumStringMap<E> (&mapping)[N], const char* invalidStr) {
+    constexpr const char* EnumToString(E val, const EnumStringMap<E> (&mapping)[N], const char* invalidStr)
+    {
         for (const auto& kv : mapping) {
             if (kv.val == val) return kv.str.data();
         }
@@ -78,10 +82,7 @@ namespace OpenXLSX {
     /**
      * @brief Format val as a string with decimalPlaces
      */
-    inline std::string formatDoubleAsString(double val, int decimalPlaces = 2)
-    {
-        return fmt::format("{:.{}f}", val, decimalPlaces);
-    }
+    inline std::string formatDoubleAsString(double val, int decimalPlaces = 2) { return fmt::format("{:.{}f}", val, decimalPlaces); }
 
     /**
      * @brief Check that a double value is within range, and format it as a string with decimalPlaces
@@ -98,6 +99,6 @@ namespace OpenXLSX {
         return formatDoubleAsString(val, decimalPlaces);
     }
 
-} // namespace OpenXLSX
+}    // namespace OpenXLSX
 
-#endif // OPENXLSX_XLSTYLES_INTERNAL_HPP
+#endif    // OPENXLSX_XLSTYLES_INTERNAL_HPP

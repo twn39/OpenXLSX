@@ -7,11 +7,12 @@
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 
-namespace OpenXLSX {
+namespace OpenXLSX
+{
 
     class XLWorksheet;
 
@@ -20,31 +21,31 @@ namespace OpenXLSX {
      * @details By explicitly constructing an XLStreamCell, users can attach specific styles
      * to a streamed row without buffering the entire DOM in memory.
      */
-    class OPENXLSX_EXPORT XLStreamCell {
+    class OPENXLSX_EXPORT XLStreamCell
+    {
     public:
         /**
          * @brief Explicitly constructs a styled streaming cell from an XLCellValue.
          * @param val The cell value (e.g. integer, string, double).
          */
-        explicit XLStreamCell(XLCellValue val) 
-            : value(std::move(val)), styleIndex(std::nullopt) {}
+        explicit XLStreamCell(XLCellValue val) : value(std::move(val)), styleIndex(std::nullopt) {}
 
         /**
          * @brief Constructs a styled streaming cell with an explicitly assigned style index.
          * @param val The cell value.
          * @param style The XLStyleIndex (e.g. retrieved from doc.workbook().styles().create(...))
          */
-        XLStreamCell(XLCellValue val, XLStyleIndex style) 
-            : value(std::move(val)), styleIndex(style) {}
+        XLStreamCell(XLCellValue val, XLStyleIndex style) : value(std::move(val)), styleIndex(style) {}
 
-        XLCellValue value;
+        XLCellValue                 value;
         std::optional<XLStyleIndex> styleIndex;
     };
 
-    class OPENXLSX_EXPORT XLStreamWriter {
+    class OPENXLSX_EXPORT XLStreamWriter
+    {
     public:
-        XLStreamWriter() = default;
-        XLStreamWriter(const XLStreamWriter&) = delete;
+        XLStreamWriter()                                 = default;
+        XLStreamWriter(const XLStreamWriter&)            = delete;
         XLStreamWriter& operator=(const XLStreamWriter&) = delete;
 
         XLStreamWriter(XLStreamWriter&& other) noexcept;
@@ -52,20 +53,20 @@ namespace OpenXLSX {
 
         ~XLStreamWriter();
 
-        bool        isStreamActive() const;
-        
+        bool isStreamActive() const;
+
         /**
          * @brief Appends a row of unstyled values to the stream.
          * @param values A vector of XLCellValue items.
          */
-        void        appendRow(const std::vector<XLCellValue>& values);
-        
+        void appendRow(const std::vector<XLCellValue>& values);
+
         /**
          * @brief Appends a row of styled values to the stream.
          * @param cells A vector of XLStreamCell items.
          */
-        void        appendRow(const std::vector<XLStreamCell>& cells);
-        
+        void appendRow(const std::vector<XLStreamCell>& cells);
+
         std::string getTempFilePath() const;
         void        close();
 
@@ -95,5 +96,5 @@ namespace OpenXLSX {
         std::string m_writeBuffer;
     };
 
-}
-#endif // OPENXLSX_XLSTREAMWRITER_HPP
+}    // namespace OpenXLSX
+#endif    // OPENXLSX_XLSTREAMWRITER_HPP

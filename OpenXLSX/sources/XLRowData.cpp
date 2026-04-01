@@ -1,9 +1,9 @@
-#include <algorithm>
-#include <cassert>
+#include "XLRowData.hpp"
 #include "XLCell.hpp"
 #include "XLRow.hpp"
-#include "XLRowData.hpp"
 #include "XLUtilities.hpp"
+#include <algorithm>
+#include <cassert>
 namespace OpenXLSX
 {
     XLRowDataIterator::XLRowDataIterator(const XLRowDataRange& rowDataRange, XLIteratorLocation loc)
@@ -18,7 +18,7 @@ namespace OpenXLSX
           m_cellNode(std::make_unique<XMLNode>(*other.m_cellNode)),
           m_currentCell(other.m_currentCell)
     {}
-    XLRowDataIterator::XLRowDataIterator(XLRowDataIterator&& other) noexcept = default;    
+    XLRowDataIterator::XLRowDataIterator(XLRowDataIterator&& other) noexcept = default;
     XLRowDataIterator& XLRowDataIterator::operator=(const XLRowDataIterator& other)
     {
         if (&other != this) {
@@ -34,8 +34,9 @@ namespace OpenXLSX
             throw XLInputError("XLRowDataIterator: tried to increment beyond end operator");
         const uint16_t cellNumber = m_currentCell.cellReference().column() + 1;
         XMLNode        cellNode   = m_currentCell.m_cellNode->next_sibling_of_type(pugi::node_element);
-        if (cellNumber > m_dataRange->m_lastCol) m_currentCell = XLCell();
-        
+        if (cellNumber > m_dataRange->m_lastCol)
+            m_currentCell = XLCell();
+
         else if (cellNode.empty() or extractColumnFromCellRef(cellNode.attribute("r").value()) > cellNumber) {
             cellNode = m_dataRange->m_rowNode->insert_child_after("c", *m_currentCell.m_cellNode);
             char cellAddrBuf[16];
@@ -49,18 +50,18 @@ namespace OpenXLSX
         }
         return *this;
     }
-    XLRowDataIterator XLRowDataIterator::operator++(int)    
+    XLRowDataIterator XLRowDataIterator::operator++(int)
     {
         auto oldIter(*this);
         ++(*this);
         return oldIter;
     }
-    XLCell& XLRowDataIterator::operator*() { return m_currentCell; }
+    XLCell&                    XLRowDataIterator::operator*() { return m_currentCell; }
     XLRowDataIterator::pointer XLRowDataIterator::operator->() { return &m_currentCell; }
-    bool XLRowDataIterator::operator==(const XLRowDataIterator& rhs) const
+    bool                       XLRowDataIterator::operator==(const XLRowDataIterator& rhs) const
     {
         if (static_cast<bool>(m_currentCell) != static_cast<bool>(rhs.m_currentCell)) return false;
-        if (not m_currentCell) return true;    
+        if (not m_currentCell) return true;
         return m_currentCell == rhs.m_currentCell;
     }
     bool XLRowDataIterator::operator!=(const XLRowDataIterator& rhs) const { return !(*this == rhs); }
@@ -84,18 +85,15 @@ namespace OpenXLSX
           m_firstCol(1),    // first col of 1
           m_lastCol(0),     // and last col of 0 will ensure that size returns 0
           m_sharedStrings(XLSharedStringsDefaulted)
-    {
-        
-    }
+    {}
     XLRowDataRange::XLRowDataRange(const XLRowDataRange& other)
-        : m_rowNode((other.m_rowNode != nullptr) ? std::make_unique<XMLNode>(*other.m_rowNode)
-                                                 : nullptr),    
+        : m_rowNode((other.m_rowNode != nullptr) ? std::make_unique<XMLNode>(*other.m_rowNode) : nullptr),
           m_firstCol(other.m_firstCol),
           m_lastCol(other.m_lastCol),
           m_sharedStrings(other.m_sharedStrings)
     {}
     XLRowDataRange::XLRowDataRange(XLRowDataRange&& other) noexcept = default;
-    XLRowDataRange::~XLRowDataRange() = default;
+    XLRowDataRange::~XLRowDataRange()                               = default;
     XLRowDataRange& XLRowDataRange::operator=(const XLRowDataRange& other)
     {
         if (&other != this) {
@@ -104,8 +102,8 @@ namespace OpenXLSX
         }
         return *this;
     }
-    XLRowDataRange& XLRowDataRange::operator=(XLRowDataRange&& other) noexcept = default;
-    uint16_t XLRowDataRange::size() const { return m_lastCol - m_firstCol + 1; }
+    XLRowDataRange&   XLRowDataRange::operator=(XLRowDataRange&& other) noexcept = default;
+    uint16_t          XLRowDataRange::size() const { return m_lastCol - m_firstCol + 1; }
     XLRowDataIterator XLRowDataRange::begin()
     { return XLRowDataIterator{*this, (size() > 0 ? XLIteratorLocation::Begin : XLIteratorLocation::End)}; }
     XLRowDataIterator XLRowDataRange::end() { return XLRowDataIterator{*this, XLIteratorLocation::End}; }
@@ -119,8 +117,8 @@ namespace OpenXLSX
         return *this;
     }
     XLRowDataProxy::XLRowDataProxy(XLRow* row, XMLNode* rowNode) : m_row(row), m_rowNode(rowNode) {}
-    XLRowDataProxy::XLRowDataProxy(const XLRowDataProxy& other) = default;
-    XLRowDataProxy::XLRowDataProxy(XLRowDataProxy&& other) noexcept = default;
+    XLRowDataProxy::XLRowDataProxy(const XLRowDataProxy& other)                = default;
+    XLRowDataProxy::XLRowDataProxy(XLRowDataProxy&& other) noexcept            = default;
     XLRowDataProxy& XLRowDataProxy::operator=(XLRowDataProxy&& other) noexcept = default;
     XLRowDataProxy& XLRowDataProxy::operator=(const std::vector<XLCellValue>& values)
     {
@@ -131,7 +129,7 @@ namespace OpenXLSX
         uint16_t       colNo  = static_cast<uint16_t>(values.size());
         const uint32_t rowNum = m_row->rowNumber();
         char           addrBuffer[16];    // Buffer for cell address (e.g., "XFD1048576")
-        for (auto value = values.rbegin(); value != values.rend(); ++value) {    
+        for (auto value = values.rbegin(); value != values.rend(); ++value) {
             curNode = m_rowNode->prepend_child("c");
             makeCellAddress(rowNum, colNo, addrBuffer);
             setDefaultCellAttributes(curNode, addrBuffer, *m_rowNode, colNo);
@@ -146,7 +144,7 @@ namespace OpenXLSX
         if (values.empty()) return *this;
         auto range = XLRowDataRange(*m_rowNode, 1, static_cast<uint16_t>(values.size()), m_row->m_sharedStrings.get());
         auto dst   = range.begin();
-                                       
+
         auto src = values.begin();
         while (true) {
             dst->value() = static_cast<bool>(*src);
@@ -156,9 +154,9 @@ namespace OpenXLSX
         }
         return *this;
     }
-    XLRowDataProxy::operator std::vector<XLCellValue>() const { return getValues(); }
-    XLRowDataProxy::operator std::deque<XLCellValue>() const { return convertContainer<std::deque<XLCellValue>>(); }
-    XLRowDataProxy::operator std::list<XLCellValue>() const { return convertContainer<std::list<XLCellValue>>(); }
+    XLRowDataProxy::         operator std::vector<XLCellValue>() const { return getValues(); }
+    XLRowDataProxy::         operator std::deque<XLCellValue>() const { return convertContainer<std::deque<XLCellValue>>(); }
+    XLRowDataProxy::         operator std::list<XLCellValue>() const { return convertContainer<std::list<XLCellValue>>(); }
     std::vector<XLCellValue> XLRowDataProxy::getValues() const
     {
         const XMLNode  lastElementChild = m_rowNode->last_child_of_type(pugi::node_element);
@@ -166,7 +164,7 @@ namespace OpenXLSX
         std::vector<XLCellValue> result(static_cast<uint64_t>(numCells));
         if (numCells > 0) {
             XMLNode node = lastElementChild;    // avoid unneeded call to first_child_of_type by iterating backwards, vector is random
-                                                
+
             while (not node.empty()) {
                 result[extractColumnFromCellRef(node.attribute("r").value()) - 1] = XLCell(node, m_row->m_sharedStrings.get()).value();
                 node                                                              = node.previous_sibling_of_type(pugi::node_element);
@@ -175,24 +173,22 @@ namespace OpenXLSX
         return result;
     }
     const XLSharedStrings& XLRowDataProxy::getSharedStrings() const { return m_row->m_sharedStrings.get(); }
-    void XLRowDataProxy::deleteCellValues(uint16_t count)
+    void                   XLRowDataProxy::deleteCellValues(uint16_t count)
     {
         XMLNode cellNode = m_rowNode->first_child_of_type(pugi::node_element);
         while (not cellNode.empty()) {
             if (extractColumnFromCellRef(cellNode.attribute("r").value()) <= count) {
-                XMLNode nextNode = cellNode.next_sibling();
+                XMLNode nextNode    = cellNode.next_sibling();
                 XMLNode nextElement = cellNode.next_sibling_of_type(pugi::node_element);
-                
-                
+
                 m_rowNode->remove_child(cellNode);
-                
-                
+
                 while (not nextNode.empty() and nextNode != nextElement) {
                     XMLNode toDelete = nextNode;
-                    nextNode = nextNode.next_sibling();
+                    nextNode         = nextNode.next_sibling();
                     m_rowNode->remove_child(toDelete);
                 }
-                
+
                 cellNode = nextElement;
             }
             else {
@@ -202,11 +198,11 @@ namespace OpenXLSX
     }
     void XLRowDataProxy::prependCellValue(const XLCellValue& value, uint16_t col)
     {
-        XMLNode curNode = m_rowNode->prepend_child("c");    
-        char addrBuffer[16];
+        XMLNode curNode = m_rowNode->prepend_child("c");
+        char    addrBuffer[16];
         makeCellAddress(m_row->rowNumber(), col, addrBuffer);
         setDefaultCellAttributes(curNode, addrBuffer, *m_rowNode, col);
         XLCell(curNode, m_row->m_sharedStrings.get()).value() = value;
     }
-    void XLRowDataProxy::clear() { m_rowNode->remove_children(); }    
+    void XLRowDataProxy::clear() { m_rowNode->remove_children(); }
 }    // namespace OpenXLSX

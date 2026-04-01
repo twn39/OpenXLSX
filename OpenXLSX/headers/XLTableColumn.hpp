@@ -1,33 +1,24 @@
 #pragma once
 
 #include "XLXmlParser.hpp"
+#include <optional>
 #include <string>
 #include <string_view>
-#include <optional>
 
-namespace OpenXLSX {
+namespace OpenXLSX
+{
 
     /**
      * @brief Enum class defining the possible functions for a table's totals row.
      */
-    enum class XLTotalsRowFunction {
-        None,
-        Sum,
-        Min,
-        Max,
-        Average,
-        Count,
-        CountNums,
-        StdDev,
-        Var,
-        Custom
-    };
+    enum class XLTotalsRowFunction { None, Sum, Min, Max, Average, Count, CountNums, StdDev, Var, Custom };
 
     /**
      * @brief The XLTableColumn class encapsulates the <tableColumn> XML node.
      * It allows setting different kinds of column properties in a table.
      */
-    class XLTableColumn {
+    class XLTableColumn
+    {
     public:
         /**
          * @brief Constructor
@@ -111,4 +102,4 @@ namespace OpenXLSX {
         XMLNode m_node;
     };
 
-} // namespace OpenXLSX
+}    // namespace OpenXLSX

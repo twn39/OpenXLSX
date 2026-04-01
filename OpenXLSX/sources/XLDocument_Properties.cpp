@@ -1,7 +1,7 @@
-#include <string>
-#include <string_view>
 #include <charconv>
 #include <fmt/format.h>
+#include <string>
+#include <string_view>
 
 #include "XLDocument.hpp"
 #include "XLException.hpp"
@@ -9,7 +9,8 @@
 using namespace OpenXLSX;
 
 /**
- * @details Provides read access to standard OOXML document metadata (core and extended properties) such as creator, application version, or creation date.
+ * @details Provides read access to standard OOXML document metadata (core and extended properties) such as creator, application version, or
+ * creation date.
  */
 std::string XLDocument::property(XLProperty prop) const
 {
@@ -61,8 +62,8 @@ std::string XLDocument::property(XLProperty prop) const
 
 /**
  * @brief extract an integer major version v1 and minor version v2 from a string
- * @details Extracts integer major and minor versions from a string, ensuring the formatting strictly complies with the OOXML AppVersion schema requirements.
- * [0-9]{1,2}\.[0-9]{1,4}  (Example: 14.123)
+ * @details Extracts integer major and minor versions from a string, ensuring the formatting strictly complies with the OOXML AppVersion
+ * schema requirements. [0-9]{1,2}\.[0-9]{1,4}  (Example: 14.123)
  * @param versionString the string to process
  * @param majorVersion by reference: store the major version here
  * @param minorVersion by reference: store the minor version here
@@ -85,10 +86,10 @@ bool getAppVersion(std::string_view versionString, int& majorVersion, int& minor
     if (begin != std::string_view::npos and dotPos != std::string_view::npos) {
         std::string_view strMajorVersion = versionString.substr(begin, dotPos - begin);
         std::string_view strMinorVersion = versionString.substr(dotPos + 1, end - dotPos);
-        
+
         auto resMajor = std::from_chars(strMajorVersion.data(), strMajorVersion.data() + strMajorVersion.size(), majorVersion);
         if (resMajor.ec != std::errc() || resMajor.ptr != strMajorVersion.data() + strMajorVersion.size()) return false;
-        
+
         auto resMinor = std::from_chars(strMinorVersion.data(), strMinorVersion.data() + strMinorVersion.size(), minorVersion);
         if (resMinor.ec != std::errc() || resMinor.ptr != strMinorVersion.data() + strMinorVersion.size()) return false;
     }
@@ -100,7 +101,8 @@ bool getAppVersion(std::string_view versionString, int& majorVersion, int& minor
 }
 
 /**
- * @details Mutates document metadata, explicitly validating format-specific constraints (e.g., boolean strings or version formatting 'XX.XXXX') to prevent schema validation failures in Excel.
+ * @details Mutates document metadata, explicitly validating format-specific constraints (e.g., boolean strings or version formatting
+ * 'XX.XXXX') to prevent schema validation failures in Excel.
  */
 void XLDocument::setProperty(XLProperty prop, std::string_view value)
 {

@@ -2,26 +2,29 @@
 #define OPENXLSX_XLIMAGEPARSER_HPP
 
 #include "OpenXLSX-Exports.hpp"
-#include <string>
 #include <cstdint>
+#include <string>
 
-namespace OpenXLSX {
+namespace OpenXLSX
+{
 
-    struct XLImageSize {
-        uint32_t width{0};
-        uint32_t height{0};
+    struct XLImageSize
+    {
+        uint32_t    width{0};
+        uint32_t    height{0};
         std::string extension{""};
-        bool valid{false};
+        bool        valid{false};
     };
 
     /**
      * @brief Parses binary image headers (PNG, JPG, GIF) to extract width and height without external dependencies.
      */
-    class OPENXLSX_EXPORT XLImageParser {
+    class OPENXLSX_EXPORT XLImageParser
+    {
     public:
         static XLImageSize parseDimensions(const std::string& path);
     };
 
-} // namespace OpenXLSX
+}    // namespace OpenXLSX
 
-#endif // OPENXLSX_XLIMAGEPARSER_HPP
+#endif    // OPENXLSX_XLIMAGEPARSER_HPP

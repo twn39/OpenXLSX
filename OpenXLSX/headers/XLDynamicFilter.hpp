@@ -3,7 +3,8 @@
 #include "OpenXLSX-Exports.hpp"
 #include <string>
 
-namespace OpenXLSX {
+namespace OpenXLSX
+{
     /**
      * @brief Enum defining all valid dynamic filter types according to ECMA-376 18.18.25.
      */
@@ -27,12 +28,26 @@ namespace OpenXLSX {
         ThisYear,
         LastYear,
         YearToDate,
-        Q1, Q2, Q3, Q4,
-        M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12
+        Q1,
+        Q2,
+        Q3,
+        Q4,
+        M1,
+        M2,
+        M3,
+        M4,
+        M5,
+        M6,
+        M7,
+        M8,
+        M9,
+        M10,
+        M11,
+        M12
     };
 
     /**
      * @brief Helper function to convert enum to string.
      */
     OPENXLSX_EXPORT std::string XLDynamicFilterTypeToString(XLDynamicFilterType type);
-}
+}    // namespace OpenXLSX

@@ -4,13 +4,15 @@
 
 using namespace OpenXLSX;
 
-namespace {
-    std::string nodeToString(const XMLNode& node) {
+namespace
+{
+    std::string nodeToString(const XMLNode& node)
+    {
         std::ostringstream oss;
         node.print(oss, "", pugi::format_raw | pugi::format_no_declaration);
         return oss.str();
     }
-}
+}    // namespace
 
 TEST_CASE("XML Object Round-Trip Tests", "[XMLRoundTrip]")
 {
@@ -20,9 +22,9 @@ TEST_CASE("XML Object Round-Trip Tests", "[XMLRoundTrip]")
     {
         const char* inputXml = "<font><b val=\"1\"/><sz val=\"12\"/><color rgb=\"FF0000\"/><name val=\"Calibri\"/></font>";
         REQUIRE(doc.load_string(inputXml));
-        
+
         XLFont font(doc.document_element());
-        
+
         // Modify state
         font.setBold(false);
         font.setFontSize(14);
@@ -31,7 +33,7 @@ TEST_CASE("XML Object Round-Trip Tests", "[XMLRoundTrip]")
 
         std::string outputXml = nodeToString(doc.document_element());
         INFO("Output XML: " << outputXml);
-        
+
         // Assert modified state via XML comparison
         REQUIRE(outputXml.find("<b val=\"0\"/>") != std::string::npos);
         REQUIRE(outputXml.find("<sz val=\"14\"/>") != std::string::npos);
@@ -75,7 +77,7 @@ TEST_CASE("XML Object Round-Trip Tests", "[XMLRoundTrip]")
         REQUIRE(doc.load_string(inputXml));
 
         XLCfvo cfvo(doc.document_element());
-        
+
         REQUIRE(cfvo.type() == XLCfvoType::Percent);
         REQUIRE(cfvo.value() == "10");
 
@@ -90,7 +92,8 @@ TEST_CASE("XML Object Round-Trip Tests", "[XMLRoundTrip]")
 
     SECTION("XLDataValidation Round-Trip")
     {
-        const char* inputXml = "<dataValidation type=\"whole\" operator=\"between\" allowBlank=\"1\" sqref=\"A1:A10\"><formula1>1</formula1><formula2>100</formula2></dataValidation>";
+        const char* inputXml = "<dataValidation type=\"whole\" operator=\"between\" allowBlank=\"1\" "
+                               "sqref=\"A1:A10\"><formula1>1</formula1><formula2>100</formula2></dataValidation>";
         REQUIRE(doc.load_string(inputXml));
 
         XLDataValidation dv(doc.document_element());
@@ -108,14 +111,15 @@ TEST_CASE("XML Object Round-Trip Tests", "[XMLRoundTrip]")
 
     SECTION("XLCfRule Round-Trip")
     {
-        const char* inputXml = "<cfRule type=\"cellIs\" operator=\"between\" priority=\"1\"><formula>10</formula><formula>20</formula></cfRule>";
+        const char* inputXml =
+            "<cfRule type=\"cellIs\" operator=\"between\" priority=\"1\"><formula>10</formula><formula>20</formula></cfRule>";
         REQUIRE(doc.load_string(inputXml));
 
         XLCfRule rule(doc.document_element());
         REQUIRE(rule.type() == XLCfType::CellIs);
         REQUIRE(rule.Operator() == XLCfOperator::Between);
         REQUIRE(rule.priority() == 1);
-        
+
         auto formulas = rule.formulas();
         REQUIRE(formulas.size() == 2);
         REQUIRE(formulas[0] == "10");

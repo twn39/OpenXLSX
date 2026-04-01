@@ -21,9 +21,9 @@ namespace OpenXLSX
     /**
      * @brief Manages date and time values according to the Excel 1900 date system.
      * @details Excel represents dates as floating-point numbers where 1.0 is 1900-01-01.
-     * This class handles the historical "1900 Leap Year Bug" (Excel incorrectly treats 1900 
+     * This class handles the historical "1900 Leap Year Bug" (Excel incorrectly treats 1900
      * as a leap year) to ensure absolute compatibility with Microsoft Excel files.
-     * All string inputs and outputs are in the ISO 8601-like format (YYYY-MM-DD HH:MM:SS) 
+     * All string inputs and outputs are in the ISO 8601-like format (YYYY-MM-DD HH:MM:SS)
      * unless a custom format is specified.
      */
     class OPENXLSX_EXPORT XLDateTime
@@ -56,12 +56,12 @@ namespace OpenXLSX
          */
         explicit XLDateTime(const std::chrono::system_clock::time_point& timepoint);
 
-        // Rule of Zero: All copy/move operations are handled by the compiler 
+        // Rule of Zero: All copy/move operations are handled by the compiler
         // as the class only contains a single primitive double (m_serial).
-        XLDateTime(const XLDateTime& other) = default;
-        XLDateTime(XLDateTime&& other) noexcept = default;
-        ~XLDateTime() = default;
-        XLDateTime& operator=(const XLDateTime& other) = default;
+        XLDateTime(const XLDateTime& other)                = default;
+        XLDateTime(XLDateTime&& other) noexcept            = default;
+        ~XLDateTime()                                      = default;
+        XLDateTime& operator=(const XLDateTime& other)     = default;
         XLDateTime& operator=(XLDateTime&& other) noexcept = default;
 
         /**
@@ -99,9 +99,7 @@ namespace OpenXLSX
          */
         template<typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
         operator T() const    // NOLINT
-        {
-            return static_cast<T>(serial());
-        }
+        { return static_cast<T>(serial()); }
 
         /**
          * @brief Explicitly converts the Excel date to a standard C tm struct.
@@ -120,7 +118,7 @@ namespace OpenXLSX
 
         /**
          * @brief Decomposes the Excel serial number into its date and time components.
-         * @details This method handles the 1900 leap year bug and rounding overflows 
+         * @details This method handles the 1900 leap year bug and rounding overflows
          * to provide an accurate representation of the time.
          */
         [[nodiscard]] std::tm tm() const;

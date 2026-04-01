@@ -1,24 +1,25 @@
 // ===== External Includes ===== //
 #include <cstdint>
-#include <gsl/gsl>
 #include <fmt/format.h>
-#include <memory>     
+#include <gsl/gsl>
+#include <memory>
 #include <pugixml.hpp>
-#include <stdexcept>   
-#include <string>      
-#include <vector>      
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLColor.hpp"
 #include "XLDocument.hpp"
 #include "XLException.hpp"
 #include "XLStyles.hpp"
-#include "XLUtilities.hpp"
 #include "XLStyles_Internal.hpp"
+#include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
 
-namespace {
+namespace
+{
     constexpr EnumStringMap<XLUnderlineStyle> XLUnderlineStyleMap[] = {
         {"", XLUnderlineNone},
         {"single", XLUnderlineSingle},
@@ -26,13 +27,10 @@ namespace {
         {"none", XLUnderlineNone},
     };
 
-    XLUnderlineStyle XLUnderlineStyleFromString(std::string_view str) {
-        return EnumFromString(str, XLUnderlineStyleMap, XLUnderlineInvalid);
-    }
+    XLUnderlineStyle XLUnderlineStyleFromString(std::string_view str)
+    { return EnumFromString(str, XLUnderlineStyleMap, XLUnderlineInvalid); }
 
-    const char* XLUnderlineStyleToString(XLUnderlineStyle val) {
-        return EnumToString(val, XLUnderlineStyleMap, "(invalid)");
-    }
+    const char* XLUnderlineStyleToString(XLUnderlineStyle val) { return EnumToString(val, XLUnderlineStyleMap, "(invalid)"); }
 
     constexpr EnumStringMap<XLFontSchemeStyle> XLFontSchemeStyleMap[] = {
         {"", XLFontSchemeNone},
@@ -41,13 +39,10 @@ namespace {
         {"none", XLFontSchemeNone},
     };
 
-    XLFontSchemeStyle XLFontSchemeStyleFromString(std::string_view str) {
-        return EnumFromString(str, XLFontSchemeStyleMap, XLFontSchemeInvalid);
-    }
+    XLFontSchemeStyle XLFontSchemeStyleFromString(std::string_view str)
+    { return EnumFromString(str, XLFontSchemeStyleMap, XLFontSchemeInvalid); }
 
-    const char* XLFontSchemeStyleToString(XLFontSchemeStyle val) {
-        return EnumToString(val, XLFontSchemeStyleMap, "(invalid)");
-    }
+    const char* XLFontSchemeStyleToString(XLFontSchemeStyle val) { return EnumToString(val, XLFontSchemeStyleMap, "(invalid)"); }
 
     constexpr EnumStringMap<XLVerticalAlignRunStyle> XLVerticalAlignRunStyleMap[] = {
         {"", XLBaseline},
@@ -56,14 +51,12 @@ namespace {
         {"baseline", XLBaseline},
     };
 
-    XLVerticalAlignRunStyle XLVerticalAlignRunStyleFromString(std::string_view str) {
-        return EnumFromString(str, XLVerticalAlignRunStyleMap, XLVerticalAlignRunInvalid);
-    }
+    XLVerticalAlignRunStyle XLVerticalAlignRunStyleFromString(std::string_view str)
+    { return EnumFromString(str, XLVerticalAlignRunStyleMap, XLVerticalAlignRunInvalid); }
 
-    const char* XLVerticalAlignRunStyleToString(XLVerticalAlignRunStyle val) {
-        return EnumToString(val, XLVerticalAlignRunStyleMap, "(invalid)");
-    }
-}
+    const char* XLVerticalAlignRunStyleToString(XLVerticalAlignRunStyle val)
+    { return EnumToString(val, XLVerticalAlignRunStyleMap, "(invalid)"); }
+}    // namespace
 
 XLFont::XLFont() : m_fontNode(std::make_unique<XMLNode>()) {}
 
@@ -125,35 +118,80 @@ bool XLFont::condense() const { return getBoolAttributeWhenOmittedMeansTrue(*m_f
 bool XLFont::extend() const { return getBoolAttributeWhenOmittedMeansTrue(*m_fontNode, "extend", "val"); }
 
 XLFont& XLFont::setFontName(std::string_view newName)
-{ appendAndSetNodeAttribute(*m_fontNode, "name", "val", std::string(newName).c_str()).empty(); return *this; }
+{
+    appendAndSetNodeAttribute(*m_fontNode, "name", "val", std::string(newName).c_str()).empty();
+    return *this;
+}
 XLFont& XLFont::setFontCharset(size_t newCharset)
-{ appendAndSetNodeAttribute(*m_fontNode, "charset", "val", std::to_string(newCharset)).empty(); return *this; }
+{
+    appendAndSetNodeAttribute(*m_fontNode, "charset", "val", std::to_string(newCharset)).empty();
+    return *this;
+}
 XLFont& XLFont::setFontFamily(size_t newFamily)
-{ appendAndSetNodeAttribute(*m_fontNode, "family", "val", std::to_string(newFamily)).empty(); return *this; }
+{
+    appendAndSetNodeAttribute(*m_fontNode, "family", "val", std::to_string(newFamily)).empty();
+    return *this;
+}
 XLFont& XLFont::setFontSize(size_t newSize)
-{ appendAndSetNodeAttribute(*m_fontNode, "sz", "val", std::to_string(newSize)).empty(); return *this; }
+{
+    appendAndSetNodeAttribute(*m_fontNode, "sz", "val", std::to_string(newSize)).empty();
+    return *this;
+}
 XLFont& XLFont::setFontColor(XLColor newColor)
-{ appendAndSetNodeAttribute(*m_fontNode, "color", "rgb", newColor.hex(), XLRemoveAttributes).empty(); return *this; }
-XLFont& XLFont::setBold(bool set) { appendAndSetNodeAttribute(*m_fontNode, "b", "val", (set ? "1" : "0")).empty(); return *this; }
-XLFont& XLFont::setItalic(bool set) { appendAndSetNodeAttribute(*m_fontNode, "i", "val", (set ? "1" : "0")).empty(); return *this; }
+{
+    appendAndSetNodeAttribute(*m_fontNode, "color", "rgb", newColor.hex(), XLRemoveAttributes).empty();
+    return *this;
+}
+XLFont& XLFont::setBold(bool set)
+{
+    appendAndSetNodeAttribute(*m_fontNode, "b", "val", (set ? "1" : "0")).empty();
+    return *this;
+}
+XLFont& XLFont::setItalic(bool set)
+{
+    appendAndSetNodeAttribute(*m_fontNode, "i", "val", (set ? "1" : "0")).empty();
+    return *this;
+}
 XLFont& XLFont::setStrikethrough(bool set)
-{ appendAndSetNodeAttribute(*m_fontNode, "strike", "val", (set ? "1" : "0")).empty(); return *this; }
+{
+    appendAndSetNodeAttribute(*m_fontNode, "strike", "val", (set ? "1" : "0")).empty();
+    return *this;
+}
 XLFont& XLFont::setUnderline(XLUnderlineStyle style)
-{ appendAndSetNodeAttribute(*m_fontNode, "u", "val", XLUnderlineStyleToString(style)).empty(); return *this; }
+{
+    appendAndSetNodeAttribute(*m_fontNode, "u", "val", XLUnderlineStyleToString(style)).empty();
+    return *this;
+}
 XLFont& XLFont::setScheme(XLFontSchemeStyle newScheme)
-{ appendAndSetNodeAttribute(*m_fontNode, "scheme", "val", XLFontSchemeStyleToString(newScheme)).empty(); return *this; }
+{
+    appendAndSetNodeAttribute(*m_fontNode, "scheme", "val", XLFontSchemeStyleToString(newScheme)).empty();
+    return *this;
+}
 XLFont& XLFont::setVertAlign(XLVerticalAlignRunStyle newVertAlign)
 {
-    appendAndSetNodeAttribute(*m_fontNode, "vertAlign", "val", XLVerticalAlignRunStyleToString(newVertAlign)).empty(); return *this;
+    appendAndSetNodeAttribute(*m_fontNode, "vertAlign", "val", XLVerticalAlignRunStyleToString(newVertAlign)).empty();
+    return *this;
 }
 XLFont& XLFont::setOutline(bool set)
-{ appendAndSetNodeAttribute(*m_fontNode, "outline", "val", (set ? "true" : "false")).empty(); return *this; }
+{
+    appendAndSetNodeAttribute(*m_fontNode, "outline", "val", (set ? "true" : "false")).empty();
+    return *this;
+}
 XLFont& XLFont::setShadow(bool set)
-{ appendAndSetNodeAttribute(*m_fontNode, "shadow", "val", (set ? "true" : "false")).empty(); return *this; }
+{
+    appendAndSetNodeAttribute(*m_fontNode, "shadow", "val", (set ? "true" : "false")).empty();
+    return *this;
+}
 XLFont& XLFont::setCondense(bool set)
-{ appendAndSetNodeAttribute(*m_fontNode, "condense", "val", (set ? "true" : "false")).empty(); return *this; }
+{
+    appendAndSetNodeAttribute(*m_fontNode, "condense", "val", (set ? "true" : "false")).empty();
+    return *this;
+}
 XLFont& XLFont::setExtend(bool set)
-{ appendAndSetNodeAttribute(*m_fontNode, "extend", "val", (set ? "true" : "false")).empty(); return *this; }
+{
+    appendAndSetNodeAttribute(*m_fontNode, "extend", "val", (set ? "true" : "false")).empty();
+    return *this;
+}
 
 std::string XLFont::summary() const
 {
@@ -193,10 +231,7 @@ XLFonts::XLFonts(const XMLNode& fonts) : m_fontsNode(std::make_unique<XMLNode>(f
     }
 }
 
-XLFonts::~XLFonts()
-{
-    m_fonts.clear();   
-}
+XLFonts::~XLFonts() { m_fonts.clear(); }
 
 XLFonts::XLFonts(const XLFonts& other) : m_fontsNode(std::make_unique<XMLNode>(*other.m_fontsNode)), m_fonts(other.m_fonts) {}
 
@@ -222,8 +257,8 @@ XLFont XLFonts::fontByIndex(XLStyleIndex index) const
 
 XLStyleIndex XLFonts::create(XLFont copyFrom, std::string_view styleEntriesPrefix)
 {
-    XLStyleIndex index = count();   
-    XMLNode      newNode{};         
+    XLStyleIndex index = count();
+    XMLNode      newNode{};
 
     // ===== Append new node prior to final whitespaces, if any
     XMLNode lastStyle = m_fontsNode->last_child_of_type(pugi::node_element);
@@ -235,12 +270,11 @@ XLStyleIndex XLFonts::create(XLFont copyFrom, std::string_view styleEntriesPrefi
         using namespace std::literals::string_literals;
         throw XLException("XLFonts::"s + __func__ + ": failed to append a new fonts node"s);
     }
-    if (styleEntriesPrefix.length() > 0)   
-        m_fontsNode->insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());   
+    if (styleEntriesPrefix.length() > 0)
+        m_fontsNode->insert_child_before(pugi::node_pcdata, newNode).set_value(std::string(styleEntriesPrefix).c_str());
 
     XLFont newFont(newNode);
-    if (copyFrom.m_fontNode->empty()) {   
+    if (copyFrom.m_fontNode->empty()) {
         // ===== Create a font with default values
         newFont.setFontName(OpenXLSX::XLDefaultFontName);
         newFont.setFontSize(OpenXLSX::XLDefaultFontSize);
@@ -249,10 +283,10 @@ XLStyleIndex XLFonts::create(XLFont copyFrom, std::string_view styleEntriesPrefi
         newFont.setFontCharset(OpenXLSX::XLDefaultFontCharset);
     }
     else
-        copyXMLNode(newNode, *copyFrom.m_fontNode);   
+        copyXMLNode(newNode, *copyFrom.m_fontNode);
 
     m_fonts.push_back(newFont);
-    appendAndSetAttribute(*m_fontsNode, "count", std::to_string(m_fonts.size()));   
+    appendAndSetAttribute(*m_fontsNode, "count", std::to_string(m_fonts.size()));
     return index;
 }
 

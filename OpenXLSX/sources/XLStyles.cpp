@@ -1,12 +1,12 @@
 // ===== External Includes ===== //
 #include <cstdint>
-#include <gsl/gsl>
-#include <string_view>
 #include <fmt/format.h>
+#include <gsl/gsl>
 #include <memory>
 #include <pugixml.hpp>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 // ===== OpenXLSX Includes ===== //
@@ -15,12 +15,13 @@
 #include "XLException.hpp"
 #include "XLStyle.hpp"
 #include "XLStyles.hpp"
-#include "XLUtilities.hpp"
 #include "XLStyles_Internal.hpp"
+#include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
 
-namespace {
+namespace
+{
     enum XLStylesEntryType : uint8_t {
         XLStylesNumberFormats    = 0,
         XLStylesFonts            = 1,
@@ -51,24 +52,21 @@ namespace {
     };
 
     XLStylesEntryType XLStylesEntryTypeFromString(std::string_view str)
-    {
-        return EnumFromString(str, XLStylesEntryTypeMap, XLStylesEntryType::XLStylesInvalid);
-    }
+    { return EnumFromString(str, XLStylesEntryTypeMap, XLStylesEntryType::XLStylesInvalid); }
 
-    const char* XLStylesEntryTypeToString(XLStylesEntryType val)
-    {
-        return EnumToString(val, XLStylesEntryTypeMap, "(invalid)");
-    }
+    const char* XLStylesEntryTypeToString(XLStylesEntryType val) { return EnumToString(val, XLStylesEntryTypeMap, "(invalid)"); }
 
     void wrapNode(XMLNode parentNode, const XMLNode& node, std::string_view prefix)
     {
         if (not node.empty() and prefix.length() > 0) {
-            parentNode.insert_child_before(pugi::node_pcdata, node).set_value(std::string(prefix).c_str());    // insert prefix before node opening tag
+            parentNode.insert_child_before(pugi::node_pcdata, node)
+                .set_value(std::string(prefix).c_str());    // insert prefix before node opening tag
             XMLNode n = node;
-            n.append_child(pugi::node_pcdata).set_value(std::string(prefix).c_str());    // insert prefix before node closing tag (within node)
+            n.append_child(pugi::node_pcdata)
+                .set_value(std::string(prefix).c_str());    // insert prefix before node closing tag (within node)
         }
     }
-}
+}    // namespace
 
 // ===== XLStyles, master class
 
@@ -119,7 +117,8 @@ XLStyles::XLStyles(gsl::not_null<XLXmlData*> xmlData, bool suppressWarnings, std
                 [[fallthrough]];
             case XLStylesExtLst:
                 if (!m_suppressWarnings)
-                    std::cout << "XLStyles: Ignoring currently unsupported <" << std::string(XLStylesEntryTypeToString(e)) + "> node" << std::endl;
+                    std::cout << "XLStyles: Ignoring currently unsupported <" << std::string(XLStylesEntryTypeToString(e)) + "> node"
+                              << std::endl;
                 break;
             case XLStylesInvalid:
                 [[fallthrough]];
@@ -238,10 +237,7 @@ XLStyles& XLStyles::operator=(const XLStyles& other)
     return *this;
 }
 
-uint32_t XLStyles::createNumberFormat(std::string_view formatCode)
-{
-    return m_numberFormats->createNumberFormat(formatCode);
-}
+uint32_t XLStyles::createNumberFormat(std::string_view formatCode) { return m_numberFormats->createNumberFormat(formatCode); }
 
 XLNumberFormats& XLStyles::numberFormats() const { return *m_numberFormats; }
 
@@ -261,7 +257,7 @@ XLDxfs& XLStyles::dxfs() const { return *m_dxfs; }
 
 XLStyleIndex XLStyles::addDxf(const XLDxf& dxf) { return m_dxfs->create(dxf); }
 
-XLStyleIndex XLStyles::addNamedStyle(std::string_view name,
+XLStyleIndex XLStyles::addNamedStyle(std::string_view            name,
                                      std::optional<XLStyleIndex> fontId,
                                      std::optional<XLStyleIndex> fillId,
                                      std::optional<XLStyleIndex> borderId,
@@ -269,8 +265,8 @@ XLStyleIndex XLStyles::addNamedStyle(std::string_view name,
 {
     // 1. Create format definition in <cellStyleXfs>
     XLStyleIndex styleXfIdx = cellStyleFormats().create();
-    auto styleXf = cellStyleFormats()[styleXfIdx];
-    
+    auto         styleXf    = cellStyleFormats()[styleXfIdx];
+
     if (fontId) {
         styleXf.setFontIndex(*fontId);
         styleXf.setApplyFont(true);
@@ -290,16 +286,16 @@ XLStyleIndex XLStyles::addNamedStyle(std::string_view name,
 
     // 2. Register the name in <cellStyles>
     XLStyleIndex cellStyleIdx = cellStyles().create();
-    auto cellStyle = cellStyles()[cellStyleIdx];
+    auto         cellStyle    = cellStyles()[cellStyleIdx];
     cellStyle.setName(name);
     cellStyle.setXfId(styleXfIdx);
 
     // 3. Create a ready-to-use cell format in <cellXfs> that inherits this style
     XLStyleIndex cellXfIdx = cellFormats().create();
-    auto cellXf = cellFormats()[cellXfIdx];
-    
-    cellXf.setXfId(styleXfIdx); // Bind to the named style format
-    
+    auto         cellXf    = cellFormats()[cellXfIdx];
+
+    cellXf.setXfId(styleXfIdx);    // Bind to the named style format
+
     // Excel strictly requires these to be mirrored in the cellXfs node
     if (fontId) {
         cellXf.setFontIndex(*fontId);
@@ -331,16 +327,14 @@ XLStyleIndex XLStyles::namedStyle(std::string_view name) const
             break;
         }
     }
-    
+
     if (targetStyleXfId == XLInvalidStyleIndex) return XLInvalidStyleIndex;
 
     // Find a corresponding cellXfs entry that uses this xfId
     for (size_t i = 0; i < cellFormats().count(); ++i) {
-        if (cellFormats()[i].xfId() == targetStyleXfId) {
-            return gsl::narrow_cast<XLStyleIndex>(i);
-        }
+        if (cellFormats()[i].xfId() == targetStyleXfId) { return gsl::narrow_cast<XLStyleIndex>(i); }
     }
-    
+
     return XLInvalidStyleIndex;
 }
 
@@ -354,18 +348,18 @@ XLStyleIndex XLStyles::findOrCreateStyle(const XLStyle& style)
     // canonical index.  Pool bloat from tentative entries is bounded by the number of
     // distinct style.findOrCreateStyle calls, which is typically very small.
     XLStyleIndex fontIdx = 0;    // default font (index 0)
-    if (style.font.name || style.font.size || style.font.color ||
-        style.font.bold || style.font.italic || style.font.underline || style.font.strikethrough)
+    if (style.font.name || style.font.size || style.font.color || style.font.bold || style.font.italic || style.font.underline ||
+        style.font.strikethrough)
     {
         // Create a writable copy of the default font, then configure it
         XLStyleIndex tentativeFontIdx = fonts().create(fonts().fontByIndex(0));
-        XLFont f = fonts().fontByIndex(tentativeFontIdx);
-        if (style.font.name)          f.setFontName(*style.font.name);
-        if (style.font.size)          f.setFontSize(*style.font.size);
-        if (style.font.color)         f.setFontColor(*style.font.color);
-        if (style.font.bold)          f.setBold(*style.font.bold);
-        if (style.font.italic)        f.setItalic(*style.font.italic);
-        if (style.font.underline)     f.setUnderline(*style.font.underline ? XLUnderlineSingle : XLUnderlineNone);
+        XLFont       f                = fonts().fontByIndex(tentativeFontIdx);
+        if (style.font.name) f.setFontName(*style.font.name);
+        if (style.font.size) f.setFontSize(*style.font.size);
+        if (style.font.color) f.setFontColor(*style.font.color);
+        if (style.font.bold) f.setBold(*style.font.bold);
+        if (style.font.italic) f.setItalic(*style.font.italic);
+        if (style.font.underline) f.setUnderline(*style.font.underline ? XLUnderlineSingle : XLUnderlineNone);
         if (style.font.strikethrough) f.setStrikethrough(*style.font.strikethrough);
         // findOrCreate: if an identical font is already in the pool it returns that index;
         // otherwise it creates a new entry (which happens to be the tentative one).
@@ -376,28 +370,23 @@ XLStyleIndex XLStyles::findOrCreateStyle(const XLStyle& style)
     XLStyleIndex fillIdx = 0;    // default fill
     if (style.fill.pattern || style.fill.fgColor || style.fill.bgColor) {
         XLStyleIndex tentativeFillIdx = fills().create();
-        XLFill fill = fills().fillByIndex(tentativeFillIdx);
-        if (style.fill.pattern)  fill.setPatternType(*style.fill.pattern);
-        if (style.fill.fgColor)  fill.setColor(*style.fill.fgColor);
-        if (style.fill.bgColor)  fill.setBackgroundColor(*style.fill.bgColor);
+        XLFill       fill             = fills().fillByIndex(tentativeFillIdx);
+        if (style.fill.pattern) fill.setPatternType(*style.fill.pattern);
+        if (style.fill.fgColor) fill.setColor(*style.fill.fgColor);
+        if (style.fill.bgColor) fill.setBackgroundColor(*style.fill.bgColor);
         fillIdx = fills().findOrCreate(fill);
     }
 
     // ===== Step 3: Resolve border index (deduplicated) ======================
     XLStyleIndex borderIdx = 0;    // default border
-    if (style.border.left.style || style.border.left.color ||
-        style.border.right.style || style.border.right.color ||
-        style.border.top.style || style.border.top.color ||
-        style.border.bottom.style || style.border.bottom.color)
+    if (style.border.left.style || style.border.left.color || style.border.right.style || style.border.right.color ||
+        style.border.top.style || style.border.top.color || style.border.bottom.style || style.border.bottom.color)
     {
         XLStyleIndex tentativeBorderIdx = borders().create();
-        XLBorder border = borders().borderByIndex(tentativeBorderIdx);
-        if (style.border.left.style)
-            border.setLeft(*style.border.left.style, style.border.left.color.value_or(XLColor("FF000000")));
-        if (style.border.right.style)
-            border.setRight(*style.border.right.style, style.border.right.color.value_or(XLColor("FF000000")));
-        if (style.border.top.style)
-            border.setTop(*style.border.top.style, style.border.top.color.value_or(XLColor("FF000000")));
+        XLBorder     border             = borders().borderByIndex(tentativeBorderIdx);
+        if (style.border.left.style) border.setLeft(*style.border.left.style, style.border.left.color.value_or(XLColor("FF000000")));
+        if (style.border.right.style) border.setRight(*style.border.right.style, style.border.right.color.value_or(XLColor("FF000000")));
+        if (style.border.top.style) border.setTop(*style.border.top.style, style.border.top.color.value_or(XLColor("FF000000")));
         if (style.border.bottom.style)
             border.setBottom(*style.border.bottom.style, style.border.bottom.color.value_or(XLColor("FF000000")));
         borderIdx = borders().findOrCreate(border);
@@ -406,12 +395,11 @@ XLStyleIndex XLStyles::findOrCreateStyle(const XLStyle& style)
 
     // ===== Step 4: Resolve number format ID =================================
     uint32_t numFmtId = 0;    // default (General)
-    if (style.numberFormat)
-        numFmtId = createNumberFormat(*style.numberFormat);
+    if (style.numberFormat) numFmtId = createNumberFormat(*style.numberFormat);
 
     // ===== Step 5: Assemble the XLCellFormat and deduplicate ================
     XLStyleIndex tentativeXfIdx = cellFormats().create();
-    XLCellFormat xf = cellFormats().cellFormatByIndex(tentativeXfIdx);
+    XLCellFormat xf             = cellFormats().cellFormatByIndex(tentativeXfIdx);
     xf.setFontIndex(fontIdx);
     xf.setFillIndex(fillIdx);
     xf.setBorderIndex(borderIdx);
@@ -419,14 +407,14 @@ XLStyleIndex XLStyles::findOrCreateStyle(const XLStyle& style)
         xf.setNumberFormatId(numFmtId);
         xf.setApplyNumberFormat(true);
     }
-    if (fontIdx > 0)   xf.setApplyFont(true);
-    if (fillIdx > 0)   xf.setApplyFill(true);
+    if (fontIdx > 0) xf.setApplyFont(true);
+    if (fillIdx > 0) xf.setApplyFill(true);
     if (borderIdx > 0) xf.setApplyBorder(true);
     if (style.alignment.horizontal || style.alignment.vertical || style.alignment.wrapText) {
         auto align = xf.alignment(XLCreateIfMissing);
         if (style.alignment.horizontal) align.setHorizontal(*style.alignment.horizontal);
-        if (style.alignment.vertical)   align.setVertical(*style.alignment.vertical);
-        if (style.alignment.wrapText)   align.setWrapText(*style.alignment.wrapText);
+        if (style.alignment.vertical) align.setVertical(*style.alignment.vertical);
+        if (style.alignment.wrapText) align.setWrapText(*style.alignment.wrapText);
         xf.setApplyAlignment(true);
     }
 

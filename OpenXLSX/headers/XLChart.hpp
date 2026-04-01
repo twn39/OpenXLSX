@@ -2,8 +2,8 @@
 #define OPENXLSX_XLCHART_HPP
 
 #include "OpenXLSX-Exports.hpp"
-#include "XLXmlFile.hpp"
 #include "XLConstants.hpp"
+#include "XLXmlFile.hpp"
 
 #include <string>
 #include <string_view>
@@ -24,12 +24,12 @@ namespace OpenXLSX
         Pie,
         Pie3D,
         Scatter,
-        ScatterLine,           ///< Scatter with straight lines, no markers
-        ScatterLineMarker,     ///< Scatter with straight lines and markers
-        ScatterSmooth,         ///< Scatter with smooth lines, no markers
-        ScatterSmoothMarker,   ///< Scatter with smooth lines and markers
-        ScatterMarker,         ///< Scatter with markers only, no lines
-        Bubble,                ///< Bubble chart (needs addBubbleSeries)
+        ScatterLine,            ///< Scatter with straight lines, no markers
+        ScatterLineMarker,      ///< Scatter with straight lines and markers
+        ScatterSmooth,          ///< Scatter with smooth lines, no markers
+        ScatterSmoothMarker,    ///< Scatter with smooth lines and markers
+        ScatterMarker,          ///< Scatter with markers only, no lines
+        Bubble,                 ///< Bubble chart (needs addBubbleSeries)
         Area,
         AreaStacked,
         AreaPercentStacked,
@@ -42,35 +42,14 @@ namespace OpenXLSX
         RadarMarkers
     };
 
-    enum class XLLegendPosition {
-        Bottom,
-        Left,
-        Right,
-        Top,
-        TopRight,
-        Hidden
-    };
+    enum class XLLegendPosition { Bottom, Left, Right, Top, TopRight, Hidden };
 
-
-    enum class XLMarkerStyle {
-        None,
-        Circle,
-        Dash,
-        Diamond,
-        Dot,
-        Picture,
-        Plus,
-        Square,
-        Star,
-        Triangle,
-        X,
-        Default
-    };
+    enum class XLMarkerStyle { None, Circle, Dash, Diamond, Dot, Picture, Plus, Square, Star, Triangle, X, Default };
 
     /**
      * @brief The XLChart class represents an Excel chart XML file.
      */
-    
+
     /**
      * @brief A proxy class for an individual chart axis.
      */
@@ -80,37 +59,15 @@ namespace OpenXLSX
     class XLWorksheet;
     class XLCellRange;
 
-    
+    enum class XLErrorBarDirection { X, Y };
 
-    enum class XLErrorBarDirection {
-        X,
-        Y
-    };
+    enum class XLErrorBarType { Both, Minus, Plus };
 
-    enum class XLErrorBarType {
-        Both,
-        Minus,
-        Plus
-    };
+    enum class XLErrorBarValueType { Custom, FixedValue, Percentage, StandardDeviation, StandardError };
 
-    enum class XLErrorBarValueType {
-        Custom,
-        FixedValue,
-        Percentage,
-        StandardDeviation,
-        StandardError
-    };
+    enum class XLTrendlineType { Linear, Exponential, Logarithmic, Polynomial, Power, MovingAverage };
 
-    enum class XLTrendlineType {
-        Linear,
-        Exponential,
-        Logarithmic,
-        Polynomial,
-        Power,
-        MovingAverage
-    };
-
-class OPENXLSX_EXPORT XLChartSeries
+    class OPENXLSX_EXPORT XLChartSeries
     {
     public:
         XLChartSeries() = default;
@@ -155,18 +112,18 @@ class OPENXLSX_EXPORT XLChartSeries
         XMLNode m_node;
     };
 
-
-    struct XLChartAnchor {
+    struct XLChartAnchor
+    {
         std::string name;
-        uint32_t row{1};
-        uint32_t col{1};
-        XLDistance width{XLDistance::Pixels(400)};
-        XLDistance height{XLDistance::Pixels(300)};
+        uint32_t    row{1};
+        uint32_t    col{1};
+        XLDistance  width{XLDistance::Pixels(400)};
+        XLDistance  height{XLDistance::Pixels(300)};
 
         XLChartAnchor() = default;
-        XLChartAnchor(std::string_view n, uint32_t r, uint32_t c, XLDistance w, XLDistance h) : name(n), row(r), col(c), width(w), height(h) {}
+        XLChartAnchor(std::string_view n, uint32_t r, uint32_t c, XLDistance w, XLDistance h) : name(n), row(r), col(c), width(w), height(h)
+        {}
     };
-
 
     class OPENXLSX_EXPORT XLAxis
     {
@@ -242,9 +199,22 @@ class OPENXLSX_EXPORT XLChartSeries
          * @param title A literal string or cell reference for the series name.
          * @param categoriesRef A cell reference for the X-axis categories.
          */
-        XLChartSeries addSeries(const XLWorksheet& wks, const XLCellRange& values, std::string_view title = "", std::optional<XLChartType> targetChartType = std::nullopt, bool useSecondaryAxis = false);
-        XLChartSeries addSeries(const XLWorksheet& wks, const XLCellRange& values, const XLCellRange& categories, std::string_view title = "", std::optional<XLChartType> targetChartType = std::nullopt, bool useSecondaryAxis = false);
-        XLChartSeries addSeries(std::string_view valuesRef, std::string_view title = "", std::string_view categoriesRef = "", std::optional<XLChartType> targetChartType = std::nullopt, bool useSecondaryAxis = false);
+        XLChartSeries addSeries(const XLWorksheet&         wks,
+                                const XLCellRange&         values,
+                                std::string_view           title            = "",
+                                std::optional<XLChartType> targetChartType  = std::nullopt,
+                                bool                       useSecondaryAxis = false);
+        XLChartSeries addSeries(const XLWorksheet&         wks,
+                                const XLCellRange&         values,
+                                const XLCellRange&         categories,
+                                std::string_view           title            = "",
+                                std::optional<XLChartType> targetChartType  = std::nullopt,
+                                bool                       useSecondaryAxis = false);
+        XLChartSeries addSeries(std::string_view           valuesRef,
+                                std::string_view           title            = "",
+                                std::string_view           categoriesRef    = "",
+                                std::optional<XLChartType> targetChartType  = std::nullopt,
+                                bool                       useSecondaryAxis = false);
 
         /**
          * @brief Add a bubble chart series with explicit X, Y, and size ranges.
@@ -253,16 +223,14 @@ class OPENXLSX_EXPORT XLChartSeries
          * @param sizeRef   Cell reference for bubble sizes.
          * @param title     Optional series name.
          */
-        XLChartSeries addBubbleSeries(std::string_view xValRef,
-                                      std::string_view yValRef,
-                                      std::string_view sizeRef,
-                                      std::string_view title = "");
+        XLChartSeries
+            addBubbleSeries(std::string_view xValRef, std::string_view yValRef, std::string_view sizeRef, std::string_view title = "");
 
         XLChartSeries addBubbleSeries(const XLWorksheet& wks,
                                       const XLCellRange& xValues,
                                       const XLCellRange& yValues,
                                       const XLCellRange& sizes,
-                                      std::string_view title = "");
+                                      std::string_view   title = "");
 
         /**
          * @brief Set the chart title.
@@ -330,13 +298,11 @@ class OPENXLSX_EXPORT XLChartSeries
          */
         void setChartAreaColor(std::string_view hexRGB);
 
-
-
     private:
         friend class XLDocument;
-        void initXml(XLChartType type = XLChartType::Bar);
+        void                   initXml(XLChartType type = XLChartType::Bar);
         [[nodiscard]] uint32_t seriesCount() const;
     };
-}
+}    // namespace OpenXLSX
 
-#endif // OPENXLSX_XLCHART_HPP
+#endif    // OPENXLSX_XLCHART_HPP

@@ -4,30 +4,31 @@
 // ===== External Includes ===== //
 #include <cstdint>    // uint8_t, uint16_t, uint32_t
 #include <ostream>    // std::basic_ostream
-#include <vector>
 #include <string>
 #include <string_view>
+#include <vector>
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
+#include "XLAutoFilter.hpp"
 #include "XLException.hpp"
+#include "XLTableColumn.hpp"
 #include "XLXmlData.hpp"
 #include "XLXmlFile.hpp"
-#include "XLAutoFilter.hpp"
-#include "XLTableColumn.hpp"
 
 namespace OpenXLSX
 {
     class XLWorksheet;
     class XLCellRange;
-    
-    struct XLSlicerOptions {
-        std::string name = "";       // Defaults to column name if empty
-        std::string caption = "";    // Defaults to column name if empty
-        uint32_t width = 144;        // pixels
-        uint32_t height = 200;       // pixels
-        int32_t offsetX = 0;         // pixels
-        int32_t offsetY = 0;         // pixels
+
+    struct XLSlicerOptions
+    {
+        std::string name    = "";     // Defaults to column name if empty
+        std::string caption = "";     // Defaults to column name if empty
+        uint32_t    width   = 144;    // pixels
+        uint32_t    height  = 200;    // pixels
+        int32_t     offsetX = 0;      // pixels
+        int32_t     offsetY = 0;      // pixels
     };
 
     class XLTable;
@@ -38,6 +39,7 @@ namespace OpenXLSX
     class OPENXLSX_EXPORT XLTableCollection
     {
         friend class XLWorksheet;
+
     public:
         /**
          * @brief Constructor
@@ -88,10 +90,10 @@ namespace OpenXLSX
         bool valid() const;
 
     private:
-        XMLNode m_sheetNode;
-        XLWorksheet* m_worksheet{nullptr};
+        XMLNode                      m_sheetNode;
+        XLWorksheet*                 m_worksheet{nullptr};
         mutable std::vector<XLTable> m_tables;
-        mutable bool m_loaded{false};
+        mutable bool                 m_loaded{false};
 
         void load() const;
     };
@@ -103,6 +105,7 @@ namespace OpenXLSX
     {
         friend class XLTableCollection;
         friend class XLWorksheet;
+
     public:
         /**
          * @brief Constructor

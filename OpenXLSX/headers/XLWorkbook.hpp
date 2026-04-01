@@ -188,8 +188,8 @@ namespace OpenXLSX
          * @brief Add a new worksheet.
          * @param sheetName The name of the new worksheet.
          */
-        void     addWorksheet(std::string_view sheetName);
-        void     addChartsheet(std::string_view sheetName);
+        void addWorksheet(std::string_view sheetName);
+        void addChartsheet(std::string_view sheetName);
 
         /**
          * @brief Clone an existing sheet.

@@ -1,9 +1,9 @@
 // ===== External Includes ===== //
 #include <algorithm>
-#include <mutex>
-#include <shared_mutex>
 #include <gsl/gsl>
+#include <mutex>
 #include <pugixml.hpp>
+#include <shared_mutex>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLDocument.hpp"
@@ -67,7 +67,7 @@ XLSharedStrings::~XLSharedStrings() = default;
 int32_t XLSharedStrings::getStringIndex(const std::string& str) const
 {
     Expects(m_stringIndex != nullptr || m_stringCache != nullptr);
-    
+
     std::shared_lock<std::shared_mutex> lock;
     if (m_mutex) lock = std::shared_lock<std::shared_mutex>(*m_mutex);
 
@@ -92,8 +92,8 @@ bool XLSharedStrings::stringExists(const std::string& str) const
 
     // Use O(1) hash lookup if available
     if (m_stringIndex) { return m_stringIndex->find(str) != m_stringIndex->end(); }
-    
-    if (m_mutex) lock.unlock(); // Unlock before calling getStringIndex to prevent deadlock
+
+    if (m_mutex) lock.unlock();    // Unlock before calling getStringIndex to prevent deadlock
     return getStringIndex(str) >= 0;
 }
 
@@ -103,7 +103,7 @@ bool XLSharedStrings::stringExists(const std::string& str) const
 const char* XLSharedStrings::getString(int32_t index) const
 {
     Expects(m_stringCache != nullptr);
-    
+
     std::shared_lock<std::shared_mutex> lock;
     if (m_mutex) lock = std::shared_lock<std::shared_mutex>(*m_mutex);
 
@@ -122,21 +122,18 @@ int32_t XLSharedStrings::appendString(const std::string& str) const
 {
     Expects(m_stringCache != nullptr);
     Expects(m_stringArena != nullptr);
-    
+
     std::unique_lock<std::shared_mutex> lock;
     if (m_mutex) {
         lock = std::unique_lock<std::shared_mutex>(*m_mutex);
         // Double check locking
         if (m_stringIndex) {
             auto it = m_stringIndex->find(str);
-            if (it != m_stringIndex->end()) {
-                return it->second;
-            }
-        } else {
+            if (it != m_stringIndex->end()) { return it->second; }
+        }
+        else {
             const auto iter = std::find_if(m_stringCache->begin(), m_stringCache->end(), [&](std::string_view s) { return str == s; });
-            if (iter != m_stringCache->end()) {
-                return static_cast<int32_t>(std::distance(m_stringCache->begin(), iter));
-            }
+            if (iter != m_stringCache->end()) { return static_cast<int32_t>(std::distance(m_stringCache->begin(), iter)); }
         }
     }
 
@@ -174,7 +171,8 @@ int32_t XLSharedStrings::getOrCreateStringIndex(const std::string& str) const
                 return it->second;    // String already exists
             }
         }
-    } else {
+    }
+    else {
         // Fast path: O(1) lookup using hash index
         if (m_stringIndex) {
             auto it = m_stringIndex->find(str);
@@ -194,8 +192,8 @@ int32_t XLSharedStrings::getOrCreateStringIndex(const std::string& str) const
  */
 void XLSharedStrings::reserveStrings(size_t n) const
 {
-    if (m_stringCache)  m_stringCache->reserve(n);
-    if (m_stringIndex)  m_stringIndex->reserve(n);
+    if (m_stringCache) m_stringCache->reserve(n);
+    if (m_stringIndex) m_stringIndex->reserve(n);
 }
 
 /**
@@ -205,10 +203,8 @@ void XLSharedStrings::reserveStrings(size_t n) const
 size_t XLSharedStrings::memoryUsageBytes() const noexcept
 {
     size_t total = 0;
-    if (m_stringCache)
-        total += m_stringCache->capacity() * sizeof(std::string_view);
-    if (m_stringIndex)
-        total += m_stringIndex->bucket_count() * (sizeof(void*) + sizeof(std::pair<std::string_view, int32_t>));
+    if (m_stringCache) total += m_stringCache->capacity() * sizeof(std::string_view);
+    if (m_stringIndex) total += m_stringIndex->bucket_count() * (sizeof(void*) + sizeof(std::pair<std::string_view, int32_t>));
     return total;
 }
 
@@ -225,7 +221,7 @@ void XLSharedStrings::print(std::basic_ostream<char>& ostr) const { xmlDocument(
 void XLSharedStrings::clearString(int32_t index) const    // 2024-04-30: whitespace support
 {
     Expects(m_stringCache != nullptr);
-    
+
     std::unique_lock<std::shared_mutex> lock;
     if (m_mutex) lock = std::unique_lock<std::shared_mutex>(*m_mutex);
 
@@ -237,9 +233,7 @@ void XLSharedStrings::clearString(int32_t index) const    // 2024-04-30: whitesp
     // Keep m_stringIndex in sync to prevent dangling references
     if (m_stringIndex) {
         auto oldStr = (*m_stringCache)[static_cast<size_t>(index)];
-        if (!oldStr.empty()) {
-            m_stringIndex->erase(oldStr);
-        }
+        if (!oldStr.empty()) { m_stringIndex->erase(oldStr); }
     }
 
     (*m_stringCache)[static_cast<size_t>(index)] = "";
@@ -273,7 +267,7 @@ int32_t XLSharedStrings::rewriteXmlFromCache()
         XMLNode textNode = xmlDocument().document_element().append_child("si").append_child("t");
         if ((!s.empty()) and (s.front() == ' ' or s.back() == ' '))
             textNode.append_attribute("xml:space").set_value("preserve");    // preserve spaces at begin/end of string
-        textNode.text().set(s.data()); // s is guaranteed to be null-terminated by the Arena
+        textNode.text().set(s.data());                                       // s is guaranteed to be null-terminated by the Arena
         ++writtenStrings;
     }
     return writtenStrings;

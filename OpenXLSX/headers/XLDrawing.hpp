@@ -10,11 +10,11 @@
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
 // #include "XLDocument.hpp"
+#include "XLConstants.hpp"
 #include "XLException.hpp"
+#include "XLImageOptions.hpp"
 #include "XLXmlData.hpp"
 #include "XLXmlFile.hpp"
-#include "XLConstants.hpp"
-#include "XLImageOptions.hpp"
 
 #include <memory>
 
@@ -49,7 +49,7 @@ namespace OpenXLSX
     class OPENXLSX_EXPORT XLShapeClientData
     {
     public:
-XLShapeClientData();
+        XLShapeClientData();
 
         /**
          * @brief Constructor. New items should only be created through an XLShape object.
@@ -91,14 +91,13 @@ XLShapeClientData();
         std::string objectType() const;    // attribute ObjectType, value "Note"
         bool moveWithCells() const;    // element x:MoveWithCells - true = present or lowercase node_pcdata "true", false = not present or
                                        // lowercase node_pcdata "false"
-        bool sizeWithCells() const;    // element x:SizeWithCells - logic as in MoveWithCells
-        std::string
-             anchor() const;    // element x:Anchor - e.g. "3, 23, 0, 0, 4, 25, 3, 5"
-        bool autoFill() const;                   // element x:AutoFill - logic as in MoveWithCells
-        XLShapeTextVAlign textVAlign() const;    // element x:TextVAlign - Top, ???
-        XLShapeTextHAlign textHAlign() const;    // element x:TextHAlign - Left, ???
-        uint32_t          row() const;           // element x:Row, 0-indexed row of cell to which this shape is linked
-        uint16_t          column() const;        // element x:Column, 0-indexed column of cell to which this shape is linked
+        bool              sizeWithCells() const;    // element x:SizeWithCells - logic as in MoveWithCells
+        std::string       anchor() const;           // element x:Anchor - e.g. "3, 23, 0, 0, 4, 25, 3, 5"
+        bool              autoFill() const;         // element x:AutoFill - logic as in MoveWithCells
+        XLShapeTextVAlign textVAlign() const;       // element x:TextVAlign - Top, ???
+        XLShapeTextHAlign textHAlign() const;       // element x:TextHAlign - Left, ???
+        uint32_t          row() const;              // element x:Row, 0-indexed row of cell to which this shape is linked
+        uint16_t          column() const;           // element x:Column, 0-indexed column of cell to which this shape is linked
 
         /**
          * @brief Component Data Mutators
@@ -114,7 +113,7 @@ XLShapeClientData();
         bool setColumn(uint16_t newColumn);
 
     private:
-mutable XMLNode                                   m_clientDataNode; /**< An XMLNode object with the x:ClientData item */
+        mutable XMLNode                                   m_clientDataNode; /**< An XMLNode object with the x:ClientData item */
         inline static const std::vector<std::string_view> m_nodeOrder =
             {"x:MoveWithCells", "x:SizeWithCells", "x:Anchor", "x:AutoFill", "x:TextVAlign", "x:TextHAlign", "x:Row", "x:Column"};
     };
@@ -210,7 +209,7 @@ mutable XMLNode                                   m_clientDataNode; /**< An XMLN
         friend class XLVmlDrawing;    // for access to m_shapeNode in XLVmlDrawing::addShape
         friend class XLComments;      // added for access to m_shapeNode in XLComments::set
     public:
-XLShape();
+        XLShape();
 
         /**
          * @brief Constructor. New items should only be created through an XLStyles object.
@@ -270,8 +269,9 @@ XLShape();
         bool setAllowInCell(bool set);
         bool setStyle(std::string_view newStyle);
         bool setStyle(XLShapeStyle const& newStyle);
+
     private:
-mutable XMLNode                                   m_shapeNode; /**< An XMLNode object with the v:shape item */
+        mutable XMLNode                                   m_shapeNode; /**< An XMLNode object with the v:shape item */
         inline static const std::vector<std::string_view> m_nodeOrder =
             {"v:shadow", "v:fill", "v:stroke", "v:path", "v:textbox", "x:ClientData"};
     };
@@ -280,30 +280,21 @@ mutable XMLNode                                   m_shapeNode; /**< An XMLNode o
      * @brief An encapsulation of a drawing item (e.g. an image)
      */
 
-    enum class XLVectorShapeType {
-        Rectangle,
-        Ellipse,
-        Line,
-        Triangle,
-        RightTriangle,
-        Arrow,
-        Diamond,
-        Parallelogram,
-        Hexagon
-    };
+    enum class XLVectorShapeType { Rectangle, Ellipse, Line, Triangle, RightTriangle, Arrow, Diamond, Parallelogram, Hexagon };
 
-    struct XLVectorShapeOptions {
-        XLVectorShapeType type = XLVectorShapeType::Rectangle;
-        std::string name = "Shape 1";
-        std::string text = "";
-        std::string fillColor = "4286F4"; // ARGB, no #
-        std::string lineColor = "000000";
-        double lineWidth = 1.0;
+    struct XLVectorShapeOptions
+    {
+        XLVectorShapeType type      = XLVectorShapeType::Rectangle;
+        std::string       name      = "Shape 1";
+        std::string       text      = "";
+        std::string       fillColor = "4286F4";    // ARGB, no #
+        std::string       lineColor = "000000";
+        double            lineWidth = 1.0;
 
-        uint32_t width = 100;
-        uint32_t height = 100;
-        int32_t offsetX = 0;
-        int32_t offsetY = 0;
+        uint32_t width   = 100;
+        uint32_t height  = 100;
+        int32_t  offsetX = 0;
+        int32_t  offsetY = 0;
 
         std::string macro = "";
     };
@@ -387,13 +378,13 @@ mutable XMLNode                                   m_shapeNode; /**< An XMLNode o
          * @param height the height of the image in pixels
          * @param options the formatting and positioning options
          */
-        void addImage(std::string_view rId,
-                      std::string_view name,
-                      std::string_view description,
-                      uint32_t           row,
-                      uint32_t           col,
-                      uint32_t           width,
-                      uint32_t           height,
+        void addImage(std::string_view      rId,
+                      std::string_view      name,
+                      std::string_view      description,
+                      uint32_t              row,
+                      uint32_t              col,
+                      uint32_t              width,
+                      uint32_t              height,
                       const XLImageOptions& options = XLImageOptions());
 
         /**
@@ -407,19 +398,9 @@ mutable XMLNode                                   m_shapeNode; /**< An XMLNode o
          */
 
         void addShape(uint32_t row, uint32_t col, const XLVectorShapeOptions& options = XLVectorShapeOptions());
-        void addChartAnchor(std::string_view rId,
-                            std::string_view   name,
-                            uint32_t           row,
-                            uint32_t           col,
-                            uint32_t           width,
-                            uint32_t           height);
+        void addChartAnchor(std::string_view rId, std::string_view name, uint32_t row, uint32_t col, uint32_t width, uint32_t height);
 
-        void addChartAnchor(std::string_view rId,
-                               std::string_view   name,
-                               uint32_t           row,
-                               uint32_t           col,
-                               XLDistance         width,
-                               XLDistance         height);
+        void addChartAnchor(std::string_view rId, std::string_view name, uint32_t row, uint32_t col, XLDistance width, XLDistance height);
 
         /**
          * @brief Add an image to the drawing, automatically maintaining aspect ratio
@@ -435,9 +416,9 @@ mutable XMLNode                                   m_shapeNode; /**< An XMLNode o
                             std::string_view name,
                             std::string_view description,
                             std::string_view data,
-                            uint32_t           row,
-                            uint32_t           col,
-                            double             scalingFactor = 1.0);
+                            uint32_t         row,
+                            uint32_t         col,
+                            double           scalingFactor = 1.0);
 
         /**
          * @brief Get the drawing relationships

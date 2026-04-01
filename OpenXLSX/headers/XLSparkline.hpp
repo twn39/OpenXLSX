@@ -23,18 +23,18 @@ namespace OpenXLSX
         ~XLSparkline();
 
         XLSparklineType type() const;
-        void setType(XLSparklineType type);
+        void            setType(XLSparklineType type);
 
         std::string location() const;
-        void setLocation(const std::string& sqref);
+        void        setLocation(const std::string& sqref);
 
         std::string dataRange() const;
-        void setDataRange(const std::string& formula);
+        void        setDataRange(const std::string& formula);
 
     private:
         XMLNode m_node;
     };
 
-} // namespace OpenXLSX
+}    // namespace OpenXLSX
 
-#endif // OPENXLSX_XLSPARKLINE_HPP
+#endif    // OPENXLSX_XLSPARKLINE_HPP

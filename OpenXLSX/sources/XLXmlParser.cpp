@@ -34,7 +34,7 @@ namespace OpenXLSX
     {
         if (NO_XML_NS) return name_;
         const std::basic_string_view<pugi::char_t> nameView(name_);
-        const auto pos = nameView.find(':');
+        const auto                                 pos = nameView.find(':');
         if (pos == std::basic_string_view<pugi::char_t>::npos) return name_;
         return name_ + pos + 1;
     }
@@ -74,7 +74,7 @@ namespace OpenXLSX
     XMLNode XMLNode::first_child_of_type(pugi::xml_node_type type_) const
     {
         if (_root) {
-            XMLNode x = first_child();
+            XMLNode       x = first_child();
             const XMLNode l = last_child();
             while (x != l and x.type() != type_) x = x.next_sibling();
             if (x.type() == type_) return XMLNode(x);
@@ -86,7 +86,7 @@ namespace OpenXLSX
     {
         if (_root) {
             const XMLNode f = first_child();
-            XMLNode x = last_child();
+            XMLNode       x = last_child();
             while (x != f and x.type() != type_) x = x.previous_sibling();
             if (x.type() == type_) return XMLNode(x);
         }

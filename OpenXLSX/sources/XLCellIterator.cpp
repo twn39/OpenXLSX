@@ -140,7 +140,7 @@ void XLCellIterator::updateCurrentCell(bool createIfMissing) const
                 cellNode = cellNode.next_sibling_of_type(pugi::node_element);
             }
             if (colNo != m_currentColumn) cellNode = XMLNode{};
-            
+
             if (createIfMissing and cellNode.empty()) {
                 cellNode = m_hintNode.parent().insert_child_after("c", m_hintNode);
                 char cellAddrBuf[16];
@@ -158,7 +158,7 @@ void XLCellIterator::updateCurrentCell(bool createIfMissing) const
                 rowNode = rowNode.next_sibling_of_type(pugi::node_element);
             }
             if (rowNo != m_currentRow) rowNode = XMLNode{};
-            
+
             if (createIfMissing and rowNode.empty()) {
                 rowNode = m_dataNode.insert_child_after("row", m_hintNode.parent());
                 rowNode.append_attribute("r").set_value(m_currentRow);

@@ -1,18 +1,19 @@
 #include <OpenXLSX.hpp>
-#include <iostream>
 #include <catch2/catch_test_macros.hpp>
+#include <iostream>
 
 using namespace OpenXLSX;
 
 TEST_CASE("XLDataValidation Tests", "[XLDataValidation]")
 {
-    SECTION("Create and set data validations") {
+    SECTION("Create and set data validations")
+    {
         XLDocument doc;
         doc.create("./testDataValidation.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto& validations = wks.dataValidations();
-        
+
         // 1. Whole number range
         auto dv1 = validations.append();
         dv1.setSqref("A1:A10");
@@ -34,36 +35,38 @@ TEST_CASE("XLDataValidation Tests", "[XLDataValidation]")
         // Re-open and verify
         XLDocument doc2;
         doc2.open("./testDataValidation.xlsx");
-        auto wks2 = doc2.workbook().worksheet("Sheet1");
+        auto  wks2         = doc2.workbook().worksheet("Sheet1");
         auto& validations2 = wks2.dataValidations();
-        
+
         REQUIRE(validations2.count() == 2);
-        
+
         doc2.close();
     }
 
-    SECTION("Clear data validations") {
+    SECTION("Clear data validations")
+    {
         XLDocument doc;
         doc.create("./testDataValidationClear.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
-        
+
         auto& validations = wks.dataValidations();
         validations.append().setSqref("A1");
         validations.append().setSqref("B1");
-        
+
         REQUIRE(validations.count() == 2);
-        
+
         validations.clear();
         REQUIRE(validations.count() == 0);
-        
+
         doc.save();
         doc.close();
     }
 
-    SECTION("New Data Validation Features (P1, P2, P3)") {
+    SECTION("New Data Validation Features (P1, P2, P3)")
+    {
         XLDocument doc;
         doc.create("./testNewDataValidationFeatures.xlsx", XLForceOverwrite);
-        auto wks = doc.workbook().worksheet("Sheet1");
+        auto  wks         = doc.workbook().worksheet("Sheet1");
         auto& validations = wks.dataValidations();
 
         // 1. Test Decimal Range with P1 properties
@@ -114,9 +117,9 @@ TEST_CASE("XLDataValidation Tests", "[XLDataValidation]")
         // Re-open and verify persistence
         XLDocument doc2;
         doc2.open("./testNewDataValidationFeatures.xlsx");
-        auto wks2 = doc2.workbook().worksheet("Sheet1");
-        auto& v2 = wks2.dataValidations();
-        
+        auto  wks2 = doc2.workbook().worksheet("Sheet1");
+        auto& v2   = wks2.dataValidations();
+
         auto dvVerify = v2.at("C1:C5");
         REQUIRE_FALSE(dvVerify.empty());
         REQUIRE(dvVerify.type() == XLDataValidationType::Decimal);
@@ -132,10 +135,11 @@ TEST_CASE("XLDataValidation Tests", "[XLDataValidation]")
         doc2.close();
     }
 
-    SECTION("Data Validation Range Collapsing") {
+    SECTION("Data Validation Range Collapsing")
+    {
         XLDocument doc;
         doc.create("./testDataValidationCollapsing.xlsx", XLForceOverwrite);
-        auto wks = doc.workbook().worksheet("Sheet1");
+        auto  wks         = doc.workbook().worksheet("Sheet1");
         auto& validations = wks.dataValidations();
 
         auto dv = validations.append();
@@ -171,7 +175,7 @@ TEST_CASE("XLDataValidation Tests", "[XLDataValidation]")
 
         // Reset to a clean block
         dv.setSqref("A1:C5");
-        
+
         // Remove a block from the middle
         dv.removeRange("B2:B4");
         // Remaining should be the top row, bottom row, and left/right columns
@@ -184,15 +188,22 @@ TEST_CASE("XLDataValidation Tests", "[XLDataValidation]")
         doc.close();
     }
 
-    SECTION("Data Validation Iterators and Precise Removal") {
+    SECTION("Data Validation Iterators and Precise Removal")
+    {
         XLDocument doc;
         doc.create("./testDataValidationIterator.xlsx", XLForceOverwrite);
-        auto wks = doc.workbook().worksheet("Sheet1");
+        auto  wks         = doc.workbook().worksheet("Sheet1");
         auto& validations = wks.dataValidations();
 
-        auto dv1 = validations.append(); dv1.setSqref("A1"); dv1.setType(XLDataValidationType::Whole);
-        auto dv2 = validations.append(); dv2.setSqref("B1"); dv2.setType(XLDataValidationType::Decimal);
-        auto dv3 = validations.append(); dv3.setSqref("C1"); dv3.setType(XLDataValidationType::List);
+        auto dv1 = validations.append();
+        dv1.setSqref("A1");
+        dv1.setType(XLDataValidationType::Whole);
+        auto dv2 = validations.append();
+        dv2.setSqref("B1");
+        dv2.setType(XLDataValidationType::Decimal);
+        auto dv3 = validations.append();
+        dv3.setSqref("C1");
+        dv3.setType(XLDataValidationType::List);
 
         // 1. Test Iterator
         int count = 0;
@@ -205,7 +216,7 @@ TEST_CASE("XLDataValidation Tests", "[XLDataValidation]")
         // 2. Test Precise Removal by sqref
         validations.remove("B1");
         REQUIRE(validations.count() == 2);
-        
+
         // Verify B1 is gone, C1 and A1 remain
         bool foundDecimal = false;
         for (auto dv : validations) {
@@ -214,7 +225,7 @@ TEST_CASE("XLDataValidation Tests", "[XLDataValidation]")
         REQUIRE_FALSE(foundDecimal);
 
         // 3. Test Precise Removal by index
-        validations.remove(0); // Removes A1
+        validations.remove(0);    // Removes A1
         REQUIRE(validations.count() == 1);
         REQUIRE(validations.begin()->type() == XLDataValidationType::List);
 
@@ -226,24 +237,23 @@ TEST_CASE("XLDataValidation Tests", "[XLDataValidation]")
         doc.close();
     }
 
-    SECTION("Data Validation List Limits and Escaping") {
+    SECTION("Data Validation List Limits and Escaping")
+    {
         XLDocument doc;
         doc.create("./testDataValidationList.xlsx", XLForceOverwrite);
-        auto wks = doc.workbook().worksheet("Sheet1");
+        auto  wks         = doc.workbook().worksheet("Sheet1");
         auto& validations = wks.dataValidations();
 
         auto dv = validations.append();
         dv.setSqref("A1");
-        
+
         // Test escaping
         dv.setList({"Normal", "Has \"Quotes\"", "End\""});
         REQUIRE(dv.formula1() == "\"Normal,Has \"\"Quotes\"\",End\"\"\"");
 
         // Test length limit (255 characters)
         std::vector<std::string> longList;
-        for (int i = 0; i < 30; ++i) {
-            longList.push_back("1234567890"); 
-        }
+        for (int i = 0; i < 30; ++i) { longList.push_back("1234567890"); }
         // Total length will be over 300
         REQUIRE_THROWS_AS(dv.setList(longList), XLException);
 
@@ -269,10 +279,11 @@ TEST_CASE("XLDataValidation Tests", "[XLDataValidation]")
         doc.close();
     }
 
-    SECTION("Data Validation Global Properties") {
+    SECTION("Data Validation Global Properties")
+    {
         XLDocument doc;
         doc.create("./testDataValidationGlobal.xlsx", XLForceOverwrite);
-        auto wks = doc.workbook().worksheet("Sheet1");
+        auto  wks         = doc.workbook().worksheet("Sheet1");
         auto& validations = wks.dataValidations();
 
         // Must append at least one to create the node, otherwise properties won't attach
@@ -292,8 +303,8 @@ TEST_CASE("XLDataValidation Tests", "[XLDataValidation]")
         // Re-open and verify
         XLDocument doc2;
         doc2.open("./testDataValidationGlobal.xlsx");
-        auto wks2 = doc2.workbook().worksheet("Sheet1");
-        auto& v2 = wks2.dataValidations();
+        auto  wks2 = doc2.workbook().worksheet("Sheet1");
+        auto& v2   = wks2.dataValidations();
 
         REQUIRE(v2.disablePrompts() == true);
         REQUIRE(v2.xWindow() == 100);
@@ -302,7 +313,8 @@ TEST_CASE("XLDataValidation Tests", "[XLDataValidation]")
         doc2.close();
     }
 
-    SECTION("Data Validation Config and Ergonomics") {
+    SECTION("Data Validation Config and Ergonomics")
+    {
         XLDocument doc;
         doc.create("./testDataValidationConfig.xlsx", XLForceOverwrite);
         auto wks1 = doc.workbook().worksheet("Sheet1");
@@ -311,14 +323,14 @@ TEST_CASE("XLDataValidation Tests", "[XLDataValidation]")
 
         // Create a generic config
         XLDataValidationConfig rule;
-        rule.type = XLDataValidationType::List;
-        rule.operator_ = XLDataValidationOperator::Between;
-        rule.allowBlank = true;
-        rule.showDropDown = true;
+        rule.type             = XLDataValidationType::List;
+        rule.operator_        = XLDataValidationOperator::Between;
+        rule.allowBlank       = true;
+        rule.showDropDown     = true;
         rule.showInputMessage = true;
-        rule.promptTitle = "Select Option";
-        rule.prompt = "Please select from list";
-        rule.formula1 = "\"A,B,C\"";
+        rule.promptTitle      = "Select Option";
+        rule.prompt           = "Please select from list";
+        rule.formula1         = "\"A,B,C\"";
 
         // Apply it to Sheet1
         wks1.dataValidations().addValidation(rule, "A1:A10");

@@ -1,25 +1,26 @@
-#include <catch2/catch_test_macros.hpp>
 #include <OpenXLSX.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
 using namespace OpenXLSX;
 
-TEST_CASE("Comments RichText Validation", "[Comments][RichText]") {
+TEST_CASE("Comments RichText Validation", "[Comments][RichText]")
+{
     XLDocument doc;
     doc.create("Comments_RichText_Test.xlsx", XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     wks.cell("A1").value() = "Hover me";
 
-    XLRichText rt;
+    XLRichText    rt;
     XLRichTextRun run1("Warning: ");
     run1.setBold(true);
-    run1.setFontColor(XLColor("FFFF0000")); // Red
+    run1.setFontColor(XLColor("FFFF0000"));    // Red
     rt.addRun(run1);
 
     XLRichTextRun run2("This is a rich text comment!");
     run2.setItalic(true);
-    run2.setFontColor(XLColor("FF0000FF")); // Blue
+    run2.setFontColor(XLColor("FF0000FF"));    // Blue
     rt.addRun(run2);
 
     wks.comments().setRichText("A1", rt, "Author Name", 4, 6);
@@ -30,12 +31,12 @@ TEST_CASE("Comments RichText Validation", "[Comments][RichText]") {
 
     doc.open("Comments_RichText_Test.xlsx");
     auto wks2 = doc.workbook().worksheet("Sheet1");
-    
+
     // get comment by index since get(cellRef) returns std::string
     auto comment = wks2.comments().get(0);
     REQUIRE(comment.valid() == true);
     REQUIRE(comment.ref() == "A1");
-    
+
     auto parsedRt = comment.richText();
     REQUIRE(parsedRt.runs().size() == 2);
     REQUIRE(parsedRt.runs()[0].text() == "Warning: ");

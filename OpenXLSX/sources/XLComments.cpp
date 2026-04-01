@@ -88,12 +88,12 @@ XLComment::XLComment(XMLNode node) : m_commentNode(node) {}
  * @note For the library it is reasonable to expect users to compile it with MSCV /permissive- flag, but for the user's own projects the
  * header files shall "just work"
  */
-bool XLComment::valid() const { return not m_commentNode.empty(); }
+bool        XLComment::valid() const { return not m_commentNode.empty(); }
 std::string XLComment::ref() const { return m_commentNode.attribute("ref").value(); }
 std::string XLComment::text() const { return getCommentString(m_commentNode); }
 XLRichText  XLComment::richText() const { return parseRichText(m_commentNode); }
 uint16_t    XLComment::authorId() const { return gsl::narrow_cast<uint16_t>(m_commentNode.attribute("authorId").as_uint()); }
-XLComment& XLComment::setText(const std::string& newText)
+XLComment&  XLComment::setText(const std::string& newText)
 {
     m_commentNode.remove_child("text");
     XMLNode tNode = m_commentNode.append_child("text").append_child("t");
@@ -143,8 +143,10 @@ XLComment& XLComment::setRichText(const XLRichText& richText)
     return *this;
 }
 XLComment& XLComment::setAuthorId(uint16_t newAuthorId)
-{ appendAndSetAttribute(m_commentNode, "authorId", std::to_string(newAuthorId)); return *this; }
-
+{
+    appendAndSetAttribute(m_commentNode, "authorId", std::to_string(newAuthorId));
+    return *this;
+}
 
 XLComments::XLComments() : XLXmlFile(nullptr), m_vmlDrawing() {}
 
@@ -223,13 +225,11 @@ XMLNode XLComments::commentNode(const std::string& cellRef) const
         XMLNode comment = m_commentList.first_child_of_type(pugi::node_element);
         while (not comment.empty()) {
             m_commentMap[comment.attribute("ref").value()] = comment;
-            comment = comment.next_sibling_of_type(pugi::node_element);
+            comment                                        = comment.next_sibling_of_type(pugi::node_element);
         }
     }
     auto it = m_commentMap.find(cellRef);
-    if (it != m_commentMap.end()) {
-        return it->second;
-    }
+    if (it != m_commentMap.end()) { return it->second; }
     return XMLNode();
 }
 uint16_t XLComments::authorCount() const
@@ -276,11 +276,9 @@ uint16_t XLComments::addAuthor(const std::string& authorName)
     XMLNode  lastAuth;
 
     while (not auth.empty()) {
-        if (std::string(auth.first_child().value()) == authorName) {
-            return index;
-        }
+        if (std::string(auth.first_child().value()) == authorName) { return index; }
         lastAuth = auth;
-        auth = auth.next_sibling_of_type(pugi::node_element);
+        auth     = auth.next_sibling_of_type(pugi::node_element);
         ++index;
     }
 
@@ -288,9 +286,9 @@ uint16_t XLComments::addAuthor(const std::string& authorName)
         auth = m_authors.prepend_child("author");                          // insert new node
         m_authors.prepend_child(pugi::node_pcdata).set_value("\n\t\t");    // prefix first author with second level indentation
     }
-    else {                                                                   // found the last author node
-        auth = m_authors.insert_child_after("author", lastAuth);             // append a new author
-        copyLeadingWhitespaces(m_authors, lastAuth, auth);                   // copy whitespaces prefix from previous author
+    else {                                                          // found the last author node
+        auth = m_authors.insert_child_after("author", lastAuth);    // append a new author
+        copyLeadingWhitespaces(m_authors, lastAuth, auth);          // copy whitespaces prefix from previous author
     }
     auth.prepend_child(pugi::node_pcdata).set_value(authorName.c_str());
     return index;
@@ -300,9 +298,7 @@ size_t XLComments::count() const
     XMLNode comment = m_commentList.first_child_of_type(pugi::node_element);
     size_t  count   = 0;
     while (not comment.empty()) {
-        if (std::string_view(comment.name()) == "comment") {
-            ++count;
-        }
+        if (std::string_view(comment.name()) == "comment") { ++count; }
         comment = comment.next_sibling_of_type(pugi::node_element);
     }
     return count;
@@ -331,7 +327,12 @@ bool XLComments::deleteComment(const std::string& cellRef)
 XLComment   XLComments::get(size_t index) const { return XLComment(commentNode(index)); }
 std::string XLComments::get(const std::string& cellRef) const { return getCommentString(commentNode(cellRef)); }
 
-void XLComments::setupVmlShape(const std::string& cellRef, uint32_t destRow, uint16_t destCol, bool newCommentCreated, uint16_t widthCols, uint16_t heightRows)
+void XLComments::setupVmlShape(const std::string& cellRef,
+                               uint32_t           destRow,
+                               uint16_t           destCol,
+                               bool               newCommentCreated,
+                               uint16_t           widthCols,
+                               uint16_t           heightRows)
 {
     if (!m_vmlDrawing.valid()) return;
 
@@ -420,7 +421,11 @@ void XLComments::setupVmlShape(const std::string& cellRef, uint32_t destRow, uin
         path.append_attribute("o:connecttype").set_value("rect");
     }
 }
-bool XLComments::set(std::string const& cellRef, std::string const& commentText, uint16_t authorId_, uint16_t widthCols, uint16_t heightRows)
+bool XLComments::set(std::string const& cellRef,
+                     std::string const& commentText,
+                     uint16_t           authorId_,
+                     uint16_t           widthCols,
+                     uint16_t           heightRows)
 {
     XLCellReference destRef(cellRef);
     uint32_t        destRow           = destRef.row();
@@ -429,15 +434,14 @@ bool XLComments::set(std::string const& cellRef, std::string const& commentText,
 
     using namespace std::literals::string_literals;
     XMLNode comment = commentNode(cellRef);
-    if (not comment.empty()) {
-        comment.remove_children();
-    }
+    if (not comment.empty()) { comment.remove_children(); }
     else {
         comment = m_commentList.first_child_of_type(pugi::node_element);
         while (not comment.empty()) {
             if (comment.name() == "comment"s) {    // safeguard against rogue nodes
                 XLCellReference ref(comment.attribute("ref").value());
-                if (ref.row() > destRow or (ref.row() == destRow and ref.column() >= destCol))    // abort when node or a node behind it is found
+                if (ref.row() > destRow or
+                    (ref.row() == destRow and ref.column() >= destCol))    // abort when node or a node behind it is found
                     break;
             }
             comment = comment.next_sibling_of_type(pugi::node_element);
@@ -474,7 +478,7 @@ bool XLComments::set(std::string const& cellRef, std::string const& commentText,
         m_hintIndex = 0;
     }
 
-    m_commentMap[cellRef] = comment; // update cache
+    m_commentMap[cellRef] = comment;    // update cache
 
     // now that we have a valid comment node: update attributes and content
     if (comment.attribute("ref").empty())                                        // if ref has to be created
@@ -491,7 +495,11 @@ bool XLComments::set(std::string const& cellRef, std::string const& commentText,
 
     return true;
 }
-bool XLComments::setRichText(std::string const& cellRef, const XLRichText& richText, uint16_t authorId_, uint16_t widthCols, uint16_t heightRows)
+bool XLComments::setRichText(std::string const& cellRef,
+                             const XLRichText&  richText,
+                             uint16_t           authorId_,
+                             uint16_t           widthCols,
+                             uint16_t           heightRows)
 {
     XLCellReference destRef(cellRef);
     uint32_t        destRow           = destRef.row();
@@ -501,9 +509,7 @@ bool XLComments::setRichText(std::string const& cellRef, const XLRichText& richT
     using namespace std::literals::string_literals;
 
     XMLNode comment = commentNode(cellRef);
-    if (not comment.empty()) {
-        comment.remove_children();
-    }
+    if (not comment.empty()) { comment.remove_children(); }
     else {
         comment = m_commentList.first_child_of_type(pugi::node_element);
         while (not comment.empty()) {
@@ -543,7 +549,7 @@ bool XLComments::setRichText(std::string const& cellRef, const XLRichText& richT
         m_hintIndex = 0;
     }
 
-    m_commentMap[cellRef] = comment; // update cache
+    m_commentMap[cellRef] = comment;    // update cache
 
     if (comment.attribute("ref").empty()) comment.append_attribute("ref").set_value(destRef.address().c_str());
     appendAndSetAttribute(comment, "authorId", std::to_string(authorId_));
@@ -579,13 +585,21 @@ bool XLComments::setVisible(std::string const& cellRef, bool visible)
         return s.style().hide();
 }
 
-bool XLComments::set(std::string const& cellRef, std::string const& commentText, std::string const& authorName, uint16_t widthCols, uint16_t heightRows)
+bool XLComments::set(std::string const& cellRef,
+                     std::string const& commentText,
+                     std::string const& authorName,
+                     uint16_t           widthCols,
+                     uint16_t           heightRows)
 {
     uint16_t id = addAuthor(authorName);
     return set(cellRef, commentText, id, widthCols, heightRows);
 }
 
-bool XLComments::setRichText(std::string const& cellRef, const XLRichText& richText, std::string const& authorName, uint16_t widthCols, uint16_t heightRows)
+bool XLComments::setRichText(std::string const& cellRef,
+                             const XLRichText&  richText,
+                             std::string const& authorName,
+                             uint16_t           widthCols,
+                             uint16_t           heightRows)
 {
     uint16_t id = addAuthor(authorName);
     return setRichText(cellRef, richText, id, widthCols, heightRows);

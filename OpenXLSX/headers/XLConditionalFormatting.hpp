@@ -1,15 +1,15 @@
 #ifndef OPENXLSX_XLCONDITIONALFORMATTING_HPP
 #define OPENXLSX_XLCONDITIONALFORMATTING_HPP
 
-#include <cstdint>
-#include <string>
-#include <vector>
-#include <memory>
-#include <string_view>
 #include "OpenXLSX-Exports.hpp"
-#include "XLXmlParser.hpp"
-#include "XLStyles.hpp"
 #include "XLColor.hpp"
+#include "XLStyles.hpp"
+#include "XLXmlParser.hpp"
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace OpenXLSX
 {
@@ -67,15 +67,7 @@ namespace OpenXLSX
         Invalid   = 255
     };
 
-    enum class XLCfvoType : uint8_t {
-        Min        = 0,
-        Max        = 1,
-        Number     = 2,
-        Percent    = 3,
-        Formula    = 4,
-        Percentile = 5,
-        Invalid    = 255
-    };
+    enum class XLCfvoType : uint8_t { Min = 0, Max = 1, Number = 2, Percent = 3, Formula = 4, Percentile = 5, Invalid = 255 };
 
     OPENXLSX_EXPORT XLCfType XLCfTypeFromString(std::string const& typeString);
     OPENXLSX_EXPORT std::string  XLCfTypeToString(XLCfType cfType);
@@ -83,7 +75,7 @@ namespace OpenXLSX
     OPENXLSX_EXPORT std::string    XLCfOperatorToString(XLCfOperator cfOperator);
     OPENXLSX_EXPORT XLCfTimePeriod XLCfTimePeriodFromString(std::string const& timePeriodString);
     OPENXLSX_EXPORT std::string XLCfTimePeriodToString(XLCfTimePeriod cfTimePeriod);
-    OPENXLSX_EXPORT XLCfvoType XLCfvoTypeFromString(std::string const& cfvoTypeString);
+    OPENXLSX_EXPORT XLCfvoType  XLCfvoTypeFromString(std::string const& cfvoTypeString);
     OPENXLSX_EXPORT std::string XLCfvoTypeToString(XLCfvoType cfvoType);
 
     class OPENXLSX_EXPORT XLCfvo
@@ -92,6 +84,7 @@ namespace OpenXLSX
         friend class XLCfDataBar;
         friend class XLCfIconSet;
         friend class XLCfRule;
+
     public:
         XLCfvo();
         explicit XLCfvo(const XMLNode& node);
@@ -102,9 +95,9 @@ namespace OpenXLSX
         XLCfvo& operator=(const XLCfvo& other);
         XLCfvo& operator=(XLCfvo&& other) noexcept;
 
-        XLCfvoType type() const;
+        XLCfvoType  type() const;
         std::string value() const;
-        bool gte() const;
+        bool        gte() const;
 
         void setType(XLCfvoType type);
         void setValue(const std::string& value);
@@ -114,7 +107,7 @@ namespace OpenXLSX
 
     private:
         std::unique_ptr<XMLDocument> m_xmlDocument;
-        mutable XMLNode m_cfvoNode;
+        mutable XMLNode              m_cfvoNode;
     };
 
     class OPENXLSX_EXPORT XLCfColorScale
@@ -129,7 +122,7 @@ namespace OpenXLSX
         XLCfColorScale& operator=(const XLCfColorScale& other);
         XLCfColorScale& operator=(XLCfColorScale&& other) noexcept;
 
-        std::vector<XLCfvo> cfvos() const;
+        std::vector<XLCfvo>  cfvos() const;
         std::vector<XLColor> colors() const;
 
         void addValue(XLCfvoType type, const std::string& value, const XLColor& color);
@@ -139,7 +132,7 @@ namespace OpenXLSX
 
     private:
         std::unique_ptr<XMLDocument> m_xmlDocument;
-        mutable XMLNode m_colorScaleNode;
+        mutable XMLNode              m_colorScaleNode;
     };
 
     class OPENXLSX_EXPORT XLCfDataBar
@@ -154,8 +147,8 @@ namespace OpenXLSX
         XLCfDataBar& operator=(const XLCfDataBar& other);
         XLCfDataBar& operator=(XLCfDataBar&& other) noexcept;
 
-        XLCfvo min() const;
-        XLCfvo max() const;
+        XLCfvo  min() const;
+        XLCfvo  max() const;
         XLColor color() const;
 
         void setMin(XLCfvoType type, const std::string& value);
@@ -169,7 +162,7 @@ namespace OpenXLSX
 
     private:
         std::unique_ptr<XMLDocument> m_xmlDocument;
-        mutable XMLNode m_dataBarNode;
+        mutable XMLNode              m_dataBarNode;
     };
 
     class OPENXLSX_EXPORT XLCfIconSet
@@ -185,11 +178,11 @@ namespace OpenXLSX
         XLCfIconSet& operator=(XLCfIconSet&& other) noexcept;
 
         std::string iconSet() const;
-        void setIconSet(const std::string& iconSetName);
+        void        setIconSet(const std::string& iconSetName);
 
         std::vector<XLCfvo> cfvos() const;
-        void addValue(XLCfvoType type, const std::string& value);
-        void clear();
+        void                addValue(XLCfvoType type, const std::string& value);
+        void                clear();
 
         bool showValue() const;
         void setShowValue(bool show);
@@ -202,12 +195,13 @@ namespace OpenXLSX
 
     private:
         std::unique_ptr<XMLDocument> m_xmlDocument;
-        mutable XMLNode m_iconSetNode;
+        mutable XMLNode              m_iconSetNode;
     };
 
     class OPENXLSX_EXPORT XLCfRule
     {
         friend class XLCfRules;
+
     public:
         XLCfRule();
         explicit XLCfRule(const XMLNode& node);
@@ -218,7 +212,7 @@ namespace OpenXLSX
         XLCfRule& operator=(const XLCfRule& other);
         XLCfRule& operator=(XLCfRule&& other) noexcept;
 
-        bool empty() const;
+        bool                     empty() const;
         std::string              formula() const;
         std::vector<std::string> formulas() const;
         XLCfColorScale           colorScale() const;
@@ -226,32 +220,33 @@ namespace OpenXLSX
         XLCfIconSet              iconSet() const;
         XLUnsupportedElement     extLst() const;
 
-        XLCfType     type() const;
-        XLStyleIndex dxfId() const;
-        uint16_t     priority() const;
-        bool         stopIfTrue() const;
-        bool         aboveAverage() const;
-        bool         percent() const;
-        bool         bottom() const;
-        XLCfOperator Operator() const;
-        std::string text() const;
+        XLCfType       type() const;
+        XLStyleIndex   dxfId() const;
+        uint16_t       priority() const;
+        bool           stopIfTrue() const;
+        bool           aboveAverage() const;
+        bool           percent() const;
+        bool           bottom() const;
+        XLCfOperator   Operator() const;
+        std::string    text() const;
         XLCfTimePeriod timePeriod() const;
-        uint16_t rank() const;
-        int16_t  stdDev() const;
-        bool equalAverage() const;
+        uint16_t       rank() const;
+        int16_t        stdDev() const;
+        bool           equalAverage() const;
 
         XLCfRule& setFormula(std::string const& newFormula);
-        bool addFormula(std::string const& newFormula);
-        void clearFormulas();
-        bool setColorScale(XLCfColorScale const& newColorScale);
-        bool setDataBar(XLCfDataBar const& newDataBar);
-        bool setIconSet(XLCfIconSet const& newIconSet);
-        bool setExtLst(XLUnsupportedElement const& newExtLst);
+        bool      addFormula(std::string const& newFormula);
+        void      clearFormulas();
+        bool      setColorScale(XLCfColorScale const& newColorScale);
+        bool      setDataBar(XLCfDataBar const& newDataBar);
+        bool      setIconSet(XLCfIconSet const& newIconSet);
+        bool      setExtLst(XLUnsupportedElement const& newExtLst);
 
         XLCfRule& setType(XLCfType newType);
         XLCfRule& setDxfId(XLStyleIndex newDxfId);
 
         XLCfRule& setPriority(uint16_t newPriority);
+
     public:
         XLCfRule& setStopIfTrue(bool set = true);
         XLCfRule& setAboveAverage(bool set = true);
@@ -269,14 +264,9 @@ namespace OpenXLSX
         XMLNode node() const { return m_cfRuleNode; }
 
     private:
-        std::unique_ptr<XMLDocument> m_xmlDocument;
-        mutable XMLNode m_cfRuleNode;
-        inline static const std::vector<std::string_view> m_nodeOrder = {
-            "formula",
-            "colorScale",
-            "dataBar",
-            "iconSet",
-            "extLst"};
+        std::unique_ptr<XMLDocument>                      m_xmlDocument;
+        mutable XMLNode                                   m_cfRuleNode;
+        inline static const std::vector<std::string_view> m_nodeOrder = {"formula", "colorScale", "dataBar", "iconSet", "extLst"};
     };
 
     constexpr const char* XLDefaultCfRulePrefix = "\n\t\t";
@@ -293,26 +283,25 @@ namespace OpenXLSX
         XLCfRules& operator=(const XLCfRules& other);
         XLCfRules& operator=(XLCfRules&& other) noexcept = default;
 
-        bool empty() const;
-        uint16_t maxPriorityValue() const;
-        bool setPriority(size_t cfRuleIndex, uint16_t newPriority);
-        void renumberPriorities(uint16_t increment = 1);
-        size_t count() const;
-        XLCfRule cfRuleByIndex(size_t index) const;
-        XLCfRule operator[](size_t index) const { return cfRuleByIndex(index); }
-        size_t create(XLCfRule copyFrom = XLCfRule{}, std::string cfRulePrefix = XLDefaultCfRulePrefix);
+        bool        empty() const;
+        uint16_t    maxPriorityValue() const;
+        bool        setPriority(size_t cfRuleIndex, uint16_t newPriority);
+        void        renumberPriorities(uint16_t increment = 1);
+        size_t      count() const;
+        XLCfRule    cfRuleByIndex(size_t index) const;
+        XLCfRule    operator[](size_t index) const { return cfRuleByIndex(index); }
+        size_t      create(XLCfRule copyFrom = XLCfRule{}, std::string cfRulePrefix = XLDefaultCfRulePrefix);
         std::string summary() const;
 
     private:
-        mutable XMLNode m_conditionalFormattingNode;
-        inline static const std::vector<std::string_view> m_nodeOrder = {
-            "cfRule",
-            "extLst"};
+        mutable XMLNode                                   m_conditionalFormattingNode;
+        inline static const std::vector<std::string_view> m_nodeOrder = {"cfRule", "extLst"};
     };
 
     class OPENXLSX_EXPORT XLConditionalFormat
     {
         friend class XLConditionalFormats;
+
     public:
         XLConditionalFormat();
         explicit XLConditionalFormat(const XMLNode& node);
@@ -323,20 +312,18 @@ namespace OpenXLSX
         XLConditionalFormat& operator=(const XLConditionalFormat& other);
         XLConditionalFormat& operator=(XLConditionalFormat&& other) noexcept = default;
 
-        bool empty() const;
-        std::string sqref() const;
-        XLCfRules cfRules() const;
+        bool                 empty() const;
+        std::string          sqref() const;
+        XLCfRules            cfRules() const;
         XLUnsupportedElement extLst() const { return XLUnsupportedElement{}; }
 
-        bool setSqref(std::string newSqref);
-        bool setExtLst(XLUnsupportedElement const& newExtLst);
+        bool        setSqref(std::string newSqref);
+        bool        setExtLst(XLUnsupportedElement const& newExtLst);
         std::string summary() const;
 
     private:
-        mutable XMLNode m_conditionalFormattingNode;
-        inline static const std::vector<std::string_view> m_nodeOrder = {
-            "cfRule",
-            "extLst"};
+        mutable XMLNode                                   m_conditionalFormattingNode;
+        inline static const std::vector<std::string_view> m_nodeOrder = {"cfRule", "extLst"};
     };
 
     constexpr const char* XLDefaultConditionalFormattingPrefix = "\n\t";
@@ -353,21 +340,21 @@ namespace OpenXLSX
         XLConditionalFormats& operator=(const XLConditionalFormats& other);
         XLConditionalFormats& operator=(XLConditionalFormats&& other) noexcept = default;
 
-        bool empty() const;
-        size_t count() const;
+        bool                empty() const;
+        size_t              count() const;
         XLConditionalFormat conditionalFormatByIndex(size_t index) const;
         XLConditionalFormat operator[](size_t index) const { return conditionalFormatByIndex(index); }
-        size_t create(XLConditionalFormat copyFrom = XLConditionalFormat{},
-                      std::string conditionalFormattingPrefix = XLDefaultConditionalFormattingPrefix);
-        std::string summary() const;
+        size_t              create(XLConditionalFormat copyFrom                    = XLConditionalFormat{},
+                                   std::string         conditionalFormattingPrefix = XLDefaultConditionalFormattingPrefix);
+        std::string         summary() const;
 
     private:
-        mutable XMLNode m_sheetNode;
+        mutable XMLNode                      m_sheetNode;
         const std::vector<std::string_view>* m_nodeOrder;
     };
 
     // ----- Helper Builder Functions for XLCfRule -----
-    
+
     OPENXLSX_EXPORT XLCfRule XLColorScaleRule(const XLColor& minColor, const XLColor& maxColor);
     OPENXLSX_EXPORT XLCfRule XLColorScaleRule(const XLColor& minColor, const XLColor& midColor, const XLColor& maxColor);
     OPENXLSX_EXPORT XLCfRule XLDataBarRule(const XLColor& color, bool showValue = true);
@@ -387,6 +374,6 @@ namespace OpenXLSX
     OPENXLSX_EXPORT XLCfRule XLContainsErrorsRule();
     OPENXLSX_EXPORT XLCfRule XLNotContainsErrorsRule();
 
-}
+}    // namespace OpenXLSX
 
 #endif

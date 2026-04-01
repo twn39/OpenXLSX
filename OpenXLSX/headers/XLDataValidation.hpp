@@ -1,35 +1,24 @@
 #ifndef OPENXLSX_XLDATAVALIDATION_HPP
 #define OPENXLSX_XLDATAVALIDATION_HPP
 
-#include <string>
-#include <vector>
-#include <string_view>
 #include "OpenXLSX-Exports.hpp"
-#include "XLXmlParser.hpp"
 #include "XLCellReference.hpp"
+#include "XLXmlParser.hpp"
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace OpenXLSX
 {
     /**
      * @brief
      */
-    enum class XLDataValidationType
-    {
-        None,
-        Custom,
-        Date,
-        Decimal,
-        List,
-        TextLength,
-        Time,
-        Whole
-    };
+    enum class XLDataValidationType { None, Custom, Date, Decimal, List, TextLength, Time, Whole };
 
     /**
      * @brief
      */
-    enum class XLDataValidationOperator
-    {
+    enum class XLDataValidationOperator {
         Between,
         Equal,
         GreaterThan,
@@ -43,18 +32,12 @@ namespace OpenXLSX
     /**
      * @brief
      */
-    enum class XLDataValidationErrorStyle
-    {
-        Stop,
-        Warning,
-        Information
-    };
+    enum class XLDataValidationErrorStyle { Stop, Warning, Information };
 
     /**
      * @brief IME (Input Method Editor) mode for data validation
      */
-    enum class XLIMEMode
-    {
+    enum class XLIMEMode {
         NoControl,
         Off,
         On,
@@ -75,20 +58,20 @@ namespace OpenXLSX
      */
     struct OPENXLSX_EXPORT XLDataValidationConfig
     {
-        XLDataValidationType type = XLDataValidationType::None;
-        XLDataValidationOperator operator_ = XLDataValidationOperator::Between;
-        bool allowBlank = true;
-        bool showDropDown = false;
-        bool showInputMessage = false;
-        bool showErrorMessage = false;
-        XLIMEMode imeMode = XLIMEMode::NoControl;
-        XLDataValidationErrorStyle errorStyle = XLDataValidationErrorStyle::Stop;
-        std::string promptTitle;
-        std::string prompt;
-        std::string errorTitle;
-        std::string error;
-        std::string formula1;
-        std::string formula2;
+        XLDataValidationType       type             = XLDataValidationType::None;
+        XLDataValidationOperator   operator_        = XLDataValidationOperator::Between;
+        bool                       allowBlank       = true;
+        bool                       showDropDown     = false;
+        bool                       showInputMessage = false;
+        bool                       showErrorMessage = false;
+        XLIMEMode                  imeMode          = XLIMEMode::NoControl;
+        XLDataValidationErrorStyle errorStyle       = XLDataValidationErrorStyle::Stop;
+        std::string                promptTitle;
+        std::string                prompt;
+        std::string                errorTitle;
+        std::string                error;
+        std::string                formula1;
+        std::string                formula2;
 
         XLDataValidationConfig() = default;
         explicit XLDataValidationConfig(const XLDataValidation& dv);
@@ -112,7 +95,7 @@ namespace OpenXLSX
          * @return Reference to self for chaining.
          */
         XLDataValidation& requireList(const std::vector<std::string>& list, bool allowBlank = true);
-        
+
         /**
          * @brief Fluent API for setting a dropdown list validation using a formula or range reference.
          * @param formula Reference string (e.g. "$A$1:$A$10" or "Config!$B$1:$B$5").
@@ -121,28 +104,30 @@ namespace OpenXLSX
          */
         XLDataValidation& requireList(std::string_view formula, bool allowBlank = true);
 
-        XLDataValidation& setErrorAlert(std::string_view title, std::string_view message, XLDataValidationErrorStyle style = XLDataValidationErrorStyle::Stop);
+        XLDataValidation& setErrorAlert(std::string_view           title,
+                                        std::string_view           message,
+                                        XLDataValidationErrorStyle style = XLDataValidationErrorStyle::Stop);
         XLDataValidation& setPromptMessage(std::string_view title, std::string_view message);
 
         // Config API
         [[nodiscard]] XLDataValidationConfig config() const;
-        void applyConfig(const XLDataValidationConfig& config);
+        void                                 applyConfig(const XLDataValidationConfig& config);
 
         // Getters
-        [[nodiscard]] std::string sqref() const;
-        [[nodiscard]] XLDataValidationType type() const;
-        [[nodiscard]] XLDataValidationOperator operator_() const;
-        [[nodiscard]] bool allowBlank() const;
-        [[nodiscard]] std::string formula1() const;
-        [[nodiscard]] std::string formula2() const;
-        [[nodiscard]] bool showDropDown() const;
-        [[nodiscard]] bool showInputMessage() const;
-        [[nodiscard]] bool showErrorMessage() const;
-        [[nodiscard]] XLIMEMode imeMode() const;
-        [[nodiscard]] std::string promptTitle() const;
-        [[nodiscard]] std::string prompt() const;
-        [[nodiscard]] std::string errorTitle() const;
-        [[nodiscard]] std::string error() const;
+        [[nodiscard]] std::string                sqref() const;
+        [[nodiscard]] XLDataValidationType       type() const;
+        [[nodiscard]] XLDataValidationOperator   operator_() const;
+        [[nodiscard]] bool                       allowBlank() const;
+        [[nodiscard]] std::string                formula1() const;
+        [[nodiscard]] std::string                formula2() const;
+        [[nodiscard]] bool                       showDropDown() const;
+        [[nodiscard]] bool                       showInputMessage() const;
+        [[nodiscard]] bool                       showErrorMessage() const;
+        [[nodiscard]] XLIMEMode                  imeMode() const;
+        [[nodiscard]] std::string                promptTitle() const;
+        [[nodiscard]] std::string                prompt() const;
+        [[nodiscard]] std::string                errorTitle() const;
+        [[nodiscard]] std::string                error() const;
         [[nodiscard]] XLDataValidationErrorStyle errorStyle() const;
 
         // Setters
@@ -193,30 +178,34 @@ namespace OpenXLSX
         {
         public:
             using iterator_category = std::forward_iterator_tag;
-            using value_type = XLDataValidation;
-            using difference_type = std::ptrdiff_t;
-            using pointer = XLDataValidation*;
-            using reference = XLDataValidation&;
+            using value_type        = XLDataValidation;
+            using difference_type   = std::ptrdiff_t;
+            using pointer           = XLDataValidation*;
+            using reference         = XLDataValidation&;
 
             Iterator() : m_node(nullptr) {}
             explicit Iterator(XMLNode node) : m_node(node) {}
 
             value_type operator*() const { return XLDataValidation(m_node); }
-            
-            class Proxy {
+
+            class Proxy
+            {
                 value_type m_val;
+
             public:
                 explicit Proxy(value_type val) : m_val(val) {}
                 value_type* operator->() { return &m_val; }
             };
-            
+
             Proxy operator->() const { return Proxy(XLDataValidation(m_node)); }
 
-            Iterator& operator++() {
+            Iterator& operator++()
+            {
                 if (m_node) m_node = m_node.next_sibling("dataValidation");
                 return *this;
             }
-            Iterator operator++(int) {
+            Iterator operator++(int)
+            {
                 Iterator tmp = *this;
                 ++(*this);
                 return tmp;
@@ -231,13 +220,14 @@ namespace OpenXLSX
         XLDataValidations() : m_sheetNode(nullptr) {}
         explicit XLDataValidations(const XMLNode& node) : m_sheetNode(node) {}
 
-        [[nodiscard]] bool empty() const { 
+        [[nodiscard]] bool empty() const
+        {
             if (!m_sheetNode) return true;
             return !m_sheetNode.child("dataValidations");
         }
         [[nodiscard]] size_t count() const;
-        XLDataValidation append();
-        XLDataValidation addValidation(const XLDataValidationConfig& config, std::string_view sqref);
+        XLDataValidation     append();
+        XLDataValidation     addValidation(const XLDataValidationConfig& config, std::string_view sqref);
         /**
          * @brief Quick fluent factory for adding a validation rule to a cell range.
          * @param sqref The cell range (e.g. "A1:A10")
@@ -247,7 +237,7 @@ namespace OpenXLSX
 
         [[nodiscard]] XLDataValidation at(size_t index);
         [[nodiscard]] XLDataValidation at(std::string_view sqref);
-        void clear();
+        void                           clear();
 
         // Priority 1/4 New Properties: Precise Deletion and Iterators
         void remove(size_t index);
@@ -255,28 +245,27 @@ namespace OpenXLSX
 
         // Global properties
         [[nodiscard]] bool disablePrompts() const;
-        void setDisablePrompts(bool disable);
-        
+        void               setDisablePrompts(bool disable);
+
         [[nodiscard]] uint32_t xWindow() const;
-        void setXWindow(uint32_t x);
+        void                   setXWindow(uint32_t x);
 
         [[nodiscard]] uint32_t yWindow() const;
-        void setYWindow(uint32_t y);
+        void                   setYWindow(uint32_t y);
 
-        [[nodiscard]] Iterator begin() const {
+        [[nodiscard]] Iterator begin() const
+        {
             if (!m_sheetNode) return Iterator();
             auto dvNode = m_sheetNode.child("dataValidations");
             if (!dvNode) return Iterator();
             return Iterator(dvNode.child("dataValidation"));
         }
-        
-        [[nodiscard]] Iterator end() const {
-            return Iterator();
-        }
+
+        [[nodiscard]] Iterator end() const { return Iterator(); }
 
     private:
         mutable XMLNode m_sheetNode;
     };
-} // namespace OpenXLSX
+}    // namespace OpenXLSX
 
-#endif // OPENXLSX_XLDATAVALIDATION_HPP
+#endif    // OPENXLSX_XLDATAVALIDATION_HPP

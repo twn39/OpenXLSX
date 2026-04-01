@@ -1,11 +1,13 @@
-#include <catch2/catch_test_macros.hpp>
 #include <OpenXLSX.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
 using namespace OpenXLSX;
 
-TEST_CASE("XLConditionalFormatting Tests", "[ConditionalFormatting]") {
-    SECTION("XLCfvo Property Tests") {
+TEST_CASE("XLConditionalFormatting Tests", "[ConditionalFormatting]")
+{
+    SECTION("XLCfvo Property Tests")
+    {
         XLCfvo cfvo;
         cfvo.setType(XLCfvoType::Percent);
         cfvo.setValue("50");
@@ -16,7 +18,8 @@ TEST_CASE("XLConditionalFormatting Tests", "[ConditionalFormatting]") {
         REQUIRE(cfvo.gte() == false);
     }
 
-    SECTION("XLCfDataBar Property Tests") {
+    SECTION("XLCfDataBar Property Tests")
+    {
         XLCfDataBar dataBar;
         dataBar.setMin(XLCfvoType::Min, "0");
         dataBar.setMax(XLCfvoType::Max, "0");
@@ -29,12 +32,13 @@ TEST_CASE("XLConditionalFormatting Tests", "[ConditionalFormatting]") {
         REQUIRE(dataBar.showValue() == false);
     }
 
-    SECTION("XLCfColorScale Property Tests") {
+    SECTION("XLCfColorScale Property Tests")
+    {
         XLCfColorScale colorScale;
         colorScale.addValue(XLCfvoType::Min, "0", XLColor(255, 0, 0));
         colorScale.addValue(XLCfvoType::Max, "0", XLColor(0, 255, 0));
 
-        auto cfvos = colorScale.cfvos();
+        auto cfvos  = colorScale.cfvos();
         auto colors = colorScale.colors();
 
         REQUIRE(cfvos.size() == 2);
@@ -44,7 +48,8 @@ TEST_CASE("XLConditionalFormatting Tests", "[ConditionalFormatting]") {
         REQUIRE(colors[1] == XLColor(0, 255, 0));
     }
 
-    SECTION("XLCfIconSet Property Tests") {
+    SECTION("XLCfIconSet Property Tests")
+    {
         XLCfIconSet iconSet;
         iconSet.setIconSet("3Arrows");
         iconSet.addValue(XLCfvoType::Percent, "0");
@@ -58,7 +63,8 @@ TEST_CASE("XLConditionalFormatting Tests", "[ConditionalFormatting]") {
         REQUIRE(iconSet.reverse() == true);
     }
 
-    SECTION("Multi-Formula Support") {
+    SECTION("Multi-Formula Support")
+    {
         XLCfRule rule;
         rule.setType(XLCfType::CellIs);
         rule.setOperator(XLCfOperator::Between);
@@ -83,17 +89,18 @@ TEST_CASE("XLConditionalFormatting Tests", "[ConditionalFormatting]") {
         REQUIRE(rule.formulas().empty());
     }
 
-    SECTION("Worksheet Integration and OOXML Validation") {
+    SECTION("Worksheet Integration and OOXML Validation")
+    {
         XLDocument doc;
         doc.create("CFTest.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto cfIdx = wks.conditionalFormats().create();
-        auto cf = wks.conditionalFormats().conditionalFormatByIndex(cfIdx);
+        auto cf    = wks.conditionalFormats().conditionalFormatByIndex(cfIdx);
         cf.setSqref("A1:A10");
 
         auto ruleIdx = cf.cfRules().create();
-        auto rule = cf.cfRules().cfRuleByIndex(ruleIdx);
+        auto rule    = cf.cfRules().cfRuleByIndex(ruleIdx);
         rule.setType(XLCfType::DataBar);
 
         XLCfDataBar db;
@@ -106,9 +113,9 @@ TEST_CASE("XLConditionalFormatting Tests", "[ConditionalFormatting]") {
         XMLNode dbNode = rule.dataBar().node();
         REQUIRE_FALSE(dbNode.empty());
         REQUIRE(std::string(dbNode.name()) == "dataBar");
-        
+
         auto cfvoNodes = dbNode.children("cfvo");
-        int count = 0;
+        int  count     = 0;
         for (auto& n : cfvoNodes) {
             if (count == 0) {
                 REQUIRE(std::string(n.attribute("type").value()) == "num");
@@ -123,7 +130,8 @@ TEST_CASE("XLConditionalFormatting Tests", "[ConditionalFormatting]") {
         doc.close();
     }
 
-    SECTION("High-level Builder Functions") {
+    SECTION("High-level Builder Functions")
+    {
         XLDocument doc;
         doc.create("CFBuilderTest.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
@@ -175,7 +183,8 @@ TEST_CASE("XLConditionalFormatting Tests", "[ConditionalFormatting]") {
     }
 }
 
-TEST_CASE("Conditional Formatting Excel Generation", "[ConditionalFormattingGen]") {
+TEST_CASE("Conditional Formatting Excel Generation", "[ConditionalFormattingGen]")
+{
     XLDocument doc;
     doc.create("ConditionalFormatting_Verification.xlsx", XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
@@ -202,11 +211,11 @@ TEST_CASE("Conditional Formatting Excel Generation", "[ConditionalFormattingGen]
 
     // 3. Cell Is Rule (C列: 值 >= 5 时背景变黄，文字变红)
     XLDxf dxfC;
-    dxfC.font().setFontColor(XLColor("FFFF0000")); // 红字
+    dxfC.font().setFontColor(XLColor("FFFF0000"));    // 红字
     dxfC.fill().setFillType(XLPatternFill);
     dxfC.fill().setPatternType(XLPatternSolid);
-    dxfC.fill().setBackgroundColor(XLColor("FFFFFF00")); // 黄底
-    dxfC.fill().setColor(XLColor("FFFFFF00"));           // fgColor 也设为黄
+    dxfC.fill().setBackgroundColor(XLColor("FFFFFF00"));    // 黄底
+    dxfC.fill().setColor(XLColor("FFFFFF00"));              // fgColor 也设为黄
     auto cellIsRule = XLCellIsRule(">=", "5");
     wks.addConditionalFormatting("C1:C10", cellIsRule, dxfC);
 
@@ -220,6 +229,6 @@ TEST_CASE("Conditional Formatting Excel Generation", "[ConditionalFormattingGen]
     doc.save();
     doc.close();
     // No success output needed for quiet tests
-    
-    REQUIRE(true); // Dummy requirement to make Catch2 happy
+
+    REQUIRE(true);    // Dummy requirement to make Catch2 happy
 }

@@ -1,9 +1,9 @@
 // ===== External Includes ===== //
 #include <cassert>
-#include <pugixml.hpp>
-#include <regex>
 #include <charconv>
 #include <fmt/format.h>
+#include <pugixml.hpp>
+#include <regex>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLCell.hpp"
@@ -51,9 +51,8 @@ namespace
             result += XLCellReference::columnAsString(static_cast<uint16_t>(XLCellReference::columnAsNumber(colPart) + colOffset));
 
         if (rowAbsolute) result += '$';
-        if (rowAbsolute || rowOffset == 0) {
-            result += rowPart;
-        } else {
+        if (rowAbsolute || rowOffset == 0) { result += rowPart; }
+        else {
             uint32_t rowNum = 0;
             std::from_chars(rowPart.data(), rowPart.data() + rowPart.size(), rowNum);
             result += fmt::format("{}", rowNum + rowOffset);
@@ -68,15 +67,15 @@ namespace
     std::string shiftFormula(const std::string& formula, int32_t rowOffset, int16_t colOffset)
     {
         if (rowOffset == 0 && colOffset == 0) return formula;
-        
+
         std::string result;
         result.reserve(formula.length() + 10);
-        
+
         size_t i = 0;
         while (i < formula.length()) {
             char c = formula[i];
-            
-            if (c == '"') { // String literal
+
+            if (c == '"') {    // String literal
                 size_t end = formula.find('"', i + 1);
                 while (end != std::string::npos && end + 1 < formula.length() && formula[end + 1] == '"') {
                     end = formula.find('"', end + 2);
@@ -84,45 +83,50 @@ namespace
                 if (end == std::string::npos) end = formula.length() - 1;
                 result.append(formula, i, end - i + 1);
                 i = end + 1;
-            } else if (c == '\'') { // Sheet name reference with spaces
+            }
+            else if (c == '\'') {    // Sheet name reference with spaces
                 size_t end = formula.find('\'', i + 1);
                 if (end == std::string::npos) end = formula.length() - 1;
                 result.append(formula, i, end - i + 1);
                 i = end + 1;
-            } else if (std::isalpha(c) || c == '$') { 
+            }
+            else if (std::isalpha(c) || c == '$') {
                 size_t start = i;
-                
+
                 if (formula[i] == '$') i++;
-                
+
                 int alphaCount = 0;
                 while (i < formula.length() && std::isalpha(formula[i])) {
                     alphaCount++;
                     i++;
                 }
-                
+
                 if (i < formula.length() && formula[i] == '$') i++;
-                
+
                 int digitCount = 0;
                 while (i < formula.length() && std::isdigit(formula[i])) {
                     digitCount++;
                     i++;
                 }
-                
+
                 std::string token = formula.substr(start, i - start);
-                
+
                 // Valid reference check: Has column letters (1-3) and row digits, and not a function
-                if (alphaCount > 0 && alphaCount <= 3 && digitCount > 0 && 
-                    (i == formula.length() || formula[i] != '(') && token.back() != '$') {
+                if (alphaCount > 0 && alphaCount <= 3 && digitCount > 0 && (i == formula.length() || formula[i] != '(') &&
+                    token.back() != '$')
+                {
                     result += shiftReference(token, rowOffset, colOffset);
-                } else {
+                }
+                else {
                     result += token;
                 }
-            } else {
+            }
+            else {
                 result += c;
                 i++;
             }
         }
-        
+
         return result;
     }
 }    // namespace
@@ -308,13 +312,13 @@ XLFormula XLFormulaProxy::getFormula() const
 
             // Try to get XLDocument
             // We use friendship or public access if available. Since we are in the library, we can access internals.
-            auto& doc = const_cast<XLDocument&>(m_cell->m_sharedStrings.get().parentDoc());
+            auto&   doc       = const_cast<XLDocument&>(m_cell->m_sharedStrings.get().parentDoc());
             XMLNode sheetData = m_cellNode->parent().parent();
-            void* sheetKey = sheetData.internal_object();
-            
+            void*   sheetKey  = sheetData.internal_object();
+
             // Access the document's shared formulas cache
             auto& formulasCache = doc.m_sharedFormulas[sheetKey];
-            
+
             // If cache is empty for this sheet, populate it in one single pass (O(N))
             if (formulasCache.empty()) {
                 for (auto row : sheetData.children("row")) {
@@ -322,23 +326,19 @@ XLFormula XLFormulaProxy::getFormula() const
                         XMLNode f = cell.child("f");
                         if (!f.empty() && std::string(f.attribute("t").value()) == "shared" && !f.text().empty()) {
                             uint32_t sharedIndex = f.attribute("si").as_uint();
-                            auto masterRef = XLCellReference(cell.attribute("r").value());
-                            
-                            formulasCache[sharedIndex] = XLDocument::SharedFormula {
-                                f.text().get(),
-                                masterRef.row(),
-                                masterRef.column()
-                            };
+                            auto     masterRef   = XLCellReference(cell.attribute("r").value());
+
+                            formulasCache[sharedIndex] = XLDocument::SharedFormula{f.text().get(), masterRef.row(), masterRef.column()};
                         }
                     }
                 }
             }
-            
+
             // Look up the master formula in the populated O(1) cache
             auto it = formulasCache.find(si);
             if (it != formulasCache.end()) {
                 auto currentRef = m_cell->cellReference();
-                return XLFormula(shiftFormula(it->second.formula, 
+                return XLFormula(shiftFormula(it->second.formula,
                                               static_cast<int32_t>(currentRef.row()) - static_cast<int32_t>(it->second.baseRow),
                                               static_cast<int16_t>(currentRef.column()) - static_cast<int16_t>(it->second.baseCol)));
             }

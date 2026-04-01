@@ -1,5 +1,5 @@
-#include <catch2/catch_all.hpp>
 #include <OpenXLSX.hpp>
+#include <catch2/catch_all.hpp>
 #include <iostream>
 
 using namespace OpenXLSX;
@@ -37,7 +37,7 @@ TEST_CASE("Modern XLProperties Tests", "[XLProperties]")
         REQUIRE(props.revision() == "2");
         REQUIRE(props.category() == "Test Category");
         REQUIRE(props.contentStatus() == "Draft");
-        
+
         REQUIRE(props.created().toString("%Y-%m-%dT%H:%M:%SZ") == "2023-05-20T10:30:00Z");
         REQUIRE(props.modified().toString("%Y-%m-%dT%H:%M:%SZ") == "2024-03-15T14:45:30Z");
 
@@ -78,7 +78,7 @@ TEST_CASE("Modern XLProperties Tests", "[XLProperties]")
         // The template has its own defaults. Let's set ours and verify.
         appProps.setProperty("Application", "OpenXLSX");
         appProps.setProperty("AppVersion", "1.0");
-        
+
         REQUIRE(appProps.property("Application") == "OpenXLSX");
         REQUIRE(appProps.property("AppVersion") == "1.0");
 

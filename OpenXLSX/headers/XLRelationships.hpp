@@ -113,10 +113,10 @@ namespace OpenXLSX
          */
         explicit XLRelationshipItem(const XMLNode& node);
 
-        ~XLRelationshipItem() = default;
-        XLRelationshipItem(const XLRelationshipItem& other) = default;
-        XLRelationshipItem(XLRelationshipItem&& other) noexcept = default;
-        XLRelationshipItem& operator=(const XLRelationshipItem& other) = default;
+        ~XLRelationshipItem()                                              = default;
+        XLRelationshipItem(const XLRelationshipItem& other)                = default;
+        XLRelationshipItem(XLRelationshipItem&& other) noexcept            = default;
+        XLRelationshipItem& operator=(const XLRelationshipItem& other)     = default;
         XLRelationshipItem& operator=(XLRelationshipItem&& other) noexcept = default;
 
         [[nodiscard]] XLRelationshipType type() const;
@@ -147,9 +147,9 @@ namespace OpenXLSX
 
         ~XLRelationships();
 
-        XLRelationships(const XLRelationships& other) = default;
-        XLRelationships(XLRelationships&& other) noexcept = default;
-        XLRelationships& operator=(const XLRelationships& other) = default;
+        XLRelationships(const XLRelationships& other)                = default;
+        XLRelationships(XLRelationships&& other) noexcept            = default;
+        XLRelationships& operator=(const XLRelationships& other)     = default;
         XLRelationships& operator=(XLRelationships&& other) noexcept = default;
 
         [[nodiscard]] XLRelationshipItem relationshipById(std::string_view id) const;

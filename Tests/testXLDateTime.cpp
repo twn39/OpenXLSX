@@ -22,7 +22,7 @@ namespace
     template struct Rob<XLDocument_extractXmlFromArchive, &XLDocument::extractXmlFromArchive>;
 
     // Prototype declaration for the friend function
-    std::string (XLDocument::*get_impl(XLDocument_extractXmlFromArchive))(std::string_view);
+    std::string (XLDocument::* get_impl(XLDocument_extractXmlFromArchive))(std::string_view);
 
     // Function to call the protected member
     std::string getRawXml(XLDocument& doc, const std::string& path)
@@ -56,7 +56,7 @@ TEST_CASE("XLDateTime Tests", "[XLDateTime]")
         // 1. Start of Epoch
         XLDateTime dt1(1.0);
         REQUIRE(dt1.toString() == "1900-01-01 00:00:00");
-        REQUIRE(dt1.tm().tm_wday == 0); // Sunday
+        REQUIRE(dt1.tm().tm_wday == 0);    // Sunday
 
         // 2. Day 59 (1900-02-28)
         XLDateTime dt59(59.0);
@@ -114,7 +114,7 @@ TEST_CASE("XLDateTime Tests", "[XLDateTime]")
         REQUIRE_THROWS(XLDateTime(tmo));
 
         tmo.tm_year = 89;
-        tmo.tm_mon  = 12; // Invalid month (0-11)
+        tmo.tm_mon  = 12;    // Invalid month (0-11)
         REQUIRE_THROWS(XLDateTime(tmo));
 
         tmo.tm_mon = -1;
@@ -143,7 +143,7 @@ TEST_CASE("XLDateTime Tests", "[XLDateTime]")
     SECTION("Copy/Move and Assignment (Rule of Zero)")
     {
         XLDateTime dt(6069.86742);
-        
+
         // Copy
         XLDateTime dt2 = dt;
         REQUIRE(dt2.serial() == Catch::Approx(dt.serial()));
@@ -159,21 +159,21 @@ TEST_CASE("XLDateTime Tests", "[XLDateTime]")
 
         // std::tm assignment
         std::tm tmo;
-        tmo.tm_year = 124; // 2024
-        tmo.tm_mon  = 2;   // March
-        tmo.tm_mday = 12;
-        tmo.tm_hour = 12;
-        tmo.tm_min  = 0;
-        tmo.tm_sec  = 0;
+        tmo.tm_year  = 124;    // 2024
+        tmo.tm_mon   = 2;      // March
+        tmo.tm_mday  = 12;
+        tmo.tm_hour  = 12;
+        tmo.tm_min   = 0;
+        tmo.tm_sec   = 0;
         tmo.tm_isdst = -1;
-        
+
         dt4 = tmo;
         REQUIRE(dt4.serial() == Catch::Approx(45363.5));
     }
 
     SECTION("Implicit conversion")
     {
-        XLDateTime dt(45363.5); // 2024-03-12 12:00
+        XLDateTime dt(45363.5);    // 2024-03-12 12:00
 
         double  serial = dt;
         std::tm result = dt;
@@ -190,8 +190,8 @@ TEST_CASE("XLDateTime Tests", "[XLDateTime]")
         // Parsing
         XLDateTime dt = XLDateTime::fromString("2023-10-27 14:30:00");
         auto       tm = dt.tm();
-        REQUIRE(tm.tm_year == 123); // 2023 - 1900
-        REQUIRE(tm.tm_mon == 9);    // October (0-indexed)
+        REQUIRE(tm.tm_year == 123);    // 2023 - 1900
+        REQUIRE(tm.tm_mon == 9);       // October (0-indexed)
         REQUIRE(tm.tm_mday == 27);
 
         // Formatting
@@ -204,18 +204,18 @@ TEST_CASE("XLDateTime Tests", "[XLDateTime]")
 
     SECTION("Chrono Support")
     {
-        auto now = std::chrono::system_clock::now();
+        auto       now = std::chrono::system_clock::now();
         XLDateTime dt(now);
-        
+
         // Convert back to chrono
         auto back = dt.chrono();
-        
+
         // Check difference (should be less than 1 second due to Excel precision)
         auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - back).count();
         REQUIRE(std::abs(diff) <= 1);
 
         XLDateTime dtNow = XLDateTime::now();
-        REQUIRE(dtNow.serial() > 45000); 
+        REQUIRE(dtNow.serial() > 45000);
     }
 
     SECTION("Cell Integration and XML Storage")
@@ -238,11 +238,11 @@ TEST_CASE("XLDateTime Tests", "[XLDateTime]")
             XLDocument doc2;
             doc2.open(filename);
             auto wks2 = doc2.workbook().worksheet("Sheet1");
-            
+
             // Excel stores dates as doubles
             double serial = wks2.cell("A1").value().get<double>();
             REQUIRE(serial == Catch::Approx(45363.5));
-            
+
             XLDateTime dt2(serial);
             REQUIRE(dt2.toString() == "2024-03-12 12:00:00");
 

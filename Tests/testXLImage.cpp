@@ -1,12 +1,13 @@
 #include <OpenXLSX.hpp>
-#include <iostream>
-#include <fstream>
 #include <catch2/catch_test_macros.hpp>
+#include <fstream>
+#include <iostream>
 
 using namespace OpenXLSX;
 
 // Helper to read binary file
-std::string readBinaryFile(const std::string& path) {
+std::string readBinaryFile(const std::string& path)
+{
     std::ifstream file(path, std::ios::binary);
     if (!file) return "";
     return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -14,7 +15,8 @@ std::string readBinaryFile(const std::string& path) {
 
 TEST_CASE("XLImage Tests", "[XLImage]")
 {
-    SECTION("Add and read images") {
+    SECTION("Add and read images")
+    {
         XLDocument doc;
         doc.create("./testImage.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
@@ -23,7 +25,7 @@ TEST_CASE("XLImage Tests", "[XLImage]")
         REQUIRE_FALSE(imgData.empty());
 
         wks.addImage("test.png", imgData, 2, 2, 200, 200);
-        
+
         REQUIRE(wks.images().size() == 1);
         REQUIRE(wks.images()[0].name() == "test.png");
         REQUIRE(wks.images()[0].row() == 2);
@@ -36,19 +38,19 @@ TEST_CASE("XLImage Tests", "[XLImage]")
         XLDocument doc2;
         doc2.open("./testImage.xlsx");
         auto wks2 = doc2.workbook().worksheet("Sheet1");
-        
+
         auto imgs = wks2.images();
         REQUIRE(imgs.size() == 1);
         REQUIRE(imgs[0].name() == "test.png");
-        
+
         // Get raw data
-        std::string relId = imgs[0].relationshipId();
+        std::string relId   = imgs[0].relationshipId();
         std::string imgPath = wks2.drawing().relationships().relationshipById(relId).target();
         // Relationship target is relative to drawing file (xl/drawings/)
         // internal path should be xl/media/test.png
-        
+
         // Resolve path (simplified)
-        std::string fullPath = "xl/" + imgPath.substr(3); // remove "../"
+        std::string fullPath      = "xl/" + imgPath.substr(3);    // remove "../"
         std::string retrievedData = doc2.getImage(fullPath);
         REQUIRE(retrievedData == imgData);
 

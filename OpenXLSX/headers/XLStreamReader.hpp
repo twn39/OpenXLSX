@@ -7,14 +7,16 @@
 #include <string>
 #include <vector>
 
-namespace OpenXLSX {
+namespace OpenXLSX
+{
 
     class XLWorksheet;
 
-    class OPENXLSX_EXPORT XLStreamReader {
+    class OPENXLSX_EXPORT XLStreamReader
+    {
     public:
-        XLStreamReader() = default;
-        XLStreamReader(const XLStreamReader&) = delete;
+        XLStreamReader()                                 = default;
+        XLStreamReader(const XLStreamReader&)            = delete;
         XLStreamReader& operator=(const XLStreamReader&) = delete;
 
         XLStreamReader(XLStreamReader&& other) noexcept;
@@ -44,29 +46,29 @@ namespace OpenXLSX {
 
     private:
         friend class XLWorksheet;
-        
+
         explicit XLStreamReader(const XLWorksheet* worksheet);
-        
+
         void fetchMoreData();
 
         /**
          * @brief SAX state machine states for parsing worksheet XML.
          */
         enum class SaxState : uint8_t {
-            Scanning,       // Scanning for an opening '<'
-            InTagName,      // Reading the tag name
-            InAttrName,     // Reading an attribute name
-            AfterAttrName,  // After attr name, waiting for '='
-            InAttrValue,    // Reading an attribute value (inside quotes)
-            InTextContent,  // Inside a tag's text content (e.g., <v>42</v>)
-            InClosingTag,   // Reading a closing tag (after '</')
+            Scanning,         // Scanning for an opening '<'
+            InTagName,        // Reading the tag name
+            InAttrName,       // Reading an attribute name
+            AfterAttrName,    // After attr name, waiting for '='
+            InAttrValue,      // Reading an attribute value (inside quotes)
+            InTextContent,    // Inside a tag's text content (e.g., <v>42</v>)
+            InClosingTag,     // Reading a closing tag (after '</')
         };
 
         void cleanup();
 
         const XLWorksheet* m_worksheet{nullptr};
         void*              m_zipStream{nullptr};
-        
+
         std::string m_buffer;
         bool        m_eof{false};
         uint32_t    m_currentRow{0};
@@ -78,5 +80,5 @@ namespace OpenXLSX {
         std::string m_textContentBuf;
     };
 
-}
-#endif // OPENXLSX_XLSTREAMREADER_HPP
+}    // namespace OpenXLSX
+#endif    // OPENXLSX_XLSTREAMREADER_HPP

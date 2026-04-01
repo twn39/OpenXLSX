@@ -25,22 +25,27 @@ namespace
         if (typeString == "application/vnd.openxmlformats-package.relationships+xml") return XLContentType::Relationships;
         if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml") return XLContentType::Worksheet;
         if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.chartsheet+xml") return XLContentType::Chartsheet;
-        if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.externalLink+xml") return XLContentType::ExternalLink;
+        if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.externalLink+xml")
+            return XLContentType::ExternalLink;
         if (typeString == "application/vnd.openxmlformats-officedocument.theme+xml") return XLContentType::Theme;
         if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml") return XLContentType::Styles;
-        if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml") return XLContentType::SharedStrings;
+        if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml")
+            return XLContentType::SharedStrings;
         if (typeString == "application/vnd.openxmlformats-officedocument.drawing+xml") return XLContentType::Drawing;
         if (typeString == "application/vnd.openxmlformats-officedocument.drawingml.chart+xml") return XLContentType::Chart;
         if (typeString == "application/vnd.ms-office.chartstyle+xml") return XLContentType::ChartStyle;
         if (typeString == "application/vnd.ms-office.chartcolorstyle+xml") return XLContentType::ChartColorStyle;
         if (typeString == "application/vnd.ms-excel.controlproperties+xml") return XLContentType::ControlProperties;
-        if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.calcChain+xml") return XLContentType::CalculationChain;
+        if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.calcChain+xml")
+            return XLContentType::CalculationChain;
         if (typeString == "application/vnd.ms-office.vbaProject") return XLContentType::VBAProject;
         if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotTable+xml") return XLContentType::PivotTable;
         if (typeString == "application/vnd.ms-excel.slicer+xml") return XLContentType::Slicer;
         if (typeString == "application/vnd.ms-excel.slicerCache+xml") return XLContentType::SlicerCache;
-        if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheDefinition+xml") return XLContentType::PivotCacheDefinition;
-        if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheRecords+xml") return XLContentType::PivotCacheRecords;
+        if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheDefinition+xml")
+            return XLContentType::PivotCacheDefinition;
+        if (typeString == "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheRecords+xml")
+            return XLContentType::PivotCacheRecords;
         if (typeString == "application/vnd.openxmlformats-package.core-properties+xml") return XLContentType::CoreProperties;
         if (typeString == "application/vnd.openxmlformats-officedocument.extended-properties+xml") return XLContentType::ExtendedProperties;
         if (typeString == "application/vnd.openxmlformats-officedocument.custom-properties+xml") return XLContentType::CustomProperties;
@@ -54,34 +59,62 @@ namespace
     static std::string GetStringFromType(XLContentType type)
     {
         switch (type) {
-            case XLContentType::WorkbookMacroEnabled: return "application/vnd.ms-excel.sheet.macroEnabled.main+xml";
-            case XLContentType::Workbook: return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml";
-            case XLContentType::Relationships: return "application/vnd.openxmlformats-package.relationships+xml";
-            case XLContentType::Worksheet: return "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml";
-            case XLContentType::Chartsheet: return "application/vnd.openxmlformats-officedocument.spreadsheetml.chartsheet+xml";
-            case XLContentType::ExternalLink: return "application/vnd.openxmlformats-officedocument.spreadsheetml.externalLink+xml";
-            case XLContentType::Theme: return "application/vnd.openxmlformats-officedocument.theme+xml";
-            case XLContentType::Styles: return "application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml";
-            case XLContentType::SharedStrings: return "application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml";
-            case XLContentType::Drawing: return "application/vnd.openxmlformats-officedocument.drawing+xml";
-            case XLContentType::Chart: return "application/vnd.openxmlformats-officedocument.drawingml.chart+xml";
-            case XLContentType::ChartStyle: return "application/vnd.ms-office.chartstyle+xml";
-            case XLContentType::ChartColorStyle: return "application/vnd.ms-office.chartcolorstyle+xml";
-            case XLContentType::ControlProperties: return "application/vnd.ms-excel.controlproperties+xml";
-            case XLContentType::CalculationChain: return "application/vnd.openxmlformats-officedocument.spreadsheetml.calcChain+xml";
-            case XLContentType::VBAProject: return "application/vnd.ms-office.vbaProject";
-            case XLContentType::PivotTable: return "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotTable+xml";
-            case XLContentType::Slicer: return "application/vnd.ms-excel.slicer+xml";
-            case XLContentType::SlicerCache: return "application/vnd.ms-excel.slicerCache+xml";
-            case XLContentType::PivotCacheDefinition: return "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheDefinition+xml";
-            case XLContentType::PivotCacheRecords: return "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheRecords+xml";
-            case XLContentType::CoreProperties: return "application/vnd.openxmlformats-package.core-properties+xml";
-            case XLContentType::ExtendedProperties: return "application/vnd.openxmlformats-officedocument.extended-properties+xml";
-            case XLContentType::CustomProperties: return "application/vnd.openxmlformats-officedocument.custom-properties+xml";
-            case XLContentType::Comments: return "application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml";
-            case XLContentType::Table: return "application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml";
-            case XLContentType::VMLDrawing: return "application/vnd.openxmlformats-officedocument.vmlDrawing";
-            default: throw XLInternalError("Unknown ContentType");
+            case XLContentType::WorkbookMacroEnabled:
+                return "application/vnd.ms-excel.sheet.macroEnabled.main+xml";
+            case XLContentType::Workbook:
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml";
+            case XLContentType::Relationships:
+                return "application/vnd.openxmlformats-package.relationships+xml";
+            case XLContentType::Worksheet:
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml";
+            case XLContentType::Chartsheet:
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.chartsheet+xml";
+            case XLContentType::ExternalLink:
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.externalLink+xml";
+            case XLContentType::Theme:
+                return "application/vnd.openxmlformats-officedocument.theme+xml";
+            case XLContentType::Styles:
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml";
+            case XLContentType::SharedStrings:
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml";
+            case XLContentType::Drawing:
+                return "application/vnd.openxmlformats-officedocument.drawing+xml";
+            case XLContentType::Chart:
+                return "application/vnd.openxmlformats-officedocument.drawingml.chart+xml";
+            case XLContentType::ChartStyle:
+                return "application/vnd.ms-office.chartstyle+xml";
+            case XLContentType::ChartColorStyle:
+                return "application/vnd.ms-office.chartcolorstyle+xml";
+            case XLContentType::ControlProperties:
+                return "application/vnd.ms-excel.controlproperties+xml";
+            case XLContentType::CalculationChain:
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.calcChain+xml";
+            case XLContentType::VBAProject:
+                return "application/vnd.ms-office.vbaProject";
+            case XLContentType::PivotTable:
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotTable+xml";
+            case XLContentType::Slicer:
+                return "application/vnd.ms-excel.slicer+xml";
+            case XLContentType::SlicerCache:
+                return "application/vnd.ms-excel.slicerCache+xml";
+            case XLContentType::PivotCacheDefinition:
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheDefinition+xml";
+            case XLContentType::PivotCacheRecords:
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheRecords+xml";
+            case XLContentType::CoreProperties:
+                return "application/vnd.openxmlformats-package.core-properties+xml";
+            case XLContentType::ExtendedProperties:
+                return "application/vnd.openxmlformats-officedocument.extended-properties+xml";
+            case XLContentType::CustomProperties:
+                return "application/vnd.openxmlformats-officedocument.custom-properties+xml";
+            case XLContentType::Comments:
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml";
+            case XLContentType::Table:
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml";
+            case XLContentType::VMLDrawing:
+                return "application/vnd.openxmlformats-officedocument.vmlDrawing";
+            default:
+                throw XLInternalError("Unknown ContentType");
         }
     }
 }    // anonymous namespace
@@ -106,7 +139,6 @@ XLContentType XLContentItem::type() const { return GetContentTypeFromString(m_co
 
 std::string XLContentItem::path() const { return m_contentNode->attribute("PartName").value(); }
 
-
 XLContentTypes::XLContentTypes() = default;
 
 XLContentTypes::XLContentTypes(gsl::not_null<XLXmlData*> xmlData) : XLXmlFile(xmlData) {}
@@ -129,7 +161,8 @@ bool XLContentTypes::hasOverride(std::string_view path) const
         internalPath.reserve(path.size() + 1);
         internalPath = "/";
         internalPath.append(path);
-    } else {
+    }
+    else {
         internalPath = std::string(path);
     }
     return !xmlDocument().document_element().find_child_by_attribute("Override", "PartName", internalPath.c_str()).empty();
@@ -145,7 +178,7 @@ void XLContentTypes::addDefault(std::string_view extension, std::string_view con
     // Default nodes should come before Override nodes.
     // Find the first Override node to insert before it, or just append if none exists.
     const XMLNode firstOverride = root.child("Override");
-    XMLNode node{};
+    XMLNode       node{};
     if (firstOverride.empty())
         node = root.append_child("Default");
     else
@@ -160,18 +193,20 @@ void XLContentTypes::addDefault(std::string_view extension, std::string_view con
  */
 void XLContentTypes::addOverride(std::string_view path, XLContentType type)
 {
-    const std::string typeString   = GetStringFromType(type);
+    const std::string typeString = GetStringFromType(type);
     std::string       internalPath;
     if (!path.empty() && path.front() != '/') {
         internalPath.reserve(path.size() + 1);
         internalPath = "/";
         internalPath.append(path);
-    } else {
+    }
+    else {
         internalPath = std::string(path);
     }
 
-    const XMLNode lastOverride = xmlDocument().document_element().last_child_of_type(pugi::node_element);    // see if there's a last element
-    XMLNode node{};                                                                                    // scope declaration
+    const XMLNode lastOverride =
+        xmlDocument().document_element().last_child_of_type(pugi::node_element);    // see if there's a last element
+    XMLNode node{};                                                                 // scope declaration
 
     // Create new node in the [Content_Types].xml file
     if (lastOverride.empty())
@@ -186,26 +221,29 @@ void XLContentTypes::addOverride(std::string_view path, XLContentType type)
 
 void XLContentTypes::updateOverride(std::string_view path, XLContentType type)
 {
-    const std::string typeString   = GetStringFromType(type);
+    const std::string typeString = GetStringFromType(type);
     std::string       internalPath;
     if (!path.empty() && path.front() != '/') {
         internalPath.reserve(path.size() + 1);
         internalPath = "/";
         internalPath.append(path);
-    } else {
+    }
+    else {
         internalPath = std::string(path);
     }
 
     XMLNode node = xmlDocument().document_element().find_child_by_attribute("Override", "PartName", internalPath.c_str());
-    if (!node.empty()) {
-        node.attribute("ContentType").set_value(typeString.c_str());
-    } else {
+    if (!node.empty()) { node.attribute("ContentType").set_value(typeString.c_str()); }
+    else {
         addOverride(path, type);
     }
 }
 
 void XLContentTypes::deleteOverride(std::string_view path)
-{ xmlDocument().document_element().remove_child(xmlDocument().document_element().find_child_by_attribute("PartName", std::string(path).c_str())); }
+{
+    xmlDocument().document_element().remove_child(
+        xmlDocument().document_element().find_child_by_attribute("PartName", std::string(path).c_str()));
+}
 
 void XLContentTypes::deleteOverride(const XLContentItem& item) { deleteOverride(item.path()); }
 
@@ -215,9 +253,7 @@ void XLContentTypes::deleteDefault(std::string_view extension)
     // This is needed when stripping VBA macros: the Default entry for "bin" must
     // be removed alongside the archive file and workbook relationships.
     XMLNode node = xmlDocument().document_element().find_child_by_attribute("Default", "Extension", std::string(extension).c_str());
-    if (!node.empty()) {
-        xmlDocument().document_element().remove_child(node);
-    }
+    if (!node.empty()) { xmlDocument().document_element().remove_child(node); }
 }
 
 XLContentItem XLContentTypes::contentItem(std::string_view path)

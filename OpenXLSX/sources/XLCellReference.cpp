@@ -1,12 +1,12 @@
 // ===== External Includes ===== //
 #include <array>
+#include <cctype>    // std::isdigit
+#include <charconv>
 #include <cmath>
-#include <string_view>
+#include <cstdint>    // pull requests #216, #232
 #include <gsl/assert>
 #include <gsl/util>
-#include <charconv>
-#include <cctype>     // std::isdigit
-#include <cstdint>    // pull requests #216, #232
+#include <string_view>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLCellReference.hpp"
@@ -26,7 +26,8 @@ namespace
 }    // namespace
 
 /**
- * @details Initializes a reference using an Excel-style coordinate string (e.g., 'A1'). Serves as the primary parser for cell identities read directly from the DOM.
+ * @details Initializes a reference using an Excel-style coordinate string (e.g., 'A1'). Serves as the primary parser for cell identities
+ * read directly from the DOM.
  */
 XLCellReference::XLCellReference(std::string_view cellAddress)
 {
@@ -38,7 +39,8 @@ XLCellReference::XLCellReference(std::string_view cellAddress)
 }
 
 /**
- * @details Directly binds explicit row and column indices. Offers higher performance than string parsing when iterating systematically (e.g., over a numerical range).
+ * @details Directly binds explicit row and column indices. Offers higher performance than string parsing when iterating systematically
+ * (e.g., over a numerical range).
  */
 XLCellReference::XLCellReference(uint32_t row, uint16_t column)
 {
@@ -47,7 +49,8 @@ XLCellReference::XLCellReference(uint32_t row, uint16_t column)
 }
 
 /**
- * @details Binds a hybrid coordinate system using explicit numeric rows and alphabetical column headers, typically for convenient manual cell selection.
+ * @details Binds a hybrid coordinate system using explicit numeric rows and alphabetical column headers, typically for convenient manual
+ * cell selection.
  */
 XLCellReference::XLCellReference(uint32_t row, std::string_view column)
 {
@@ -143,7 +146,8 @@ XLCellReference XLCellReference::operator--(int)
 uint32_t XLCellReference::row() const noexcept { return m_row; }
 
 /**
- * @details Mutates the 1-based vertical index. Automatically recalculates the full Excel-style string address to keep the internal state in sync.
+ * @details Mutates the 1-based vertical index. Automatically recalculates the full Excel-style string address to keep the internal state in
+ * sync.
  */
 void XLCellReference::setRow(uint32_t row)
 {
@@ -170,7 +174,8 @@ void XLCellReference::setColumn(uint16_t column)
 }
 
 /**
- * @details Re-binds the object to an entirely new coordinate, bypassing dual string recalculation by batching the integer mutations together.
+ * @details Re-binds the object to an entirely new coordinate, bypassing dual string recalculation by batching the integer mutations
+ * together.
  */
 void XLCellReference::setRowAndColumn(uint32_t row, uint16_t column)
 {
@@ -182,12 +187,14 @@ void XLCellReference::setRowAndColumn(uint32_t row, uint16_t column)
 }
 
 /**
- * @details Provides the cached Excel-style cell identifier (e.g. 'A1'), which is directly compliant with the OOXML <c r=\"A1\"> coordinate schema requirement.
+ * @details Provides the cached Excel-style cell identifier (e.g. 'A1'), which is directly compliant with the OOXML <c r=\"A1\"> coordinate
+ * schema requirement.
  */
 std::string XLCellReference::address() const { return m_cellAddress; }
 
 /**
- * @details Parses an Excel-style coordinate string (e.g., 'A1') and breaks it down into raw 1-based vertical and horizontal integer components for internal programmatic routing.
+ * @details Parses an Excel-style coordinate string (e.g., 'A1') and breaks it down into raw 1-based vertical and horizontal integer
+ * components for internal programmatic routing.
  */
 void XLCellReference::setAddress(std::string_view address)
 {
@@ -198,12 +205,13 @@ void XLCellReference::setAddress(std::string_view address)
 }
 
 /**
- * @details Highly optimized formatter converting integer indices to strings (using std::to_chars if available) to minimize serialization overhead.
+ * @details Highly optimized formatter converting integer indices to strings (using std::to_chars if available) to minimize serialization
+ * overhead.
  */
 std::string XLCellReference::rowAsString(uint32_t row)
 {
     std::array<char, 11> str{};    // NOLINT (11 chars enough for max uint32_t)
-    const auto*         p = std::to_chars(str.data(), str.data() + str.size(), row).ptr;
+    const auto*          p = std::to_chars(str.data(), str.data() + str.size(), row).ptr;
     return std::string{str.data(), static_cast<size_t>(p - str.data())};
 }
 
@@ -218,7 +226,8 @@ uint32_t XLCellReference::rowAsNumber(std::string_view row)
 }
 
 /**
- * @details Translates a 1-based horizontal integer index into the standard Excel alphabetical column notation (A, B, ..., Z, AA, AB...). Required for generating compliant OOXML XML nodes.
+ * @details Translates a 1-based horizontal integer index into the standard Excel alphabetical column notation (A, B, ..., Z, AA, AB...).
+ * Required for generating compliant OOXML XML nodes.
  */
 std::string XLCellReference::columnAsString(uint16_t column)
 {
@@ -248,7 +257,8 @@ std::string XLCellReference::columnAsString(uint16_t column)
 }
 
 /**
- * @details Performs Base26 reverse-translation from alphabetical column notation into a numeric index. Throws XLInputError for non-alphabet characters or violations of maximum bounds.
+ * @details Performs Base26 reverse-translation from alphabetical column notation into a numeric index. Throws XLInputError for non-alphabet
+ * characters or violations of maximum bounds.
  */
 uint16_t XLCellReference::columnAsNumber(std::string_view column)
 {
@@ -266,12 +276,11 @@ uint16_t XLCellReference::columnAsNumber(std::string_view column)
     // ===== If the full string was decoded and colNo is within allowed range [1;MAX_COLS]
     if (letterCount == column.length() and colNo > 0 and colNo <= MAX_COLS) return gsl::narrow_cast<uint16_t>(colNo);
     throw XLInputError("XLCellReference::columnAsNumber - column \"" + std::string(column) + "\" is invalid");
-
-
 }
 
 /**
- * @details Splits a consolidated alphanumeric coordinate (e.g., 'A1') into discrete row and column components. Throws if the format is malformed or out of bounds.
+ * @details Splits a consolidated alphanumeric coordinate (e.g., 'A1') into discrete row and column components. Throws if the format is
+ * malformed or out of bounds.
  */
 XLCoordinates XLCellReference::coordinatesFromAddress(std::string_view address)
 {
@@ -296,6 +305,4 @@ XLCoordinates XLCellReference::coordinatesFromAddress(std::string_view address)
             return {gsl::narrow_cast<uint32_t>(rowNo), gsl::narrow_cast<uint16_t>(colNo)};
     }
     throw XLInputError("XLCellReference::coordinatesFromAddress - address \"" + std::string(address) + "\" is invalid");
-
-
 }

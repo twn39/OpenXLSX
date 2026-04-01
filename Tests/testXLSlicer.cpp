@@ -1,7 +1,7 @@
-#include <catch2/catch_test_macros.hpp>
 #include "OpenXLSX.hpp"
-#include <iostream>
+#include <catch2/catch_test_macros.hpp>
 #include <fstream>
+#include <iostream>
 #include <string>
 
 using namespace OpenXLSX;
@@ -16,25 +16,25 @@ TEST_CASE("Table Slicer API and OOXML Validation", "[XLSlicer]")
     wks.cell("A1").value() = "Region";
     wks.cell("B1").value() = "Product";
     wks.cell("C1").value() = "Sales";
-    
+
     wks.cell("A2").value() = "North";
     wks.cell("B2").value() = "Apple";
     wks.cell("C2").value() = 100;
-    
+
     wks.cell("A3").value() = "South";
     wks.cell("B3").value() = "Banana";
     wks.cell("C3").value() = 200;
 
     auto tables = wks.tables();
-    auto table = tables.add("SalesTable", "A1:C3");
+    auto table  = tables.add("SalesTable", "A1:C3");
 
     XLSlicerOptions opts1;
-    opts1.name = "SlicerRegion";
+    opts1.name    = "SlicerRegion";
     opts1.caption = "Filter Region";
     wks.addTableSlicer("E2", table, "Region", opts1);
 
     XLSlicerOptions opts2;
-    opts2.name = "SlicerProduct";
+    opts2.name    = "SlicerProduct";
     opts2.caption = "Filter Product";
     wks.addTableSlicer("G2", table, "Product", opts2);
 
@@ -51,7 +51,7 @@ TEST_CASE("Table Slicer API and OOXML Validation", "[XLSlicer]")
     // Verify relations and content types via accessing raw XML
     // In OpenXLSX we can access raw XML node trees
     auto sheetNode = wks2.xmlDocument().document_element();
-    auto extLst = sheetNode.child("extLst");
+    auto extLst    = sheetNode.child("extLst");
     REQUIRE(!extLst.empty());
 
     // Check for slicerList extension
@@ -70,19 +70,19 @@ TEST_CASE("Table Slicer API and OOXML Validation", "[XLSlicer]")
     REQUIRE(slicerRefCount == 2);
 
     // Verify Drawing XML structure
-    auto drwRoot = wks2.drawing().xmlDocument().document_element();
-    int anchorCount = 0;
-    int graphicFrameCount = 0;
-    int fallbackCount = 0;
+    auto drwRoot           = wks2.drawing().xmlDocument().document_element();
+    int  anchorCount       = 0;
+    int  graphicFrameCount = 0;
+    int  fallbackCount     = 0;
     for (auto anchor : drwRoot.children("xdr:twoCellAnchor")) {
         anchorCount++;
         auto altContent = anchor.child("mc:AlternateContent");
         REQUIRE(!altContent.empty());
-        
+
         auto choice = altContent.child("mc:Choice");
         REQUIRE(!choice.empty());
         REQUIRE(std::string(choice.attribute("Requires").value()) == "sle15");
-        
+
         auto graphicFrame = choice.child("xdr:graphicFrame");
         if (!graphicFrame.empty()) {
             graphicFrameCount++;
@@ -99,14 +99,14 @@ TEST_CASE("Table Slicer API and OOXML Validation", "[XLSlicer]")
             REQUIRE(!fallback.child("xdr:sp").empty());
         }
     }
-    
+
     // 2 slicers should generate 2 anchors, 2 graphic frames, and 2 fallbacks
     REQUIRE(anchorCount == 2);
     REQUIRE(graphicFrameCount == 2);
     REQUIRE(fallbackCount == 2);
 
     // 3. Document Level Validation
-    auto wbkNode = doc2.workbook().xmlDocument().document_element();
+    auto wbkNode   = doc2.workbook().xmlDocument().document_element();
     auto wbkExtLst = wbkNode.child("extLst");
     REQUIRE(!wbkExtLst.empty());
 
@@ -128,7 +128,7 @@ TEST_CASE("Table Slicer API and OOXML Validation", "[XLSlicer]")
     XLDocument doc3;
     doc3.open("./TableSlicerFullTest_SaveAs.xlsx");
     REQUIRE(doc3.workbook().worksheet("Sheet1").hasDrawing() == true);
-    
+
     // Ensure table parsing still works
     auto tb = doc3.workbook().worksheet("Sheet1").tables().table("SalesTable");
     REQUIRE(tb.valid() == true);

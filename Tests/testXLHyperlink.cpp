@@ -1,11 +1,13 @@
-#include <catch2/catch_all.hpp>
 #include <OpenXLSX.hpp>
+#include <catch2/catch_all.hpp>
 #include <pugixml.hpp>
 
 using namespace OpenXLSX;
 
-TEST_CASE("XLWorksheet Hyperlink Support", "[XLWorksheet]") {
-    SECTION("Add External Hyperlink") {
+TEST_CASE("XLWorksheet Hyperlink Support", "[XLWorksheet]")
+{
+    SECTION("Add External Hyperlink")
+    {
         XLDocument doc;
         doc.create("./testHyperlink.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
@@ -20,21 +22,22 @@ TEST_CASE("XLWorksheet Hyperlink Support", "[XLWorksheet]") {
         XLDocument doc2;
         doc2.open("./testHyperlink.xlsx");
         auto wks2 = doc2.workbook().worksheet("Sheet1");
-        
+
         pugi::xml_document sheetDoc;
         sheetDoc.load_string(wks2.xmlData().c_str());
         auto hyperlinks = sheetDoc.child("worksheet").child("hyperlinks");
         REQUIRE_FALSE(hyperlinks.empty());
-        
+
         auto link = hyperlinks.child("hyperlink");
         REQUIRE(std::string(link.attribute("ref").value()) == "A1");
         REQUIRE_FALSE(link.attribute("r:id").empty());
         REQUIRE(std::string(link.attribute("tooltip").value()) == "Click to visit Google");
-        
+
         doc2.close();
     }
 
-    SECTION("Add Internal Hyperlink") {
+    SECTION("Add Internal Hyperlink")
+    {
         XLDocument doc;
         doc.create("./testInternalLink.xlsx", XLForceOverwrite);
         doc.workbook().addWorksheet("TargetSheet");
@@ -50,17 +53,18 @@ TEST_CASE("XLWorksheet Hyperlink Support", "[XLWorksheet]") {
         XLDocument doc2;
         doc2.open("./testInternalLink.xlsx");
         auto wks2 = doc2.workbook().worksheet("Sheet1");
-        
+
         pugi::xml_document sheetDoc;
         sheetDoc.load_string(wks2.xmlData().c_str());
         auto link = sheetDoc.child("worksheet").child("hyperlinks").child("hyperlink");
         REQUIRE(std::string(link.attribute("ref").value()) == "B2");
         REQUIRE(std::string(link.attribute("location").value()) == "TargetSheet!A1");
-        
+
         doc2.close();
     }
 
-    SECTION("Hyperlink CRUD Operations") {
+    SECTION("Hyperlink CRUD Operations")
+    {
         XLDocument doc;
         doc.create("./testHyperlinkCRUD.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");

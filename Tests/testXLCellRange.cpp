@@ -223,11 +223,7 @@ TEST_CASE("XLCellRange Bulk Operations", "[XLCellRange]")
     auto range = wks.range("B2:D4");
 
     // 1. Matrix Write
-    std::vector<std::vector<int>> matrix = {
-        {1, 2, 3},
-        {4, 5, 6},
-        {7, 8, 9}
-    };
+    std::vector<std::vector<int>> matrix = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
     range.setValue(matrix);
 
     // Verify
@@ -242,13 +238,13 @@ TEST_CASE("XLCellRange Bulk Operations", "[XLCellRange]")
 
     // 3. Batch Style Apply
     XLStyle style;
-    style.font.bold = true;
+    style.font.bold    = true;
     style.fill.pattern = XLPatternSolid;
-    style.fill.fgColor = XLColor("FFFF00"); // Yellow
+    style.fill.fgColor = XLColor("FFFF00");    // Yellow
     range.applyStyle(style);
 
     // 4. Set Border Outline
-    range.setBorderOutline(XLLineStyleThick, XLColor("0000FF")); // Blue thick border
+    range.setBorderOutline(XLLineStyleThick, XLColor("0000FF"));    // Blue thick border
 
     doc.save();
     doc.close();
@@ -256,7 +252,7 @@ TEST_CASE("XLCellRange Bulk Operations", "[XLCellRange]")
     // Reopen and verify
     XLDocument doc2;
     doc2.open("./testXLCellRange_bulk.xlsx");
-    auto wks2 = doc2.workbook().worksheet("Sheet1");
+    auto  wks2   = doc2.workbook().worksheet("Sheet1");
     auto& styles = doc2.styles();
 
     // Verify cell B2 (Top-Left corner) has thick top and left borders
@@ -271,7 +267,7 @@ TEST_CASE("XLCellRange Bulk Operations", "[XLCellRange]")
     auto borderC3 = styles.borders().borderByIndex(formatC3.borderIndex());
     REQUIRE(borderC3.top().style() != XLLineStyleThick);
     REQUIRE(borderC3.left().style() != XLLineStyleThick);
-    
+
     // Check background style applied via batch
     auto fillC3 = styles.fills().fillByIndex(formatC3.fillIndex());
     REQUIRE(fillC3.patternType() == XLPatternSolid);

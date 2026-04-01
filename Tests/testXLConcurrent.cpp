@@ -1,6 +1,6 @@
 #include <OpenXLSX.hpp>
-#include <catch2/catch_all.hpp>
 #include <atomic>
+#include <catch2/catch_all.hpp>
 #include <thread>
 #include <vector>
 
@@ -17,13 +17,11 @@ TEST_CASE("XLConcurrent Tests", "[XLConcurrent]")
         // Setup: create document with multiple worksheets
         XLDocument doc;
         doc.create(filename, XLForceOverwrite);
-        for (int i = 2; i <= numSheets; ++i)
-            doc.workbook().addWorksheet("Sheet" + std::to_string(i));
+        for (int i = 2; i <= numSheets; ++i) doc.workbook().addWorksheet("Sheet" + std::to_string(i));
 
         // Get worksheet references before spawning threads
         std::vector<XLWorksheet> worksheets;
-        for (int i = 1; i <= numSheets; ++i)
-            worksheets.push_back(doc.workbook().worksheet("Sheet" + std::to_string(i)));
+        for (int i = 1; i <= numSheets; ++i) worksheets.push_back(doc.workbook().worksheet("Sheet" + std::to_string(i)));
 
         // Concurrent writes: each thread writes to its own worksheet
         std::vector<std::thread> threads;
@@ -35,12 +33,13 @@ TEST_CASE("XLConcurrent Tests", "[XLConcurrent]")
                     auto& wks = worksheets[static_cast<size_t>(t)];
                     for (int row = 1; row <= numRows; ++row) {
                         wks.cell(static_cast<uint32_t>(row), 1).value() = row;
-                        wks.cell(static_cast<uint32_t>(row), 2).value() =
-                            "Sheet" + std::to_string(t + 1) + "_Row" + std::to_string(row);
+                        wks.cell(static_cast<uint32_t>(row), 2).value() = "Sheet" + std::to_string(t + 1) + "_Row" + std::to_string(row);
                         wks.cell(static_cast<uint32_t>(row), 3).value() = row * 1.5;
                     }
                 }
-                catch (...) { ++errors; }
+                catch (...) {
+                    ++errors;
+                }
             });
         }
 
@@ -59,8 +58,7 @@ TEST_CASE("XLConcurrent Tests", "[XLConcurrent]")
             auto wks = doc.workbook().worksheet("Sheet" + std::to_string(t + 1));
             REQUIRE(wks.cell(1, 1).value().get<int>() == 1);
             REQUIRE(wks.cell(numRows, 1).value().get<int>() == numRows);
-            REQUIRE(wks.cell(1, 2).value().get<std::string>() ==
-                    "Sheet" + std::to_string(t + 1) + "_Row1");
+            REQUIRE(wks.cell(1, 2).value().get<std::string>() == "Sheet" + std::to_string(t + 1) + "_Row1");
             REQUIRE(wks.cell(1, 3).value().get<double>() == Catch::Approx(1.5));
         }
 
@@ -93,7 +91,7 @@ TEST_CASE("XLConcurrent Tests", "[XLConcurrent]")
         // lock; calling it concurrently from multiple threads is a data race
         // even for pure reads. Obtain both handles sequentially here, then let
         // the reader threads do only cell-level reads in parallel.
-        XLDocument       doc;
+        XLDocument doc;
         doc.open(filename);
         std::atomic<int> errors{0};
 
@@ -107,7 +105,9 @@ TEST_CASE("XLConcurrent Tests", "[XLConcurrent]")
                     if (val != row) ++errors;
                 }
             }
-            catch (...) { ++errors; }
+            catch (...) {
+                ++errors;
+            }
         });
 
         std::thread reader2([&]() {
@@ -117,7 +117,9 @@ TEST_CASE("XLConcurrent Tests", "[XLConcurrent]")
                     if (val != row * 10) ++errors;
                 }
             }
-            catch (...) { ++errors; }
+            catch (...) {
+                ++errors;
+            }
         });
 
         reader1.join();
@@ -134,12 +136,10 @@ TEST_CASE("XLConcurrent Tests", "[XLConcurrent]")
 
         XLDocument doc;
         doc.create(filename, XLForceOverwrite);
-        for (int i = 2; i <= numThreads; ++i)
-            doc.workbook().addWorksheet("Sheet" + std::to_string(i));
+        for (int i = 2; i <= numThreads; ++i) doc.workbook().addWorksheet("Sheet" + std::to_string(i));
 
         std::vector<XLWorksheet> worksheets;
-        for (int i = 1; i <= numThreads; ++i)
-            worksheets.push_back(doc.workbook().worksheet("Sheet" + std::to_string(i)));
+        for (int i = 1; i <= numThreads; ++i) worksheets.push_back(doc.workbook().worksheet("Sheet" + std::to_string(i)));
 
         // All threads write the SAME strings to force shared string contention
         std::vector<std::thread> threads;
@@ -150,10 +150,11 @@ TEST_CASE("XLConcurrent Tests", "[XLConcurrent]")
                 try {
                     auto& wks = worksheets[static_cast<size_t>(t)];
                     for (int i = 1; i <= numStrings; ++i)
-                        wks.cell(static_cast<uint32_t>(i), 1).value() =
-                            "CommonString_" + std::to_string(i);
+                        wks.cell(static_cast<uint32_t>(i), 1).value() = "CommonString_" + std::to_string(i);
                 }
-                catch (...) { ++errors; }
+                catch (...) {
+                    ++errors;
+                }
             });
         }
 
@@ -170,8 +171,7 @@ TEST_CASE("XLConcurrent Tests", "[XLConcurrent]")
             auto wks = doc.workbook().worksheet("Sheet" + std::to_string(t + 1));
             for (int i = 1; i <= numStrings; ++i) {
                 INFO("Thread: " << t << " String Index: " << i);
-                REQUIRE(wks.cell(static_cast<uint32_t>(i), 1).value().get<std::string>() ==
-                        "CommonString_" + std::to_string(i));
+                REQUIRE(wks.cell(static_cast<uint32_t>(i), 1).value().get<std::string>() == "CommonString_" + std::to_string(i));
             }
         }
         doc.close();
@@ -187,12 +187,10 @@ TEST_CASE("XLConcurrent Tests", "[XLConcurrent]")
 
         XLDocument doc;
         doc.create(filename, XLForceOverwrite);
-        for (int i = 2; i <= numSheets; ++i)
-            doc.workbook().addWorksheet("Sheet" + std::to_string(i));
+        for (int i = 2; i <= numSheets; ++i) doc.workbook().addWorksheet("Sheet" + std::to_string(i));
 
         std::vector<XLWorksheet> worksheets;
-        for (int i = 1; i <= numSheets; ++i)
-            worksheets.push_back(doc.workbook().worksheet("Sheet" + std::to_string(i)));
+        for (int i = 1; i <= numSheets; ++i) worksheets.push_back(doc.workbook().worksheet("Sheet" + std::to_string(i)));
 
         std::atomic<int>         errors{0};
         std::vector<std::thread> writers;
@@ -202,23 +200,23 @@ TEST_CASE("XLConcurrent Tests", "[XLConcurrent]")
                 try {
                     auto& wks = worksheets[static_cast<size_t>(t)];
                     for (int row = 1; row <= numRows; ++row)
-                        wks.cell(static_cast<uint32_t>(row), 1).value() =
-                            "Str_" + std::to_string(t) + "_" + std::to_string(row);
+                        wks.cell(static_cast<uint32_t>(row), 1).value() = "Str_" + std::to_string(t) + "_" + std::to_string(row);
                 }
-                catch (...) { ++errors; }
+                catch (...) {
+                    ++errors;
+                }
             });
         }
 
         // Concurrently rename sheets while writers run (acquires doc unique_lock)
         std::thread mutator([&]() {
             try {
-                for (int i = 0; i < numSheets; ++i)
-                    worksheets[static_cast<size_t>(i)].setName(
-                        "RenamedSheet" + std::to_string(i + 1));
-                for (int i = 0; i < numSheets; ++i)
-                    worksheets[static_cast<size_t>(i)].setName("Sheet" + std::to_string(i + 1));
+                for (int i = 0; i < numSheets; ++i) worksheets[static_cast<size_t>(i)].setName("RenamedSheet" + std::to_string(i + 1));
+                for (int i = 0; i < numSheets; ++i) worksheets[static_cast<size_t>(i)].setName("Sheet" + std::to_string(i + 1));
             }
-            catch (...) { ++errors; }
+            catch (...) {
+                ++errors;
+            }
         });
 
         for (auto& th : writers) th.join();

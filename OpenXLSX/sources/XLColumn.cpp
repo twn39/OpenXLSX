@@ -42,17 +42,12 @@ bool XLColumn::isHidden() const { return m_columnNode.attribute("hidden").as_boo
  * @details
  */
 void XLColumn::setHidden(bool state)    // NOLINT
-{
-    getOrCreateAttribute("hidden").set_value(state ? 1 : 0);
-}
+{ getOrCreateAttribute("hidden").set_value(state ? 1 : 0); }
 
 /**
  * @details Get the outline level of the column.
  */
-uint8_t XLColumn::outlineLevel() const
-{
-    return static_cast<uint8_t>(m_columnNode.attribute("outlineLevel").as_uint(0));
-}
+uint8_t XLColumn::outlineLevel() const { return static_cast<uint8_t>(m_columnNode.attribute("outlineLevel").as_uint(0)); }
 
 /**
  * @details Set the outline level of the column.
@@ -61,10 +56,9 @@ void XLColumn::setOutlineLevel(uint8_t level)
 {
     constexpr uint8_t maxOutlineLevel = 7;
     if (level > maxOutlineLevel) level = maxOutlineLevel;
-    
-    if (level == 0) {
-        m_columnNode.remove_attribute("outlineLevel");
-    } else {
+
+    if (level == 0) { m_columnNode.remove_attribute("outlineLevel"); }
+    else {
         getOrCreateAttribute("outlineLevel").set_value(level);
     }
 }
@@ -72,19 +66,15 @@ void XLColumn::setOutlineLevel(uint8_t level)
 /**
  * @details Is the column collapsed?
  */
-bool XLColumn::isCollapsed() const
-{
-    return m_columnNode.attribute("collapsed").as_bool(false);
-}
+bool XLColumn::isCollapsed() const { return m_columnNode.attribute("collapsed").as_bool(false); }
 
 /**
  * @details Set the column to be collapsed or expanded.
  */
 void XLColumn::setCollapsed(bool state)
 {
-    if (!state) {
-        m_columnNode.remove_attribute("collapsed");
-    } else {
+    if (!state) { m_columnNode.remove_attribute("collapsed"); }
+    else {
         getOrCreateAttribute("collapsed").set_value(1);
     }
 }
@@ -112,6 +102,4 @@ bool XLColumn::setFormat(XLStyleIndex cellFormatIndex)
 }
 
 void XLColumn::autoFit()
-{
-    throw XLInternalError("autoFit() requires XLWorksheet context. Please use XLWorksheet::autoFitColumn(colIndex).");
-}
+{ throw XLInternalError("autoFit() requires XLWorksheet context. Please use XLWorksheet::autoFitColumn(colIndex)."); }

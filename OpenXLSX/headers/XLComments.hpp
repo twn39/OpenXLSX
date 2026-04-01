@@ -2,9 +2,9 @@
 #define OPENXLSX_XLCOMMENTS_HPP
 
 // ===== External Includes ===== //
-#include <cstdint>    // uint8_t, uint16_t, uint32_t
-#include <ostream>    // std::basic_ostream
-#include <unordered_map> // std::unordered_map
+#include <cstdint>          // uint8_t, uint16_t, uint32_t
+#include <ostream>          // std::basic_ostream
+#include <unordered_map>    // std::unordered_map
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
@@ -42,7 +42,7 @@ namespace OpenXLSX
          * @param other Object to be moved.
          */
         XLComment(XLComment&& other) noexcept = default;
-        ~XLComment() = default;
+        ~XLComment()                          = default;
 
         /**
          * @brief Copy assignment operator.
@@ -62,14 +62,14 @@ namespace OpenXLSX
          * @brief Test if XLComment is linked to valid XML
          * @return true if comment was constructed on a valid XML node, otherwise false
          */
-        bool valid() const;
+        bool        valid() const;
         std::string ref() const;    // the cell reference of the comment
         std::string text() const;
         XLRichText  richText() const;
         uint16_t    authorId() const;
-        XLComment& setText(const std::string& newText);
-        XLComment& setRichText(const XLRichText& richText);
-        XLComment& setAuthorId(uint16_t newAuthorId);
+        XLComment&  setText(const std::string& newText);
+        XLComment&  setRichText(const XLRichText& richText);
+        XLComment&  setAuthorId(uint16_t newAuthorId);
 
         // /**
         //  * @brief Return a string summary of the comment properties
@@ -141,7 +141,12 @@ namespace OpenXLSX
         XMLNode authorNode(uint16_t index) const;
         XMLNode commentNode(size_t index) const;
         XMLNode commentNode(const std::string& cellRef) const;
-        void    setupVmlShape(const std::string& cellRef, uint32_t destRow, uint16_t destCol, bool newCommentCreated, uint16_t widthCols = 4, uint16_t heightRows = 6);
+        void    setupVmlShape(const std::string& cellRef,
+                              uint32_t           destRow,
+                              uint16_t           destCol,
+                              bool               newCommentCreated,
+                              uint16_t           widthCols  = 4,
+                              uint16_t           heightRows = 6);
 
     public:
         uint16_t authorCount() const;
@@ -185,7 +190,11 @@ namespace OpenXLSX
          * @param heightRows height of the comment box in rows
          * @return true upon success, false on failure
          */
-        bool set(std::string const& cellRef, std::string const& comment, uint16_t authorId_ = 0, uint16_t widthCols = 4, uint16_t heightRows = 6);
+        bool set(std::string const& cellRef,
+                 std::string const& comment,
+                 uint16_t           authorId_  = 0,
+                 uint16_t           widthCols  = 4,
+                 uint16_t           heightRows = 6);
 
         /**
          * @brief set the comment for the referenced cell, automatically adding the author if not exists
@@ -196,7 +205,11 @@ namespace OpenXLSX
          * @param heightRows height of the comment box in rows
          * @return true upon success, false on failure
          */
-        bool set(std::string const& cellRef, std::string const& comment, std::string const& authorName, uint16_t widthCols = 4, uint16_t heightRows = 6);
+        bool set(std::string const& cellRef,
+                 std::string const& comment,
+                 std::string const& authorName,
+                 uint16_t           widthCols  = 4,
+                 uint16_t           heightRows = 6);
 
         /**
          * @brief set the rich text comment for the referenced cell
@@ -207,7 +220,11 @@ namespace OpenXLSX
          * @param heightRows height of the comment box in rows
          * @return true upon success, false on failure
          */
-        bool setRichText(std::string const& cellRef, const XLRichText& richText, uint16_t authorId_ = 0, uint16_t widthCols = 4, uint16_t heightRows = 6);
+        bool setRichText(std::string const& cellRef,
+                         const XLRichText&  richText,
+                         uint16_t           authorId_  = 0,
+                         uint16_t           widthCols  = 4,
+                         uint16_t           heightRows = 6);
 
         /**
          * @brief set the rich text comment for the referenced cell, automatically adding the author if not exists
@@ -218,7 +235,11 @@ namespace OpenXLSX
          * @param heightRows height of the comment box in rows
          * @return true upon success, false on failure
          */
-        bool setRichText(std::string const& cellRef, const XLRichText& richText, std::string const& authorName, uint16_t widthCols = 4, uint16_t heightRows = 6);
+        bool setRichText(std::string const& cellRef,
+                         const XLRichText&  richText,
+                         std::string const& authorName,
+                         uint16_t           widthCols  = 4,
+                         uint16_t           heightRows = 6);
 
         /**
          * @brief get the XLShape object for this comment
@@ -239,9 +260,9 @@ namespace OpenXLSX
         void print(std::basic_ostream<char>& ostr) const;
 
     private:
-        XMLNode                       m_authors{};
-        XMLNode                       m_commentList{};
-        XLVmlDrawing                  m_vmlDrawing;
+        XMLNode                                          m_authors{};
+        XMLNode                                          m_commentList{};
+        XLVmlDrawing                                     m_vmlDrawing;
         mutable std::unordered_map<std::string, XMLNode> m_commentMap{};
         mutable XMLNode m_hintNode{};    // the last comment XML Node accessed by index is stored here, if any - will be reset when comments
                                          // are inserted or deleted

@@ -139,9 +139,9 @@ void XLZipArchive::addEntry(std::string_view name, std::string_view data)
     std::memcpy(rawBuffer, data.data(), data.size());
 
     zip_source_t* s = zip_source_buffer(m_archive->archive, rawBuffer, static_cast<zip_uint64_t>(data.size()), 1);
-    if (!s) { 
-        std::free(rawBuffer); // Free immediately if source creation fails
-        throw XLInternalError("Failed to create zip source"); 
+    if (!s) {
+        std::free(rawBuffer);    // Free immediately if source creation fails
+        throw XLInternalError("Failed to create zip source");
     }
 
     zip_int64_t idx = zip_name_locate(m_archive->archive, std::string(name).c_str(), 0);
@@ -178,7 +178,9 @@ std::string XLZipArchive::getEntry(std::string_view name) const
 
     zip_stat_t st;
     zip_stat_init(&st);
-    if (zip_stat(m_archive->archive, std::string(name).c_str(), 0, &st) < 0) { throw XLInternalError("Entry not found: " + std::string(name)); }
+    if (zip_stat(m_archive->archive, std::string(name).c_str(), 0, &st) < 0) {
+        throw XLInternalError("Entry not found: " + std::string(name));
+    }
 
     zip_file_t* f = zip_fopen(m_archive->archive, std::string(name).c_str(), 0);
     if (!f) throw XLInternalError("Failed to open entry: " + std::string(name));
@@ -234,14 +236,11 @@ std::vector<std::string> XLZipArchive::entryNames() const
         // zip_get_name() returns nullptr for entries marked for deletion (pending delete).
         // Constructing std::string from nullptr is UB and causes SIGSEGV on some platforms.
         const char* name = zip_get_name(m_archive->archive, i, 0);
-        if (name != nullptr) {
-            result.emplace_back(name);
-        }
+        if (name != nullptr) { result.emplace_back(name); }
     }
 
     return result;
 }
-
 
 void XLZipArchive::addEntryFromFile(std::string_view name, std::string_view filePath)
 {
@@ -250,9 +249,7 @@ void XLZipArchive::addEntryFromFile(std::string_view name, std::string_view file
     m_archive->isModified = true;
 
     zip_source_t* s = zip_source_file(m_archive->archive, std::string(filePath).c_str(), 0, 0);
-    if (!s) { 
-        throw XLInternalError("Failed to create zip source from file: " + std::string(filePath)); 
-    }
+    if (!s) { throw XLInternalError("Failed to create zip source from file: " + std::string(filePath)); }
 
     zip_int64_t index = zip_file_add(m_archive->archive, std::string(name).c_str(), s, ZIP_FL_OVERWRITE);
     if (index < 0) {

@@ -1,8 +1,8 @@
 #include <string>
 
-#include "XLWorksheet.hpp"
 #include "XLDocument.hpp"
 #include "XLUtilities.hpp"
+#include "XLWorksheet.hpp"
 
 using namespace OpenXLSX;
 
@@ -42,7 +42,8 @@ XLCellRange XLWorksheet::mergeCells(const std::string& rangeReference, bool empt
 void XLWorksheet::unmergeCells(XLCellRange const& rangeToUnmerge)
 {
     int32_t mergeIndex = merges().findMerge(rangeToUnmerge.address());
-    if (mergeIndex != -1) merges().deleteMerge(mergeIndex);
+    if (mergeIndex != -1)
+        merges().deleteMerge(mergeIndex);
     else {
         using namespace std::literals::string_literals;
         throw XLInputError("XLWorksheet::"s + __func__ + ": merged range "s + rangeToUnmerge.address() + " does not exist"s);
@@ -83,38 +84,36 @@ XLConditionalFormats XLWorksheet::conditionalFormats() const { return XLConditio
 
 void XLWorksheet::addConditionalFormatting(const std::string& sqref, const XLCfRule& rule)
 {
-    auto cfList = conditionalFormats();
+    auto                cfList = conditionalFormats();
     XLConditionalFormat cfTarget;
-    bool found = false;
+    bool                found = false;
     for (size_t i = 0; i < cfList.count(); ++i) {
         if (cfList[i].sqref() == sqref) {
             cfTarget = cfList[i];
-            found = true;
+            found    = true;
             break;
         }
     }
     if (!found) {
         size_t idx = cfList.create();
-        cfTarget = cfList[idx];
+        cfTarget   = cfList[idx];
         cfTarget.setSqref(sqref);
     }
-    
+
     // Compute global max priority across all conditional formatting rules in this worksheet
     uint16_t globalMaxPrio = 0;
     for (size_t i = 0; i < cfList.count(); ++i) {
         auto cfmt = cfList[i];
         for (size_t j = 0; j < cfmt.cfRules().count(); ++j) {
             uint16_t prio = cfmt.cfRules()[j].priority();
-            if (prio > globalMaxPrio) {
-                globalMaxPrio = prio;
-            }
+            if (prio > globalMaxPrio) { globalMaxPrio = prio; }
         }
     }
-    
+
     // We create a mutable copy to update priority before inserting it
     XLCfRule ruleWithPrio = rule;
     ruleWithPrio.setPriority(globalMaxPrio + 1);
-    
+
     // The underlying XLCfRules::create also computes maxPrio internally but only within its parent CF node.
     // By setting it explicitly beforehand and relying on the `copyFrom` behavior, we can ensure it's copied properly.
     cfTarget.cfRules().create(ruleWithPrio);
@@ -132,36 +131,25 @@ void XLWorksheet::addConditionalFormatting(const std::string& sqref, const XLCfR
 }
 
 void XLWorksheet::addConditionalFormatting(const XLCellRange& range, const XLCfRule& rule)
-{
-    addConditionalFormatting(range.address(), rule);
-}
+{ addConditionalFormatting(range.address(), rule); }
 
 void XLWorksheet::addConditionalFormatting(const XLCellRange& range, const XLCfRule& rule, const XLDxf& dxf)
-{
-    addConditionalFormatting(range.address(), rule, dxf);
-}
+{ addConditionalFormatting(range.address(), rule, dxf); }
 
 void XLWorksheet::removeConditionalFormatting(const std::string& sqref)
 {
     auto rootNode = xmlDocument().document_element();
-    for (XMLNode node = rootNode.child("conditionalFormatting"); not node.empty(); ) {
+    for (XMLNode node = rootNode.child("conditionalFormatting"); not node.empty();) {
         XMLNode next = node.next_sibling("conditionalFormatting");
-        if (std::string(node.attribute("sqref").value()) == sqref) {
-            rootNode.remove_child(node);
-        }
+        if (std::string(node.attribute("sqref").value()) == sqref) { rootNode.remove_child(node); }
         node = next;
     }
 }
 
-void XLWorksheet::removeConditionalFormatting(const XLCellRange& range)
-{
-    removeConditionalFormatting(range.address());
-}
+void XLWorksheet::removeConditionalFormatting(const XLCellRange& range) { removeConditionalFormatting(range.address()); }
 
 void XLWorksheet::clearAllConditionalFormatting()
 {
     auto rootNode = xmlDocument().document_element();
-    while (XMLNode node = rootNode.child("conditionalFormatting")) {
-        rootNode.remove_child(node);
-    }
+    while (XMLNode node = rootNode.child("conditionalFormatting")) { rootNode.remove_child(node); }
 }

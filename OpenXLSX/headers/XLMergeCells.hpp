@@ -29,7 +29,7 @@ namespace OpenXLSX
 
     /**
      * @brief Manages merged cell ranges in a worksheet.
-     * @details This class handles the <mergeCells> element. 
+     * @details This class handles the <mergeCells> element.
      * Rationale: Excel's string-based range lookups (e.g., "A1:C3") are O(N) and expensive for frequent checks.
      * This class maintains a numerical coordinate cache to enable O(1) cell-in-merge tests and O(M) overlap detection,
      * significantly improving performance for spreadsheets with many merged areas.
@@ -54,7 +54,7 @@ namespace OpenXLSX
             { return row >= top && row <= bottom && col >= left && col <= right; }
 
             /**
-             * @brief Detect spatial intersection between two regions to prevent overlapping merges, 
+             * @brief Detect spatial intersection between two regions to prevent overlapping merges,
              * which are illegal in the OOXML schema.
              */
             [[nodiscard]] bool overlaps(const XLRect& other) const noexcept
@@ -76,10 +76,10 @@ namespace OpenXLSX
          */
         explicit XLMergeCells(const XMLNode& rootNode, std::vector<std::string_view> const& nodeOrder);
 
-        ~XLMergeCells() = default;
-        XLMergeCells(const XLMergeCells& other) = default;
-        XLMergeCells(XLMergeCells&& other) noexcept = default;
-        XLMergeCells& operator=(const XLMergeCells& other) = default;
+        ~XLMergeCells()                                        = default;
+        XLMergeCells(const XLMergeCells& other)                = default;
+        XLMergeCells(XLMergeCells&& other) noexcept            = default;
+        XLMergeCells& operator=(const XLMergeCells& other)     = default;
         XLMergeCells& operator=(XLMergeCells&& other) noexcept = default;
 
         /**

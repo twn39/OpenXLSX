@@ -17,10 +17,10 @@
 namespace OpenXLSX
 {
     /**
-         */
+     */
     class OPENXLSX_EXPORT XLColor
     {
-friend bool operator==(const XLColor& lhs, const XLColor& rhs);
+        friend bool operator==(const XLColor& lhs, const XLColor& rhs);
         friend bool operator!=(const XLColor& lhs, const XLColor& rhs);
 
     public:
@@ -93,7 +93,8 @@ friend bool operator==(const XLColor& lhs, const XLColor& rhs);
          * @brief Returns the 8-character ARGB hex string representation used in OOXML (e.g., "FFFF0000").
          */
         [[nodiscard]] std::string hex() const;
-private:
+
+    private:
         uint8_t m_alpha{255};
 
         uint8_t m_red{0};

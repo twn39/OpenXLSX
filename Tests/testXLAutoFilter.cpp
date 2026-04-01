@@ -1,6 +1,6 @@
-#include <catch2/catch_test_macros.hpp>
 #include "OpenXLSX.hpp"
 #include "XLDynamicFilter.hpp"
+#include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
 using namespace OpenXLSX;
@@ -16,11 +16,11 @@ TEST_CASE("AutoFilter and SortState Generation", "[XLAutoFilter]")
     wks.cell("A1").value() = "Region";
     wks.cell("B1").value() = "Product";
     wks.cell("C1").value() = "Sales";
-    
+
     wks.cell("A2").value() = "North";
     wks.cell("B2").value() = "Apples";
     wks.cell("C2").value() = 100;
-    
+
     wks.cell("A3").value() = "South";
     wks.cell("B3").value() = "Bananas";
     wks.cell("C3").value() = 300;
@@ -35,7 +35,7 @@ TEST_CASE("AutoFilter and SortState Generation", "[XLAutoFilter]")
 
     // Set AutoFilter Range
     wks.setAutoFilter(wks.range(XLCellReference("A1"), XLCellReference("C5")));
-    
+
     // Apply a filter condition to Column 0 ("Region")
     auto filterRegion = wks.autofilterObject().filterColumn(0);
     filterRegion.addFilter("North");
@@ -45,7 +45,7 @@ TEST_CASE("AutoFilter and SortState Generation", "[XLAutoFilter]")
     filterSales.setDynamicFilter(XLDynamicFilterTypeToString(XLDynamicFilterType::AboveAverage));
 
     // Apply a sort condition (Sort by Sales Descending)
-    wks.addSortCondition("A1:C5", 2, true); 
+    wks.addSortCondition("A1:C5", 2, true);
 
     // Simulate auto filter application (should hide "South" and "East" rows)
     wks.applyAutoFilter();
@@ -57,10 +57,10 @@ TEST_CASE("AutoFilter and SortState Generation", "[XLAutoFilter]")
     XLDocument doc2;
     doc2.open("./AutoFilterTest.xlsx");
     auto wks2 = doc2.workbook().worksheet("Sheet1");
-    
+
     REQUIRE(wks2.hasAutoFilter() == true);
     REQUIRE(wks2.autoFilter() == "A1:C5");
-    
+
     // The "South" and "East" rows (3 and 5) should be hidden by applyAutoFilter
     REQUIRE(wks2.row(3).isHidden() == true);
     REQUIRE(wks2.row(5).isHidden() == true);
@@ -70,14 +70,14 @@ TEST_CASE("AutoFilter and SortState Generation", "[XLAutoFilter]")
 
     // Verify XML structure
     std::string sheetXmlStr = doc2.extractXmlFromArchive("xl/worksheets/sheet1.xml");
-    
+
     // Check autoFilter parent node
     REQUIRE(sheetXmlStr.find("<autoFilter ref=\"A1:C5\">") != std::string::npos);
-    
+
     // Check standard filter
     REQUIRE(sheetXmlStr.find("<filterColumn colId=\"0\">") != std::string::npos);
     REQUIRE(sheetXmlStr.find("<filter val=\"North\" />") != std::string::npos);
-    
+
     // Check dynamic filter
     REQUIRE(sheetXmlStr.find("<filterColumn colId=\"2\">") != std::string::npos);
     REQUIRE(sheetXmlStr.find("<dynamicFilter type=\"aboveAverage\" />") != std::string::npos);

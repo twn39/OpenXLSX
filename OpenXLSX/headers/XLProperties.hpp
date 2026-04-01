@@ -14,8 +14,8 @@
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
-#include "XLXmlFile.hpp"
 #include "XLDateTime.hpp"
+#include "XLXmlFile.hpp"
 
 namespace OpenXLSX
 {
@@ -103,40 +103,40 @@ namespace OpenXLSX
 
         // Standard Core Properties
         std::string title() const;
-        void setTitle(std::string_view title);
+        void        setTitle(std::string_view title);
 
         std::string subject() const;
-        void setSubject(std::string_view subject);
+        void        setSubject(std::string_view subject);
 
         std::string creator() const;
-        void setCreator(std::string_view creator);
+        void        setCreator(std::string_view creator);
 
         std::string keywords() const;
-        void setKeywords(std::string_view keywords);
+        void        setKeywords(std::string_view keywords);
 
         std::string description() const;
-        void setDescription(std::string_view description);
+        void        setDescription(std::string_view description);
 
         std::string lastModifiedBy() const;
-        void setLastModifiedBy(std::string_view author);
+        void        setLastModifiedBy(std::string_view author);
 
         std::string revision() const;
-        void setRevision(std::string_view revision);
+        void        setRevision(std::string_view revision);
 
         std::string lastPrinted() const;
-        void setLastPrinted(std::string_view date);
+        void        setLastPrinted(std::string_view date);
 
         XLDateTime created() const;
-        void setCreated(const XLDateTime& date);
+        void       setCreated(const XLDateTime& date);
 
         XLDateTime modified() const;
-        void setModified(const XLDateTime& date);
+        void       setModified(const XLDateTime& date);
 
         std::string category() const;
-        void setCategory(std::string_view category);
+        void        setCategory(std::string_view category);
 
         std::string contentStatus() const;
-        void setContentStatus(std::string_view status);
+        void        setContentStatus(std::string_view status);
     };
 
     /**

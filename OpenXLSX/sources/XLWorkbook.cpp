@@ -4,8 +4,8 @@
 #include <gsl/gsl>
 #include <iterator>
 #include <mutex>
-#include <shared_mutex>
 #include <pugixml.hpp>
+#include <shared_mutex>
 #include <vector>
 
 // ===== OpenXLSX Includes ===== //
@@ -38,7 +38,6 @@ namespace
         "smartTagTypes",  "webPublishing",       "fileRecoveryPr", "webPublishObjects",
         "extLst"};
 }    // namespace
-
 
 XLDefinedName::XLDefinedName(const XMLNode& node) : m_node(node) {}
 
@@ -77,7 +76,6 @@ void        XLDefinedName::setComment(std::string_view comment)
     if (attr.empty()) attr = m_node.append_attribute("comment");
     attr.set_value(std::string(comment).c_str());
 }
-
 
 XLDefinedNames::XLDefinedNames(const XMLNode& node) : m_node(node) {}
 
@@ -141,7 +139,6 @@ size_t XLDefinedNames::count() const
     return c;
 }
 
-
 XLWorkbook::XLWorkbook(XLXmlData* xmlData) : XLXmlFile(xmlData) {}
 XLWorkbook::~XLWorkbook() = default;
 
@@ -167,14 +164,16 @@ XLSheet XLWorkbook::sheet(std::string_view sheetName)
 XLSheet XLWorkbook::sheet(uint16_t index)
 {
     Expects(index >= 1);
-    
+
     unsigned int count = 0;
-    for (XMLNode node = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not node.empty(); node = node.next_sibling_of_type(pugi::node_element)) count++;
-    
+    for (XMLNode node = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not node.empty();
+         node         = node.next_sibling_of_type(pugi::node_element))
+        count++;
+
     if (index > count) throw XLInputError(fmt::format("Sheet index {} is out of bounds", index));
 
     std::string foundName;
-    uint16_t curIndex = 0;
+    uint16_t    curIndex = 0;
     for (XMLNode node = sheetsNode(xmlDocument()).first_child_of_type(pugi::node_element); not node.empty();
          node         = node.next_sibling_of_type(pugi::node_element))
     {
@@ -247,12 +246,11 @@ void XLWorkbook::addWorksheet(std::string_view sheetName)
     if (xmlDocument().document_element().child("sheets").find_child_by_attribute("name", std::string(sheetName).c_str()))
         throw XLInputError(fmt::format("Sheet named \"{}\" already exists.", sheetName));
 
-    auto internalID = createInternalSheetID();
-    std::string sheetPath = fmt::format("/xl/worksheets/sheet{}.xml", internalID);
+    auto        internalID = createInternalSheetID();
+    std::string sheetPath  = fmt::format("/xl/worksheets/sheet{}.xml", internalID);
 
-    parentDoc().execCommand(XLCommand(XLCommandType::AddWorksheet)
-                                .setParam("sheetName", std::string(sheetName))
-                                .setParam("sheetPath", sheetPath));
+    parentDoc().execCommand(
+        XLCommand(XLCommandType::AddWorksheet).setParam("sheetName", std::string(sheetName)).setParam("sheetPath", sheetPath));
     prepareSheetMetadata(sheetName, internalID, sheetPath);
 }
 
@@ -261,12 +259,11 @@ void XLWorkbook::addChartsheet(std::string_view sheetName)
     if (xmlDocument().document_element().child("sheets").find_child_by_attribute("name", std::string(sheetName).c_str()))
         throw XLInputError(fmt::format("Sheet named \"{}\" already exists.", sheetName));
 
-    auto internalID = createInternalSheetID();
-    std::string sheetPath = fmt::format("/xl/chartsheets/sheet{}.xml", internalID);
+    auto        internalID = createInternalSheetID();
+    std::string sheetPath  = fmt::format("/xl/chartsheets/sheet{}.xml", internalID);
 
-    parentDoc().execCommand(XLCommand(XLCommandType::AddChartsheet)
-                                .setParam("sheetName", std::string(sheetName))
-                                .setParam("sheetPath", sheetPath));
+    parentDoc().execCommand(
+        XLCommand(XLCommandType::AddChartsheet).setParam("sheetName", std::string(sheetName)).setParam("sheetPath", sheetPath));
     prepareSheetMetadata(sheetName, internalID, sheetPath);
 }
 

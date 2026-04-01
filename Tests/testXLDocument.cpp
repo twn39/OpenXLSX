@@ -156,7 +156,7 @@ TEST_CASE("XLDocument Tests", "[XLDocument]")
             archive.open(xlsmFile2);
             REQUIRE(archive.hasEntry("xl/vbaProject.bin"));
             REQUIRE(archive.getEntry("xl/vbaProject.bin") == "dummy macro content");
-            
+
             // Also verify it's registered in [Content_Types].xml
             std::string contentTypes = archive.getEntry("[Content_Types].xml");
             REQUIRE(contentTypes.find("application/vnd.ms-office.vbaProject") != std::string::npos);

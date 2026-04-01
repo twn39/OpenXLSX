@@ -1,22 +1,21 @@
 // ===== External Includes ===== //
 #include <cstdint>
-#include <gsl/gsl>
 #include <fmt/format.h>
-#include <memory>     
+#include <gsl/gsl>
+#include <memory>
 #include <pugixml.hpp>
-#include <stdexcept>   
-#include <string>      
-#include <vector>      
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLDocument.hpp"
 #include "XLException.hpp"
 #include "XLStyles.hpp"
-#include "XLUtilities.hpp"
 #include "XLStyles_Internal.hpp"
+#include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
-
 
 XLNumberFormat::XLNumberFormat() : m_numberFormatNode(std::make_unique<XMLNode>()) {}
 
@@ -41,10 +40,7 @@ bool XLNumberFormat::setNumberFormatId(uint32_t newNumberFormatId)
 bool XLNumberFormat::setFormatCode(std::string_view newFormatCode)
 { return appendAndSetAttribute(*m_numberFormatNode, "formatCode", std::string(newFormatCode).c_str()).empty() == false; }
 
-std::string XLNumberFormat::summary() const
-{
-    return fmt::format("numFmtId={}, formatCode={}", numberFormatId(), formatCode());
-}
+std::string XLNumberFormat::summary() const { return fmt::format("numFmtId={}, formatCode={}", numberFormatId(), formatCode()); }
 
 // ===== XLNumberFormats, parent of XLNumberFormat
 
@@ -64,10 +60,7 @@ XLNumberFormats::XLNumberFormats(const XMLNode& numberFormats) : m_numberFormats
     }
 }
 
-XLNumberFormats::~XLNumberFormats()
-{
-    m_numberFormats.clear();   
-}
+XLNumberFormats::~XLNumberFormats() { m_numberFormats.clear(); }
 
 XLNumberFormats::XLNumberFormats(const XLNumberFormats& other)
     : m_numberFormatsNode(std::make_unique<XMLNode>(*other.m_numberFormatsNode)),
@@ -113,11 +106,9 @@ uint32_t XLNumberFormats::numberFormatIdFromIndex(XLStyleIndex index) const
 
 uint32_t XLNumberFormats::getFreeNumberFormatId() const
 {
-    uint32_t maxId = 163; // Excel reserved format IDs end at 163
+    uint32_t maxId = 163;    // Excel reserved format IDs end at 163
     for (const auto& fmt : m_numberFormats) {
-        if (fmt.numberFormatId() > maxId) {
-            maxId = fmt.numberFormatId();
-        }
+        if (fmt.numberFormatId() > maxId) { maxId = fmt.numberFormatId(); }
     }
     return maxId + 1;
 }
@@ -126,9 +117,7 @@ uint32_t XLNumberFormats::createNumberFormat(std::string_view formatCode)
 {
     // If exact format code already exists, just return its ID
     for (const auto& fmt : m_numberFormats) {
-        if (fmt.formatCode() == formatCode) {
-            return fmt.numberFormatId();
-        }
+        if (fmt.formatCode() == formatCode) { return fmt.numberFormatId(); }
     }
 
     uint32_t newId = getFreeNumberFormatId();
@@ -148,9 +137,8 @@ uint32_t XLNumberFormats::createNumberFormat(std::string_view formatCode)
 
     // Update count attribute on <numFmts>
     auto countAttr = m_numberFormatsNode->attribute("count");
-    if (countAttr.empty()) {
-        m_numberFormatsNode->append_attribute("count").set_value(m_numberFormats.size());
-    } else {
+    if (countAttr.empty()) { m_numberFormatsNode->append_attribute("count").set_value(m_numberFormats.size()); }
+    else {
         countAttr.set_value(m_numberFormats.size());
     }
 
@@ -173,8 +161,7 @@ XLStyleIndex XLNumberFormats::create(XLNumberFormat copyFrom, std::string_view s
         throw XLException("XLNumberFormats::"s + __func__ + ": failed to append a new numFmt node"s);
     }
     if (styleEntriesPrefix.length() > 0)
-        m_numberFormatsNode->insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());
+        m_numberFormatsNode->insert_child_before(pugi::node_pcdata, newNode).set_value(std::string(styleEntriesPrefix).c_str());
 
     XLNumberFormat newNumberFormat(newNode);
     if (copyFrom.m_numberFormatNode->empty()) {
@@ -184,7 +171,7 @@ XLStyleIndex XLNumberFormats::create(XLNumberFormat copyFrom, std::string_view s
     }
     else {
         copyXMLNode(newNode, *copyFrom.m_numberFormatNode);
-        newNumberFormat.setNumberFormatId(getFreeNumberFormatId()); // Ensure copied formats get a fresh ID
+        newNumberFormat.setNumberFormatId(getFreeNumberFormatId());    // Ensure copied formats get a fresh ID
     }
 
     m_numberFormats.push_back(newNumberFormat);

@@ -85,24 +85,23 @@ void XLColor::set(std::string_view hexCode)
     constexpr size_t hexCodeSizeWithoutAlpha = 6;
     constexpr size_t hexCodeSizeWithAlpha    = 8;
 
-    if (hexCode.size() != hexCodeSizeWithoutAlpha && hexCode.size() != hexCodeSizeWithAlpha) {
-        throw XLInputError("Invalid color code");
-    }
-    
+    if (hexCode.size() != hexCodeSizeWithoutAlpha && hexCode.size() != hexCodeSizeWithAlpha) { throw XLInputError("Invalid color code"); }
+
     // Helper to parse 2 hex chars into uint8_t
     auto parseHex = [](std::string_view str) -> uint8_t {
-        uint8_t val = 0;
+        uint8_t val    = 0;
         auto [ptr, ec] = std::from_chars(str.data(), str.data() + 2, val, 16);
         if (ec != std::errc()) throw XLInputError("Invalid hex string");
         return val;
     };
 
     if (hexCode.size() == hexCodeSizeWithoutAlpha) {
-        m_alpha = 255; // Default alpha is opaque
+        m_alpha = 255;    // Default alpha is opaque
         m_red   = parseHex(hexCode.substr(0, 2));
         m_green = parseHex(hexCode.substr(2, 2));
         m_blue  = parseHex(hexCode.substr(4, 2));
-    } else {
+    }
+    else {
         m_alpha = parseHex(hexCode.substr(0, 2));
         m_red   = parseHex(hexCode.substr(2, 2));
         m_green = parseHex(hexCode.substr(4, 2));
@@ -135,7 +134,4 @@ uint8_t XLColor::blue() const { return m_blue; }
  */
 #include <fmt/format.h>
 
-std::string XLColor::hex() const
-{
-    return fmt::format("{:02X}{:02X}{:02X}{:02X}", m_alpha, m_red, m_green, m_blue);
-}
+std::string XLColor::hex() const { return fmt::format("{:02X}{:02X}{:02X}{:02X}", m_alpha, m_red, m_green, m_blue); }

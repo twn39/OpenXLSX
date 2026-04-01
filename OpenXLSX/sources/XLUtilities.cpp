@@ -1,9 +1,9 @@
 #include "XLUtilities.hpp"
 #include "XLException.hpp"
 #include <array>
+#include <gsl/span>
 #include <string>
 #include <vector>
-#include <gsl/span>
 
 namespace OpenXLSX
 {

@@ -41,10 +41,10 @@ TEST_CASE("Excel Physical Boundaries", "[Boundaries]")
         // OpenXLSX does not artificially enforce this, which allows it to process files gracefully.
         // But we must guarantee that pushing >32k characters does not corrupt memory or segfault.
         std::string hugeString(35000, 'A');
-        
+
         REQUIRE_NOTHROW(wks.cell("A1").value() = hugeString);
         REQUIRE(wks.cell("A1").value().get<std::string>() == hugeString);
-        
+
         // Save and reload to ensure the XML writer and libzip handle the large text block properly
         doc.save();
         doc.close();
@@ -59,7 +59,7 @@ TEST_CASE("Excel Physical Boundaries", "[Boundaries]")
         // Excel limits names to 31 chars.
         std::string validName(31, 'W');
         REQUIRE_NOTHROW(doc.workbook().addWorksheet(validName));
-        
+
         // OpenXLSX actually strictly enforces this and throws an XLInputError
         std::string overLimitName(32, 'X');
         REQUIRE_THROWS_AS(doc.workbook().addWorksheet(overLimitName), XLInputError);
@@ -69,9 +69,7 @@ TEST_CASE("Excel Physical Boundaries", "[Boundaries]")
     {
         // Excel does not have a strict hardcoded limit for sheets (memory bounded),
         // but older versions were limited to 255. Let's ensure creating 255 doesn't crash us.
-        for (int i = 0; i < 255; ++i) {
-            REQUIRE_NOTHROW(doc.workbook().addWorksheet("MassSheet_" + std::to_string(i)));
-        }
+        for (int i = 0; i < 255; ++i) { REQUIRE_NOTHROW(doc.workbook().addWorksheet("MassSheet_" + std::to_string(i))); }
         REQUIRE(doc.workbook().worksheetCount() >= 255);
     }
 }

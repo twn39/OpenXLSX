@@ -16,7 +16,7 @@ TEST_CASE("Negative Tests - Corrupt Files and Exceptions", "[CorruptFiles]")
     SECTION("Not a ZIP Archive")
     {
         const std::string dummy_file = "dummy_text_file.xlsx";
-        std::ofstream out(dummy_file);
+        std::ofstream     out(dummy_file);
         out << "This is just a text file, not a valid ZIP or XLSX file.";
         out.close();
 
@@ -49,23 +49,23 @@ TEST_CASE("Negative Tests - Corrupt Files and Exceptions", "[CorruptFiles]")
 
         // 2. We inject bad xml into [Content_Types].xml
         // We use python to copy the zip but replace the file, since zipfile 'a' mode appends a duplicate name.
-        const char* py_script = 
-            "import zipfile, os\n"
-            "with zipfile.ZipFile('malformed_xml.xlsx', 'r') as zin:\n"
-            "    with zipfile.ZipFile('malformed_xml_bad.xlsx', 'w') as zout:\n"
-            "        for item in zin.infolist():\n"
-            "            if item.filename == '[Content_Types].xml':\n"
-            "                zout.writestr(item, '<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"xml\" ')\n"
-            "            else:\n"
-            "                zout.writestr(item, zin.read(item.filename))\n"
-            "os.replace('malformed_xml_bad.xlsx', 'malformed_xml.xlsx')\n";
-            
+        const char* py_script = "import zipfile, os\n"
+                                "with zipfile.ZipFile('malformed_xml.xlsx', 'r') as zin:\n"
+                                "    with zipfile.ZipFile('malformed_xml_bad.xlsx', 'w') as zout:\n"
+                                "        for item in zin.infolist():\n"
+                                "            if item.filename == '[Content_Types].xml':\n"
+                                "                zout.writestr(item, '<Types "
+                                "xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"xml\" ')\n"
+                                "            else:\n"
+                                "                zout.writestr(item, zin.read(item.filename))\n"
+                                "os.replace('malformed_xml_bad.xlsx', 'malformed_xml.xlsx')\n";
+
         std::ofstream script("corrupt.py");
         script << py_script;
         script.close();
 
         int res = system("python3 corrupt.py");
-        
+
         if (res == 0) {
             XLDocument doc;
             // The XML parser should throw XLException when trying to parse the malformed XML

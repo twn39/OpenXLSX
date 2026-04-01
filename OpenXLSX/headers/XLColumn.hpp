@@ -12,10 +12,10 @@
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
-#include "XLStyles.hpp"    // XLStyleIndex
-#include "XLXmlParser.hpp"
 #include "XLStyle.hpp"
+#include "XLStyles.hpp"    // XLStyleIndex
 #include "XLStyles.hpp"
+#include "XLXmlParser.hpp"
 
 namespace OpenXLSX
 {

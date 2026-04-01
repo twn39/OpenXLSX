@@ -21,7 +21,8 @@ namespace OpenXLSX
     /**
      * @brief
      */
-    struct XLCoordinates {
+    struct XLCoordinates
+    {
         uint32_t row;
         uint16_t column;
     };
@@ -46,7 +47,8 @@ namespace OpenXLSX
         /**
          * @brief Constructor taking a cell address as argument.
          * @param cellAddress The address of the cell, e.g. 'A1'.
-         * @details Initializes a reference using an Excel-style coordinate string (e.g., 'A1'). Serves as the primary parser for cell identities read directly from the DOM.
+         * @details Initializes a reference using an Excel-style coordinate string (e.g., 'A1'). Serves as the primary parser for cell
+         * identities read directly from the DOM.
          */
         XLCellReference(std::string_view cellAddress = "");    // NOLINT
 
@@ -225,7 +227,8 @@ namespace OpenXLSX
     inline bool operator!=(const XLCellReference& lhs, const XLCellReference& rhs) noexcept { return !(lhs == rhs); }
 
     /**
-     * @brief Evaluates precedence primarily by row, then by column, allowing cell ranges to be sorted efficiently and sequentially from left-to-right, top-to-bottom.
+     * @brief Evaluates precedence primarily by row, then by column, allowing cell ranges to be sorted efficiently and sequentially from
+     * left-to-right, top-to-bottom.
      */
     inline bool operator<(const XLCellReference& lhs, const XLCellReference& rhs) noexcept
     { return lhs.row() < rhs.row() or (lhs.row() <= rhs.row() and lhs.column() < rhs.column()); }

@@ -28,7 +28,7 @@ namespace
         static auto fn = get_impl(XLDocument_extractXmlFromArchive());
         return (doc.*fn)(path);
     }
-}
+}    // namespace
 
 class XLChartTestDoc
 {
@@ -51,9 +51,7 @@ TEST_CASE("Chart Creation and Verification", "[XLChart][OOXML]")
             auto wks = doc.workbook().worksheet("Sheet1");
 
             // Add some data
-            for (int i = 1; i <= 10; ++i) {
-                wks.cell(i, 1).value() = i;
-            }
+            for (int i = 1; i <= 10; ++i) { wks.cell(i, 1).value() = i; }
 
             // Add a chart
             auto chart = wks.addChart(XLChartType::Bar, "My Chart", 2, 4, 400, 300);
@@ -71,7 +69,7 @@ TEST_CASE("Chart Creation and Verification", "[XLChart][OOXML]")
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
             REQUIRE(chartXml.find("<c:chartSpace") != std::string::npos);
             REQUIRE(chartXml.find("<c:barChart>") != std::string::npos);
-            
+
             // Verify series was added
             REQUIRE(chartXml.find("<c:ser>") != std::string::npos);
             REQUIRE(chartXml.find("Sheet1!$A$1:$A$10") != std::string::npos);
@@ -85,9 +83,9 @@ TEST_CASE("Chart Creation and Verification", "[XLChart][OOXML]")
             // Extract drawing relationship ID for the chart
             size_t chartPos = drawingXml.find("<c:chart r:id=\"");
             REQUIRE(chartPos != std::string::npos);
-            size_t idStart = chartPos + 15;
-            size_t idEnd = drawingXml.find("\"", idStart);
-            std::string rId = drawingXml.substr(idStart, idEnd - idStart);
+            size_t      idStart = chartPos + 15;
+            size_t      idEnd   = drawingXml.find("\"", idStart);
+            std::string rId     = drawingXml.substr(idStart, idEnd - idStart);
 
             // 3. Verify drawing rels file points to chart1.xml
             std::string drawingRelsXml = testDoc.getRawXml("xl/drawings/_rels/drawing1.xml.rels");
@@ -109,7 +107,7 @@ TEST_CASE("Chart Creation and Verification", "[XLChart][OOXML]")
         {
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
-            auto wks = doc.workbook().worksheet("Sheet1");
+            auto wks   = doc.workbook().worksheet("Sheet1");
             auto chart = wks.addChart(XLChartType::Line, "Line Chart", 2, 4, 400, 300);
             chart.addSeries("Sheet1!$A$1:$A$10");
             doc.save();
@@ -132,7 +130,7 @@ TEST_CASE("Chart Creation and Verification", "[XLChart][OOXML]")
         {
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
-            auto wks = doc.workbook().worksheet("Sheet1");
+            auto wks   = doc.workbook().worksheet("Sheet1");
             auto chart = wks.addChart(XLChartType::Pie, "Pie Chart", 2, 4, 400, 300);
             chart.addSeries("Sheet1!$A$1:$A$10");
             doc.save();
@@ -145,7 +143,7 @@ TEST_CASE("Chart Creation and Verification", "[XLChart][OOXML]")
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
             REQUIRE(chartXml.find("<c:pieChart>") != std::string::npos);
             REQUIRE(chartXml.find("<c:ser>") != std::string::npos);
-            REQUIRE(chartXml.find("<c:catAx>") == std::string::npos); // Pie chart shouldn't have axes
+            REQUIRE(chartXml.find("<c:catAx>") == std::string::npos);    // Pie chart shouldn't have axes
             testDoc.close();
         }
         std::filesystem::remove(filename);
@@ -156,7 +154,7 @@ TEST_CASE("Chart Creation and Verification", "[XLChart][OOXML]")
         {
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
-            auto wks = doc.workbook().worksheet("Sheet1");
+            auto wks   = doc.workbook().worksheet("Sheet1");
             auto chart = wks.addChart(XLChartType::Scatter, "Scatter Chart", 2, 4, 400, 300);
             chart.addSeries("Sheet1!$A$1:$A$10");
             doc.save();
@@ -180,13 +178,13 @@ TEST_CASE("Chart Creation and Verification", "[XLChart][OOXML]")
         {
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
-            auto wks = doc.workbook().worksheet("Sheet1");
+            auto wks   = doc.workbook().worksheet("Sheet1");
             auto chart = wks.addChart(XLChartType::Bar, "Bar Chart", 2, 4, 400, 300);
-            
+
             // valueRef, title, categoriesRef
             chart.addSeries("Sheet1!$B$2:$B$10", "Revenue", "Sheet1!$A$2:$A$10");
             chart.addSeries("Sheet1!$C$2:$C$10", "Sheet1!$C$1", "Sheet1!$A$2:$A$10");
-            
+
             doc.save();
             doc.close();
         }
@@ -203,7 +201,7 @@ TEST_CASE("Chart Creation and Verification", "[XLChart][OOXML]")
             // Check categories
             REQUIRE(chartXml.find("<c:cat>") != std::string::npos);
             REQUIRE(chartXml.find("<c:f>Sheet1!$A$2:$A$10</c:f>") != std::string::npos);
-            
+
             testDoc.close();
         }
         std::filesystem::remove(filename);
@@ -214,12 +212,12 @@ TEST_CASE("Chart Creation and Verification", "[XLChart][OOXML]")
         {
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
-            auto wks = doc.workbook().worksheet("Sheet1");
+            auto wks   = doc.workbook().worksheet("Sheet1");
             auto chart = wks.addChart(XLChartType::Scatter, "Scatter", 2, 4, 400, 300);
-            
+
             // Y-values, Title, X-values (categoriesRef for Scatter)
             chart.addSeries("Sheet1!$C$2:$C$10", "Correlation", "Sheet1!$B$2:$B$10");
-            
+
             doc.save();
             doc.close();
         }
@@ -228,11 +226,11 @@ TEST_CASE("Chart Creation and Verification", "[XLChart][OOXML]")
             XLChartTestDoc testDoc;
             testDoc.open(filename);
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
-            
+
             // For Scatter chart, the "category" is mapped to X values (c:xVal) and value is Y values (c:yVal)
             REQUIRE(chartXml.find("<c:xVal>") != std::string::npos);
             REQUIRE(chartXml.find("<c:f>Sheet1!$B$2:$B$10</c:f>") != std::string::npos);
-            
+
             REQUIRE(chartXml.find("<c:yVal>") != std::string::npos);
             REQUIRE(chartXml.find("<c:f>Sheet1!$C$2:$C$10</c:f>") != std::string::npos);
 
@@ -262,11 +260,11 @@ TEST_CASE("Chart Series Fluent API", "[XLChart][Fluent]")
             }
 
             auto chart = wks.addChart(XLChartType::Line, "My Fluent Chart", 2, 4, 400, 300);
-            
+
             chart.addSeries("Sheet1!$B$1:$B$5", "", "Sheet1!$A$1:$A$5")
-                 .setTitle("Squares")
-                 .setSmooth(true)
-                 .setMarkerStyle(XLMarkerStyle::Circle);
+                .setTitle("Squares")
+                .setSmooth(true)
+                .setMarkerStyle(XLMarkerStyle::Circle);
 
             doc.save();
             doc.close();
@@ -302,20 +300,20 @@ TEST_CASE("Chart Anchor API", "[XLChart][Anchor]")
             }
 
             using namespace DistanceLiterals;
-            
+
             XLChartAnchor anchor;
-            anchor.name = "My Anchor Chart";
-            anchor.row = 2;
-            anchor.col = 4;
-            anchor.width = 12_cm;
+            anchor.name   = "My Anchor Chart";
+            anchor.row    = 2;
+            anchor.col    = 4;
+            anchor.width  = 12_cm;
             anchor.height = 8_cm;
 
             auto chart = wks.addChart(XLChartType::Line, anchor);
-            
+
             chart.addSeries("Sheet1!$B$1:$B$5", "", "Sheet1!$A$1:$A$5")
-                 .setTitle("Squares")
-                 .setSmooth(true)
-                 .setMarkerStyle(XLMarkerStyle::Circle);
+                .setTitle("Squares")
+                .setSmooth(true)
+                .setMarkerStyle(XLMarkerStyle::Circle);
 
             doc.save();
             doc.close();
@@ -348,10 +346,10 @@ TEST_CASE("Chart Cell Range API", "[XLChart][Range]")
             }
 
             auto categories = wks.range(XLCellReference("A1"), XLCellReference("A5"));
-            auto values = wks.range(XLCellReference("B1"), XLCellReference("B5"));
+            auto values     = wks.range(XLCellReference("B1"), XLCellReference("B5"));
 
             auto chart = wks.addChart(XLChartType::Bar, "Range Chart", 2, 4, 400, 300);
-            
+
             // Should internally build Sheet1!$B$1:$B$5 and Sheet1!$A$1:$A$5
             chart.addSeries(wks, values, categories, "My Values");
 
@@ -382,15 +380,18 @@ TEST_CASE("Chart Phase1 Phase2 Features", "[XLChart][Phase12]")
     {
         const std::string fname = "test_p1_series_color.xlsx";
         {
-            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            XLDocument doc;
+            doc.create(fname, XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
             for (int i = 1; i <= 3; ++i) wks.cell(i, 1).value() = i * 10;
             auto chart = wks.addChart(XLChartType::Bar, "ColorTest", 1, 3, 400, 300);
             chart.addSeries("Sheet1!$A$1:$A$3").setColor("FF0000");
-            doc.save(); doc.close();
+            doc.save();
+            doc.close();
         }
         {
-            XLChartTestDoc td; td.open(fname);
+            XLChartTestDoc td;
+            td.open(fname);
             std::string xml = td.getRawXml("xl/charts/chart1.xml");
             REQUIRE(xml.find("c:spPr") != std::string::npos);
             bool hasColor = xml.find("FF0000") != std::string::npos || xml.find("ff0000") != std::string::npos;
@@ -404,22 +405,24 @@ TEST_CASE("Chart Phase1 Phase2 Features", "[XLChart][Phase12]")
     {
         const std::string fname = "test_p1_datapoint_color.xlsx";
         {
-            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            XLDocument doc;
+            doc.create(fname, XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
             for (int i = 1; i <= 5; ++i) wks.cell(i, 1).value() = i;
             auto chart = wks.addChart(XLChartType::Bar, "DPColor", 1, 3, 400, 300);
-            chart.addSeries("Sheet1!$A$1:$A$5")
-                 .setDataPointColor(0, "00B050")
-                 .setDataPointColor(4, "FF0000");
-            doc.save(); doc.close();
+            chart.addSeries("Sheet1!$A$1:$A$5").setDataPointColor(0, "00B050").setDataPointColor(4, "FF0000");
+            doc.save();
+            doc.close();
         }
         {
-            XLChartTestDoc td; td.open(fname);
+            XLChartTestDoc td;
+            td.open(fname);
             std::string xml = td.getRawXml("xl/charts/chart1.xml");
             REQUIRE(xml.find("c:dPt") != std::string::npos);
             bool hasGreen = xml.find("00B050") != std::string::npos || xml.find("00b050") != std::string::npos;
             bool hasRed   = xml.find("FF0000") != std::string::npos || xml.find("ff0000") != std::string::npos;
-            REQUIRE(hasGreen); REQUIRE(hasRed);
+            REQUIRE(hasGreen);
+            REQUIRE(hasRed);
             td.close();
         }
         std::filesystem::remove(fname);
@@ -429,21 +432,25 @@ TEST_CASE("Chart Phase1 Phase2 Features", "[XLChart][Phase12]")
     {
         const std::string fname = "test_p1_gap_overlap.xlsx";
         {
-            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            XLDocument doc;
+            doc.create(fname, XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
             for (int i = 1; i <= 3; ++i) wks.cell(i, 1).value() = i;
             auto chart = wks.addChart(XLChartType::Bar, "GapTest", 1, 3, 400, 300);
             chart.addSeries("Sheet1!$A$1:$A$3");
             chart.setGapWidth(200);
             chart.setOverlap(-20);
-            doc.save(); doc.close();
+            doc.save();
+            doc.close();
         }
         {
-            XLChartTestDoc td; td.open(fname);
-            std::string xml = td.getRawXml("xl/charts/chart1.xml");
-            bool hasGap     = containsOneOf(xml, {"c:gapWidth val=\"200\"", "c:gapWidth val=\"200\" />"});
-            bool hasOverlap = containsOneOf(xml, {"c:overlap val=\"-20\"",  "c:overlap val=\"-20\" />"});
-            REQUIRE(hasGap); REQUIRE(hasOverlap);
+            XLChartTestDoc td;
+            td.open(fname);
+            std::string xml        = td.getRawXml("xl/charts/chart1.xml");
+            bool        hasGap     = containsOneOf(xml, {"c:gapWidth val=\"200\"", "c:gapWidth val=\"200\" />"});
+            bool        hasOverlap = containsOneOf(xml, {"c:overlap val=\"-20\"", "c:overlap val=\"-20\" />"});
+            REQUIRE(hasGap);
+            REQUIRE(hasOverlap);
             td.close();
         }
         std::filesystem::remove(fname);
@@ -453,16 +460,19 @@ TEST_CASE("Chart Phase1 Phase2 Features", "[XLChart][Phase12]")
     {
         const std::string fname = "test_p1_axis_numfmt.xlsx";
         {
-            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            XLDocument doc;
+            doc.create(fname, XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
             for (int i = 1; i <= 3; ++i) wks.cell(i, 1).value() = i * 0.1;
             auto chart = wks.addChart(XLChartType::Bar, "NumFmtTest", 1, 3, 400, 300);
             chart.addSeries("Sheet1!$A$1:$A$3");
             chart.yAxis().setNumberFormat("0.00%");
-            doc.save(); doc.close();
+            doc.save();
+            doc.close();
         }
         {
-            XLChartTestDoc td; td.open(fname);
+            XLChartTestDoc td;
+            td.open(fname);
             std::string xml = td.getRawXml("xl/charts/chart1.xml");
             REQUIRE(xml.find("0.00%") != std::string::npos);
             REQUIRE(xml.find("c:numFmt") != std::string::npos);
@@ -475,15 +485,21 @@ TEST_CASE("Chart Phase1 Phase2 Features", "[XLChart][Phase12]")
     {
         const std::string fname = "test_p1_scatter_smooth.xlsx";
         {
-            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            XLDocument doc;
+            doc.create(fname, XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
-            for (int i = 1; i <= 4; ++i) { wks.cell(i,1).value()=i; wks.cell(i,2).value()=i*i; }
+            for (int i = 1; i <= 4; ++i) {
+                wks.cell(i, 1).value() = i;
+                wks.cell(i, 2).value() = i * i;
+            }
             auto chart = wks.addChart(XLChartType::ScatterSmooth, "SmoothScatter", 1, 4, 400, 300);
             chart.addSeries("Sheet1!$B$1:$B$4", "", "Sheet1!$A$1:$A$4");
-            doc.save(); doc.close();
+            doc.save();
+            doc.close();
         }
         {
-            XLChartTestDoc td; td.open(fname);
+            XLChartTestDoc td;
+            td.open(fname);
             std::string xml = td.getRawXml("xl/charts/chart1.xml");
             REQUIRE(xml.find("c:scatterChart") != std::string::npos);
             REQUIRE(xml.find("val=\"smooth\"") != std::string::npos);
@@ -496,18 +512,21 @@ TEST_CASE("Chart Phase1 Phase2 Features", "[XLChart][Phase12]")
     {
         const std::string fname = "test_p2_plotarea_color.xlsx";
         {
-            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            XLDocument doc;
+            doc.create(fname, XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
             for (int i = 1; i <= 3; ++i) wks.cell(i, 1).value() = i;
             auto chart = wks.addChart(XLChartType::Bar, "PlotAreaColor", 1, 3, 400, 300);
             chart.addSeries("Sheet1!$A$1:$A$3");
             chart.setPlotAreaColor("E8F4F8");
-            doc.save(); doc.close();
+            doc.save();
+            doc.close();
         }
         {
-            XLChartTestDoc td; td.open(fname);
-            std::string xml = td.getRawXml("xl/charts/chart1.xml");
-            bool hasColor = xml.find("E8F4F8") != std::string::npos || xml.find("e8f4f8") != std::string::npos;
+            XLChartTestDoc td;
+            td.open(fname);
+            std::string xml      = td.getRawXml("xl/charts/chart1.xml");
+            bool        hasColor = xml.find("E8F4F8") != std::string::npos || xml.find("e8f4f8") != std::string::npos;
             REQUIRE(hasColor);
             td.close();
         }
@@ -518,18 +537,21 @@ TEST_CASE("Chart Phase1 Phase2 Features", "[XLChart][Phase12]")
     {
         const std::string fname = "test_p2_chartarea_color.xlsx";
         {
-            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            XLDocument doc;
+            doc.create(fname, XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
             for (int i = 1; i <= 3; ++i) wks.cell(i, 1).value() = i;
             auto chart = wks.addChart(XLChartType::Bar, "ChartAreaColor", 1, 3, 400, 300);
             chart.addSeries("Sheet1!$A$1:$A$3");
             chart.setChartAreaColor("F5F5F5");
-            doc.save(); doc.close();
+            doc.save();
+            doc.close();
         }
         {
-            XLChartTestDoc td; td.open(fname);
-            std::string xml = td.getRawXml("xl/charts/chart1.xml");
-            bool hasColor = xml.find("F5F5F5") != std::string::npos || xml.find("f5f5f5") != std::string::npos;
+            XLChartTestDoc td;
+            td.open(fname);
+            std::string xml      = td.getRawXml("xl/charts/chart1.xml");
+            bool        hasColor = xml.find("F5F5F5") != std::string::npos || xml.find("f5f5f5") != std::string::npos;
             REQUIRE(hasColor);
             td.close();
         }
@@ -540,23 +562,28 @@ TEST_CASE("Chart Phase1 Phase2 Features", "[XLChart][Phase12]")
     {
         const std::string fname = "test_p2_bubble.xlsx";
         {
-            XLDocument doc; doc.create(fname, XLForceOverwrite);
+            XLDocument doc;
+            doc.create(fname, XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
             for (int i = 1; i <= 4; ++i) {
-                wks.cell(i,1).value()=i*10; wks.cell(i,2).value()=i*5; wks.cell(i,3).value()=i;
+                wks.cell(i, 1).value() = i * 10;
+                wks.cell(i, 2).value() = i * 5;
+                wks.cell(i, 3).value() = i;
             }
             auto chart = wks.addChart(XLChartType::Bubble, "BubbleTest", 1, 5, 500, 350);
             chart.setTitle("Market Bubbles");
-            chart.addBubbleSeries("Sheet1!$A$1:$A$4","Sheet1!$B$1:$B$4","Sheet1!$C$1:$C$4","S1");
-            doc.save(); doc.close();
+            chart.addBubbleSeries("Sheet1!$A$1:$A$4", "Sheet1!$B$1:$B$4", "Sheet1!$C$1:$C$4", "S1");
+            doc.save();
+            doc.close();
         }
         {
-            XLChartTestDoc td; td.open(fname);
+            XLChartTestDoc td;
+            td.open(fname);
             std::string xml = td.getRawXml("xl/charts/chart1.xml");
-            REQUIRE(xml.find("c:bubbleChart")    != std::string::npos);
-            REQUIRE(xml.find("c:xVal")           != std::string::npos);
-            REQUIRE(xml.find("c:yVal")           != std::string::npos);
-            REQUIRE(xml.find("c:bubbleSize")     != std::string::npos);
+            REQUIRE(xml.find("c:bubbleChart") != std::string::npos);
+            REQUIRE(xml.find("c:xVal") != std::string::npos);
+            REQUIRE(xml.find("c:yVal") != std::string::npos);
+            REQUIRE(xml.find("c:bubbleSize") != std::string::npos);
             REQUIRE(xml.find("Sheet1!$A$1:$A$4") != std::string::npos);
             REQUIRE(xml.find("Sheet1!$C$1:$C$4") != std::string::npos);
             td.close();

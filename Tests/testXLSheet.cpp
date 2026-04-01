@@ -115,121 +115,121 @@ TEST_CASE("XLSheet Tests", "[XLSheet]")
         REQUIRE(wks.autoFilter().empty());
 
         doc.save();
-        }
+    }
 
-        SECTION("XLSheet Panes (Freeze & Split)")
-        {
-            XLDocument doc;
-            doc.create("./testXLSheetPanes.xlsx", XLForceOverwrite);
+    SECTION("XLSheet Panes (Freeze & Split)")
+    {
+        XLDocument doc;
+        doc.create("./testXLSheetPanes.xlsx", XLForceOverwrite);
 
-            auto wks = doc.workbook().worksheet("Sheet1");
+        auto wks = doc.workbook().worksheet("Sheet1");
 
-            // 1. Freeze first row
-            wks.freezePanes(0, 1);
-            REQUIRE(wks.hasPanes());
-            std::ostringstream ss1;
-            wks.xmlDocument().document_element().print(ss1);
-            std::string xml = ss1.str();
-            REQUIRE(xml.find("ySplit=\"1\"") != std::string::npos);
-            REQUIRE(xml.find("state=\"frozen\"") != std::string::npos);
-            REQUIRE(xml.find("topLeftCell=\"A2\"") != std::string::npos);
-            REQUIRE(xml.find("<selection pane=\"bottomLeft\"") != std::string::npos);
+        // 1. Freeze first row
+        wks.freezePanes(0, 1);
+        REQUIRE(wks.hasPanes());
+        std::ostringstream ss1;
+        wks.xmlDocument().document_element().print(ss1);
+        std::string xml = ss1.str();
+        REQUIRE(xml.find("ySplit=\"1\"") != std::string::npos);
+        REQUIRE(xml.find("state=\"frozen\"") != std::string::npos);
+        REQUIRE(xml.find("topLeftCell=\"A2\"") != std::string::npos);
+        REQUIRE(xml.find("<selection pane=\"bottomLeft\"") != std::string::npos);
 
-            // 2. Freeze first column
-            wks.freezePanes(1, 0);
-            REQUIRE(wks.hasPanes());
-            std::ostringstream ss2;
-            wks.xmlDocument().document_element().print(ss2);
-            xml = ss2.str();
-            REQUIRE(xml.find("xSplit=\"1\"") != std::string::npos);
-            REQUIRE(xml.find("state=\"frozen\"") != std::string::npos);
-            REQUIRE(xml.find("activePane=\"topRight\"") != std::string::npos);
-            REQUIRE(xml.find("<selection pane=\"topRight\"") != std::string::npos);
+        // 2. Freeze first column
+        wks.freezePanes(1, 0);
+        REQUIRE(wks.hasPanes());
+        std::ostringstream ss2;
+        wks.xmlDocument().document_element().print(ss2);
+        xml = ss2.str();
+        REQUIRE(xml.find("xSplit=\"1\"") != std::string::npos);
+        REQUIRE(xml.find("state=\"frozen\"") != std::string::npos);
+        REQUIRE(xml.find("activePane=\"topRight\"") != std::string::npos);
+        REQUIRE(xml.find("<selection pane=\"topRight\"") != std::string::npos);
 
-            // 3. Freeze first row and first column
-            wks.freezePanes(1, 1);
-            REQUIRE(wks.hasPanes());
-            std::ostringstream ss3;
-            wks.xmlDocument().document_element().print(ss3);
-            xml = ss3.str();
-            REQUIRE(xml.find("xSplit=\"1\"") != std::string::npos);
-            REQUIRE(xml.find("ySplit=\"1\"") != std::string::npos);
-            REQUIRE(xml.find("state=\"frozen\"") != std::string::npos);
-            REQUIRE(xml.find("activePane=\"bottomRight\"") != std::string::npos);
-            REQUIRE(xml.find("<selection pane=\"topRight\"") != std::string::npos);
-            REQUIRE(xml.find("<selection pane=\"bottomLeft\"") != std::string::npos);
-            REQUIRE(xml.find("<selection pane=\"bottomRight\"") != std::string::npos);
+        // 3. Freeze first row and first column
+        wks.freezePanes(1, 1);
+        REQUIRE(wks.hasPanes());
+        std::ostringstream ss3;
+        wks.xmlDocument().document_element().print(ss3);
+        xml = ss3.str();
+        REQUIRE(xml.find("xSplit=\"1\"") != std::string::npos);
+        REQUIRE(xml.find("ySplit=\"1\"") != std::string::npos);
+        REQUIRE(xml.find("state=\"frozen\"") != std::string::npos);
+        REQUIRE(xml.find("activePane=\"bottomRight\"") != std::string::npos);
+        REQUIRE(xml.find("<selection pane=\"topRight\"") != std::string::npos);
+        REQUIRE(xml.find("<selection pane=\"bottomLeft\"") != std::string::npos);
+        REQUIRE(xml.find("<selection pane=\"bottomRight\"") != std::string::npos);
 
-            // 4. Split panes
-            wks.splitPanes(1000, 2000, "C3", XLPane::BottomRight);
-            REQUIRE(wks.hasPanes());
-            std::ostringstream ss4;
-            wks.xmlDocument().document_element().print(ss4);
-            xml = ss4.str();
-            REQUIRE(xml.find("xSplit=\"1000\"") != std::string::npos);
-            REQUIRE(xml.find("ySplit=\"2000\"") != std::string::npos);
-            REQUIRE(xml.find("state=\"split\"") != std::string::npos);
-            REQUIRE(xml.find("activePane=\"bottomRight\"") != std::string::npos);
+        // 4. Split panes
+        wks.splitPanes(1000, 2000, "C3", XLPane::BottomRight);
+        REQUIRE(wks.hasPanes());
+        std::ostringstream ss4;
+        wks.xmlDocument().document_element().print(ss4);
+        xml = ss4.str();
+        REQUIRE(xml.find("xSplit=\"1000\"") != std::string::npos);
+        REQUIRE(xml.find("ySplit=\"2000\"") != std::string::npos);
+        REQUIRE(xml.find("state=\"split\"") != std::string::npos);
+        REQUIRE(xml.find("activePane=\"bottomRight\"") != std::string::npos);
 
-            // 5. Clear panes
-            wks.clearPanes();
-            REQUIRE_FALSE(wks.hasPanes());
-            std::ostringstream ss5;
-            wks.xmlDocument().document_element().print(ss5);
-            xml = ss5.str();
-            REQUIRE(xml.find("<pane") == std::string::npos);
-            REQUIRE(xml.find("<selection") == std::string::npos);
+        // 5. Clear panes
+        wks.clearPanes();
+        REQUIRE_FALSE(wks.hasPanes());
+        std::ostringstream ss5;
+        wks.xmlDocument().document_element().print(ss5);
+        xml = ss5.str();
+        REQUIRE(xml.find("<pane") == std::string::npos);
+        REQUIRE(xml.find("<selection") == std::string::npos);
 
-            // 6. Freeze using string cell reference overload
-            wks.freezePanes("B2");
-            REQUIRE(wks.hasPanes());
-            std::ostringstream ss6;
-            wks.xmlDocument().document_element().print(ss6);
-            xml = ss6.str();
-            REQUIRE(xml.find("xSplit=\"1\"") != std::string::npos);
-            REQUIRE(xml.find("ySplit=\"1\"") != std::string::npos);
-            REQUIRE(xml.find("state=\"frozen\"") != std::string::npos);
-            REQUIRE(xml.find("activePane=\"bottomRight\"") != std::string::npos);
-            doc.save();
-        }
+        // 6. Freeze using string cell reference overload
+        wks.freezePanes("B2");
+        REQUIRE(wks.hasPanes());
+        std::ostringstream ss6;
+        wks.xmlDocument().document_element().print(ss6);
+        xml = ss6.str();
+        REQUIRE(xml.find("xSplit=\"1\"") != std::string::npos);
+        REQUIRE(xml.find("ySplit=\"1\"") != std::string::npos);
+        REQUIRE(xml.find("state=\"frozen\"") != std::string::npos);
+        REQUIRE(xml.find("activePane=\"bottomRight\"") != std::string::npos);
+        doc.save();
+    }
 
-        SECTION("XLSheet Grouping (Outline)")
-        {
-            XLDocument doc;
-            doc.create("./testXLSheetGrouping.xlsx", XLForceOverwrite);
-            auto wks = doc.workbook().worksheet("Sheet1");
+    SECTION("XLSheet Grouping (Outline)")
+    {
+        XLDocument doc;
+        doc.create("./testXLSheetGrouping.xlsx", XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
 
-            // Group rows 2-5 (Level 1), not collapsed
-            wks.groupRows(2, 5, 1, false);
+        // Group rows 2-5 (Level 1), not collapsed
+        wks.groupRows(2, 5, 1, false);
 
-            // Group rows 3-4 (Level 2), collapsed
-            wks.groupRows(3, 4, 2, true);
+        // Group rows 3-4 (Level 2), collapsed
+        wks.groupRows(3, 4, 2, true);
 
-            // Group columns B-D (2-4, Level 1), not collapsed
-            wks.groupColumns(2, 4, 1, false);
+        // Group columns B-D (2-4, Level 1), not collapsed
+        wks.groupColumns(2, 4, 1, false);
 
-            // Check Rows
-            REQUIRE(wks.row(2).outlineLevel() == 1);
-            REQUIRE_FALSE(wks.row(2).isHidden());
-            
-            REQUIRE(wks.row(3).outlineLevel() == 2);
-            REQUIRE(wks.row(3).isHidden());
-            
-            REQUIRE(wks.row(4).outlineLevel() == 2);
-            REQUIRE(wks.row(4).isHidden());
-            
-            REQUIRE(wks.row(5).outlineLevel() == 1);
-            REQUIRE(wks.row(5).isCollapsed() == true); // Because level 2 above it was collapsed
-            
-            // Check Columns
-            REQUIRE(wks.column(2).outlineLevel() == 1);
-            REQUIRE(wks.column(3).outlineLevel() == 1);
-            REQUIRE(wks.column(4).outlineLevel() == 1);
-            
-            doc.save();
-        }
+        // Check Rows
+        REQUIRE(wks.row(2).outlineLevel() == 1);
+        REQUIRE_FALSE(wks.row(2).isHidden());
 
-        SECTION("XLSheet Column Formatting")
+        REQUIRE(wks.row(3).outlineLevel() == 2);
+        REQUIRE(wks.row(3).isHidden());
+
+        REQUIRE(wks.row(4).outlineLevel() == 2);
+        REQUIRE(wks.row(4).isHidden());
+
+        REQUIRE(wks.row(5).outlineLevel() == 1);
+        REQUIRE(wks.row(5).isCollapsed() == true);    // Because level 2 above it was collapsed
+
+        // Check Columns
+        REQUIRE(wks.column(2).outlineLevel() == 1);
+        REQUIRE(wks.column(3).outlineLevel() == 1);
+        REQUIRE(wks.column(4).outlineLevel() == 1);
+
+        doc.save();
+    }
+
+    SECTION("XLSheet Column Formatting")
 
     {
         XLDocument doc;
@@ -279,7 +279,7 @@ TEST_CASE("XLSheet Tests", "[XLSheet]")
         setup.setPageOrder("overThenDown");
         setup.setUseFirstPageNumber(true);
         setup.setFirstPageNumber(2);
-        
+
         REQUIRE(setup.pageOrder() == "overThenDown");
         REQUIRE(setup.useFirstPageNumber() == true);
         REQUIRE(setup.firstPageNumber() == 2);
@@ -357,190 +357,188 @@ TEST_CASE("XLSheet Tests", "[XLSheet]")
         REQUIRE(sheetXml.find("<oddFooter>&amp;CConfidential</oddFooter>") != std::string::npos);
         REQUIRE(sheetXml.find("<evenHeader>&amp;R&amp;D</evenHeader>") != std::string::npos);
         REQUIRE(sheetXml.find("<firstHeader>&amp;CFirst Page Header</firstHeader>") != std::string::npos);
-        
+
         size_t hfPos = sheetXml.find("<headerFooter");
         REQUIRE(setupPos < hfPos);
 
         doc2.close();
-        }
+    }
 
+    SECTION("XLSheet HeaderFooter OOXML Strict Node Order")
+    {
+        XLDocument doc;
+        doc.create("./testXLSheet_HF_Order.xlsx", XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
 
-        SECTION("XLSheet HeaderFooter OOXML Strict Node Order")
-        {
-            XLDocument doc;
-            doc.create("./testXLSheet_HF_Order.xlsx", XLForceOverwrite);
-            auto wks = doc.workbook().worksheet("Sheet1");
+        // Intentionally set in reverse/random order to trigger the NodeOrder re-arrangement
+        auto hf = wks.headerFooter();
+        hf.setFirstFooter("FirstFooter");
+        hf.setFirstHeader("FirstHeader");
+        hf.setEvenFooter("EvenFooter");
+        hf.setEvenHeader("EvenHeader");
+        hf.setOddFooter("OddFooter");
+        hf.setOddHeader("OddHeader");
 
-            // Intentionally set in reverse/random order to trigger the NodeOrder re-arrangement
-            auto hf = wks.headerFooter();
-            hf.setFirstFooter("FirstFooter");
-            hf.setFirstHeader("FirstHeader");
-            hf.setEvenFooter("EvenFooter");
-            hf.setEvenHeader("EvenHeader");
-            hf.setOddFooter("OddFooter");
-            hf.setOddHeader("OddHeader");
+        doc.save();
+        doc.close();
 
-            doc.save();
-            doc.close();
+        // Re-open and verify functionality
+        XLDocument doc2;
+        doc2.open("./testXLSheet_HF_Order.xlsx");
+        auto wks2 = doc2.workbook().worksheet("Sheet1");
+        auto hf2  = wks2.headerFooter();
 
-            // Re-open and verify functionality
-            XLDocument doc2;
-            doc2.open("./testXLSheet_HF_Order.xlsx");
-            auto wks2 = doc2.workbook().worksheet("Sheet1");
-            auto hf2 = wks2.headerFooter();
+        REQUIRE(hf2.oddHeader() == "OddHeader");
+        REQUIRE(hf2.oddFooter() == "OddFooter");
+        REQUIRE(hf2.evenHeader() == "EvenHeader");
+        REQUIRE(hf2.evenFooter() == "EvenFooter");
+        REQUIRE(hf2.firstHeader() == "FirstHeader");
+        REQUIRE(hf2.firstFooter() == "FirstFooter");
 
-            REQUIRE(hf2.oddHeader() == "OddHeader");
-            REQUIRE(hf2.oddFooter() == "OddFooter");
-            REQUIRE(hf2.evenHeader() == "EvenHeader");
-            REQUIRE(hf2.evenFooter() == "EvenFooter");
-            REQUIRE(hf2.firstHeader() == "FirstHeader");
-            REQUIRE(hf2.firstFooter() == "FirstFooter");
+        // Verify strict OOXML ordering in XML output
+        std::string sheetXml = getRawXml(doc2, "xl/worksheets/sheet1.xml");
 
-            // Verify strict OOXML ordering in XML output
-            std::string sheetXml = getRawXml(doc2, "xl/worksheets/sheet1.xml");
+        size_t oddH   = sheetXml.find("<oddHeader>");
+        size_t oddF   = sheetXml.find("<oddFooter>");
+        size_t evenH  = sheetXml.find("<evenHeader>");
+        size_t evenF  = sheetXml.find("<evenFooter>");
+        size_t firstH = sheetXml.find("<firstHeader>");
+        size_t firstF = sheetXml.find("<firstFooter>");
 
-            size_t oddH  = sheetXml.find("<oddHeader>");
-            size_t oddF  = sheetXml.find("<oddFooter>");
-            size_t evenH = sheetXml.find("<evenHeader>");
-            size_t evenF = sheetXml.find("<evenFooter>");
-            size_t firstH= sheetXml.find("<firstHeader>");
-            size_t firstF= sheetXml.find("<firstFooter>");
+        REQUIRE(oddH != std::string::npos);
+        REQUIRE(oddF != std::string::npos);
+        REQUIRE(evenH != std::string::npos);
+        REQUIRE(evenF != std::string::npos);
+        REQUIRE(firstH != std::string::npos);
+        REQUIRE(firstF != std::string::npos);
 
-            REQUIRE(oddH != std::string::npos);
-            REQUIRE(oddF != std::string::npos);
-            REQUIRE(evenH != std::string::npos);
-            REQUIRE(evenF != std::string::npos);
-            REQUIRE(firstH != std::string::npos);
-            REQUIRE(firstF != std::string::npos);
+        // Strict OOXML sequence requirement: oddHeader, oddFooter, evenHeader, evenFooter, firstHeader, firstFooter
+        REQUIRE(oddH < oddF);
+        REQUIRE(oddF < evenH);
+        REQUIRE(evenH < evenF);
+        REQUIRE(evenF < firstH);
+        REQUIRE(firstH < firstF);
 
-            // Strict OOXML sequence requirement: oddHeader, oddFooter, evenHeader, evenFooter, firstHeader, firstFooter
-            REQUIRE(oddH < oddF);
-            REQUIRE(oddF < evenH);
-            REQUIRE(evenH < evenF);
-            REQUIRE(evenF < firstH);
-            REQUIRE(firstH < firstF);
-            
-            doc2.close();
-        }
+        doc2.close();
+    }
 
-        SECTION("XLSheet Protection")
-        {
-            XLDocument doc;
-            doc.create("./testXLSheet5.xlsx", XLForceOverwrite);
-            auto wks = doc.workbook().worksheet("Sheet1");
+    SECTION("XLSheet Protection")
+    {
+        XLDocument doc;
+        doc.create("./testXLSheet5.xlsx", XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
 
-            // 1. Test safety: should not crash and should return defaults (true = allowed) when node doesn't exist
-            REQUIRE_FALSE(wks.sheetProtected());
-            REQUIRE(wks.insertColumnsAllowed());
-            REQUIRE(wks.formatCellsAllowed());
-            REQUIRE(wks.passwordHash().empty());
+        // 1. Test safety: should not crash and should return defaults (true = allowed) when node doesn't exist
+        REQUIRE_FALSE(wks.sheetProtected());
+        REQUIRE(wks.insertColumnsAllowed());
+        REQUIRE(wks.formatCellsAllowed());
+        REQUIRE(wks.passwordHash().empty());
 
-            // 2. Test basic protection
-            wks.protectSheet(true);
-            REQUIRE(wks.sheetProtected() == true);
+        // 2. Test basic protection
+        wks.protectSheet(true);
+        REQUIRE(wks.sheetProtected() == true);
 
-            // 3. Test detailed settings
-            wks.allowInsertColumns(true);
-            REQUIRE(wks.insertColumnsAllowed() == true);
+        // 3. Test detailed settings
+        wks.allowInsertColumns(true);
+        REQUIRE(wks.insertColumnsAllowed() == true);
 
-            wks.denyInsertRows();
-            REQUIRE(wks.insertRowsAllowed() == false);
+        wks.denyInsertRows();
+        REQUIRE(wks.insertRowsAllowed() == false);
 
-            wks.allowFormatCells(true);
-            REQUIRE(wks.formatCellsAllowed() == true);
+        wks.allowFormatCells(true);
+        REQUIRE(wks.formatCellsAllowed() == true);
 
-            wks.denyFormatColumns();
-            REQUIRE(wks.formatColumnsAllowed() == false);
+        wks.denyFormatColumns();
+        REQUIRE(wks.formatColumnsAllowed() == false);
 
-            wks.allowAutoFilter(true);
-            REQUIRE(wks.autoFilterAllowed() == true);
+        wks.allowAutoFilter(true);
+        REQUIRE(wks.autoFilterAllowed() == true);
 
-            wks.denySort();
-            REQUIRE(wks.sortAllowed() == false);
+        wks.denySort();
+        REQUIRE(wks.sortAllowed() == false);
 
-            // 4. Test password
-            wks.setPassword("OpenXLSX");
-            REQUIRE(wks.passwordIsSet() == true);
-            REQUIRE(wks.passwordHash() == "a355");
+        // 4. Test password
+        wks.setPassword("OpenXLSX");
+        REQUIRE(wks.passwordIsSet() == true);
+        REQUIRE(wks.passwordHash() == "a355");
 
-            doc.save();
+        doc.save();
 
-            // 5. Verify XML structure
-            std::string sheetXml = getRawXml(doc, "xl/worksheets/sheet1.xml");
-            REQUIRE(sheetXml.find("<sheetProtection") != std::string::npos);
-            REQUIRE(sheetXml.find("sheet=\"true\"") != std::string::npos);
-            REQUIRE(sheetXml.find("insertColumns=\"false\"") != std::string::npos); // allow = true -> XML "false" (not protected)
-            REQUIRE(sheetXml.find("insertRows=\"true\"") != std::string::npos);    // allow = false -> XML "true" (protected)
-            REQUIRE(sheetXml.find("formatCells=\"false\"") != std::string::npos);
-            REQUIRE(sheetXml.find("formatColumns=\"true\"") != std::string::npos);
-            REQUIRE(sheetXml.find("autoFilter=\"false\"") != std::string::npos);
-            REQUIRE(sheetXml.find("sort=\"true\"") != std::string::npos);
-            REQUIRE(sheetXml.find("password=\"a355\"") != std::string::npos);
+        // 5. Verify XML structure
+        std::string sheetXml = getRawXml(doc, "xl/worksheets/sheet1.xml");
+        REQUIRE(sheetXml.find("<sheetProtection") != std::string::npos);
+        REQUIRE(sheetXml.find("sheet=\"true\"") != std::string::npos);
+        REQUIRE(sheetXml.find("insertColumns=\"false\"") != std::string::npos);    // allow = true -> XML "false" (not protected)
+        REQUIRE(sheetXml.find("insertRows=\"true\"") != std::string::npos);        // allow = false -> XML "true" (protected)
+        REQUIRE(sheetXml.find("formatCells=\"false\"") != std::string::npos);
+        REQUIRE(sheetXml.find("formatColumns=\"true\"") != std::string::npos);
+        REQUIRE(sheetXml.find("autoFilter=\"false\"") != std::string::npos);
+        REQUIRE(sheetXml.find("sort=\"true\"") != std::string::npos);
+        REQUIRE(sheetXml.find("password=\"a355\"") != std::string::npos);
 
-            // 6. Test clear functions
-            wks.clearPassword();
-            REQUIRE_FALSE(wks.passwordIsSet());
+        // 6. Test clear functions
+        wks.clearPassword();
+        REQUIRE_FALSE(wks.passwordIsSet());
 
-            wks.clearSheetProtection();
-            REQUIRE_FALSE(wks.sheetProtected());
-            REQUIRE(wks.insertRowsAllowed()); // Should revert to default (allowed)
+        wks.clearSheetProtection();
+        REQUIRE_FALSE(wks.sheetProtected());
+        REQUIRE(wks.insertRowsAllowed());    // Should revert to default (allowed)
 
-            doc.close();
-        }
+        doc.close();
+    }
 
-        SECTION("XLSheet Views and Page Breaks")
-        {
-            XLDocument doc;
-            doc.create("./testXLSheet6.xlsx", XLForceOverwrite);
-            auto wks = doc.workbook().worksheet("Sheet1");
+    SECTION("XLSheet Views and Page Breaks")
+    {
+        XLDocument doc;
+        doc.create("./testXLSheet6.xlsx", XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
 
-            // Test Zoom
-            REQUIRE(wks.zoom() == 100); // Default
-            wks.setZoom(150);
-            REQUIRE(wks.zoom() == 150);
+        // Test Zoom
+        REQUIRE(wks.zoom() == 100);    // Default
+        wks.setZoom(150);
+        REQUIRE(wks.zoom() == 150);
 
-            // Test Page Breaks
-            wks.insertRowBreak(5);
-            wks.insertRowBreak(10);
-            
-            doc.save();
-            doc.close();
+        // Test Page Breaks
+        wks.insertRowBreak(5);
+        wks.insertRowBreak(10);
 
-            // Re-open and verify
-            XLDocument doc2;
-            doc2.open("./testXLSheet6.xlsx");
-            auto wks2 = doc2.workbook().worksheet("Sheet1");
+        doc.save();
+        doc.close();
 
-            REQUIRE(wks2.zoom() == 150);
+        // Re-open and verify
+        XLDocument doc2;
+        doc2.open("./testXLSheet6.xlsx");
+        auto wks2 = doc2.workbook().worksheet("Sheet1");
 
-            // Verify XML structure
-            std::string sheetXml = getRawXml(doc2, "xl/worksheets/sheet1.xml");
-            
-            // Zoom
-            REQUIRE(sheetXml.find("zoomScale=\"150\"") != std::string::npos);
-            REQUIRE(sheetXml.find("zoomScaleNormal=\"150\"") != std::string::npos);
+        REQUIRE(wks2.zoom() == 150);
 
-            // Page Breaks
-            REQUIRE(sheetXml.find("<rowBreaks") != std::string::npos);
-            REQUIRE(sheetXml.find("count=\"2\"") != std::string::npos);
-            REQUIRE(sheetXml.find("manualBreakCount=\"2\"") != std::string::npos);
-            REQUIRE(sheetXml.find("<brk id=\"5\"") != std::string::npos);
-            REQUIRE(sheetXml.find("<brk id=\"10\"") != std::string::npos);
+        // Verify XML structure
+        std::string sheetXml = getRawXml(doc2, "xl/worksheets/sheet1.xml");
 
-            // Test Removal
-            wks2.removeRowBreak(5);
-            doc2.save();
-            doc2.close();
+        // Zoom
+        REQUIRE(sheetXml.find("zoomScale=\"150\"") != std::string::npos);
+        REQUIRE(sheetXml.find("zoomScaleNormal=\"150\"") != std::string::npos);
 
-            XLDocument doc3;
-            doc3.open("./testXLSheet6.xlsx");
-            std::string sheetXml3 = getRawXml(doc3, "xl/worksheets/sheet1.xml");
-            REQUIRE(sheetXml3.find("count=\"1\"") != std::string::npos);
-            REQUIRE(sheetXml3.find("id=\"5\"") == std::string::npos);
-            REQUIRE(sheetXml3.find("id=\"10\"") != std::string::npos);
-            doc3.close();
-        }
+        // Page Breaks
+        REQUIRE(sheetXml.find("<rowBreaks") != std::string::npos);
+        REQUIRE(sheetXml.find("count=\"2\"") != std::string::npos);
+        REQUIRE(sheetXml.find("manualBreakCount=\"2\"") != std::string::npos);
+        REQUIRE(sheetXml.find("<brk id=\"5\"") != std::string::npos);
+        REQUIRE(sheetXml.find("<brk id=\"10\"") != std::string::npos);
 
+        // Test Removal
+        wks2.removeRowBreak(5);
+        doc2.save();
+        doc2.close();
+
+        XLDocument doc3;
+        doc3.open("./testXLSheet6.xlsx");
+        std::string sheetXml3 = getRawXml(doc3, "xl/worksheets/sheet1.xml");
+        REQUIRE(sheetXml3.find("count=\"1\"") != std::string::npos);
+        REQUIRE(sheetXml3.find("id=\"5\"") == std::string::npos);
+        REQUIRE(sheetXml3.find("id=\"10\"") != std::string::npos);
+        doc3.close();
+    }
 }
 TEST_CASE("Worksheet Slicing and Batch Insertion API", "[XLWorksheet][Range][Row]")
 {
@@ -615,17 +613,15 @@ TEST_CASE("Worksheet Peek API", "[XLWorksheet][Peek]")
             REQUIRE(!c2.has_value());
 
             // Since we only peeked A1, row 1 should still not exist in XML!
-            REQUIRE(wks.rowCount() == 2); // Row 2 was created for B2
-            
+            REQUIRE(wks.rowCount() == 2);    // Row 2 was created for B2
+
             // Validate that row 1 was never created by peekCell
             // We can check this by counting actual rows
             uint32_t actualRows = 0;
             for (auto row : wks.rows()) {
-                if (row.cells().begin() != row.cells().end()) {
-                    actualRows++;
-                }
+                if (row.cells().begin() != row.cells().end()) { actualRows++; }
             }
-            REQUIRE(actualRows == 1); // Only row 2 exists
+            REQUIRE(actualRows == 1);    // Only row 2 exists
 
             doc.save();
             doc.close();
@@ -658,7 +654,7 @@ TEST_CASE("Worksheet mergeCells API", "[XLWorksheet][Merge]")
 
             // Since it's merged B2:D4, the value is in B2
             REQUIRE(wks.cell("B2").value().get<std::string>() == "Fluent Title");
-            
+
             // Check that the other cells in the merge range also got the value
             // (Because XLCellRange::operator= applies to all cells in range)
             REQUIRE(wks.cell("C3").value().get<std::string>() == "Fluent Title");
@@ -678,7 +674,7 @@ TEST_CASE("Worksheet Strong Index API", "[XLWorksheet][Index]")
             auto wks = doc.workbook().worksheet("Sheet1");
 
             using namespace OpenXLSX::IndexLiterals;
-            wks.cell(2_row, 3_col).value() = "C2";
+            wks.cell(2_row, 3_col).value()                 = "C2";
             wks.cell(XLRowIndex(4), XLColIndex(5)).value() = "E4";
 
             doc.save();
@@ -708,19 +704,13 @@ TEST_CASE("Page Setup Ergonomics Validation", "[XLPageSetup][Fluent]")
             auto wks = doc.workbook().worksheet("Sheet1");
 
             using namespace OpenXLSX::DistanceLiterals;
-            
-            wks.pageMargins()
-                 .setLeft(1_inch)
-                 .setRight(2.5_cm)
-                 .setTop(1.5_inch)
-                 .setBottom(1.5_inch)
-                 .setHeader(0.5_inch)
-                 .setFooter(0.5_inch);
+
+            wks.pageMargins().setLeft(1_inch).setRight(2.5_cm).setTop(1.5_inch).setBottom(1.5_inch).setHeader(0.5_inch).setFooter(0.5_inch);
 
             wks.pageSetup()
-                 .setOrientation(XLPageOrientation::Landscape)
-                 .setPaperSize(9) // A4
-                 .setBlackAndWhite(true);
+                .setOrientation(XLPageOrientation::Landscape)
+                .setPaperSize(9)    // A4
+                .setBlackAndWhite(true);
 
             doc.save();
             doc.close();
@@ -730,15 +720,15 @@ TEST_CASE("Page Setup Ergonomics Validation", "[XLPageSetup][Fluent]")
             XLDocument doc;
             doc.open(filename);
             auto wks = doc.workbook().worksheet("Sheet1");
-            
+
             // Check orientation
             REQUIRE(wks.pageSetup().orientation() == XLPageOrientation::Landscape);
             REQUIRE(wks.pageSetup().paperSize() == 9);
             REQUIRE(wks.pageSetup().blackAndWhite() == true);
-            
+
             // Check margins
             REQUIRE(wks.pageMargins().left() == Catch::Approx(1.0));
-            REQUIRE(wks.pageMargins().right() == Catch::Approx(2.5 / 2.54)); // roughly 0.984 inch
+            REQUIRE(wks.pageMargins().right() == Catch::Approx(2.5 / 2.54));    // roughly 0.984 inch
         }
     }
 }

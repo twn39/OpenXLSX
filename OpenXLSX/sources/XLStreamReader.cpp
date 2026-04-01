@@ -8,7 +8,8 @@
 #include "XLStreamReader.hpp"
 #include "XLWorksheet.hpp"
 
-namespace {
+namespace
+{
 
     // Decode standard XML character entities in-place.
     void xmlUnescape(std::string& s)
@@ -16,12 +17,29 @@ namespace {
         size_t w = 0;
         for (size_t r = 0; r < s.size();) {
             if (s[r] == '&') {
-                if      (s.compare(r, 5, "&amp;")  == 0) { s[w++] = '&';  r += 5; }
-                else if (s.compare(r, 4, "&lt;")   == 0) { s[w++] = '<';  r += 4; }
-                else if (s.compare(r, 4, "&gt;")   == 0) { s[w++] = '>';  r += 4; }
-                else if (s.compare(r, 6, "&quot;") == 0) { s[w++] = '"';  r += 6; }
-                else if (s.compare(r, 6, "&apos;") == 0) { s[w++] = '\''; r += 6; }
-                else { s[w++] = s[r++]; }
+                if (s.compare(r, 5, "&amp;") == 0) {
+                    s[w++] = '&';
+                    r += 5;
+                }
+                else if (s.compare(r, 4, "&lt;") == 0) {
+                    s[w++] = '<';
+                    r += 4;
+                }
+                else if (s.compare(r, 4, "&gt;") == 0) {
+                    s[w++] = '>';
+                    r += 4;
+                }
+                else if (s.compare(r, 6, "&quot;") == 0) {
+                    s[w++] = '"';
+                    r += 6;
+                }
+                else if (s.compare(r, 6, "&apos;") == 0) {
+                    s[w++] = '\'';
+                    r += 6;
+                }
+                else {
+                    s[w++] = s[r++];
+                }
             }
             else {
                 s[w++] = s[r++];
@@ -32,10 +50,10 @@ namespace {
 
 }    // anonymous namespace
 
-namespace OpenXLSX {
+namespace OpenXLSX
+{
 
-    XLStreamReader::XLStreamReader(const XLWorksheet* worksheet)
-        : m_worksheet(worksheet)
+    XLStreamReader::XLStreamReader(const XLWorksheet* worksheet) : m_worksheet(worksheet)
     {
         if (!worksheet) throw XLInternalError("Worksheet is null");
 
@@ -102,8 +120,7 @@ namespace OpenXLSX {
 
         constexpr size_t kReadBuf = 65536;
         char             buf[kReadBuf];    // 64 KB chunks
-        auto             bytesRead = m_worksheet->parentDoc().archive().readEntryStream(
-            m_zipStream, buf, kReadBuf);
+        auto             bytesRead = m_worksheet->parentDoc().archive().readEntryStream(m_zipStream, buf, kReadBuf);
 
         if (bytesRead > 0)
             m_buffer.append(buf, static_cast<size_t>(bytesRead));
@@ -159,8 +176,7 @@ namespace OpenXLSX {
                 if (rPos != std::string::npos && rPos < firstGt) {
                     size_t rEnd = m_buffer.find('"', rPos + 3);
                     if (rEnd != std::string::npos && rEnd < firstGt)
-                        m_currentRow = static_cast<uint32_t>(
-                            std::strtoul(m_buffer.c_str() + rPos + 3, nullptr, 10));
+                        m_currentRow = static_cast<uint32_t>(std::strtoul(m_buffer.c_str() + rPos + 3, nullptr, 10));
                 }
                 else {
                     ++m_currentRow;
@@ -186,8 +202,7 @@ namespace OpenXLSX {
         const char* end = m_buffer.data() + sliceEnd;
 
         auto skipWS = [&](const char* cp) -> const char* {
-            while (cp < end && (*cp == ' ' || *cp == '\t' || *cp == '\r' || *cp == '\n'))
-                ++cp;
+            while (cp < end && (*cp == ' ' || *cp == '\t' || *cp == '\r' || *cp == '\n')) ++cp;
             return cp;
         };
 
@@ -195,8 +210,8 @@ namespace OpenXLSX {
         std::string cellRef;
         std::string cellType;
         std::string cellValue;
-        bool        inVTag   = false;
-        bool        inIsTTag = false;    // inside <is><t> (inline string)
+        bool        inVTag      = false;
+        bool        inIsTTag    = false;    // inside <is><t> (inline string)
         uint32_t    expectedCol = 1;
 
         // Commit a parsed cell into result, filling column gaps with empties
@@ -207,8 +222,10 @@ namespace OpenXLSX {
             {
                 uint16_t col = 0;
                 for (char c : cellRef) {
-                    if (c >= 'A' && c <= 'Z') col = static_cast<uint16_t>(col * 26 + (c - 'A' + 1));
-                    else break;
+                    if (c >= 'A' && c <= 'Z')
+                        col = static_cast<uint16_t>(col * 26 + (c - 'A' + 1));
+                    else
+                        break;
                 }
                 if (col > 0) actualCol = col;
             }
@@ -221,8 +238,8 @@ namespace OpenXLSX {
             xmlUnescape(cellValue);
 
             if (cellType == "s") {
-                char*  ep  = nullptr;
-                auto   idx = static_cast<int32_t>(std::strtol(cellValue.data(), &ep, 10));
+                char* ep  = nullptr;
+                auto  idx = static_cast<int32_t>(std::strtol(cellValue.data(), &ep, 10));
                 if (ep != cellValue.data())
                     result.emplace_back(std::string(m_worksheet->parentDoc().sharedStrings().getString(idx)));
                 else
@@ -242,12 +259,10 @@ namespace OpenXLSX {
             else {
                 // Numeric (t="" or t="n")
                 if (!cellValue.empty()) {
-                    double val = 0.0;
-                    auto [ptr, ec] = fast_float::from_chars(
-                        cellValue.data(), cellValue.data() + cellValue.size(), val);
+                    double val     = 0.0;
+                    auto [ptr, ec] = fast_float::from_chars(cellValue.data(), cellValue.data() + cellValue.size(), val);
                     if (ec == std::errc()) {
-                        if (cellValue.find('.') == std::string::npos &&
-                            cellValue.find('E') == std::string::npos &&
+                        if (cellValue.find('.') == std::string::npos && cellValue.find('E') == std::string::npos &&
                             cellValue.find('e') == std::string::npos)
                             result.emplace_back(static_cast<int64_t>(val));
                         else
@@ -288,9 +303,12 @@ namespace OpenXLSX {
             while (p < end && *p != ' ' && *p != '>' && *p != '/') m_tagNameBuf += *p++;
 
             if (isClose) {
-                if (m_tagNameBuf == "row" || m_tagNameBuf == "c") flushCell();
-                else if (m_tagNameBuf == "v")                      inVTag   = false;
-                else if (m_tagNameBuf == "t")                      inIsTTag = false;
+                if (m_tagNameBuf == "row" || m_tagNameBuf == "c")
+                    flushCell();
+                else if (m_tagNameBuf == "v")
+                    inVTag = false;
+                else if (m_tagNameBuf == "t")
+                    inIsTTag = false;
                 while (p < end && *p != '>') ++p;
                 if (p < end) ++p;
                 continue;
@@ -303,8 +321,11 @@ namespace OpenXLSX {
 
             while (p < end) {
                 p = skipWS(p);
-                if (p >= end)   break;
-                if (*p == '>')  { ++p; break; }
+                if (p >= end) break;
+                if (*p == '>') {
+                    ++p;
+                    break;
+                }
                 if (*p == '/') {
                     selfClose = true;
                     ++p;
@@ -325,8 +346,10 @@ namespace OpenXLSX {
                 while (p < end && (q ? *p != q : (*p != ' ' && *p != '>'))) m_attrValueBuf += *p++;
                 if (q && p < end) ++p;
 
-                if      (m_attrNameBuf == "r") localR = m_attrValueBuf;
-                else if (m_attrNameBuf == "t") localT = m_attrValueBuf;
+                if (m_attrNameBuf == "r")
+                    localR = m_attrValueBuf;
+                else if (m_attrNameBuf == "t")
+                    localT = m_attrValueBuf;
             }
 
             if (m_tagNameBuf == "row") {

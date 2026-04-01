@@ -1,14 +1,15 @@
+#include <IZipArchive.hpp>
 #include <OpenXLSX.hpp>
 #include <catch2/catch_all.hpp>
 #include <pugixml.hpp>
-#include <IZipArchive.hpp>
 
 using namespace OpenXLSX;
 
 /**
  * @brief Helper to check the physical order of child nodes in an XML node.
  */
-bool checkNodeOrder(const pugi::xml_node& parent, const std::vector<std::string>& expectedOrder) {
+bool checkNodeOrder(const pugi::xml_node& parent, const std::vector<std::string>& expectedOrder)
+{
     int lastPos = -1;
     for (const auto& name : expectedOrder) {
         auto node = parent.child(name.c_str());
@@ -28,7 +29,8 @@ bool checkNodeOrder(const pugi::xml_node& parent, const std::vector<std::string>
 /**
  * @brief Helper to check attribute sequence in a node.
  */
-bool checkAttributeOrder(const pugi::xml_node& node, const std::vector<std::string>& expectedOrder) {
+bool checkAttributeOrder(const pugi::xml_node& node, const std::vector<std::string>& expectedOrder)
+{
     int lastPos = -1;
     for (const auto& name : expectedOrder) {
         auto attr = node.attribute(name.c_str());
@@ -64,7 +66,7 @@ TEST_CASE("XLTables OOXML Compliance & Stability", "[XLTables]")
 
             // Add Table (Feature 1)
             auto tbl = wks.tables().add("Table1", "A1:B3");
-            
+
             // Auto Columns (Feature 2)
             tbl.createColumnsFromRange(wks);
 
@@ -73,9 +75,9 @@ TEST_CASE("XLTables OOXML Compliance & Stability", "[XLTables]")
 
             // Totals row (Feature 6 - Simplified stable parts)
             // Note: Feature 5 (toggle) is unstable, but basic property setting is okay
-            tbl.setShowTotalsRow(true); 
+            tbl.setShowTotalsRow(true);
             tbl.column("Value").setTotalsRowFunction(XLTotalsRowFunction::Sum);
-            wks.cell("B3").value() = 100; // Manual sync for worksheet data
+            wks.cell("B3").value() = 100;    // Manual sync for worksheet data
 
             doc.save();
         }
@@ -84,7 +86,7 @@ TEST_CASE("XLTables OOXML Compliance & Stability", "[XLTables]")
         {
             XLDocument doc;
             doc.open(filename);
-            
+
             // Access internal XML via archive to check physical layout
             auto tableXml = doc.archive().getEntry("xl/tables/table1.xml");
             REQUIRE_FALSE(tableXml.empty());
@@ -120,10 +122,10 @@ TEST_CASE("XLTables OOXML Compliance & Stability", "[XLTables]")
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
-            
+
             wks.tables().add("T1", "A1:B2");
             wks.tables().add("T2", "D1:E2");
-            
+
             REQUIRE(wks.tables().count() == 2);
             doc.save();
         }
@@ -158,8 +160,8 @@ TEST_CASE("XLTables Ergonomic Add API", "[XLTables][Range]")
 
             // Use the new type-safe overload
             auto range = wks.range("A1:B2");
-            auto tbl = wks.tables().add("MyTable", range);
-            
+            auto tbl   = wks.tables().add("MyTable", range);
+
             // This implicitly relies on the getString() safety patch
             tbl.createColumnsFromRange(wks);
 

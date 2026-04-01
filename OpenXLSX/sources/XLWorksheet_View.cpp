@@ -1,9 +1,9 @@
 #include <string>
 
-#include "XLWorksheet.hpp"
+#include "XLCellReference.hpp"
 #include "XLDocument.hpp"
 #include "XLUtilities.hpp"
-#include "XLCellReference.hpp"
+#include "XLWorksheet.hpp"
 
 using namespace OpenXLSX;
 
@@ -33,15 +33,15 @@ XLPageSetup XLWorksheet::pageSetup() const
 
 void XLWorksheet::setPrintArea(const std::string& sqref)
 {
-    uint32_t localSheetId = index() - 1; // index() is 1-based, localSheetId is 0-based
+    uint32_t localSheetId = index() - 1;    // index() is 1-based, localSheetId is 0-based
     parentDoc().workbook().definedNames().append("_xlnm.Print_Area", "'" + name() + "'!" + sqref, localSheetId);
 }
 
 void XLWorksheet::setPrintTitleRows(uint32_t firstRow, uint32_t lastRow)
 {
-    uint32_t localSheetId = index() - 1;
-    std::string rowRef = "'" + name() + "'!$" + std::to_string(firstRow) + ":$" + std::to_string(lastRow);
-    
+    uint32_t    localSheetId = index() - 1;
+    std::string rowRef       = "'" + name() + "'!$" + std::to_string(firstRow) + ":$" + std::to_string(lastRow);
+
     auto currentName = parentDoc().workbook().definedNames().get("_xlnm.Print_Titles", localSheetId);
     if (currentName.valid()) {
         std::string currentRef = currentName.refersTo();
@@ -50,15 +50,15 @@ void XLWorksheet::setPrintTitleRows(uint32_t firstRow, uint32_t lastRow)
             parentDoc().workbook().definedNames().remove("_xlnm.Print_Titles", localSheetId);
         }
     }
-    
+
     parentDoc().workbook().definedNames().append("_xlnm.Print_Titles", rowRef, localSheetId);
 }
 
 void XLWorksheet::setPrintTitleCols(uint16_t firstCol, uint16_t lastCol)
 {
-    uint32_t localSheetId = index() - 1;
+    uint32_t    localSheetId = index() - 1;
     std::string colRef = "'" + name() + "'!$" + XLCellReference::columnAsString(firstCol) + ":$" + XLCellReference::columnAsString(lastCol);
-    
+
     auto currentName = parentDoc().workbook().definedNames().get("_xlnm.Print_Titles", localSheetId);
     if (currentName.valid()) {
         std::string currentRef = currentName.refersTo();
@@ -67,7 +67,7 @@ void XLWorksheet::setPrintTitleCols(uint16_t firstCol, uint16_t lastCol)
             parentDoc().workbook().definedNames().remove("_xlnm.Print_Titles", localSheetId);
         }
     }
-    
+
     parentDoc().workbook().definedNames().append("_xlnm.Print_Titles", colRef, localSheetId);
 }
 
@@ -186,13 +186,14 @@ uint16_t XLWorksheet::zoom() const
 void XLWorksheet::insertRowBreak(uint32_t row)
 {
     auto docElement = xmlDocument().document_element();
-    auto rowBreaks = docElement.child("rowBreaks");
+    auto rowBreaks  = docElement.child("rowBreaks");
     if (rowBreaks.empty()) {
         rowBreaks = appendAndGetNode(docElement, "rowBreaks", m_nodeOrder);
         rowBreaks.append_attribute("count").set_value(0);
         rowBreaks.append_attribute("manualBreakCount").set_value(0);
     }
-    for (auto brk : rowBreaks.children("brk")) if (brk.attribute("id").as_uint() == row) return;
+    for (auto brk : rowBreaks.children("brk"))
+        if (brk.attribute("id").as_uint() == row) return;
     auto brk = rowBreaks.append_child("brk");
     brk.append_attribute("id").set_value(row);
     brk.append_attribute("max").set_value(16383);
@@ -206,7 +207,7 @@ void XLWorksheet::insertRowBreak(uint32_t row)
 void XLWorksheet::removeRowBreak(uint32_t row)
 {
     auto docElement = xmlDocument().document_element();
-    auto rowBreaks = docElement.child("rowBreaks");
+    auto rowBreaks  = docElement.child("rowBreaks");
     if (rowBreaks.empty()) return;
     for (auto brk : rowBreaks.children("brk")) {
         if (brk.attribute("id").as_uint() == row) {
@@ -259,7 +260,6 @@ void XLWorksheet::groupColumns(uint16_t colFirst, uint16_t colLast, uint8_t outl
         colObj.setCollapsed(true);
     }
 }
-
 
 XLHeaderFooter XLWorksheet::headerFooter() const
 {

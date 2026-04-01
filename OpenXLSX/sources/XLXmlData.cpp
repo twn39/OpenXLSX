@@ -28,8 +28,8 @@ XLXmlData::~XLXmlData() = default;
  * @details
  */
 void XLXmlData::setRawData(const std::string& data)    // NOLINT
-{ 
-    auto result = m_xmlDoc->load_string(data.c_str(), pugi_parse_settings); 
+{
+    auto result = m_xmlDoc->load_string(data.c_str(), pugi_parse_settings);
     if (!result && result.status != pugi::status_no_document_element) {
         throw XLException("Failed to parse raw XML data. Error: " + std::string(result.description()));
     }
@@ -52,9 +52,9 @@ std::string XLXmlData::getRawData(XLXmlSavingDeclaration savingDeclaration) cons
         }
     }
 
-    if (saveDeclaration.empty()) {    // if saving declaration node does not exist
-        doc->prepend_child(pugi::node_pcdata).set_value("\n");                            // prepend a line break
-        saveDeclaration = doc->prepend_child(pugi::node_declaration);                     // prepend a saving declaration
+    if (saveDeclaration.empty()) {                                       // if saving declaration node does not exist
+        doc->prepend_child(pugi::node_pcdata).set_value("\n");           // prepend a line break
+        saveDeclaration = doc->prepend_child(pugi::node_declaration);    // prepend a saving declaration
     }
 
     // ===== If a node_declaration could be fetched or created
@@ -118,7 +118,7 @@ XMLDocument* XLXmlData::getXmlDocument()
         if (!xmlContent.empty()) {
             auto result = m_xmlDoc->load_string(xmlContent.c_str(), pugi_parse_settings);
             if (!result && result.status != pugi::status_no_document_element) {
-                 throw XLException("Failed to parse XML: " + m_xmlPath + ", Error: " + result.description());
+                throw XLException("Failed to parse XML: " + m_xmlPath + ", Error: " + result.description());
             }
         }
     }
@@ -136,7 +136,7 @@ const XMLDocument* XLXmlData::getXmlDocument() const
         if (!xmlContent.empty()) {
             auto result = m_xmlDoc->load_string(xmlContent.c_str(), pugi_parse_settings);
             if (!result && result.status != pugi::status_no_document_element) {
-                 throw XLException("Failed to parse XML: " + m_xmlPath + ", Error: " + result.description());
+                throw XLException("Failed to parse XML: " + m_xmlPath + ", Error: " + result.description());
             }
         }
     }

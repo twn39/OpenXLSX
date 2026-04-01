@@ -33,10 +33,10 @@ XLCellRange::XLCellRange(const XMLNode&         dataNode,
       m_columnStyles{}
 {
     if (m_topLeft.row() > m_bottomRight.row() or m_topLeft.column() > m_bottomRight.column()) {
-        throw XLInputError(fmt::format(
-            "XLCellRange constructor: topLeft ({}) does not point to a lower or equal row and column than bottomRight ({})",
-            topLeft.address(),
-            bottomRight.address()));
+        throw XLInputError(
+            fmt::format("XLCellRange constructor: topLeft ({}) does not point to a lower or equal row and column than bottomRight ({})",
+                        topLeft.address(),
+                        bottomRight.address()));
     }
 
     fetchColumnStyles();
@@ -60,22 +60,17 @@ void XLCellRange::fetchColumnStyles()
         uint16_t maxCol = gsl::narrow_cast<uint16_t>(col.attribute("max").as_uint(0));
 
         if (minCol > maxCol || minCol == 0 || maxCol == 0) {
-            throw XLInputError(fmt::format("XLCellRange: invalid column range {}:{}", col.attribute("min").value(), col.attribute("max").value()));
+            throw XLInputError(
+                fmt::format("XLCellRange: invalid column range {}:{}", col.attribute("min").value(), col.attribute("max").value()));
         }
 
-        if (maxCol > m_columnStyles.size()) {
-            m_columnStyles.resize(maxCol, XLDefaultCellFormat);
-        }
+        if (maxCol > m_columnStyles.size()) { m_columnStyles.resize(maxCol, XLDefaultCellFormat); }
 
         // Fill non-explicitly styled columns with the default format.
-        while (vecPos + 1 < minCol) {
-            m_columnStyles[vecPos++] = XLDefaultCellFormat;
-        }
+        while (vecPos + 1 < minCol) { m_columnStyles[vecPos++] = XLDefaultCellFormat; }
 
         XLStyleIndex colStyle = col.attribute("style").as_uint(XLDefaultCellFormat);
-        while (vecPos < maxCol) {
-            m_columnStyles[vecPos++] = colStyle;
-        }
+        while (vecPos < maxCol) { m_columnStyles[vecPos++] = colStyle; }
     }
 }
 
@@ -144,14 +139,12 @@ void XLCellRange::clear()
  */
 XLCellRange& XLCellRange::setFormat(XLStyleIndex cellFormatIndex)
 {
-    for (auto& cell : *this) {
-        cell.setCellFormat(cellFormatIndex);
-    }
+    for (auto& cell : *this) { cell.setCellFormat(cellFormatIndex); }
     return *this;
 }
 
 /**
- * @details Performs a coordinate-based intersection. If ranges are on different sheets, 
+ * @details Performs a coordinate-based intersection. If ranges are on different sheets,
  * the intersection is always empty.
  */
 XLCellRange XLCellRange::intersect(const XLCellRange& other) const
@@ -168,32 +161,46 @@ XLCellRange XLCellRange::intersect(const XLCellRange& other) const
     return XLCellRange(m_dataNode, XLCellReference(top, left), XLCellReference(bottom, right), m_sharedStrings.get());
 }
 
-void XLCellRange::applyStyle(const XLStyle& style) {
-    for (auto& cell : *this) {
-        cell.setStyle(style);
-    }
+void XLCellRange::applyStyle(const XLStyle& style)
+{
+    for (auto& cell : *this) { cell.setStyle(style); }
 }
 
-void XLCellRange::setBorderOutline(XLLineStyle style, XLColor color) {
-    uint32_t top = topLeft().row();
+void XLCellRange::setBorderOutline(XLLineStyle style, XLColor color)
+{
+    uint32_t top    = topLeft().row();
     uint32_t bottom = bottomRight().row();
-    uint16_t left = topLeft().column();
-    uint16_t right = bottomRight().column();
+    uint16_t left   = topLeft().column();
+    uint16_t right  = bottomRight().column();
 
     for (auto& cell : *this) {
         uint32_t r = cell.cellReference().row();
         uint16_t c = cell.cellReference().column();
 
         XLStyle cellStyle;
-        bool isEdge = false;
+        bool    isEdge = false;
 
-        if (r == top) { cellStyle.border.top.style = style; cellStyle.border.top.color = color; isEdge = true; }
-        if (r == bottom) { cellStyle.border.bottom.style = style; cellStyle.border.bottom.color = color; isEdge = true; }
-        if (c == left) { cellStyle.border.left.style = style; cellStyle.border.left.color = color; isEdge = true; }
-        if (c == right) { cellStyle.border.right.style = style; cellStyle.border.right.color = color; isEdge = true; }
-
-        if (isEdge) {
-            cell.setStyle(cellStyle);
+        if (r == top) {
+            cellStyle.border.top.style = style;
+            cellStyle.border.top.color = color;
+            isEdge                     = true;
         }
+        if (r == bottom) {
+            cellStyle.border.bottom.style = style;
+            cellStyle.border.bottom.color = color;
+            isEdge                        = true;
+        }
+        if (c == left) {
+            cellStyle.border.left.style = style;
+            cellStyle.border.left.color = color;
+            isEdge                      = true;
+        }
+        if (c == right) {
+            cellStyle.border.right.style = style;
+            cellStyle.border.right.color = color;
+            isEdge                       = true;
+        }
+
+        if (isEdge) { cell.setStyle(cellStyle); }
     }
 }

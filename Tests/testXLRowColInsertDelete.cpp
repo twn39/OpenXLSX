@@ -46,7 +46,7 @@ TEST_CASE("XLRowColInsertDelete Tests", "[XLRowColInsertDelete]")
         wks.insertRow(2, 1);
 
         REQUIRE(wks.cell("A1").value().getString() == "Row1");
-        REQUIRE(wks.cell("A2").value().type() == XLValueType::Empty);   // new empty row
+        REQUIRE(wks.cell("A2").value().type() == XLValueType::Empty);    // new empty row
         REQUIRE(wks.cell("A3").value().getString() == "Row2");
         REQUIRE(wks.cell("A4").value().getString() == "Row3");
 
@@ -59,8 +59,7 @@ TEST_CASE("XLRowColInsertDelete Tests", "[XLRowColInsertDelete]")
         doc.create("./testInsDelRow_multi.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
-        for (int i = 1; i <= 5; ++i)
-            wks.cell(static_cast<uint32_t>(i), 1).value() = i * 10;
+        for (int i = 1; i <= 5; ++i) wks.cell(static_cast<uint32_t>(i), 1).value() = i * 10;
 
         // Delete rows 2 and 3 — rows 4,5 should become rows 2,3
         wks.deleteRow(2, 2);
@@ -100,11 +99,11 @@ TEST_CASE("XLRowColInsertDelete Tests", "[XLRowColInsertDelete]")
         doc.create("./testInsDelRow_formula.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
-        wks.cell("A1").value() = 1;
-        wks.cell("A2").value() = 2;
-        wks.cell("A3").value() = 3;
-        wks.cell("A4").value() = 4;
-        wks.cell("A5").formula() = "=SUM(A1:A4)";  // formula in row 5, above result
+        wks.cell("A1").value()   = 1;
+        wks.cell("A2").value()   = 2;
+        wks.cell("A3").value()   = 3;
+        wks.cell("A4").value()   = 4;
+        wks.cell("A5").formula() = "=SUM(A1:A4)";    // formula in row 5, above result
 
         // Delete row 2 — formula range A1:A4 should become A1:A3
         wks.deleteRow(2, 1);
@@ -123,9 +122,9 @@ TEST_CASE("XLRowColInsertDelete Tests", "[XLRowColInsertDelete]")
         doc.create("./testInsDelRow_formulaInsert.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
-        wks.cell("A1").value() = 10;
-        wks.cell("A2").value() = 20;
-        wks.cell("A3").formula() = "=A1+A2";   // references A1 and A2
+        wks.cell("A1").value()   = 10;
+        wks.cell("A2").value()   = 20;
+        wks.cell("A3").formula() = "=A1+A2";    // references A1 and A2
 
         // Insert row before row 2 — A2 reference in the formula on (original) row 3
         // should become A3 (row 3 is pushed to row 4); A1 stay unchanged.
@@ -134,7 +133,7 @@ TEST_CASE("XLRowColInsertDelete Tests", "[XLRowColInsertDelete]")
         // Original row 3 is now row 4
         std::string formulaAfter = wks.cell("A4").formula();
         REQUIRE(formulaAfter.find("A1") != std::string::npos);
-        REQUIRE(formulaAfter.find("A3") != std::string::npos);  // A2 → A3
+        REQUIRE(formulaAfter.find("A3") != std::string::npos);    // A2 → A3
 
         doc.close();
     }
@@ -153,8 +152,8 @@ TEST_CASE("XLRowColInsertDelete Tests", "[XLRowColInsertDelete]")
         // Delete rows 2 and 3
         wks.deleteRow(2, 2);
 
-        REQUIRE(wks.merges().mergeExists("A1:B1"));       // unchanged
-        REQUIRE(wks.merges().mergeExists("A2:B3"));       // shifted up by 2
+        REQUIRE(wks.merges().mergeExists("A1:B1"));    // unchanged
+        REQUIRE(wks.merges().mergeExists("A2:B3"));    // shifted up by 2
 
         doc.close();
     }
@@ -166,13 +165,13 @@ TEST_CASE("XLRowColInsertDelete Tests", "[XLRowColInsertDelete]")
         auto wks = doc.workbook().worksheet("Sheet1");
 
         // 1. Merge cell that will be partially deleted (shrink/collapse)
-        wks.mergeCells("A1:A5");   // 5 rows tall
-        
+        wks.mergeCells("A1:A5");    // 5 rows tall
+
         // 2. Merge cell that will be entirely engulfed and destroyed
-        wks.mergeCells("C3:D4");   // 2 rows tall, exists entirely within the blast radius
-        
+        wks.mergeCells("C3:D4");    // 2 rows tall, exists entirely within the blast radius
+
         // 3. Merge cell overlapping the bottom edge of the deletion
-        wks.mergeCells("F4:G6");   // 3 rows tall
+        wks.mergeCells("F4:G6");    // 3 rows tall
 
         // Delete row 3 and 4 (count = 2)
         wks.deleteRow(3, 2);
@@ -184,11 +183,11 @@ TEST_CASE("XLRowColInsertDelete Tests", "[XLRowColInsertDelete]")
         // C3:D4 was entirely inside rows 3-4, it should be annihilated
         REQUIRE_FALSE(wks.merges().mergeExists("C3:D4"));
         // Ensure it didn't mutate into a 0-height or negative-height invalid merge
-        REQUIRE_FALSE(wks.merges().mergeExists("C3:D2")); 
+        REQUIRE_FALSE(wks.merges().mergeExists("C3:D2"));
         REQUIRE_FALSE(wks.merges().mergeExists("C3:D3"));
 
-        // F4:G6 had its top half deleted and bottom half shifted up. 
-        // Original rows: 4, 5, 6. Deleted 3, 4. 
+        // F4:G6 had its top half deleted and bottom half shifted up.
+        // Original rows: 4, 5, 6. Deleted 3, 4.
         // Row 4 is gone. Row 5 becomes 3. Row 6 becomes 4.
         // It should collapse into F3:G4.
         REQUIRE(wks.merges().mergeExists("F3:G4"));
@@ -203,13 +202,13 @@ TEST_CASE("XLRowColInsertDelete Tests", "[XLRowColInsertDelete]")
         doc.create("./testInsDelRow_mergeInsert.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
-        wks.mergeCells("A1:B1");   // above insertion point — should not move
-        wks.mergeCells("A3:B4");   // at/below insertion point — should shift down
+        wks.mergeCells("A1:B1");    // above insertion point — should not move
+        wks.mergeCells("A3:B4");    // at/below insertion point — should shift down
 
-        wks.insertRow(2, 1);       // insert 1 row before row 2
+        wks.insertRow(2, 1);    // insert 1 row before row 2
 
-        REQUIRE(wks.merges().mergeExists("A1:B1"));   // unchanged
-        REQUIRE(wks.merges().mergeExists("A4:B5"));   // shifted from A3:B4 to A4:B5
+        REQUIRE(wks.merges().mergeExists("A1:B1"));    // unchanged
+        REQUIRE(wks.merges().mergeExists("A4:B5"));    // shifted from A3:B4 to A4:B5
 
         doc.close();
     }
@@ -254,7 +253,7 @@ TEST_CASE("XLRowColInsertDelete Tests", "[XLRowColInsertDelete]")
         wks.insertColumn(2, 1);
 
         REQUIRE(wks.cell("A1").value().getString() == "ColA");
-        REQUIRE(wks.cell("B1").value().type() == XLValueType::Empty);   // new empty column
+        REQUIRE(wks.cell("B1").value().type() == XLValueType::Empty);    // new empty column
         REQUIRE(wks.cell("C1").value().getString() == "ColB");
         REQUIRE(wks.cell("D1").value().getString() == "ColC");
 
@@ -267,15 +266,15 @@ TEST_CASE("XLRowColInsertDelete Tests", "[XLRowColInsertDelete]")
         doc.create("./testInsDelCol_formula.xlsx", XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
-        wks.cell("A1").value() = 1;
-        wks.cell("B1").value() = 2;
-        wks.cell("C1").value() = 3;
+        wks.cell("A1").value()   = 1;
+        wks.cell("B1").value()   = 2;
+        wks.cell("C1").value()   = 3;
         wks.cell("D1").formula() = "=SUM(A1:C1)";
 
         // Delete column B — range should become A1:B1, D1→C1
         wks.deleteColumn(2, 1);
 
-        std::string formulaAfter = wks.cell("C1").formula();   // D1 → C1
+        std::string formulaAfter = wks.cell("C1").formula();    // D1 → C1
         REQUIRE(formulaAfter.find("B1") != std::string::npos);
         REQUIRE(formulaAfter.find("C1") == std::string::npos);
 

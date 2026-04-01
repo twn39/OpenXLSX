@@ -7,19 +7,32 @@
 #include "XLStreamWriter.hpp"
 #include "XLWorksheet.hpp"
 
-namespace {
+namespace
+{
 
     // Fast XML escape: appends escaped characters to `out` to avoid intermediate allocations.
     void appendEscaped(std::string& out, std::string_view sv)
     {
         for (char c : sv) {
             switch (c) {
-                case '<':  out += "&lt;";   break;
-                case '>':  out += "&gt;";   break;
-                case '&':  out += "&amp;";  break;
-                case '"':  out += "&quot;"; break;
-                case '\'': out += "&apos;"; break;
-                default:   out += c;        break;
+                case '<':
+                    out += "&lt;";
+                    break;
+                case '>':
+                    out += "&gt;";
+                    break;
+                case '&':
+                    out += "&amp;";
+                    break;
+                case '"':
+                    out += "&quot;";
+                    break;
+                case '\'':
+                    out += "&apos;";
+                    break;
+                default:
+                    out += c;
+                    break;
             }
         }
     }
@@ -41,24 +54,21 @@ namespace {
 
 }    // anonymous namespace
 
-namespace OpenXLSX {
+namespace OpenXLSX
+{
 
     XLStreamWriter::XLStreamWriter(XLWorksheet* worksheet)
         : m_tempPath(std::filesystem::temp_directory_path() /
-                     (std::string("openxlsx_stream_") +
-                      std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) +
-                      "_" +
-                      []() -> std::string {
-                          std::mt19937 rng(std::random_device{}());
-                          return std::to_string(rng());
-                      }() +
-                      ".xml")),
+                     (std::string("openxlsx_stream_") + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) + "_" +
+                          []() -> std::string {
+                         std::mt19937 rng(std::random_device{}());
+                         return std::to_string(rng());
+                     }() + ".xml")),
           m_stream(m_tempPath, std::ios::binary),
           m_currentRow(worksheet ? worksheet->rowCount() + 1 : 1),
           m_active(true)
     {
-        if (!m_stream.is_open())
-            throw XLInternalError("Failed to open temporary stream file: " + m_tempPath.string());
+        if (!m_stream.is_open()) throw XLInternalError("Failed to open temporary stream file: " + m_tempPath.string());
 
         // Reserve write buffer up-front — avoids reallocations during normal use
         m_writeBuffer.reserve(kFlushThreshold + 64UL * 1024UL);
@@ -76,20 +86,18 @@ namespace OpenXLSX {
           m_active(other.m_active),
           m_bottomHalf(std::move(other.m_bottomHalf)),
           m_writeBuffer(std::move(other.m_writeBuffer))
-    {
-        other.m_active = false;
-    }
+    { other.m_active = false; }
 
     XLStreamWriter& XLStreamWriter::operator=(XLStreamWriter&& other) noexcept
     {
         if (this != &other) {
             if (m_active) flushSheetDataClose();
-            m_tempPath    = std::move(other.m_tempPath);
-            m_stream      = std::move(other.m_stream);
-            m_currentRow  = other.m_currentRow;
-            m_active      = other.m_active;
-            m_bottomHalf  = std::move(other.m_bottomHalf);
-            m_writeBuffer = std::move(other.m_writeBuffer);
+            m_tempPath     = std::move(other.m_tempPath);
+            m_stream       = std::move(other.m_stream);
+            m_currentRow   = other.m_currentRow;
+            m_active       = other.m_active;
+            m_bottomHalf   = std::move(other.m_bottomHalf);
+            m_writeBuffer  = std::move(other.m_writeBuffer);
             other.m_active = false;
         }
         return *this;
@@ -114,13 +122,12 @@ namespace OpenXLSX {
 
         uint16_t colIdx = 1;
         for (const auto& item : items) {
-            const XLCellValue* valPtr = nullptr;
+            const XLCellValue*          valPtr   = nullptr;
             std::optional<XLStyleIndex> styleIdx = std::nullopt;
 
-            if constexpr (std::is_same_v<T, XLCellValue>) {
-                valPtr = &item;
-            } else {
-                valPtr = &item.value;
+            if constexpr (std::is_same_v<T, XLCellValue>) { valPtr = &item; }
+            else {
+                valPtr   = &item.value;
                 styleIdx = item.styleIndex;
             }
 
@@ -179,15 +186,9 @@ namespace OpenXLSX {
         if (m_writeBuffer.size() >= kFlushThreshold) flushWriteBuffer();
     }
 
-    void XLStreamWriter::appendRow(const std::vector<XLCellValue>& values)
-    {
-        appendRowImpl(values);
-    }
+    void XLStreamWriter::appendRow(const std::vector<XLCellValue>& values) { appendRowImpl(values); }
 
-    void XLStreamWriter::appendRow(const std::vector<XLStreamCell>& cells)
-    {
-        appendRowImpl(cells);
-    }
+    void XLStreamWriter::appendRow(const std::vector<XLStreamCell>& cells) { appendRowImpl(cells); }
 
     void XLStreamWriter::close()
     {

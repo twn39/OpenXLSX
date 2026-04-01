@@ -26,18 +26,18 @@ TEST_CASE("Rich Text Fluid API Tests", "[XLRichText]")
         XLDocument doc2;
         doc2.open("richtext_test.xlsx");
         auto wks2 = doc2.workbook().worksheet("Sheet1");
-        
+
         auto cellType = wks2.cell("A1").value().type();
         REQUIRE(cellType == XLValueType::RichText);
-        
+
         auto rtRead = wks2.cell("A1").value().get<XLRichText>();
-        auto runs = rtRead.runs();
-        
+        auto runs   = rtRead.runs();
+
         REQUIRE(runs.size() == 3);
-        
+
         REQUIRE(runs[0].text() == "Red Bold ");
         REQUIRE(runs[0].bold() == true);
-        REQUIRE(runs[0].fontColor()->hex() == "FFFF0000"); // OpenXLSX often prepends FF for alpha
+        REQUIRE(runs[0].fontColor()->hex() == "FFFF0000");    // OpenXLSX often prepends FF for alpha
 
         REQUIRE(runs[1].text() == "Blue Italic ");
         REQUIRE(runs[1].italic() == true);

@@ -7,9 +7,9 @@
 
 // ===== OpenXLSX Includes ===== //
 #include "XLDocument.hpp"
+#include "XLException.hpp"
 #include "XLProperties.hpp"
 #include "XLRelationships.hpp"    // GetStringFromType
-#include "XLException.hpp"
 #include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
@@ -86,14 +86,15 @@ namespace    // anonymous namespace for module local functions
         XMLNode titlesOfParts = docNode.child("TitlesOfParts");
         if (titlesOfParts.empty()) {
             // ===== Attempt to find a good position to insert TitlesOfParts
-            XMLNode     node     = docNode.first_child_of_type(pugi::node_element);
+            XMLNode node = docNode.first_child_of_type(pugi::node_element);
             while (not node.empty()) {
                 std::string_view nodeName = node.name();
-                if (nodeName == "Application" || nodeName == "AppVersion" || nodeName == "DocSecurity" ||
-                    nodeName == "ScaleCrop" || nodeName == "Template" || nodeName == "TotalTime" ||
-                    nodeName == "HeadingPairs") {
+                if (nodeName == "Application" || nodeName == "AppVersion" || nodeName == "DocSecurity" || nodeName == "ScaleCrop" ||
+                    nodeName == "Template" || nodeName == "TotalTime" || nodeName == "HeadingPairs")
+                {
                     node = node.next_sibling_of_type(pugi::node_element);
-                } else {
+                }
+                else {
                     break;
                 }
             }
@@ -137,7 +138,6 @@ namespace    // anonymous namespace for module local functions
     }
 }    // anonymous namespace
 
-
 /**
  * @details
  */
@@ -145,15 +145,15 @@ void XLProperties::createFromTemplate()
 {
     if (m_xmlData == nullptr) throw XLInternalError("XLProperties m_xmlData is nullptr");
 
-    std::string xmlns = OpenXLSX_XLRelationships::GetStringFromType(XLRelationshipType::CoreProperties);
-    const std::string rels = "/relationships/";
-    size_t pos = xmlns.find(rels);
+    std::string       xmlns = OpenXLSX_XLRelationships::GetStringFromType(XLRelationshipType::CoreProperties);
+    const std::string rels  = "/relationships/";
+    size_t            pos   = xmlns.find(rels);
     if (pos != std::string::npos)
         xmlns.replace(pos, rels.size(), "/");
     else
         xmlns = "http://schemas.openxmlformats.org/package/2006/metadata/core-properties";
 
-    XMLNode props = xmlDocument().prepend_child("cp:coreProperties");
+    XMLNode props                            = xmlDocument().prepend_child("cp:coreProperties");
     props.append_attribute("xmlns:cp")       = xmlns.c_str();
     props.append_attribute("xmlns:dc")       = "http://purl.org/dc/elements/1.1/";
     props.append_attribute("xmlns:dcterms")  = "http://purl.org/dc/terms/";
@@ -164,7 +164,7 @@ void XLProperties::createFromTemplate()
     setTitle("");
     setCreator("OpenXLSX");
     setLastModifiedBy("OpenXLSX");
-    
+
     XLDateTime now = XLDateTime::now();
     setCreated(now);
     setModified(now);
@@ -190,8 +190,7 @@ void XLProperties::setProperty(std::string_view name, std::string_view value)
 {
     if (m_xmlData == nullptr) return;
     XMLNode node = xmlDocument().document_element().child(std::string(name).c_str());
-    if (node.empty())
-        node = xmlDocument().document_element().append_child(std::string(name).c_str());
+    if (node.empty()) node = xmlDocument().document_element().append_child(std::string(name).c_str());
 
     node.text().set(std::string(value).c_str());
 }
@@ -230,51 +229,51 @@ void XLProperties::deleteProperty(std::string_view name)
 
 // Standard Core Properties Implementations
 std::string XLProperties::title() const { return property("dc:title"); }
-void XLProperties::setTitle(std::string_view title) { setProperty("dc:title", title); }
+void        XLProperties::setTitle(std::string_view title) { setProperty("dc:title", title); }
 
 std::string XLProperties::subject() const { return property("dc:subject"); }
-void XLProperties::setSubject(std::string_view subject) { setProperty("dc:subject", subject); }
+void        XLProperties::setSubject(std::string_view subject) { setProperty("dc:subject", subject); }
 
 std::string XLProperties::creator() const { return property("dc:creator"); }
-void XLProperties::setCreator(std::string_view creator) { setProperty("dc:creator", creator); }
+void        XLProperties::setCreator(std::string_view creator) { setProperty("dc:creator", creator); }
 
 std::string XLProperties::keywords() const { return property("cp:keywords"); }
-void XLProperties::setKeywords(std::string_view keywords) { setProperty("cp:keywords", keywords); }
+void        XLProperties::setKeywords(std::string_view keywords) { setProperty("cp:keywords", keywords); }
 
 std::string XLProperties::description() const { return property("dc:description"); }
-void XLProperties::setDescription(std::string_view description) { setProperty("dc:description", description); }
+void        XLProperties::setDescription(std::string_view description) { setProperty("dc:description", description); }
 
 std::string XLProperties::lastModifiedBy() const { return property("cp:lastModifiedBy"); }
-void XLProperties::setLastModifiedBy(std::string_view author) { setProperty("cp:lastModifiedBy", author); }
+void        XLProperties::setLastModifiedBy(std::string_view author) { setProperty("cp:lastModifiedBy", author); }
 
 std::string XLProperties::revision() const { return property("cp:revision"); }
-void XLProperties::setRevision(std::string_view revision) { setProperty("cp:revision", revision); }
+void        XLProperties::setRevision(std::string_view revision) { setProperty("cp:revision", revision); }
 
 std::string XLProperties::lastPrinted() const { return property("cp:lastPrinted"); }
-void XLProperties::setLastPrinted(std::string_view date) { setProperty("cp:lastPrinted", date); }
+void        XLProperties::setLastPrinted(std::string_view date) { setProperty("cp:lastPrinted", date); }
 
-XLDateTime XLProperties::created() const 
-{ 
+XLDateTime XLProperties::created() const
+{
     std::string date = property("dcterms:created");
     if (date.empty()) return XLDateTime();
-    return XLDateTime::fromString(date, "%Y-%m-%dT%H:%M:%SZ"); 
+    return XLDateTime::fromString(date, "%Y-%m-%dT%H:%M:%SZ");
 }
-void XLProperties::setCreated(const XLDateTime& date) 
-{ 
+void XLProperties::setCreated(const XLDateTime& date)
+{
     auto node = xmlDocument().document_element().child("dcterms:created");
     if (node.empty()) node = xmlDocument().document_element().append_child("dcterms:created");
     appendAndSetAttribute(node, "xsi:type", "dcterms:W3CDTF");
     node.text().set(date.toString("%Y-%m-%dT%H:%M:%SZ").c_str());
 }
 
-XLDateTime XLProperties::modified() const 
-{ 
+XLDateTime XLProperties::modified() const
+{
     std::string date = property("dcterms:modified");
     if (date.empty()) return XLDateTime();
-    return XLDateTime::fromString(date, "%Y-%m-%dT%H:%M:%SZ"); 
+    return XLDateTime::fromString(date, "%Y-%m-%dT%H:%M:%SZ");
 }
-void XLProperties::setModified(const XLDateTime& date) 
-{ 
+void XLProperties::setModified(const XLDateTime& date)
+{
     auto node = xmlDocument().document_element().child("dcterms:modified");
     if (node.empty()) node = xmlDocument().document_element().append_child("dcterms:modified");
     appendAndSetAttribute(node, "xsi:type", "dcterms:W3CDTF");
@@ -282,12 +281,10 @@ void XLProperties::setModified(const XLDateTime& date)
 }
 
 std::string XLProperties::category() const { return property("cp:category"); }
-void XLProperties::setCategory(std::string_view category) { setProperty("cp:category", category); }
+void        XLProperties::setCategory(std::string_view category) { setProperty("cp:category", category); }
 
 std::string XLProperties::contentStatus() const { return property("cp:contentStatus"); }
-void XLProperties::setContentStatus(std::string_view status) { setProperty("cp:contentStatus", status); }
-
-
+void        XLProperties::setContentStatus(std::string_view status) { setProperty("cp:contentStatus", status); }
 
 /**
  * @details
@@ -312,9 +309,9 @@ void XLAppProperties::createFromTemplate(XMLDocument const& workbookXml)
             throw XLInputError("xl/workbook.xml is missing sheet with sheetId=\"" + std::to_string(worksheetCount) + "\"");
     }
 
-    std::string xmlns = OpenXLSX_XLRelationships::GetStringFromType(XLRelationshipType::ExtendedProperties);
-    const std::string rels = "/relationships/";
-    size_t pos = xmlns.find(rels);
+    std::string       xmlns = OpenXLSX_XLRelationships::GetStringFromType(XLRelationshipType::ExtendedProperties);
+    const std::string rels  = "/relationships/";
+    size_t            pos   = xmlns.find(rels);
     if (pos != std::string::npos)
         xmlns.replace(pos, rels.size(), "/");
     else
@@ -335,9 +332,7 @@ void XLAppProperties::createFromTemplate(XMLDocument const& workbookXml)
     vecHP.append_child("vt:variant", XLForceNamespace).append_child("vt:lpstr", XLForceNamespace).text().set("Worksheets");
     vecHP.append_child("vt:variant", XLForceNamespace).append_child("vt:i4", XLForceNamespace).text().set(worksheetCount);
 
-    XMLNode sheetsVector =
-        props.append_child("TitlesOfParts")
-            .append_child("vt:vector", XLForceNamespace);
+    XMLNode sheetsVector                      = props.append_child("TitlesOfParts").append_child("vt:vector", XLForceNamespace);
     sheetsVector.append_attribute("size")     = worksheetCount;
     sheetsVector.append_attribute("baseType") = "lpstr";
     for (const auto& [key, value] : sheetsOrderedById) sheetsVector.append_child("vt:lpstr", XLForceNamespace).text().set(value.c_str());
@@ -463,8 +458,7 @@ void XLAppProperties::addHeadingPair(std::string_view name, int value)
     XMLNode HeadingPairsNode = headingPairsNode(xmlDocument().document_element());
     XMLNode item             = HeadingPairsNode.first_child_of_type(pugi::node_element);
     while (not item.empty() && std::string_view(item.first_child_of_type(pugi::node_element).child_value()) != name)
-        item = item.next_sibling_of_type(pugi::node_element)
-                   .next_sibling_of_type(pugi::node_element);
+        item = item.next_sibling_of_type(pugi::node_element).next_sibling_of_type(pugi::node_element);
 
     XMLNode pairCategory = item;
     XMLNode pairValue{};
@@ -500,8 +494,7 @@ void XLAppProperties::deleteHeadingPair(std::string_view name)
     XMLNode HeadingPairsNode = headingPairsNode(xmlDocument().document_element());
     XMLNode item             = HeadingPairsNode.first_child_of_type(pugi::node_element);
     while (not item.empty() && std::string_view(item.first_child_of_type(pugi::node_element).child_value()) != name)
-        item = item.next_sibling_of_type(pugi::node_element)
-                   .next_sibling_of_type(pugi::node_element);
+        item = item.next_sibling_of_type(pugi::node_element).next_sibling_of_type(pugi::node_element);
 
     if (not item.empty()) {
         const XMLNode count = item.next_sibling_of_type(pugi::node_element);
@@ -628,10 +621,10 @@ void XLAppProperties::insertSheetName(std::string_view sheetName, unsigned int i
     incrementSheetCount(+1);
 }
 
-
-
-namespace {
-    XMLNode findOrCreateProperty(XMLNode root, std::string_view name) {
+namespace
+{
+    XMLNode findOrCreateProperty(XMLNode root, std::string_view name)
+    {
         for (auto p : root.children("property")) {
             if (std::string_view(p.attribute("name").value()) == name) return XMLNode(p);
         }
@@ -642,14 +635,15 @@ namespace {
             if (pid > maxPid) maxPid = pid;
         }
 
-        auto prop = root.append_child("property");
+        auto prop                      = root.append_child("property");
         prop.append_attribute("fmtid") = "{D5CDD505-2E9C-101B-9397-08002B2CF9AE}";
         prop.append_attribute("pid")   = maxPid + 1;
         prop.append_attribute("name")  = std::string(name).c_str();
         return prop;
     }
 
-    void setPropertyValueNode(XMLNode prop, std::string_view type, std::string_view value) {
+    void setPropertyValueNode(XMLNode prop, std::string_view type, std::string_view value)
+    {
         XMLNode valueNode = prop.first_child_of_type(pugi::node_element);
         if (valueNode.empty())
             valueNode = prop.append_child(std::string(type).c_str());
@@ -659,7 +653,7 @@ namespace {
         }
         valueNode.text().set(std::string(value).c_str());
     }
-}
+}    // namespace
 
 /**
  * @details
@@ -668,7 +662,7 @@ void XLCustomProperties::createFromTemplate()
 {
     if (m_xmlData == nullptr) throw XLInternalError("XLCustomProperties m_xmlData is nullptr");
 
-    XMLNode props = xmlDocument().prepend_child("Properties");
+    XMLNode props                      = xmlDocument().prepend_child("Properties");
     props.append_attribute("xmlns")    = "http://schemas.openxmlformats.org/officeDocument/2006/custom-properties";
     props.append_attribute("xmlns:vt") = "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes";
 }
@@ -699,10 +693,7 @@ void XLCustomProperties::setProperty(std::string_view name, std::string_view val
 /**
  * @details
  */
-void XLCustomProperties::setProperty(std::string_view name, const char* value)
-{
-    setProperty(name, std::string_view(value));
-}
+void XLCustomProperties::setProperty(std::string_view name, const char* value) { setProperty(name, std::string_view(value)); }
 
 /**
  * @details

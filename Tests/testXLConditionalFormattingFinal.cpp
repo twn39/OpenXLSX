@@ -1,10 +1,11 @@
-#include <catch2/catch_test_macros.hpp>
 #include <OpenXLSX.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
 using namespace OpenXLSX;
 
-TEST_CASE("Conditional Formatting OOXML Structure Validation", "[ConditionalFormatting][OOXML]") {
+TEST_CASE("Conditional Formatting OOXML Structure Validation", "[ConditionalFormatting][OOXML]")
+{
     XLDocument doc;
     doc.create("CF_OOXML_Validation.xlsx", XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
@@ -35,7 +36,7 @@ TEST_CASE("Conditional Formatting OOXML Structure Validation", "[ConditionalForm
     wks.addConditionalFormatting(wks.range("D1:D10"), formulaRule, dxfD);
 
     doc.save();
-    
+
     // Now validate the underlying XML structures directly
     auto cfList = wks.conditionalFormats();
     REQUIRE(cfList.count() == 4);
@@ -49,27 +50,28 @@ TEST_CASE("Conditional Formatting OOXML Structure Validation", "[ConditionalForm
     // Validate Data Bar empty value absence
     auto dataBarNode = cfList[1].cfRules()[0].node().child("dataBar");
     auto cfvoMinNode = dataBarNode.child("cfvo");
-    REQUIRE(cfvoMinNode.attribute("val").empty() == true); // Should be completely omitted, not val=""
+    REQUIRE(cfvoMinNode.attribute("val").empty() == true);    // Should be completely omitted, not val=""
 
     // Validate DXF configurations in Styles
-    auto styles = doc.styles(); // styles is on doc, not workbook
+    auto styles = doc.styles();    // styles is on doc, not workbook
     REQUIRE(styles.dxfs().count() == 2);
-    
+
     // First DXF (Color and Fill)
     auto dxf1 = styles.dxfs()[0].node();
-    REQUIRE(std::string(dxf1.child("font").child("color").attribute("rgb").value()) == "FFFF0000"); // Must be uppercase
+    REQUIRE(std::string(dxf1.child("font").child("color").attribute("rgb").value()) == "FFFF0000");    // Must be uppercase
     auto fillNode = dxf1.child("fill").child("patternFill");
-    REQUIRE(std::string(fillNode.first_child().name()) == "fgColor"); // fgColor MUST precede bgColor in sequence
+    REQUIRE(std::string(fillNode.first_child().name()) == "fgColor");    // fgColor MUST precede bgColor in sequence
     REQUIRE(std::string(fillNode.first_child().next_sibling().name()) == "bgColor");
 
     // Second DXF (Font booleans)
     auto dxf2 = styles.dxfs()[1].node();
-    REQUIRE(std::string(dxf2.child("font").child("b").attribute("val").value()) == "1"); // Boolean must be "1" or "0" in this context
+    REQUIRE(std::string(dxf2.child("font").child("b").attribute("val").value()) == "1");    // Boolean must be "1" or "0" in this context
 
     doc.close();
 }
 
-TEST_CASE("Conditional Formatting Advanced Rules and Deletion", "[ConditionalFormatting][OOXML]") {
+TEST_CASE("Conditional Formatting Advanced Rules and Deletion", "[ConditionalFormatting][OOXML]")
+{
     XLDocument doc;
     doc.create("CF_Advanced_Deletion.xlsx", XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");

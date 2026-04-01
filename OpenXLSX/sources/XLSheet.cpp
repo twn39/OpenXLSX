@@ -1,11 +1,11 @@
-#include <algorithm>
-#include <map>
-#include <limits>
-#include <fmt/format.h>
-#include <pugixml.hpp>
 #include "XLSheet.hpp"
-#include "XLUtilities.hpp"
 #include "XLException.hpp"
+#include "XLUtilities.hpp"
+#include <algorithm>
+#include <fmt/format.h>
+#include <limits>
+#include <map>
+#include <pugixml.hpp>
 
 using namespace OpenXLSX;
 
@@ -39,8 +39,7 @@ namespace OpenXLSX
         unsigned int value       = (selected ? 1 : 0);
         XMLNode      sheetView   = xmlDocument.document_element().child("sheetViews").first_child_of_type(pugi::node_element);
         XMLAttribute tabSelected = sheetView.attribute("tabSelected");
-        if (tabSelected.empty())
-            tabSelected = sheetView.prepend_attribute("tabSelected");
+        if (tabSelected.empty()) tabSelected = sheetView.prepend_attribute("tabSelected");
         tabSelected.set_value(value);
     }
 
@@ -122,7 +121,7 @@ namespace OpenXLSX
         if (paneString == "topLeft") return XLPane::TopLeft;
         return XLPane::BottomRight;
     }
-}
+}    // namespace OpenXLSX
 
 XLSheet::XLSheet(XLXmlData* xmlData) : XLXmlFile(xmlData)
 {
@@ -200,7 +199,4 @@ void XLSheet::clone(const std::string& newName)
 XLSheet::operator XLWorksheet() const { return std::get<XLWorksheet>(m_sheet); }
 XLSheet::operator XLChartsheet() const { return std::get<XLChartsheet>(m_sheet); }
 
-void XLSheet::print(std::basic_ostream<char>& ostr) const
-{
-    xmlDocument().print(ostr);
-}
+void XLSheet::print(std::basic_ostream<char>& ostr) const { xmlDocument().print(ostr); }

@@ -1,8 +1,8 @@
 #include "XLChartsheet.hpp"
-#include "XLXmlData.hpp"
 #include "XLDocument.hpp"
-#include <charconv>
 #include "XLUtilities.hpp"
+#include "XLXmlData.hpp"
+#include <charconv>
 
 using namespace OpenXLSX;
 
@@ -19,8 +19,8 @@ uint16_t XLChartsheet::sheetXmlNumber() const
     size_t pos2 = pos;
     while (std::isdigit(xmlPath[pos2])) ++pos2;
     if (pos2 == pos or xmlPath.substr(pos2) != ".xml") return 0;
-    
-    uint16_t num = 0;
+
+    uint16_t         num = 0;
     std::string_view numStr(xmlPath.data() + pos, pos2 - pos);
     std::from_chars(numStr.data(), numStr.data() + numStr.size(), num);
     return num;
@@ -28,9 +28,7 @@ uint16_t XLChartsheet::sheetXmlNumber() const
 
 XLRelationships& XLChartsheet::relationships()
 {
-    if (!m_relationships.valid()) {
-        m_relationships = parentDoc().sheetRelationships(sheetXmlNumber(), true);
-    }
+    if (!m_relationships.valid()) { m_relationships = parentDoc().sheetRelationships(sheetXmlNumber(), true); }
     if (!m_relationships.valid()) throw XLException("XLChartsheet::relationships(): could not create relationships XML");
     return m_relationships;
 }
@@ -62,22 +60,20 @@ XLDrawing& XLChartsheet::drawing()
             if (drawingRelationship.empty()) throw XLException("XLChartsheet::drawing(): could not add sheet relationship for Drawing");
 
             XMLNode drawingNode = docElement.child("drawing");
-            if (drawingNode.empty()) {
-                drawingNode = docElement.append_child("drawing");
-            }
-            if (drawingNode.attribute("r:id").empty()) {
-                drawingNode.append_attribute("r:id").set_value(drawingRelationship.id().c_str());
-            } else {
+            if (drawingNode.empty()) { drawingNode = docElement.append_child("drawing"); }
+            if (drawingNode.attribute("r:id").empty()) { drawingNode.append_attribute("r:id").set_value(drawingRelationship.id().c_str()); }
+            else {
                 drawingNode.attribute("r:id").set_value(drawingRelationship.id().c_str());
             }
-        } else {
+        }
+        else {
             // Load existing drawing
             std::string drawingPath = drawingRelationship.target();
             if (drawingPath.front() != '/') {
                 std::string sheetDir = getXmlPath();
-                sheetDir = sheetDir.substr(0, sheetDir.find_last_of('/'));
-                drawingPath = sheetDir + "/" + drawingPath;
-                drawingPath = eliminateDotAndDotDotFromPath(drawingPath);
+                sheetDir             = sheetDir.substr(0, sheetDir.find_last_of('/'));
+                drawingPath          = sheetDir + "/" + drawingPath;
+                drawingPath          = eliminateDotAndDotDotFromPath(drawingPath);
             }
             if (drawingPath.front() == '/') drawingPath = drawingPath.substr(1);
             m_drawing = parentDoc().drawing(drawingPath);
@@ -92,7 +88,7 @@ XLChart XLChartsheet::addChart(XLChartType type, std::string_view name)
     XLChart chart = parentDoc().createChart(type);
 
     // 2. Get Drawing for the chartsheet
-    XLDrawing& drw = drawing();
+    XLDrawing&  drw               = drawing();
     std::string drawingPath       = drw.getXmlPath();
     std::string chartRelativePath = getPathARelativeToPathB(chart.getXmlPath(), drawingPath);
 
@@ -100,32 +96,33 @@ XLChart XLChartsheet::addChart(XLChartType type, std::string_view name)
     XLRelationshipItem chartRel;
     if (!drw.relationships().targetExists(chartRelativePath)) {
         chartRel = drw.relationships().addRelationship(XLRelationshipType::Chart, chartRelativePath);
-    } else {
+    }
+    else {
         chartRel = drw.relationships().relationshipByTarget(chartRelativePath);
     }
 
     // 4. Add Absolute Anchor in Drawing (specific to Chartsheet)
-    XMLDocument& drwDoc = drw.xmlDocument();
-    XMLNode wsDrNode = drwDoc.document_element();
+    XMLDocument& drwDoc   = drw.xmlDocument();
+    XMLNode      wsDrNode = drwDoc.document_element();
     if (wsDrNode.empty()) {
         constexpr std::string_view drwTemplate = R"(<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"></xdr:wsDr>)";
         drwDoc.load_string(drwTemplate.data(), pugi_parse_settings);
         wsDrNode = drwDoc.document_element();
     }
-    
+
     // Clear any existing anchors to ensure chartsheet only has one main chart
-    for (auto child = wsDrNode.first_child(); child; ) {
+    for (auto child = wsDrNode.first_child(); child;) {
         auto next = child.next_sibling();
         wsDrNode.remove_child(child);
         child = next;
     }
 
-    XMLNode anchor = wsDrNode.append_child("xdr:absoluteAnchor");
+    XMLNode anchor  = wsDrNode.append_child("xdr:absoluteAnchor");
     XMLNode posNode = anchor.append_child("xdr:pos");
     posNode.append_attribute("x").set_value("0");
     posNode.append_attribute("y").set_value("0");
-    
+
     XMLNode extNode = anchor.append_child("xdr:ext");
     extNode.append_attribute("cx").set_value("0");
     extNode.append_attribute("cy").set_value("0");
@@ -134,20 +131,20 @@ XLChart XLChartsheet::addChart(XLChartType type, std::string_view name)
     graphicFrame.append_attribute("macro").set_value("");
 
     XMLNode nvGraphicFramePr = graphicFrame.append_child("xdr:nvGraphicFramePr");
-    XMLNode cNvPr = nvGraphicFramePr.append_child("xdr:cNvPr");
+    XMLNode cNvPr            = nvGraphicFramePr.append_child("xdr:cNvPr");
     cNvPr.append_attribute("id").set_value(2);
     cNvPr.append_attribute("name").set_value(std::string(name).c_str());
     nvGraphicFramePr.append_child("xdr:cNvGraphicFramePr");
 
     XMLNode xfrm = graphicFrame.append_child("xdr:xfrm");
-    XMLNode off = xfrm.append_child("a:off");
+    XMLNode off  = xfrm.append_child("a:off");
     off.append_attribute("x").set_value("0");
     off.append_attribute("y").set_value("0");
     XMLNode ext = xfrm.append_child("a:ext");
     ext.append_attribute("cx").set_value("0");
     ext.append_attribute("cy").set_value("0");
 
-    XMLNode graphic = graphicFrame.append_child("a:graphic");
+    XMLNode graphic     = graphicFrame.append_child("a:graphic");
     XMLNode graphicData = graphic.append_child("a:graphicData");
     graphicData.append_attribute("uri").set_value("http://schemas.openxmlformats.org/drawingml/2006/chart");
 

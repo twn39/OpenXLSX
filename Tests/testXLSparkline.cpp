@@ -1,5 +1,5 @@
-#include <catch2/catch_test_macros.hpp>
 #include "OpenXLSX.hpp"
+#include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
 using namespace OpenXLSX;
@@ -29,7 +29,7 @@ TEST_CASE("Sparkline Creation", "[XLSparkline]")
     XLDocument doc2;
     doc2.open("./SparklineTest.xlsx");
     auto wks2 = doc2.workbook().worksheet("Sheet1");
-    
+
     // Check if basic data was saved correctly
     REQUIRE(wks2.cell("A1").value().get<int64_t>() == 10);
     REQUIRE(wks2.cell("A2").value().get<int64_t>() == -5);
@@ -43,7 +43,8 @@ TEST_CASE("Sparkline Creation", "[XLSparkline]")
     // 2. Verify that the sparklineGroups block exists under extLst
     REQUIRE(sheetXmlStr.find("<extLst>") != std::string::npos);
     REQUIRE(sheetXmlStr.find("xmlns:x14=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/main\"") != std::string::npos);
-    REQUIRE(sheetXmlStr.find("<x14:sparklineGroups xmlns:xm=\"http://schemas.microsoft.com/office/excel/2006/main\">") != std::string::npos);
+    REQUIRE(sheetXmlStr.find("<x14:sparklineGroups xmlns:xm=\"http://schemas.microsoft.com/office/excel/2006/main\">") !=
+            std::string::npos);
 
     // 3. Verify types of sparkline groups exist
     REQUIRE(sheetXmlStr.find("type=\"line\"") != std::string::npos);
@@ -56,7 +57,7 @@ TEST_CASE("Sparkline Creation", "[XLSparkline]")
     // 5. Verify the formula logic (xm:f) and square reference (xm:sqref)
     REQUIRE(sheetXmlStr.find("<xm:f>Sheet1!A1:E1</xm:f>") != std::string::npos);
     REQUIRE(sheetXmlStr.find("<xm:sqref>F1</xm:sqref>") != std::string::npos);
-    
+
     REQUIRE(sheetXmlStr.find("<xm:f>Sheet1!A2:E2</xm:f>") != std::string::npos);
     REQUIRE(sheetXmlStr.find("<xm:sqref>G2</xm:sqref>") != std::string::npos);
 

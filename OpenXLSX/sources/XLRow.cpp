@@ -78,7 +78,7 @@ namespace OpenXLSX
     }
 
     /**
-     * @details Modifies the visual height of the row. The 'customHeight' attribute must be explicitly set to 1, 
+     * @details Modifies the visual height of the row. The 'customHeight' attribute must be explicitly set to 1,
      *          otherwise MS Excel will ignore the 'ht' value and auto-fit the row height based on cell contents.
      */
     void XLRow::setHeight(float height)    // NOLINT
@@ -97,7 +97,7 @@ namespace OpenXLSX
     }
 
     /**
-     * @details Retrieves the row's vertical descent value. This is used by Excel's rendering engine 
+     * @details Retrieves the row's vertical descent value. This is used by Excel's rendering engine
      *          to appropriately position text baselines for certain fonts.
      */
     float XLRow::descent() const
@@ -106,7 +106,7 @@ namespace OpenXLSX
     }
 
     /**
-     * @details Sets the typography descent attribute. This fine-tunes how far characters drop below 
+     * @details Sets the typography descent attribute. This fine-tunes how far characters drop below
      *          the text baseline in this specific row, maintaining exact layout fidelity.
      */
     void XLRow::setDescent(float descent)
@@ -125,7 +125,7 @@ namespace OpenXLSX
     bool XLRow::isHidden() const { return m_rowNode->attribute("hidden").as_bool(false); }
 
     /**
-     * @details Modifies the visual state of the row. Typically used for applying filters or manually hiding 
+     * @details Modifies the visual state of the row. Typically used for applying filters or manually hiding
      *          rows without deleting their underlying data or breaking formulas.
      */
     void XLRow::setHidden(bool state)    // NOLINT
@@ -140,10 +140,7 @@ namespace OpenXLSX
     /**
      * @details Retrieves the row's outline level (0-7), which determines its nesting depth within a hierarchical grouping structure.
      */
-    uint8_t XLRow::outlineLevel() const
-    {
-        return static_cast<uint8_t>(m_rowNode->attribute("outlineLevel").as_uint(0));
-    }
+    uint8_t XLRow::outlineLevel() const { return static_cast<uint8_t>(m_rowNode->attribute("outlineLevel").as_uint(0)); }
 
     /**
      * @details Applies a grouping depth to the row. Values > 7 are capped, as MS Excel only supports up to 8 levels (0-7).
@@ -152,9 +149,8 @@ namespace OpenXLSX
     void XLRow::setOutlineLevel(uint8_t level)
     {
         if (level > 7) level = 7;
-        if (level == 0) {
-            m_rowNode->remove_attribute("outlineLevel");
-        } else {
+        if (level == 0) { m_rowNode->remove_attribute("outlineLevel"); }
+        else {
             if (m_rowNode->attribute("outlineLevel").empty())
                 m_rowNode->append_attribute("outlineLevel") = level;
             else
@@ -163,13 +159,10 @@ namespace OpenXLSX
     }
 
     /**
-     * @details Checks if the row carries the collapsed marker. In Excel, this flag is typically placed on the 
+     * @details Checks if the row carries the collapsed marker. In Excel, this flag is typically placed on the
      *          summary row adjacent to a hidden group to render the '+' expansion UI button.
      */
-    bool XLRow::isCollapsed() const
-    {
-        return m_rowNode->attribute("collapsed").as_bool(false);
-    }
+    bool XLRow::isCollapsed() const { return m_rowNode->attribute("collapsed").as_bool(false); }
 
     /**
      * @details Controls the expansion UI marker ('+' or '-') for grouped rows. This must be set on the summary row
@@ -177,9 +170,8 @@ namespace OpenXLSX
      */
     void XLRow::setCollapsed(bool state)
     {
-        if (!state) {
-            m_rowNode->remove_attribute("collapsed");
-        } else {
+        if (!state) { m_rowNode->remove_attribute("collapsed"); }
+        else {
             if (m_rowNode->attribute("collapsed").empty())
                 m_rowNode->append_attribute("collapsed") = static_cast<int>(state);
             else
@@ -369,7 +361,7 @@ namespace OpenXLSX
     void XLRowIterator::updateCurrentRow(bool createIfMissing)
     {
         // ===== Quick exit checks - can't be true when m_endReached
-        if (m_currentRowStatus == XLLoaded) return;                           // nothing to do, row is already loaded
+        if (m_currentRowStatus == XLLoaded) return;                            // nothing to do, row is already loaded
         if (!createIfMissing and m_currentRowStatus == XLNoSuchRow) return;    // nothing to do, row has already been determined as missing
 
         // ===== At this stage, m_currentRowStatus is XLUnloaded or XLNoSuchRow and createIfMissing == true
@@ -464,12 +456,10 @@ namespace OpenXLSX
             return false;                                    // that means no match
 
         // Check if iterators belong to the same underlying XML document node (same worksheet)
-        if (m_dataNode && rhs.m_dataNode && *m_dataNode != *rhs.m_dataNode)
-            return false;
-        
+        if (m_dataNode && rhs.m_dataNode && *m_dataNode != *rhs.m_dataNode) return false;
+
         // Check if iterators were created with the same range boundaries
-        if (m_firstRow != rhs.m_firstRow || m_lastRow != rhs.m_lastRow)
-            return false;
+        if (m_firstRow != rhs.m_firstRow || m_lastRow != rhs.m_lastRow) return false;
 
         return true;
     }

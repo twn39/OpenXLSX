@@ -3,21 +3,20 @@
 #include "XLXmlParser.hpp"
 #include <string>
 
-namespace OpenXLSX {
+namespace OpenXLSX
+{
 
     /**
      * @brief Enum class defining the logical operator for custom filters.
      */
-    enum class XLFilterLogic {
-        And,
-        Or
-    };
+    enum class XLFilterLogic { And, Or };
 
     /**
      * @brief The XLFilterColumn class encapsulates the <filterColumn> XML node.
      * It allows setting different kinds of filter criteria for a specific column in an AutoFilter range.
      */
-    class XLFilterColumn {
+    class XLFilterColumn
+    {
     public:
         /**
          * @brief Constructor
@@ -51,7 +50,11 @@ namespace OpenXLSX {
          * @param op2 The second operator.
          * @param val2 The second value.
          */
-        void setCustomFilter(const std::string& op1, const std::string& val1, XLFilterLogic logic, const std::string& op2, const std::string& val2);
+        void setCustomFilter(const std::string& op1,
+                             const std::string& val1,
+                             XLFilterLogic      logic,
+                             const std::string& op2,
+                             const std::string& val2);
 
         /**
          * @brief Set a top-10 filter.
@@ -83,7 +86,8 @@ namespace OpenXLSX {
      */
     class XLCellRange;
 
-    class XLAutoFilter {
+    class XLAutoFilter
+    {
     public:
         /**
          * @brief Constructor
@@ -126,4 +130,4 @@ namespace OpenXLSX {
         XMLNode m_node;
     };
 
-} // namespace OpenXLSX
+}    // namespace OpenXLSX

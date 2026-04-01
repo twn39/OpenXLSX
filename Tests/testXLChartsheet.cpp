@@ -27,7 +27,7 @@ namespace
         static auto fn = get_impl(XLDocument_extractXmlFromArchive());
         return (doc.*fn)(path);
     }
-}
+}    // namespace
 
 class XLChartsheetTestDoc
 {
@@ -47,17 +47,15 @@ TEST_CASE("Chartsheet Creation and Verification", "[XLChartsheet][OOXML]")
         {
             XLDocument doc;
             doc.create(filename, XLForceOverwrite);
-            
+
             // Add a normal sheet and put data there
             auto wks = doc.workbook().worksheet("Sheet1");
-            for (int i = 1; i <= 5; ++i) {
-                wks.cell(i, 1).value() = i;
-            }
+            for (int i = 1; i <= 5; ++i) { wks.cell(i, 1).value() = i; }
 
             // Create a chartsheet
             doc.workbook().addChartsheet("My ChartSheet");
             auto cs = doc.workbook().chartsheet("My ChartSheet");
-            
+
             // Add chart to chartsheet
             auto chart = cs.addChart(XLChartType::Bar, "Chart1");
             chart.addSeries("Sheet1!$A$1:$A$5");
@@ -77,11 +75,11 @@ TEST_CASE("Chartsheet Creation and Verification", "[XLChartsheet][OOXML]")
 
             // 2. Extract rId to find sheet path
             size_t sheetPos = wbkXml.find("name=\"My ChartSheet\"");
-            size_t rIdPos = wbkXml.find("r:id=\"", sheetPos);
+            size_t rIdPos   = wbkXml.find("r:id=\"", sheetPos);
             REQUIRE(rIdPos != std::string::npos);
-            size_t idStart = rIdPos + 6;
-            size_t idEnd = wbkXml.find("\"", idStart);
-            std::string rId = wbkXml.substr(idStart, idEnd - idStart);
+            size_t      idStart = rIdPos + 6;
+            size_t      idEnd   = wbkXml.find("\"", idStart);
+            std::string rId     = wbkXml.substr(idStart, idEnd - idStart);
 
             // 3. Find target in workbook.xml.rels
             std::string wbkRels = testDoc.getRawXml("xl/_rels/workbook.xml.rels");
@@ -105,7 +103,7 @@ TEST_CASE("Chartsheet Creation and Verification", "[XLChartsheet][OOXML]")
             // 6. Verify the drawing has an absoluteAnchor
             std::string drawingXml = testDoc.getRawXml("xl/drawings/drawing1.xml");
             REQUIRE(drawingXml.find("<xdr:absoluteAnchor>") != std::string::npos);
-            
+
             // 7. Verify chart exists
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
             REQUIRE(chartXml.find("<c:barChart>") != std::string::npos);

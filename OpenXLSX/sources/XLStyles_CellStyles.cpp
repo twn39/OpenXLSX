@@ -1,20 +1,20 @@
 // ===== External Includes ===== //
 #include <cstdint>
-#include <gsl/gsl>
 #include <fmt/format.h>
-#include <memory>     
+#include <gsl/gsl>
+#include <memory>
 #include <pugixml.hpp>
-#include <stdexcept>   
-#include <string>      
-#include <vector>      
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLColor.hpp"
 #include "XLDocument.hpp"
 #include "XLException.hpp"
 #include "XLStyles.hpp"
-#include "XLUtilities.hpp"
 #include "XLStyles_Internal.hpp"
+#include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
 
@@ -41,7 +41,8 @@ uint32_t     XLCellStyle::outlineStyle() const { return m_cellStyleNode->attribu
 bool         XLCellStyle::hidden() const { return m_cellStyleNode->attribute("hidden").as_bool(); }
 bool         XLCellStyle::customBuiltin() const { return m_cellStyleNode->attribute("customBuiltin").as_bool(); }
 
-bool XLCellStyle::setName(std::string_view newName) { return appendAndSetAttribute(*m_cellStyleNode, "name", std::string(newName)).empty() == false; }
+bool XLCellStyle::setName(std::string_view newName)
+{ return appendAndSetAttribute(*m_cellStyleNode, "name", std::string(newName)).empty() == false; }
 bool XLCellStyle::setXfId(XLStyleIndex newXfId)
 { return appendAndSetAttribute(*m_cellStyleNode, "xfId", std::to_string(newXfId)).empty() == false; }
 bool XLCellStyle::setBuiltinId(uint32_t newBuiltinId)
@@ -92,10 +93,7 @@ XLCellStyles::XLCellStyles(const XMLNode& cellStyles) : m_cellStylesNode(std::ma
     }
 }
 
-XLCellStyles::~XLCellStyles()
-{
-    m_cellStyles.clear();   
-}
+XLCellStyles::~XLCellStyles() { m_cellStyles.clear(); }
 
 XLCellStyles::XLCellStyles(const XLCellStyles& other)
     : m_cellStylesNode(std::make_unique<XMLNode>(*other.m_cellStylesNode)),
@@ -127,8 +125,8 @@ XLCellStyle XLCellStyles::cellStyleByIndex(XLStyleIndex index) const
 
 XLStyleIndex XLCellStyles::create(XLCellStyle copyFrom, std::string_view styleEntriesPrefix)
 {
-    XLStyleIndex index = count();   
-    XMLNode      newNode{};         
+    XLStyleIndex index = count();
+    XMLNode      newNode{};
 
     // ===== Append new node prior to final whitespaces, if any
     XMLNode lastStyle = m_cellStylesNode->last_child_of_type(pugi::node_element);
@@ -140,22 +138,20 @@ XLStyleIndex XLCellStyles::create(XLCellStyle copyFrom, std::string_view styleEn
         using namespace std::literals::string_literals;
         throw XLException("XLCellStyles::"s + __func__ + ": failed to append a new cellStyle node"s);
     }
-    if (styleEntriesPrefix.length() > 0)   
-        m_cellStylesNode->insert_child_before(pugi::node_pcdata, newNode)
-            .set_value(std::string(styleEntriesPrefix).c_str());   
+    if (styleEntriesPrefix.length() > 0)
+        m_cellStylesNode->insert_child_before(pugi::node_pcdata, newNode).set_value(std::string(styleEntriesPrefix).c_str());
 
     XLCellStyle newCellStyle(newNode);
-    if (copyFrom.m_cellStyleNode->empty()) {   
+    if (copyFrom.m_cellStyleNode->empty()) {
         // ===== Create a cell style with default values
         newCellStyle.setName("");
         newCellStyle.setXfId(0);
         newCellStyle.setHidden(false);
     }
     else
-        copyXMLNode(newNode, *copyFrom.m_cellStyleNode);   
+        copyXMLNode(newNode, *copyFrom.m_cellStyleNode);
 
     m_cellStyles.push_back(newCellStyle);
-    appendAndSetAttribute(*m_cellStylesNode, "count", std::to_string(m_cellStyles.size()));   
+    appendAndSetAttribute(*m_cellStylesNode, "count", std::to_string(m_cellStyles.size()));
     return index;
 }
-
