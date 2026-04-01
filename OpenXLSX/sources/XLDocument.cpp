@@ -427,6 +427,17 @@ void XLDocument::addStreamedFile(std::string_view pathInZip, std::string_view te
  * @details Serializes the modified DOM objects into their respective XML strings and constructs a new ZIP archive. Caches and restores
  * unhandled media/VBA entries to prevent data loss in macro-enabled files.
  */
+void XLDocument::saveAs(std::string_view fileName, const std::string& password, bool forceOverwrite)
+{
+    m_isEncryptedSession = true;
+    m_encryptionPassword = password;
+    if (m_tempDecryptedPath.empty()) {
+        std::random_device rd;
+        m_tempDecryptedPath = (std::filesystem::temp_directory_path() / ("openxlsx_" + std::to_string(rd()) + ".xlsx")).string();
+    }
+    saveAs(fileName, forceOverwrite);
+}
+
 void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
 {
     std::unique_lock<std::shared_mutex> lock(*m_docMutex);

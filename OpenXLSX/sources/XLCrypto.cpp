@@ -307,27 +307,28 @@ std::vector<uint8_t> encryptStandardPackage(gsl::span<const uint8_t> zipData, co
     std::memcpy(info.data() + headerEnd + 40, encVerifierHash.data(), 32);
     
     // Construct EncryptedPackage
-    std::vector<uint8_t> payload(8 + zipData.size());
-    payload[0] = zipData.size() & 0xFF; payload[1] = (zipData.size() >> 8) & 0xFF;
-    payload[2] = (zipData.size() >> 16) & 0xFF; payload[3] = (zipData.size() >> 24) & 0xFF;
-    payload[4] = (zipData.size() >> 32) & 0xFF; payload[5] = (zipData.size() >> 40) & 0xFF;
-    payload[6] = (zipData.size() >> 48) & 0xFF; payload[7] = (zipData.size() >> 56) & 0xFF;
-    std::memcpy(payload.data() + 8, zipData.data(), zipData.size());
-    
+    std::vector<uint8_t> payload(zipData.begin(), zipData.end());
     uint32_t rem = payload.size() % 16;
     if (rem != 0) payload.insert(payload.end(), 16 - rem, 0); // Pad to 16
     
-    // ECB Encrypt payload
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), nullptr, keyDerived.data(), nullptr);
     EVP_CIPHER_CTX_set_padding(ctx, 0);
-    std::vector<uint8_t> encPayload(payload.size());
+    std::vector<uint8_t> encData(payload.size());
     int len1=0, len2=0;
-    EVP_EncryptUpdate(ctx, encPayload.data(), &len1, payload.data(), payload.size());
-    EVP_EncryptFinal_ex(ctx, encPayload.data()+len1, &len2);
+    EVP_EncryptUpdate(ctx, encData.data(), &len1, payload.data(), payload.size());
+    EVP_EncryptFinal_ex(ctx, encData.data()+len1, &len2);
     EVP_CIPHER_CTX_free(ctx);
     
-    return buildCFB(info, encPayload);
+    std::vector<uint8_t> encPackage(8 + encData.size());
+    uint64_t originalSize = zipData.size();
+    encPackage[0] = originalSize & 0xFF; encPackage[1] = (originalSize >> 8) & 0xFF;
+    encPackage[2] = (originalSize >> 16) & 0xFF; encPackage[3] = (originalSize >> 24) & 0xFF;
+    encPackage[4] = (originalSize >> 32) & 0xFF; encPackage[5] = (originalSize >> 40) & 0xFF;
+    encPackage[6] = (originalSize >> 48) & 0xFF; encPackage[7] = (originalSize >> 56) & 0xFF;
+    std::memcpy(encPackage.data() + 8, encData.data(), encData.size());
+
+    return buildCFB(info, encPackage);
 }
 
 std::vector<uint8_t> aes256CbcDecrypt(gsl::span<const uint8_t> data, gsl::span<const uint8_t> key, gsl::span<const uint8_t> iv) {
@@ -478,7 +479,12 @@ std::vector<uint8_t> decryptStandardPackage(gsl::span<const uint8_t> encryptionI
     EVP_DecryptUpdate(ctx, decrypted.data(), &len1, payload.data(), gsl::narrow_cast<int>(payload.size()));
     EVP_DecryptFinal_ex(ctx, decrypted.data() + len1, &len2);
     
-    decrypted.resize(len1 + len2);
+    uint64_t originalSize = getU32(encryptedPackage.data()) | ((uint64_t)getU32(encryptedPackage.data() + 4) << 32);
+    if (originalSize > 0 && originalSize <= static_cast<uint64_t>(len1 + len2)) {
+        decrypted.resize(originalSize);
+    } else {
+        decrypted.resize(len1 + len2);
+    }
     return decrypted;
 }
 

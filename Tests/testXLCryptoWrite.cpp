@@ -11,7 +11,7 @@ TEST_CASE("Crypto Encryption Test") {
         auto wks = doc.workbook().worksheet("Sheet1");
         wks.cell("A1").value() = "This file was encrypted by OpenXLSX C++ Engine";
         wks.cell("B1").value() = 42;
-        REQUIRE_NOTHROW(doc.saveAs("Tests/Fixtures/OpenXLSX_Encrypted_Test.xlsx", "SecretPass123"));
+        REQUIRE_NOTHROW(doc.saveAs("Tests/Fixtures/OpenXLSX_Encrypted_Test.xlsx", std::string("SecretPass123")));
         
         XLDocument doc2;
         REQUIRE_NOTHROW(doc2.open("Tests/Fixtures/OpenXLSX_Encrypted_Test.xlsx", "SecretPass123"));

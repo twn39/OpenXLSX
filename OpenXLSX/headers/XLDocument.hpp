@@ -161,6 +161,14 @@ namespace OpenXLSX
         void saveAs(std::string_view fileName, bool forceOverwrite = XLForceOverwrite);
 
         /**
+         * @brief Persistence to a new location with encryption.
+         * @param fileName Target path.
+         * @param password Password for encryption.
+         * @param forceOverwrite Protects existing files from being overwritten.
+         */
+        void saveAs(std::string_view fileName, const std::string& password, bool forceOverwrite = XLForceOverwrite);
+
+        /**
          * @brief Save the document with a new name. Legacy interface.
          * @deprecated Use void saveAs(std::string_view, bool) for explicit overwrite control.
          */
