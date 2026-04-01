@@ -9,6 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Build options
 option(OPENXLSX_BUILD_TESTS "Build and run library tests" ON)
 option(OPENXLSX_BUILD_BENCHMARKS "Build benchmark programs" OFF)
+option(OPENXLSX_BUILD_FUZZERS "Build libFuzzer targets (Clang only)" OFF)
 option(OPENXLSX_CREATE_DOCS "Build library documentation" OFF)
 option(OPENXLSX_ENABLE_LTO "Enable Link-Time Optimization (LTO/IPO) if supported" ON)
 option(OPENXLSX_ENABLE_SANITIZERS "Enable ASan and UBSan for memory/undefined behavior analysis (GCC/Clang only)" OFF)
@@ -147,6 +148,9 @@ endif()
 #=======================================================================================================================
 if(OPENXLSX_BUILD_TESTS)
     file(GLOB TEST_SOURCES Tests/testXL*.cpp)
+    # Exclude fuzzer from regular Catch2 tests
+    list(FILTER TEST_SOURCES EXCLUDE REGEX "testXLFormulaFuzzer\\.cpp")
+    
     add_executable(OpenXLSXTests ${TEST_SOURCES})
     target_link_libraries(OpenXLSXTests PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
     
@@ -189,8 +193,18 @@ if(OPENXLSX_BUILD_TESTS)
 endif()
 
 #=======================================================================================================================
-# BENCHMARKS (Merged configuration using Catch2)
+# FUZZERS (Requires Clang)
 #=======================================================================================================================
+if(OPENXLSX_BUILD_FUZZERS)
+    add_executable(OpenXLSXFuzzer Tests/testXLFormulaFuzzer.cpp)
+    target_link_libraries(OpenXLSXFuzzer PRIVATE OpenXLSX::OpenXLSX)
+    target_compile_options(OpenXLSXFuzzer PRIVATE -fsanitize=fuzzer,address,undefined -fno-omit-frame-pointer)
+    target_link_options(OpenXLSXFuzzer PRIVATE -fsanitize=fuzzer,address,undefined)
+    
+    if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
+        message(WARNING "Apple Clang may not include libFuzzer. If linking fails, try compiling with Homebrew LLVM/Clang.")
+    endif()
+endif()
 if(OPENXLSX_BUILD_BENCHMARKS)
     add_executable(OpenXLSXBenchmark Benchmarks/Benchmark.cpp)
     target_link_libraries(OpenXLSXBenchmark PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2)
