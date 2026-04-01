@@ -156,6 +156,87 @@ TEST_CASE("Cross-Engine Compatibility", "[Compatibility]")
                 }
             }
 
+            if (file == "tencent_sheet.xlsx") {
+                INFO("Performing targeted assertions for Tencent Docs layout");
+                
+                // Titles and Headers
+                auto a1_val = wks.cell("A1").value().type();
+                if (a1_val == XLValueType::String) {
+                    REQUIRE(wks.cell("A1").value().get<std::string>().find("欢迎使用腾讯文档在线表格") != std::string::npos);
+                }
+                
+                auto a3_val = wks.cell("A3").value().type();
+                if (a3_val == XLValueType::String) {
+                    REQUIRE(wks.cell("A3").value().get<std::string>().find("一、信息统计") != std::string::npos);
+                }
+
+                auto a14_val = wks.cell("A14").value().type();
+                if (a14_val == XLValueType::String) {
+                    REQUIRE(wks.cell("A14").value().get<std::string>().find("二、工作汇报") != std::string::npos);
+                }
+
+                // First Table Headers (Row 5)
+                auto a5_val = wks.cell("A5").value().type();
+                if (a5_val == XLValueType::String) {
+                    REQUIRE(wks.cell("A5").value().get<std::string>().find("姓名") != std::string::npos);
+                }
+                auto c5_val = wks.cell("C5").value().type();
+                if (c5_val == XLValueType::String) {
+                    REQUIRE(wks.cell("C5").value().get<std::string>().find("联系电话") != std::string::npos);
+                }
+
+                // First Table Data (Row 6)
+                auto a6_val = wks.cell("A6").value().type();
+                if (a6_val == XLValueType::String) {
+                    REQUIRE(wks.cell("A6").value().get<std::string>().find("minren") != std::string::npos);
+                }
+
+                // Phone numbers and QQ numbers might be stored as Floats/Ints or Strings
+                auto c6_val = wks.cell("C6").value().type();
+                if (c6_val == XLValueType::String) {
+                    REQUIRE(wks.cell("C6").value().get<std::string>().find("15812345678") != std::string::npos);
+                } else if (c6_val == XLValueType::Float) {
+                    REQUIRE(wks.cell("C6").value().get<double>() == Catch::Approx(15812345678.0));
+                } else if (c6_val == XLValueType::Integer) {
+                    REQUIRE(wks.cell("C6").value().get<int64_t>() == 15812345678LL);
+                }
+                
+                auto d6_val = wks.cell("D6").value().type();
+                if (d6_val == XLValueType::String) {
+                    REQUIRE(wks.cell("D6").value().get<std::string>().find("123456789") != std::string::npos);
+                } else if (d6_val == XLValueType::Float) {
+                    REQUIRE(wks.cell("D6").value().get<double>() == Catch::Approx(123456789.0));
+                } else if (d6_val == XLValueType::Integer) {
+                    REQUIRE(wks.cell("D6").value().get<int64_t>() == 123456789LL);
+                }
+
+                // Second Table Headers (Row 16)
+                auto a16_val = wks.cell("A16").value().type();
+                if (a16_val == XLValueType::String) {
+                    REQUIRE(wks.cell("A16").value().get<std::string>().find("部门") != std::string::npos);
+                }
+                auto c16_val = wks.cell("C16").value().type();
+                if (c16_val == XLValueType::String) {
+                    REQUIRE(wks.cell("C16").value().get<std::string>().find("完成度") != std::string::npos);
+                }
+
+                // Second Table Data (Row 17)
+                auto a17_val = wks.cell("A17").value().type();
+                if (a17_val == XLValueType::String) {
+                    REQUIRE(wks.cell("A17").value().get<std::string>().find("产品组") != std::string::npos);
+                }
+                
+                // Percentages might be stored as Float (e.g. 1.0 for 100%) or String ("100%")
+                auto c17_val = wks.cell("C17").value().type();
+                if (c17_val == XLValueType::String) {
+                    REQUIRE(wks.cell("C17").value().get<std::string>().find("100%") != std::string::npos);
+                } else if (c17_val == XLValueType::Float) {
+                    REQUIRE(wks.cell("C17").value().get<double>() == Catch::Approx(1.0));
+                } else if (c17_val == XLValueType::Integer) {
+                    REQUIRE(wks.cell("C17").value().get<int64_t>() == 1);
+                }
+            }
+
             // Perform a safe modification
             wks.cell("ZZ99").value() = "OpenXLSX Compatibility Mark";
 
