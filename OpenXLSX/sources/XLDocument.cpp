@@ -17,6 +17,12 @@
 #include "XLChart.hpp"
 #include "XLContentTypes.hpp"
 #include "XLDocument.hpp"
+
+#include "XLCrypto.hpp"
+#include <fstream>
+#include <filesystem>
+#include <random>
+
 #include "XLPivotTable.hpp"
 #include "XLSheet.hpp"
 #include "XLStyles.hpp"
@@ -66,6 +72,48 @@ void XLDocument::suppressWarnings() { m_suppressWarnings = true; }
  * @details Establishes the document's internal structure by parsing its root relationships and mandatory XML parts. This serves as the
  * primary entry point for accessing and mutating any existing workbook.
  */
+
+
+
+
+void XLDocument::open(std::string_view fileName, const std::string& password)
+{
+    if (m_archive.isOpen()) close();
+
+    std::ifstream file(std::string(fileName), std::ios::binary | std::ios::ate);
+    if (!file) throw XLInternalError("Failed to open encrypted document");
+
+    auto size = file.tellg();
+    file.seekg(0, std::ios::beg);
+    std::vector<uint8_t> buffer(size);
+    if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
+        throw XLInternalError("Failed to read encrypted document");
+    }
+
+    if (!isEncryptedDocument(buffer)) {
+        open(fileName);
+        return;
+    }
+
+    auto decrypted = decryptDocument(buffer, password);
+    if (decrypted.empty()) {
+        throw XLInternalError("Decryption failed or not implemented");
+    }
+
+    std::random_device rd;
+    auto tempPath = std::filesystem::temp_directory_path() / ("openxlsx_" + std::to_string(rd()) + ".xlsx");
+    std::ofstream out(tempPath, std::ios::binary);
+    out.write(reinterpret_cast<const char*>(decrypted.data()), decrypted.size());
+    out.close();
+
+    open(tempPath.string());
+    
+    m_isEncryptedSession = true;
+    m_encryptionPassword = password;
+    m_tempDecryptedPath = tempPath.string();
+    m_filePath = std::string(fileName); 
+}
+
 void XLDocument::open(std::string_view fileName)
 {
     // Check if a document is already open. If yes, close it.
@@ -388,10 +436,12 @@ void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
         throw XLException("XLDocument::saveAs: refusing to overwrite existing file "s + std::string(fileName));
     }
 
+
+
     // [CRITICAL FIX: Prevent source file corruption during saveAs]
     // If the target filename is different from the currently opened file, we must clone the archive FIRST.
     // Otherwise, libzip will commit all pending XML modifications into the original source file.
-    if (m_archive.isOpen() && std::string(fileName) != m_filePath && pathExists(m_filePath)) {
+    if (!m_isEncryptedSession && m_archive.isOpen() && std::string(fileName) != m_filePath && pathExists(m_filePath)) {
         // 1. Close the current archive WITHOUT committing any changes.
         // Note: m_archive.close() might commit if isModified is true. We should ensure it doesn't, but currently we can't easily reset
         // isModified. Actually, the modifications (m_archive.addEntry) are executed LATER in this function! So at this exact moment,
@@ -472,7 +522,24 @@ void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
         }
     }
 
-    m_archive.save(m_filePath);
+        if (m_isEncryptedSession) {
+        m_archive.save(m_tempDecryptedPath);
+        std::ifstream file(m_tempDecryptedPath, std::ios::binary | std::ios::ate);
+        if (file) {
+            auto size = file.tellg();
+            file.seekg(0, std::ios::beg);
+            std::vector<uint8_t> zipData(size);
+            file.read(reinterpret_cast<char*>(zipData.data()), size);
+            file.close();
+
+            auto encryptedData = encryptDocument(zipData, m_encryptionPassword);
+            std::ofstream out(m_filePath, std::ios::binary | std::ios::trunc);
+            out.write(reinterpret_cast<const char*>(encryptedData.data()), encryptedData.size());
+            out.close();
+        }
+    } else {
+        m_archive.save(m_filePath);
+    }
 }
 
 /**

@@ -123,6 +123,13 @@ namespace OpenXLSX
         void open(std::string_view fileName);
 
         /**
+         * @brief Open an existing encrypted .xlsx package.
+         * @param fileName Path to the file to open.
+         * @param password The user password for decryption.
+         */
+        void open(std::string_view fileName, const std::string& password);
+
+        /**
          * @brief Initialize a new .xlsx package from a built-in template.
          * @param fileName Target path for the new package.
          * @param forceOverwrite Prevents accidental data loss unless explicitly requested via XLForceOverwrite.
@@ -394,6 +401,9 @@ namespace OpenXLSX
         std::map<std::string, std::string>                                   m_unhandledEntries{};
 
         bool m_formulaNeedsRecalculation{false};
+        bool m_isEncryptedSession{false};
+        std::string m_encryptionPassword{""};
+        std::string m_tempDecryptedPath{""};
 
         XLRelationships    m_docRelationships{};
         XLRelationships    m_wbkRelationships{};
