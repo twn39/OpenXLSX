@@ -37,7 +37,7 @@ int main() {
     // 5. 1900 Leap Year Date Bug 
     wks.cell("A5").value() = "1900 Leap Year (Serial 60.0)";
     XLDateTime date60(60.0); // 1900-02-29
-    wks.cell("B5").value() = date60;
+    wks.cell("B5").value() = date60.serial();
 
     // 6. Formulas
     wks.cell("A6").value() = "Formula Engine Calculation";
