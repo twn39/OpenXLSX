@@ -61,29 +61,44 @@ TEST_CASE("XLFormulaEngine – Arithmetic", "[XLFormulaEngine]")
 {
     XLFormulaEngine eng;
 
-    SECTION("Addition")         { REQUIRE(eng.evaluate("=1+2").get<double>() == Catch::Approx(3.0)); }
-    SECTION("Multiplication")   { REQUIRE(eng.evaluate("=2*3").get<double>() == Catch::Approx(6.0)); }
-    SECTION("Precedence")       { REQUIRE(eng.evaluate("=1+2*3").get<double>() == Catch::Approx(7.0)); }
-    SECTION("Parentheses")      { REQUIRE(eng.evaluate("=(1+2)*3").get<double>() == Catch::Approx(9.0)); }
-    SECTION("Subtraction")      { REQUIRE(eng.evaluate("=10-4").get<double>() == Catch::Approx(6.0)); }
-    SECTION("Division")         { REQUIRE(eng.evaluate("=10/4").get<double>() == Catch::Approx(2.5)); }
-    SECTION("Power")            { REQUIRE(eng.evaluate("=2^10").get<double>() == Catch::Approx(1024.0)); }
-    SECTION("Unary minus")      { REQUIRE(eng.evaluate("=-5").get<double>() == Catch::Approx(-5.0)); }
-    SECTION("Percent")          { REQUIRE(eng.evaluate("=50%").get<double>() == Catch::Approx(0.5)); }
-    SECTION("Div by zero")      { REQUIRE(eng.evaluate("=1/0").type() == XLValueType::Error); }
-    SECTION("No leading =")     { REQUIRE(eng.evaluate("1+1").get<double>() == Catch::Approx(2.0)); }
+    SECTION("Data-driven arithmetic evaluation") {
+        auto [expr, expected] = GENERATE(table<std::string, double>({
+            {"=1+2", 3.0},
+            {"=2*3", 6.0},
+            {"=1+2*3", 7.0},
+            {"=(1+2)*3", 9.0},
+            {"=10-4", 6.0},
+            {"=10/4", 2.5},
+            {"=2^10", 1024.0},
+            {"=-5", -5.0},
+            {"=50%", 0.5},
+            {"1+1", 2.0}
+        }));
+        INFO("Evaluating: " << expr);
+        REQUIRE(eng.evaluate(expr).get<double>() == Catch::Approx(expected));
+    }
+
+    SECTION("Div by zero") { 
+        REQUIRE(eng.evaluate("=1/0").type() == XLValueType::Error); 
+    }
 }
 
 TEST_CASE("XLFormulaEngine – Comparison", "[XLFormulaEngine]")
 {
     XLFormulaEngine eng;
 
-    SECTION("Equal numeric")       { REQUIRE(eng.evaluate("=1=1").get<bool>() == true); }
-    SECTION("Not equal")           { REQUIRE(eng.evaluate("=1<>2").get<bool>() == true); }
-    SECTION("Less than")           { REQUIRE(eng.evaluate("=1<2").get<bool>() == true); }
-    SECTION("Greater equal")       { REQUIRE(eng.evaluate("=2>=2").get<bool>() == true); }
-    SECTION("String equal (CI)")   { REQUIRE(eng.evaluate("=\"A\"=\"a\"").get<bool>() == true); }
-    SECTION("String less")         { REQUIRE(eng.evaluate("=\"abc\"<\"abd\"").get<bool>() == true); }
+    SECTION("Data-driven comparison evaluation") {
+        auto [expr, expected] = GENERATE(table<std::string, bool>({
+            {"=1=1", true},
+            {"=1<>2", true},
+            {"=1<2", true},
+            {"=2>=2", true},
+            {"=\"A\"=\"a\"", true},
+            {"=\"abc\"<\"abd\"", true}
+        }));
+        INFO("Evaluating: " << expr);
+        REQUIRE(eng.evaluate(expr).get<bool>() == expected);
+    }
 }
 
 TEST_CASE("XLFormulaEngine – String concat", "[XLFormulaEngine]")
@@ -130,48 +145,88 @@ TEST_CASE("XLFormulaEngine – Math functions", "[XLFormulaEngine]")
 {
     XLFormulaEngine eng;
 
-    SECTION("ABS negative") { REQUIRE(eng.evaluate("=ABS(-5)").get<double>() == Catch::Approx(5.0)); }
-    SECTION("ABS positive") { REQUIRE(eng.evaluate("=ABS(5)").get<double>() == Catch::Approx(5.0)); }
-    SECTION("SQRT")         { REQUIRE(eng.evaluate("=SQRT(9)").get<double>() == Catch::Approx(3.0)); }
-    SECTION("SQRT neg")     { REQUIRE(eng.evaluate("=SQRT(-1)").type() == XLValueType::Error); }
-    SECTION("INT")          { REQUIRE(eng.evaluate("=INT(3.9)").get<int64_t>() == 3); }
-    SECTION("MOD")          { REQUIRE(eng.evaluate("=MOD(10,3)").get<double>() == Catch::Approx(1.0)); }
-    SECTION("POWER")        { REQUIRE(eng.evaluate("=POWER(2,8)").get<double>() == Catch::Approx(256.0)); }
-    SECTION("ROUND")        { REQUIRE(eng.evaluate("=ROUND(3.567,2)").get<double>() == Catch::Approx(3.57)); }
-    SECTION("ROUNDUP")      { REQUIRE(eng.evaluate("=ROUNDUP(3.111,2)").get<double>() == Catch::Approx(3.12)); }
-    SECTION("ROUNDDOWN")    { REQUIRE(eng.evaluate("=ROUNDDOWN(3.999,2)").get<double>() == Catch::Approx(3.99)); }
+    SECTION("Data-driven math functions evaluation") {
+        auto [expr, expected] = GENERATE(table<std::string, double>({
+            {"=ABS(-5)", 5.0},
+            {"=ABS(5)", 5.0},
+            {"=SQRT(9)", 3.0},
+            {"=MOD(10,3)", 1.0},
+            {"=POWER(2,8)", 256.0},
+            {"=ROUND(3.567,2)", 3.57},
+            {"=ROUNDUP(3.111,2)", 3.12},
+            {"=ROUNDDOWN(3.999,2)", 3.99}
+        }));
+        INFO("Evaluating: " << expr);
+        REQUIRE(eng.evaluate(expr).get<double>() == Catch::Approx(expected));
+    }
+
+    SECTION("INT") {
+        REQUIRE(eng.evaluate("=INT(3.9)").get<int64_t>() == 3);
+    }
+    SECTION("SQRT neg") {
+        REQUIRE(eng.evaluate("=SQRT(-1)").type() == XLValueType::Error);
+    }
 }
 
 TEST_CASE("XLFormulaEngine – Logical functions", "[XLFormulaEngine]")
 {
     XLFormulaEngine eng;
 
-    SECTION("IF true")   { REQUIRE(eng.evaluate("=IF(1>0,\"yes\",\"no\")").get<std::string>() == "yes"); }
-    SECTION("IF false")  { REQUIRE(eng.evaluate("=IF(0,\"yes\",\"no\")").get<std::string>() == "no"); }
-    SECTION("IFS")       { REQUIRE(eng.evaluate("=IFS(1=0,\"no\",1=1,\"yes\")").get<std::string>() == "yes"); }
-    SECTION("SWITCH")    { REQUIRE(eng.evaluate("=SWITCH(2,1,\"one\",2,\"two\",\"other\")").get<std::string>() == "two"); }
-    SECTION("SWITCH default") { REQUIRE(eng.evaluate("=SWITCH(3,1,\"one\",2,\"two\",\"other\")").get<std::string>() == "other"); }
-    SECTION("AND true")  { REQUIRE(eng.evaluate("=AND(1,1,1)").get<bool>() == true); }
-    SECTION("AND false") { REQUIRE(eng.evaluate("=AND(1,0,1)").get<bool>() == false); }
-    SECTION("OR true")   { REQUIRE(eng.evaluate("=OR(0,0,1)").get<bool>() == true); }
-    SECTION("OR false")  { REQUIRE(eng.evaluate("=OR(0,0,0)").get<bool>() == false); }
-    SECTION("NOT")       { REQUIRE(eng.evaluate("=NOT(FALSE)").get<bool>() == true); }
-    SECTION("IFERROR ok")  { REQUIRE(eng.evaluate("=IFERROR(1+1,0)").get<double>() == Catch::Approx(2.0)); }
-    SECTION("IFERROR err") { REQUIRE(eng.evaluate("=IFERROR(1/0,99)").get<double>() == Catch::Approx(99.0)); }
+    SECTION("String returning logical functions") {
+        auto [expr, expected] = GENERATE(table<std::string, std::string>({
+            {"=IF(1>0,\"yes\",\"no\")", "yes"},
+            {"=IF(0,\"yes\",\"no\")", "no"},
+            {"=IFS(1=0,\"no\",1=1,\"yes\")", "yes"},
+            {"=SWITCH(2,1,\"one\",2,\"two\",\"other\")", "two"},
+            {"=SWITCH(3,1,\"one\",2,\"two\",\"other\")", "other"}
+        }));
+        INFO("Evaluating: " << expr);
+        REQUIRE(eng.evaluate(expr).get<std::string>() == expected);
+    }
+
+    SECTION("Boolean returning logical functions") {
+        auto [expr, expected] = GENERATE(table<std::string, bool>({
+            {"=AND(1,1,1)", true},
+            {"=AND(1,0,1)", false},
+            {"=OR(0,0,1)", true},
+            {"=OR(0,0,0)", false},
+            {"=NOT(FALSE)", true}
+        }));
+        INFO("Evaluating: " << expr);
+        REQUIRE(eng.evaluate(expr).get<bool>() == expected);
+    }
+
+    SECTION("Double returning error functions") {
+        auto [expr, expected] = GENERATE(table<std::string, double>({
+            {"=IFERROR(1+1,0)", 2.0},
+            {"=IFERROR(1/0,99)", 99.0}
+        }));
+        INFO("Evaluating: " << expr);
+        REQUIRE(eng.evaluate(expr).get<double>() == Catch::Approx(expected));
+    }
 }
 
 TEST_CASE("XLFormulaEngine – Text functions", "[XLFormulaEngine]")
 {
     XLFormulaEngine eng;
 
-    SECTION("LEN")         { REQUIRE(eng.evaluate("=LEN(\"hello\")").get<int64_t>() == 5); }
-    SECTION("LEFT")        { REQUIRE(eng.evaluate("=LEFT(\"Excel\",3)").get<std::string>() == "Exc"); }
-    SECTION("RIGHT")       { REQUIRE(eng.evaluate("=RIGHT(\"Excel\",2)").get<std::string>() == "el"); }
-    SECTION("MID")         { REQUIRE(eng.evaluate("=MID(\"OpenXLSX\",5,4)").get<std::string>() == "XLSX"); }
-    SECTION("UPPER")       { REQUIRE(eng.evaluate("=UPPER(\"hello\")").get<std::string>() == "HELLO"); }
-    SECTION("LOWER")       { REQUIRE(eng.evaluate("=LOWER(\"HELLO\")").get<std::string>() == "hello"); }
-    SECTION("TRIM")        { REQUIRE(eng.evaluate("=TRIM(\"  hi  \")").get<std::string>() == "hi"); }
-    SECTION("CONCATENATE") { REQUIRE(eng.evaluate("=CONCATENATE(\"A\",\"B\",\"C\")").get<std::string>() == "ABC"); }
+    SECTION("String returning text functions") {
+        auto [expr, expected] = GENERATE(table<std::string, std::string>({
+            {"=LEFT(\"Excel\",3)", "Exc"},
+            {"=RIGHT(\"Excel\",2)", "el"},
+            {"=MID(\"OpenXLSX\",5,4)", "XLSX"},
+            {"=UPPER(\"hello\")", "HELLO"},
+            {"=LOWER(\"HELLO\")", "hello"},
+            {"=TRIM(\"  hi  \")", "hi"},
+            {"=CONCATENATE(\"A\",\"B\",\"C\")", "ABC"}
+        }));
+        INFO("Evaluating: " << expr);
+        REQUIRE(eng.evaluate(expr).get<std::string>() == expected);
+    }
+
+    SECTION("Integer returning text functions") {
+        REQUIRE(eng.evaluate("=LEN(\"hello\")").get<int64_t>() == 5);
+    }
 }
 
 TEST_CASE("XLFormulaEngine – Info functions", "[XLFormulaEngine]")
@@ -453,14 +508,27 @@ TEST_CASE("XLFormulaEngine – Math extended", "[XLFormulaEngine]")
         REQUIRE(eng.evaluate("=SUMPRODUCT(A1:A3,B1:B3)", resolver).get<double>() == Catch::Approx(32.0));
     }
 
-    SECTION("CEILING")   { REQUIRE(eng.evaluate("=CEILING(2.3,0.5)").get<double>() == Catch::Approx(2.5)); }
-    SECTION("FLOOR")     { REQUIRE(eng.evaluate("=FLOOR(2.7,0.5)").get<double>()   == Catch::Approx(2.5)); }
-    SECTION("LOG base 2"){ REQUIRE(eng.evaluate("=LOG(8,2)").get<double>()         == Catch::Approx(3.0)); }
-    SECTION("LOG10")     { REQUIRE(eng.evaluate("=LOG(1000,10)").get<double>()     == Catch::Approx(3.0)); }
-    SECTION("EXP")       { REQUIRE(eng.evaluate("=EXP(1)").get<double>()           == Catch::Approx(2.71828).epsilon(0.0001)); }
-    SECTION("SIGN pos")  { REQUIRE(eng.evaluate("=SIGN(5)").get<int64_t>()         == 1); }
-    SECTION("SIGN neg")  { REQUIRE(eng.evaluate("=SIGN(-3)").get<int64_t>()        == -1); }
-    SECTION("SIGN zero") { REQUIRE(eng.evaluate("=SIGN(0)").get<int64_t>()         == 0); }
+    SECTION("Data-driven extended math evaluation") {
+        auto [expr, expected] = GENERATE(table<std::string, double>({
+            {"=CEILING(2.3,0.5)", 2.5},
+            {"=FLOOR(2.7,0.5)", 2.5},
+            {"=LOG(8,2)", 3.0},
+            {"=LOG(1000,10)", 3.0},
+            {"=EXP(1)", 2.71828}
+        }));
+        INFO("Evaluating: " << expr);
+        REQUIRE(eng.evaluate(expr).get<double>() == Catch::Approx(expected).epsilon(0.0001));
+    }
+
+    SECTION("Data-driven sign evaluation") {
+        auto [expr, expected] = GENERATE(table<std::string, int64_t>({
+            {"=SIGN(5)", 1},
+            {"=SIGN(-3)", -1},
+            {"=SIGN(0)", 0}
+        }));
+        INFO("Evaluating: " << expr);
+        REQUIRE(eng.evaluate(expr).get<int64_t>() == expected);
+    }
 }
 
 // =============================================================================
@@ -471,54 +539,44 @@ TEST_CASE("XLFormulaEngine – Text extended", "[XLFormulaEngine]")
 {
     XLFormulaEngine eng;
 
-    SECTION("FIND case-sensitive") {
+    SECTION("String returning text extended functions") {
+        auto [expr, expected] = GENERATE(table<std::string, std::string>({
+            {"=SUBSTITUTE(\"aabbaa\",\"a\",\"x\")", "xxbbxx"},
+            {"=SUBSTITUTE(\"aabbaa\",\"a\",\"x\",1)", "xabbaa"},
+            {"=REPLACE(\"OpenXLSX\",5,4,\"calc\")", "Opencalc"},
+            {"=REPT(\"ab\",3)", "ababab"},
+            {"=T(\"hi\")", "hi"},
+            {"=T(42)", ""},
+            {"=TEXTJOIN(\"-\",TRUE,\"A\",\"B\",\"C\")", "A-B-C"},
+            {"=TEXTJOIN(\"-\",TRUE,\"A\",\"\",\"C\")", "A-C"},
+            {"=PROPER(\"hello world\")", "Hello World"},
+            {"=CLEAN(\"hello\")", "hello"}
+        }));
+        INFO("Evaluating: " << expr);
+        REQUIRE(eng.evaluate(expr).get<std::string>() == expected);
+    }
+
+    SECTION("Integer/Double returning text extended functions") {
+        auto [expr, expected] = GENERATE(table<std::string, double>({
+            {"=FIND(\"XL\",\"OpenXLSX\")", 5.0},
+            {"=SEARCH(\"xl\",\"OpenXLSX\")", 5.0},
+            {"=VALUE(\"3.14\")", 3.14}
+        }));
+        INFO("Evaluating: " << expr);
+        REQUIRE(eng.evaluate(expr).get<double>() == Catch::Approx(expected));
+    }
+
+    SECTION("Boolean returning text extended functions") {
+        auto [expr, expected] = GENERATE(table<std::string, bool>({
+            {"=EXACT(\"Hello\",\"Hello\")", true},
+            {"=EXACT(\"hello\",\"Hello\")", false}
+        }));
+        INFO("Evaluating: " << expr);
+        REQUIRE(eng.evaluate(expr).get<bool>() == expected);
+    }
+
+    SECTION("FIND case-sensitive error") {
         REQUIRE(eng.evaluate("=FIND(\"xl\",\"OpenXLSX\")").type() == XLValueType::Error); // not found (case)
-    }
-    SECTION("FIND found") {
-        REQUIRE(eng.evaluate("=FIND(\"XL\",\"OpenXLSX\")").get<int64_t>() == 5);
-    }
-    SECTION("SEARCH case-insensitive") {
-        REQUIRE(eng.evaluate("=SEARCH(\"xl\",\"OpenXLSX\")").get<int64_t>() == 5);
-    }
-    SECTION("SUBSTITUTE all") {
-        REQUIRE(eng.evaluate("=SUBSTITUTE(\"aabbaa\",\"a\",\"x\")").get<std::string>() == "xxbbxx");
-    }
-    SECTION("SUBSTITUTE instance 1") {
-        REQUIRE(eng.evaluate("=SUBSTITUTE(\"aabbaa\",\"a\",\"x\",1)").get<std::string>() == "xabbaa");
-    }
-    SECTION("REPLACE") {
-        REQUIRE(eng.evaluate("=REPLACE(\"OpenXLSX\",5,4,\"calc\")").get<std::string>() == "Opencalc");
-    }
-    SECTION("REPT") {
-        REQUIRE(eng.evaluate("=REPT(\"ab\",3)").get<std::string>() == "ababab");
-    }
-    SECTION("EXACT true") {
-        REQUIRE(eng.evaluate("=EXACT(\"Hello\",\"Hello\")").get<bool>() == true);
-    }
-    SECTION("EXACT case") {
-        REQUIRE(eng.evaluate("=EXACT(\"hello\",\"Hello\")").get<bool>() == false);
-    }
-    SECTION("T string") {
-        REQUIRE(eng.evaluate("=T(\"hi\")").get<std::string>() == "hi");
-    }
-    SECTION("T number returns empty") {
-        REQUIRE(eng.evaluate("=T(42)").get<std::string>() == "");
-    }
-    SECTION("VALUE") {
-        REQUIRE(eng.evaluate("=VALUE(\"3.14\")").get<double>() == Catch::Approx(3.14));
-    }
-    SECTION("TEXTJOIN") {
-        REQUIRE(eng.evaluate("=TEXTJOIN(\"-\",TRUE,\"A\",\"B\",\"C\")").get<std::string>() == "A-B-C");
-    }
-    SECTION("TEXTJOIN ignore empty") {
-        REQUIRE(eng.evaluate("=TEXTJOIN(\"-\",TRUE,\"A\",\"\",\"C\")").get<std::string>() == "A-C");
-    }
-    SECTION("PROPER") {
-        REQUIRE(eng.evaluate("=PROPER(\"hello world\")").get<std::string>() == "Hello World");
-    }
-    SECTION("CLEAN removes control chars") {
-        // Can't easily embed control chars in formula, just verify non-control passthrough
-        REQUIRE(eng.evaluate("=CLEAN(\"hello\")").get<std::string>() == "hello");
     }
 }
 

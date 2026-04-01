@@ -55,6 +55,7 @@ TEST_CASE("XLConcurrent Tests", "[XLConcurrent]")
         doc.open(filename);
 
         for (int t = 0; t < numSheets; ++t) {
+            INFO("Checking Sheet: Sheet" << (t + 1));
             auto wks = doc.workbook().worksheet("Sheet" + std::to_string(t + 1));
             REQUIRE(wks.cell(1, 1).value().get<int>() == 1);
             REQUIRE(wks.cell(numRows, 1).value().get<int>() == numRows);
@@ -167,9 +168,11 @@ TEST_CASE("XLConcurrent Tests", "[XLConcurrent]")
 
         for (int t = 0; t < numThreads; ++t) {
             auto wks = doc.workbook().worksheet("Sheet" + std::to_string(t + 1));
-            for (int i = 1; i <= numStrings; ++i)
+            for (int i = 1; i <= numStrings; ++i) {
+                INFO("Thread: " << t << " String Index: " << i);
                 REQUIRE(wks.cell(static_cast<uint32_t>(i), 1).value().get<std::string>() ==
                         "CommonString_" + std::to_string(i));
+            }
         }
         doc.close();
     }

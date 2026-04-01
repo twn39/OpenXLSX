@@ -28,7 +28,12 @@ XLXmlData::~XLXmlData() = default;
  * @details
  */
 void XLXmlData::setRawData(const std::string& data)    // NOLINT
-{ m_xmlDoc->load_string(data.c_str(), pugi_parse_settings); }
+{ 
+    auto result = m_xmlDoc->load_string(data.c_str(), pugi_parse_settings); 
+    if (!result && result.status != pugi::status_no_document_element) {
+        throw XLException("Failed to parse raw XML data. Error: " + std::string(result.description()));
+    }
+}
 
 /**
  * @details
@@ -108,7 +113,15 @@ XLContentType XLXmlData::getXmlType() const { return m_xmlType; }
  */
 XMLDocument* XLXmlData::getXmlDocument()
 {
-    if (!m_xmlDoc->document_element()) m_xmlDoc->load_string(m_parentDoc->extractXmlFromArchive(m_xmlPath).c_str(), pugi_parse_settings);
+    if (!m_xmlDoc->document_element()) {
+        std::string xmlContent = m_parentDoc->extractXmlFromArchive(m_xmlPath);
+        if (!xmlContent.empty()) {
+            auto result = m_xmlDoc->load_string(xmlContent.c_str(), pugi_parse_settings);
+            if (!result && result.status != pugi::status_no_document_element) {
+                 throw XLException("Failed to parse XML: " + m_xmlPath + ", Error: " + result.description());
+            }
+        }
+    }
 
     return m_xmlDoc.get();
 }
@@ -118,7 +131,15 @@ XMLDocument* XLXmlData::getXmlDocument()
  */
 const XMLDocument* XLXmlData::getXmlDocument() const
 {
-    if (!m_xmlDoc->document_element()) m_xmlDoc->load_string(m_parentDoc->extractXmlFromArchive(m_xmlPath).c_str(), pugi_parse_settings);
+    if (!m_xmlDoc->document_element()) {
+        std::string xmlContent = m_parentDoc->extractXmlFromArchive(m_xmlPath);
+        if (!xmlContent.empty()) {
+            auto result = m_xmlDoc->load_string(xmlContent.c_str(), pugi_parse_settings);
+            if (!result && result.status != pugi::status_no_document_element) {
+                 throw XLException("Failed to parse XML: " + m_xmlPath + ", Error: " + result.description());
+            }
+        }
+    }
 
     return m_xmlDoc.get();
 }

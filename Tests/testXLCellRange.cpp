@@ -13,7 +13,10 @@ TEST_CASE("XLCellRange Tests", "[XLCellRange]")
     SECTION("Constructor")
     {
         auto rng = wks.range(XLCellReference("B2"), XLCellReference("D4"));
-        for (auto cl : rng) cl.value() = "Value";
+        for (auto cl : rng) {
+            INFO("Writing to cell: " << cl.cellReference().address());
+            cl.value() = "Value";
+        }
         doc.save();
 
         REQUIRE(wks.cell("B2").value().get<std::string>() == "Value");
@@ -30,7 +33,10 @@ TEST_CASE("XLCellRange Tests", "[XLCellRange]")
     SECTION("Copy Constructor")
     {
         auto rng = wks.range(XLCellReference("B2"), XLCellReference("D4"));
-        for (auto cl : rng) cl.value() = "Value";
+        for (auto cl : rng) {
+            INFO("Writing to cell: " << cl.cellReference().address());
+            cl.value() = "Value";
+        }
         doc.save();
 
         XLCellRange rng2 = rng;
@@ -51,7 +57,10 @@ TEST_CASE("XLCellRange Tests", "[XLCellRange]")
     SECTION("Move Constructor")
     {
         auto rng = wks.range(XLCellReference("B2"), XLCellReference("D4"));
-        for (auto cl : rng) cl.value() = "Value";
+        for (auto cl : rng) {
+            INFO("Writing to cell: " << cl.cellReference().address());
+            cl.value() = "Value";
+        }
         doc.save();
 
         XLCellRange rng2{std::move(rng)};
@@ -72,7 +81,10 @@ TEST_CASE("XLCellRange Tests", "[XLCellRange]")
     SECTION("Copy Assignment")
     {
         auto rng = wks.range(XLCellReference("B2"), XLCellReference("D4"));
-        for (auto cl : rng) cl.value() = "Value";
+        for (auto cl : rng) {
+            INFO("Writing to cell: " << cl.cellReference().address());
+            cl.value() = "Value";
+        }
         doc.save();
 
         XLCellRange rng2 = wks.range();
@@ -94,7 +106,10 @@ TEST_CASE("XLCellRange Tests", "[XLCellRange]")
     SECTION("Move Assignment")
     {
         auto rng = wks.range(XLCellReference("B2"), XLCellReference("D4"));
-        for (auto cl : rng) cl.value() = "Value";
+        for (auto cl : rng) {
+            INFO("Writing to cell: " << cl.cellReference().address());
+            cl.value() = "Value";
+        }
         doc.save();
 
         XLCellRange rng2 = wks.range();
