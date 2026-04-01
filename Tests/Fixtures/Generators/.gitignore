@@ -1,0 +1,5 @@
+.venv/
+uv.lock
+__pycache__/
+go_gen/go.mod
+go_gen/go.sum
