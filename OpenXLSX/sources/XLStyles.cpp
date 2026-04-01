@@ -72,7 +72,7 @@ namespace {
 
 // ===== XLStyles, master class
 
-XLStyles::XLStyles() {}
+XLStyles::XLStyles() : m_suppressWarnings(false) {}
 
 XLStyles::XLStyles(gsl::not_null<XLXmlData*> xmlData, bool suppressWarnings, std::string_view stylesPrefix)
     : XLXmlFile(xmlData),

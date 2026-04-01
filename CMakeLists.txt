@@ -11,6 +11,7 @@ option(OPENXLSX_BUILD_TESTS "Build and run library tests" ON)
 option(OPENXLSX_BUILD_BENCHMARKS "Build benchmark programs" OFF)
 option(OPENXLSX_CREATE_DOCS "Build library documentation" OFF)
 option(OPENXLSX_ENABLE_LTO "Enable Link-Time Optimization (LTO/IPO) if supported" ON)
+option(OPENXLSX_ENABLE_SANITIZERS "Enable ASan and UBSan for memory/undefined behavior analysis (GCC/Clang only)" OFF)
 
 set(OPENXLSX_LIBRARY_TYPE "STATIC" CACHE STRING "Library type (STATIC or SHARED)")
 
@@ -123,12 +124,21 @@ generate_export_header(OpenXLSX
 if(MSVC)
     target_compile_options(OpenXLSX PUBLIC /W4 /permissive- /utf-8 $<$<CONFIG:Release>:/O2 /Ot /Gy /Zc:inline>)
     target_compile_definitions(OpenXLSX PUBLIC _CRT_SECURE_NO_WARNINGS)
+    
+    if(OPENXLSX_ENABLE_SANITIZERS)
+        target_compile_options(OpenXLSX PRIVATE /fsanitize=address)
+    endif()
 else()
     target_compile_options(OpenXLSX PRIVATE -Wall -Wextra $<$<CONFIG:Release>:-O3 -ffunction-sections -fdata-sections>)
     if(APPLE)
         target_link_options(OpenXLSX PRIVATE $<$<CONFIG:Release>:-Wl,-dead_strip>)
     else()
         target_link_options(OpenXLSX PRIVATE $<$<CONFIG:Release>:-Wl,--gc-sections>)
+    endif()
+
+    if(OPENXLSX_ENABLE_SANITIZERS)
+        target_compile_options(OpenXLSX PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
+        target_link_options(OpenXLSX PRIVATE -fsanitize=address,undefined)
     endif()
 endif()
 
@@ -139,6 +149,11 @@ if(OPENXLSX_BUILD_TESTS)
     file(GLOB TEST_SOURCES Tests/testXL*.cpp)
     add_executable(OpenXLSXTests ${TEST_SOURCES})
     target_link_libraries(OpenXLSXTests PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
+    
+    if(OPENXLSX_ENABLE_SANITIZERS AND NOT MSVC)
+        target_compile_options(OpenXLSXTests PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
+        target_link_options(OpenXLSXTests PRIVATE -fsanitize=address,undefined)
+    endif()
 
     # Copy test data to build directory
     add_custom_command(TARGET OpenXLSXTests POST_BUILD
