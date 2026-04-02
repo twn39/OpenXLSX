@@ -1,3 +1,4 @@
+#include <iostream>
 #include <fstream>
 
 #include <map>
@@ -5,6 +6,7 @@
 #include <mbedtls/aes.h>
 #include <mbedtls/sha1.h>
 #include <mbedtls/sha512.h>
+#include <mbedtls/base64.h>
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
 #include "XLException.hpp"
@@ -24,7 +26,8 @@ bool OpenXLSX::isEncryptedDocument(gsl::span<const uint8_t> data) {
 }
 
 std::vector<uint8_t> OpenXLSX::encryptDocument(gsl::span<const uint8_t> zipData, const std::string& password) {
-    return Crypto::encryptStandardPackage(zipData, password);
+    // We now default to Agile Encryption (0x00040004) to match modern Excel behavior.
+    return Crypto::encryptAgilePackage(zipData, password);
 }
 
 std::vector<uint8_t> OpenXLSX::decryptDocument(gsl::span<const uint8_t> data, const std::string& password) {
@@ -32,11 +35,6 @@ std::vector<uint8_t> OpenXLSX::decryptDocument(gsl::span<const uint8_t> data, co
     auto encryptedPackage = Crypto::readCfbStream(data, "EncryptedPackage");
     
     if (encryptionInfo.size() >= 4) {
-        auto dec = Crypto::decryptStandardPackage(encryptionInfo, encryptedPackage, password);
-        std::ofstream out("debug.zip", std::ios::binary);
-        out.write((char*)dec.data(), dec.size());
-        out.close();
-        return dec;
         uint32_t version = encryptionInfo[0] | (encryptionInfo[1]<<8) | (encryptionInfo[2]<<16) | (encryptionInfo[3]<<24);
         if (version == 0x00020003) {
             return Crypto::decryptStandardPackage(encryptionInfo, encryptedPackage, password);
@@ -417,15 +415,275 @@ std::vector<uint8_t> generateAgileHash(const std::string& password, gsl::span<co
 
 std::vector<uint8_t> decryptAgilePackage(gsl::span<const uint8_t> encryptionInfo,
                                          gsl::span<const uint8_t> encryptedPackage,
-                                         const std::string& /*password*/) {
-    if (encryptionInfo.empty() || encryptedPackage.empty()) return std::vector<uint8_t>();
+                                         const std::string& password) {
+    if (encryptionInfo.size() <= 8 || encryptedPackage.size() < 8) return std::vector<uint8_t>();
     
     pugi::xml_document doc;
-    pugi::xml_parse_result result = doc.load_buffer(encryptionInfo.data(), encryptionInfo.size());
+    pugi::xml_parse_result result = doc.load_buffer(encryptionInfo.data() + 8, encryptionInfo.size() - 8);
     if (!result) throw XLInternalError("Failed to parse EncryptionInfo XML");
+    
+    auto root = doc.child("encryption");
+    if (!root) throw XLInternalError("Invalid Agile EncryptionInfo XML");
+    
+    auto keyDataNode = root.child("keyData");
+    auto pNode = root.child("keyEncryptors").child("keyEncryptor").child("p:encryptedKey");
+    if (!keyDataNode || !pNode) throw XLInternalError("Missing key attributes in Agile XML");
+    
+    std::string keyDataSaltB64 = keyDataNode.attribute("saltValue").value();
+    std::string pSaltB64 = pNode.attribute("saltValue").value();
+    std::string pEncKeyValueB64 = pNode.attribute("encryptedKeyValue").value();
+    int spinCount = pNode.attribute("spinCount").as_int();
+    int keyBits = pNode.attribute("keyBits").as_int();
+    int blockSize = pNode.attribute("blockSize").as_int();
+    
+    auto decodeB64 = [](const std::string& b64) {
+        size_t len = 0;
+        mbedtls_base64_decode(nullptr, 0, &len, reinterpret_cast<const unsigned char*>(b64.c_str()), b64.size());
+        std::vector<uint8_t> dec(len);
+        mbedtls_base64_decode(dec.data(), dec.size(), &len, reinterpret_cast<const unsigned char*>(b64.c_str()), b64.size());
+        dec.resize(len);
+        return dec;
+    };
+    
+    auto pSalt = decodeB64(pSaltB64);
+    auto pEncKeyValue = decodeB64(pEncKeyValueB64);
+    auto keyDataSalt = decodeB64(keyDataSaltB64);
+    
+    std::vector<uint8_t> utf16pw;
+    for(char c : password) { utf16pw.push_back(static_cast<uint8_t>(c)); utf16pw.push_back(0); }
+    
+    auto hashSHA512 = [](const std::vector<uint8_t>& d) {
+        std::vector<uint8_t> h(64);
+        mbedtls_sha512(d.data(), d.size(), h.data(), 0);
+        return h;
+    };
+    
+    std::vector<uint8_t> initialData = pSalt;
+    initialData.insert(initialData.end(), utf16pw.begin(), utf16pw.end());
+    auto H = hashSHA512(initialData);
+    
+    for(int i = 0; i < spinCount; ++i) {
+        std::vector<uint8_t> iterData = {static_cast<uint8_t>(i&0xFF), static_cast<uint8_t>((i>>8)&0xFF), static_cast<uint8_t>((i>>16)&0xFF), static_cast<uint8_t>((i>>24)&0xFF)};
+        iterData.insert(iterData.end(), H.begin(), H.end());
+        H = hashSHA512(iterData);
+    }
+    
+    std::vector<uint8_t> blockKey = {0x14, 0x6e, 0x0b, 0xe7, 0xab, 0xac, 0xd0, 0xd6};
+    std::vector<uint8_t> finalData = H;
+    finalData.insert(finalData.end(), blockKey.begin(), blockKey.end());
+    auto keyDerived = hashSHA512(finalData);
+    
+    int keyBytes = keyBits / 8;
+    if (keyDerived.size() < static_cast<size_t>(keyBytes)) {
+        keyDerived.insert(keyDerived.end(), keyBytes - keyDerived.size(), 0x36);
+    } else {
+        keyDerived.resize(keyBytes);
+    }
+    
+    mbedtls_platform_zeroize(utf16pw.data(), utf16pw.size());
+    mbedtls_platform_zeroize(initialData.data(), initialData.size());
+    
+    auto aesCbcDecrypt = [&](const std::vector<uint8_t>& data, const std::vector<uint8_t>& key, const std::vector<uint8_t>& iv) {
+        std::vector<uint8_t> in(data);
+        size_t rem = in.size() % 16;
+        if (rem != 0) in.insert(in.end(), 16 - rem, 0);
+        
+        std::vector<uint8_t> out(in.size());
+        mbedtls_aes_context ctx;
+        mbedtls_aes_init(&ctx);
+        auto cleanup = gsl::finally([&] { mbedtls_aes_free(&ctx); });
+        
+        if (mbedtls_aes_setkey_dec(&ctx, key.data(), key.size() * 8) != 0) throw XLInternalError("AES key setup failed");
+        
+        std::vector<uint8_t> currentIv = iv;
+        if (currentIv.size() < 16) currentIv.resize(16, 0); // Safety check for IV size
+        
+        mbedtls_aes_crypt_cbc(&ctx, MBEDTLS_AES_DECRYPT, in.size(), currentIv.data(), in.data(), out.data());
+        return out;
+    };
+    
+    auto packageKey = aesCbcDecrypt(pEncKeyValue, keyDerived, pSalt);
+    
+    auto getU32 = [](const uint8_t* p) { return p[0] | (p[1]<<8) | (p[2]<<16) | (p[3]<<24); };
+    uint64_t originalSize = getU32(encryptedPackage.data()) | ((uint64_t)getU32(encryptedPackage.data() + 4) << 32);
+    
+    std::vector<uint8_t> payload(encryptedPackage.begin() + 8, encryptedPackage.end());
+    std::vector<uint8_t> decrypted;
+    
 
-    // Placeholder for actual agile logic:
-    return std::vector<uint8_t>();
+    for (size_t offset = 0, i = 0; offset < payload.size(); offset += 4096, ++i) {
+        size_t end = std::min(offset + 4096, payload.size());
+        std::vector<uint8_t> chunk(payload.begin() + offset, payload.begin() + end);
+        
+        size_t rem = chunk.size() % blockSize;
+        if (rem != 0) chunk.insert(chunk.end(), blockSize - rem, 0); // Pad if needed
+        
+        // Generate IV for this chunk: H(keyDataSalt + ChunkIndex)
+        std::vector<uint8_t> ivData = keyDataSalt;
+        ivData.push_back(i & 0xFF); ivData.push_back((i>>8) & 0xFF); ivData.push_back((i>>16) & 0xFF); ivData.push_back((i>>24) & 0xFF);
+        auto ivHash = hashSHA512(ivData);
+        ivHash.resize(blockSize); // Truncate to block size (16 for AES)
+        
+            auto decChunk = aesCbcDecrypt(chunk, packageKey, ivHash);
+        decrypted.insert(decrypted.end(), decChunk.begin(), decChunk.end());
+    }
+    
+    if (originalSize > 0 && originalSize <= decrypted.size()) {
+        decrypted.resize(originalSize);
+    }
+    
+    return decrypted;
+}
+
+std::string encodeB64(gsl::span<const uint8_t> data) {
+    size_t len = 0;
+    mbedtls_base64_encode(nullptr, 0, &len, data.data(), data.size());
+    std::string b64(len, '\0');
+    mbedtls_base64_encode(reinterpret_cast<unsigned char*>(&b64[0]), b64.size(), &len, data.data(), data.size());
+    if (!b64.empty() && b64.back() == '\0') b64.pop_back(); // Remove null terminator if present
+    return b64;
+}
+
+std::vector<uint8_t> encryptAgilePackage(gsl::span<const uint8_t> zipData, const std::string& password) {
+    auto putU32 = [](std::vector<uint8_t>& buf, uint32_t offset, uint32_t val) {
+        buf[offset] = val & 0xFF; buf[offset+1] = (val >> 8) & 0xFF; buf[offset+2] = (val >> 16) & 0xFF; buf[offset+3] = (val >> 24) & 0xFF;
+    };
+    
+    std::vector<uint8_t> saltData(16), saltKey(16), verifier(16), packageKey(32);
+    mbedtls_entropy_context entropy; mbedtls_ctr_drbg_context ctr_drbg;
+    mbedtls_entropy_init(&entropy); mbedtls_ctr_drbg_init(&ctr_drbg);
+    const char* pers = "openxlsx_agile";
+    mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, (const unsigned char*)pers, std::strlen(pers));
+    mbedtls_ctr_drbg_random(&ctr_drbg, saltData.data(), 16);
+    mbedtls_ctr_drbg_random(&ctr_drbg, saltKey.data(), 16);
+    mbedtls_ctr_drbg_random(&ctr_drbg, packageKey.data(), 32);
+    mbedtls_ctr_drbg_random(&ctr_drbg, verifier.data(), 16);
+    mbedtls_ctr_drbg_free(&ctr_drbg); mbedtls_entropy_free(&entropy);
+    
+    int spinCount = 100000;
+    std::vector<uint8_t> utf16pw;
+    for(char c : password) { utf16pw.push_back(static_cast<uint8_t>(c)); utf16pw.push_back(0); }
+    
+    auto hashSHA512 = [](const std::vector<uint8_t>& d) {
+        std::vector<uint8_t> h(64);
+        mbedtls_sha512(d.data(), d.size(), h.data(), 0);
+        return h;
+    };
+    
+    std::vector<uint8_t> initialData = saltKey;
+    initialData.insert(initialData.end(), utf16pw.begin(), utf16pw.end());
+    auto H = hashSHA512(initialData);
+    
+    for(int i = 0; i < spinCount; ++i) {
+        std::vector<uint8_t> iterData = {static_cast<uint8_t>(i&0xFF), static_cast<uint8_t>((i>>8)&0xFF), static_cast<uint8_t>((i>>16)&0xFF), static_cast<uint8_t>((i>>24)&0xFF)};
+        iterData.insert(iterData.end(), H.begin(), H.end());
+        H = hashSHA512(iterData);
+    }
+    
+    std::vector<uint8_t> blockKey = {0x14, 0x6e, 0x0b, 0xe7, 0xab, 0xac, 0xd0, 0xd6};
+    std::vector<uint8_t> finalData = H; finalData.insert(finalData.end(), blockKey.begin(), blockKey.end());
+    auto keyDerived = hashSHA512(finalData); keyDerived.resize(32);
+    
+    std::vector<uint8_t> blockKeyVer = {0xfe, 0xa7, 0xd2, 0x76, 0x3b, 0x4b, 0x9e, 0x79};
+    std::vector<uint8_t> finalVer = H; finalVer.insert(finalVer.end(), blockKeyVer.begin(), blockKeyVer.end());
+    auto keyVer = hashSHA512(finalVer); keyVer.resize(32);
+    
+    std::vector<uint8_t> blockKeyVerHash = {0xd7, 0xaa, 0x0f, 0x6d, 0x30, 0x61, 0x34, 0x4e};
+    std::vector<uint8_t> finalVerHash = H; finalVerHash.insert(finalVerHash.end(), blockKeyVerHash.begin(), blockKeyVerHash.end());
+    auto keyVerHash = hashSHA512(finalVerHash); keyVerHash.resize(32);
+    
+    mbedtls_platform_zeroize(utf16pw.data(), utf16pw.size());
+    mbedtls_platform_zeroize(initialData.data(), initialData.size());
+    mbedtls_platform_zeroize(H.data(), H.size());
+    
+    auto aesCbcEncrypt = [&](const std::vector<uint8_t>& data, const std::vector<uint8_t>& key, const std::vector<uint8_t>& iv) {
+        std::vector<uint8_t> in(data);
+        size_t rem = in.size() % 16;
+        if (rem != 0) in.insert(in.end(), 16 - rem, 0); // Need block alignment for CBC
+
+        std::vector<uint8_t> out(in.size());
+        mbedtls_aes_context ctx;
+        mbedtls_aes_init(&ctx);
+        auto cleanup = gsl::finally([&] { mbedtls_aes_free(&ctx); });
+        
+        if (mbedtls_aes_setkey_enc(&ctx, key.data(), key.size() * 8) != 0) throw XLInternalError("AES encryption setup failed");
+        
+        std::vector<uint8_t> currentIv = iv;
+        mbedtls_aes_crypt_cbc(&ctx, MBEDTLS_AES_ENCRYPT, in.size(), currentIv.data(), in.data(), out.data());
+        return out;
+    };
+    
+    auto encryptedKeyValue = aesCbcEncrypt(packageKey, keyDerived, saltKey);
+    auto encryptedVerifierInput = aesCbcEncrypt(verifier, keyVer, saltKey);
+    auto verifierHash = hashSHA512(verifier);
+    auto encryptedVerifierHash = aesCbcEncrypt(verifierHash, keyVerHash, saltKey);
+    
+    // Data Integrity
+    std::vector<uint8_t> blockKeyIntegrityKey = {0x5f, 0xb2, 0xad, 0x01, 0x0c, 0xb9, 0xe1, 0xf6};
+    std::vector<uint8_t> finalIntegrityKey = packageKey; finalIntegrityKey.insert(finalIntegrityKey.end(), blockKeyIntegrityKey.begin(), blockKeyIntegrityKey.end());
+    auto keyIntegrityKey = hashSHA512(finalIntegrityKey); keyIntegrityKey.resize(32);
+    
+    std::vector<uint8_t> blockKeyIntegrityVal = {0xa0, 0x67, 0x7f, 0x02, 0xb2, 0x2c, 0x84, 0x33};
+    std::vector<uint8_t> finalIntegrityVal = packageKey; finalIntegrityVal.insert(finalIntegrityVal.end(), blockKeyIntegrityVal.begin(), blockKeyIntegrityVal.end());
+    auto keyIntegrityVal = hashSHA512(finalIntegrityVal); keyIntegrityVal.resize(32);
+    
+    // We need random 64-byte salt for HMAC key... wait, MS-OFFCRYPTO says it's just the AES encrypt using saltData!
+    // But DataIntegrity encryptedHmacKey is generated by encrypting a random HMAC key with keyIntegrityKey and saltData.
+    std::vector<uint8_t> randomHmacKey(64);
+    mbedtls_entropy_init(&entropy); mbedtls_ctr_drbg_init(&ctr_drbg);
+    mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, (const unsigned char*)pers, std::strlen(pers));
+    mbedtls_ctr_drbg_random(&ctr_drbg, randomHmacKey.data(), 64);
+    mbedtls_ctr_drbg_free(&ctr_drbg); mbedtls_entropy_free(&entropy);
+    
+    auto encHmacKey = aesCbcEncrypt(randomHmacKey, keyIntegrityKey, saltData);
+    
+    // Compute HMAC of package (using randomHmacKey and SHA512)
+    std::vector<uint8_t> hmacHash(64);
+    mbedtls_md_context_t md_ctx;
+    mbedtls_md_init(&md_ctx);
+    mbedtls_md_setup(&md_ctx, mbedtls_md_info_from_type(MBEDTLS_MD_SHA512), 1);
+    mbedtls_md_hmac_starts(&md_ctx, randomHmacKey.data(), 64);
+    
+    std::vector<uint8_t> encPackage(8);
+    uint64_t origSize = zipData.size();
+    encPackage[0] = origSize & 0xFF; encPackage[1] = (origSize>>8) & 0xFF; encPackage[2] = (origSize>>16) & 0xFF; encPackage[3] = (origSize>>24) & 0xFF;
+    encPackage[4] = (origSize>>32) & 0xFF; encPackage[5] = (origSize>>40) & 0xFF; encPackage[6] = (origSize>>48) & 0xFF; encPackage[7] = (origSize>>56) & 0xFF;
+    
+    for (size_t offset = 0, i = 0; offset < zipData.size(); offset += 4096, ++i) {
+        size_t end = std::min(offset + 4096, zipData.size());
+        std::vector<uint8_t> chunk(zipData.begin() + offset, zipData.begin() + end);
+        
+        std::vector<uint8_t> ivData = saltData;
+        ivData.push_back(i & 0xFF); ivData.push_back((i>>8) & 0xFF); ivData.push_back((i>>16) & 0xFF); ivData.push_back((i>>24) & 0xFF);
+        auto ivHash = hashSHA512(ivData); ivHash.resize(16);
+        
+        auto encChunk = aesCbcEncrypt(chunk, packageKey, ivHash);
+        encPackage.insert(encPackage.end(), encChunk.begin(), encChunk.end());
+        mbedtls_md_hmac_update(&md_ctx, encChunk.data(), encChunk.size());
+    }
+    
+    mbedtls_md_hmac_finish(&md_ctx, hmacHash.data());
+    mbedtls_md_free(&md_ctx);
+    
+    auto encHmacValue = aesCbcEncrypt(hmacHash, keyIntegrityVal, saltData);
+    
+        std::string xml = std::string("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n") + 
+    "<encryption xmlns=\"http://schemas.microsoft.com/office/2006/encryption\" xmlns:p=\"http://schemas.microsoft.com/office/2006/keyEncryptor/password\" xmlns:c=\"http://schemas.microsoft.com/office/2006/keyEncryptor/certificate\">\r\n" + 
+    "  <keyData saltSize=\"16\" blockSize=\"16\" keyBits=\"256\" hashSize=\"64\" cipherAlgorithm=\"AES\" cipherChaining=\"ChainingModeCBC\" hashAlgorithm=\"SHA512\" saltValue=\"" + encodeB64(saltData) + "\"/>\r\n" + 
+    "  <dataIntegrity encryptedHmacKey=\"" + encodeB64(encHmacKey) + "\" encryptedHmacValue=\"" + encodeB64(encHmacValue) + "\"/>\r\n" + 
+    "  <keyEncryptors>\r\n" + 
+    "    <keyEncryptor uri=\"http://schemas.microsoft.com/office/2006/keyEncryptor/password\">\r\n" + 
+    "      <p:encryptedKey spinCount=\"100000\" saltSize=\"16\" blockSize=\"16\" keyBits=\"256\" hashSize=\"64\" cipherAlgorithm=\"AES\" cipherChaining=\"ChainingModeCBC\" hashAlgorithm=\"SHA512\" saltValue=\"" + encodeB64(saltKey) + "\" encryptedVerifierHashInput=\"" + encodeB64(encryptedVerifierInput) + "\" encryptedVerifierHashValue=\"" + encodeB64(encryptedVerifierHash) + "\" encryptedKeyValue=\"" + encodeB64(encryptedKeyValue) + "\"/>\r\n" + 
+    "    </keyEncryptor>\r\n" + 
+    "  </keyEncryptors>\r\n" + 
+    "</encryption>";
+    
+    std::vector<uint8_t> info(8);
+    putU32(info, 0, 0x00040004); // Agile Version
+    putU32(info, 4, 0x00000040); // Flags
+    info.insert(info.end(), xml.begin(), xml.end());
+    
+    return buildCFB(info, encPackage);
 }
 
 std::vector<uint8_t> decryptStandardPackage(gsl::span<const uint8_t> encryptionInfo,
@@ -435,8 +693,11 @@ std::vector<uint8_t> decryptStandardPackage(gsl::span<const uint8_t> encryptionI
 
     auto getU32 = [](const uint8_t* p) { return p[0] | (p[1]<<8) | (p[2]<<16) | (p[3]<<24); };
 
+    if (encryptionInfo.size() < 32) throw XLInternalError("Invalid Standard Encryption Header (too small)");
+
     uint32_t headerSize = getU32(encryptionInfo.data() + 8);
     uint32_t keySize = getU32(encryptionInfo.data() + 28);
+    if (encryptionInfo.size() < 12 + headerSize + 4) throw XLInternalError("Invalid Standard Encryption Header (headerSize too large)");
     uint32_t saltSize = getU32(encryptionInfo.data() + 12 + headerSize);
     
     if (encryptionInfo.size() < 12 + headerSize + 4 + saltSize) throw XLInternalError("Invalid Standard Encryption Header");
