@@ -77,7 +77,14 @@ namespace OpenXLSX
     class XLCellStyles;
     class XLStyles;
 
-    enum XLUnderlineStyle : uint8_t { XLUnderlineNone = 0, XLUnderlineSingle = 1, XLUnderlineDouble = 2, XLUnderlineInvalid = 255 };
+    enum XLUnderlineStyle : uint8_t { 
+        XLUnderlineNone = 0, 
+        XLUnderlineSingle = 1, 
+        XLUnderlineDouble = 2, 
+        XLUnderlineSingleAccounting = 3, 
+        XLUnderlineDoubleAccounting = 4, 
+        XLUnderlineInvalid = 255 
+    };
 
     enum XLFontSchemeStyle : uint8_t {
         XLFontSchemeNone    = 0,     // <scheme val="none"/>

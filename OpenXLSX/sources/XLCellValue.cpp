@@ -303,7 +303,7 @@ void XLCellValueProxy::setRichText(const XLRichText& richTextValue)
         XMLNode rNode = isNode.append_child("r");
 
         // Add properties if any are set
-        if (run.fontName() || run.fontSize() || run.fontColor() || run.bold() || run.italic() || run.underline() || run.strikethrough()) {
+        if (run.fontName() || run.fontSize() || run.fontColor() || run.bold() || run.italic() || run.underlineStyle() || run.strikethrough() || run.vertAlign()) {
             XMLNode rPrNode = rNode.append_child("rPr");
             if (run.fontName()) {
                 XMLNode rFontNode = rPrNode.append_child("rFont");
@@ -319,8 +319,19 @@ void XLCellValueProxy::setRichText(const XLRichText& richTextValue)
             }
             if (run.bold() && *run.bold()) { rPrNode.append_child("b"); }
             if (run.italic() && *run.italic()) { rPrNode.append_child("i"); }
-            if (run.underline() && *run.underline()) { rPrNode.append_child("u"); }
+            if (run.underlineStyle() && *run.underlineStyle() != XLUnderlineNone && *run.underlineStyle() != XLUnderlineInvalid) {
+                XMLNode uNode = rPrNode.append_child("u");
+                if (*run.underlineStyle() == XLUnderlineDouble) uNode.append_attribute("val").set_value("double");
+                else if (*run.underlineStyle() == XLUnderlineSingleAccounting) uNode.append_attribute("val").set_value("singleAccounting");
+                else if (*run.underlineStyle() == XLUnderlineDoubleAccounting) uNode.append_attribute("val").set_value("doubleAccounting");
+                // single is default, no val needed
+            }
             if (run.strikethrough() && *run.strikethrough()) { rPrNode.append_child("strike"); }
+            if (run.vertAlign() && *run.vertAlign() != XLBaseline && *run.vertAlign() != XLVerticalAlignRunInvalid) {
+                XMLNode vertAlignNode = rPrNode.append_child("vertAlign");
+                if (*run.vertAlign() == XLSuperscript) vertAlignNode.append_attribute("val").set_value("superscript");
+                else if (*run.vertAlign() == XLSubscript) vertAlignNode.append_attribute("val").set_value("subscript");
+            }
         }
 
         // Add text
@@ -530,8 +541,24 @@ static XLRichText parseRichText(XMLNode node)
         if (!rPrNode.empty()) {
             if (!rPrNode.child("b").empty()) run.setBold(true);
             if (!rPrNode.child("i").empty()) run.setItalic(true);
-            if (!rPrNode.child("u").empty()) run.setUnderline(true);
+            
+            XMLNode uNode = rPrNode.child("u");
+            if (!uNode.empty()) {
+                std::string uVal = uNode.attribute("val").value();
+                if (uVal == "double") run.setUnderlineStyle(XLUnderlineDouble);
+                else if (uVal == "singleAccounting") run.setUnderlineStyle(XLUnderlineSingleAccounting);
+                else if (uVal == "doubleAccounting") run.setUnderlineStyle(XLUnderlineDoubleAccounting);
+                else run.setUnderlineStyle(XLUnderlineSingle);
+            }
+            
             if (!rPrNode.child("strike").empty()) run.setStrikethrough(true);
+            
+            XMLNode vertAlignNode = rPrNode.child("vertAlign");
+            if (!vertAlignNode.empty()) {
+                std::string vVal = vertAlignNode.attribute("val").value();
+                if (vVal == "superscript") run.setVertAlign(XLSuperscript);
+                else if (vVal == "subscript") run.setVertAlign(XLSubscript);
+            }
 
             XMLNode rFontNode = rPrNode.child("rFont");
             if (!rFontNode.empty()) run.setFontName(rFontNode.attribute("val").value());
