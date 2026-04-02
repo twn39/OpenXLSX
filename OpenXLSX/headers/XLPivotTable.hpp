@@ -28,6 +28,22 @@ namespace OpenXLSX
         std::vector<XLPivotField> columns;
         std::vector<XLPivotField> data;
         std::vector<XLPivotField> filters;
+
+        bool rowGrandTotals    {true};
+        bool colGrandTotals    {true};
+        bool showDrill         {true};
+        bool useAutoFormatting {false};
+        bool pageOverThenDown  {false};
+        bool mergeItem         {false};
+        bool compactData       {true};
+        bool showError         {false};
+        bool showRowHeaders    {true};
+        bool showColHeaders    {true};
+        bool showRowStripes    {false};
+        bool showColStripes    {false};
+        bool showLastColumn    {false};
+        
+        std::string pivotTableStyleName{"PivotStyleLight16"};
     };
 
     class OPENXLSX_EXPORT XLPivotTable final : public XLXmlFile

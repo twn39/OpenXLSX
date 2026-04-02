@@ -84,6 +84,32 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
     ptRoot.attribute("name").set_value(options.name.empty() ? "PivotTable1" : options.name.c_str());
     ptRoot.attribute("cacheId").set_value(newCacheId);
 
+    auto setBoolAttr = [&](XMLNode node, const char* attr, bool val) {
+        if (!node.attribute(attr)) node.append_attribute(attr) = val ? "1" : "0";
+        else node.attribute(attr).set_value(val ? "1" : "0");
+    };
+    
+    setBoolAttr(ptRoot, "rowGrandTotals", options.rowGrandTotals);
+    setBoolAttr(ptRoot, "colGrandTotals", options.colGrandTotals);
+    setBoolAttr(ptRoot, "showDrill", options.showDrill);
+    setBoolAttr(ptRoot, "useAutoFormatting", options.useAutoFormatting);
+    setBoolAttr(ptRoot, "pageOverThenDown", options.pageOverThenDown);
+    setBoolAttr(ptRoot, "mergeItem", options.mergeItem);
+    setBoolAttr(ptRoot, "compactData", options.compactData);
+    setBoolAttr(ptRoot, "showError", options.showError);
+    
+    XMLNode styleInfoNode = ptRoot.child("pivotTableStyleInfo");
+    if (!styleInfoNode) styleInfoNode = ptRoot.append_child("pivotTableStyleInfo");
+    
+    if (!styleInfoNode.attribute("name")) styleInfoNode.append_attribute("name") = options.pivotTableStyleName.c_str();
+    else styleInfoNode.attribute("name").set_value(options.pivotTableStyleName.c_str());
+    
+    setBoolAttr(styleInfoNode, "showRowHeaders", options.showRowHeaders);
+    setBoolAttr(styleInfoNode, "showColHeaders", options.showColHeaders);
+    setBoolAttr(styleInfoNode, "showRowStripes", options.showRowStripes);
+    setBoolAttr(styleInfoNode, "showColStripes", options.showColStripes);
+    setBoolAttr(styleInfoNode, "showLastColumn", options.showLastColumn);
+
     XMLNode locNode = ptRoot.child("location");
     locNode.attribute("ref").set_value(options.targetCell.c_str());
 
@@ -118,6 +144,8 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
     if (!rowItemsNode.empty()) ptRoot.remove_child(rowItemsNode);
     XMLNode colItemsNode = ptRoot.child("colItems");
     if (!colItemsNode.empty()) ptRoot.remove_child(colItemsNode);
+    XMLNode pageFieldsNodeOld = ptRoot.child("pageFields");
+    if (!pageFieldsNodeOld.empty()) ptRoot.remove_child(pageFieldsNodeOld);
     XMLNode dataFieldsNode = ptRoot.child("dataFields");
     if (!dataFieldsNode.empty()) ptRoot.remove_child(dataFieldsNode);
 
@@ -129,6 +157,7 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
     std::vector<int> rowIndices;
     std::vector<int> colIndices;
     std::vector<int> dataIndices;
+    std::vector<int> filterIndices;
 
     auto findFieldIndex = [&](const std::string& name) -> int {
         auto it = std::find(headers.begin(), headers.end(), name);
@@ -148,6 +177,10 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
         int idx = findFieldIndex(dataFld.name);
         if (idx >= 0) dataIndices.push_back(idx);
     }
+    for (const auto& filterFld : options.filters) {
+        int idx = findFieldIndex(filterFld.name);
+        if (idx >= 0) filterIndices.push_back(idx);
+    }
 
     int i = 0;
     for (const auto& h : headers) {
@@ -164,6 +197,7 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
         bool isRow  = std::find(rowIndices.begin(), rowIndices.end(), i) != rowIndices.end();
         bool isCol  = std::find(colIndices.begin(), colIndices.end(), i) != colIndices.end();
         bool isData = std::find(dataIndices.begin(), dataIndices.end(), i) != dataIndices.end();
+        bool isFilter = std::find(filterIndices.begin(), filterIndices.end(), i) != filterIndices.end();
 
         if (isRow) {
             ptFieldNode.append_attribute("axis").set_value("axisRow");
@@ -177,6 +211,16 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
         }
         else if (isCol) {
             ptFieldNode.append_attribute("axis").set_value("axisCol");
+            ptFieldNode.append_attribute("compact").set_value("0");
+            ptFieldNode.append_attribute("outline").set_value("0");
+            ptFieldNode.append_attribute("showAll").set_value("0");
+            ptFieldNode.append_attribute("defaultSubtotal").set_value("1");
+            XMLNode itemsNode = ptFieldNode.append_child("items");
+            itemsNode.append_attribute("count").set_value("1");
+            itemsNode.append_child("item").append_attribute("t").set_value("default");
+        }
+        else if (isFilter) {
+            ptFieldNode.append_attribute("axis").set_value("axisPage");
             ptFieldNode.append_attribute("compact").set_value("0");
             ptFieldNode.append_attribute("outline").set_value("0");
             ptFieldNode.append_attribute("showAll").set_value("0");
@@ -214,6 +258,18 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
         colItemsNode = ptRoot.insert_child_after("colItems", colFieldsNode);
         colItemsNode.append_attribute("count").set_value("1");
         colItemsNode.append_child("i");
+    }
+
+    XMLNode pageFieldsNode;
+    if (!filterIndices.empty()) {
+        XMLNode insertAfter = colItemsNode.empty() ? (rowItemsNode.empty() ? (rowFieldsNode.empty() ? pivotFieldsNode : rowFieldsNode) : rowItemsNode) : colItemsNode;
+        pageFieldsNode = ptRoot.insert_child_after("pageFields", insertAfter);
+        pageFieldsNode.append_attribute("count").set_value(filterIndices.size());
+        for (int idx : filterIndices) { 
+            XMLNode pageField = pageFieldsNode.append_child("pageField");
+            pageField.append_attribute("fld").set_value(idx);
+            pageField.append_attribute("hier").set_value("-1");
+        }
     }
 
     if (!dataIndices.empty()) {
