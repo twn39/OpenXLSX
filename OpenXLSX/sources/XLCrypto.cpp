@@ -483,10 +483,9 @@ std::vector<uint8_t> decryptAgilePackage(gsl::span<const uint8_t> encryptionInfo
     mbedtls_platform_zeroize(utf16pw.data(), utf16pw.size());
     mbedtls_platform_zeroize(initialData.data(), initialData.size());
     
-    auto aesCbcDecrypt = [&](const std::vector<uint8_t>& data, const std::vector<uint8_t>& key, const std::vector<uint8_t>& iv) {
+    auto aesCbcDecrypt = [&](const std::vector<uint8_t>& data, const std::vector<uint8_t>& key, const std::vector<uint8_t>& iv, bool unpad = true) {
         std::vector<uint8_t> in(data);
-        size_t rem = in.size() % 16;
-        if (rem != 0) in.insert(in.end(), 16 - rem, 0);
+        if (in.size() % 16 != 0) in.insert(in.end(), 16 - (in.size() % 16), 0); // Failsafe
         
         std::vector<uint8_t> out(in.size());
         mbedtls_aes_context ctx;
@@ -499,6 +498,18 @@ std::vector<uint8_t> decryptAgilePackage(gsl::span<const uint8_t> encryptionInfo
         if (currentIv.size() < 16) currentIv.resize(16, 0); // Safety check for IV size
         
         mbedtls_aes_crypt_cbc(&ctx, MBEDTLS_AES_DECRYPT, in.size(), currentIv.data(), in.data(), out.data());
+        
+        // Unpad PKCS#7 only if requested (usually for the final block or single structures)
+        if (unpad && !out.empty()) {
+            uint8_t padLen = out.back();
+            if (padLen > 0 && padLen <= 16 && padLen <= out.size()) {
+                bool validPad = true;
+                for (size_t i = 1; i <= padLen; ++i) {
+                    if (out[out.size() - i] != padLen) { validPad = false; break; }
+                }
+                if (validPad) out.resize(out.size() - padLen);
+            }
+        }
         return out;
     };
     
@@ -513,10 +524,14 @@ std::vector<uint8_t> decryptAgilePackage(gsl::span<const uint8_t> encryptionInfo
 
     for (size_t offset = 0, i = 0; offset < payload.size(); offset += 4096, ++i) {
         size_t end = std::min(offset + 4096, payload.size());
-        std::vector<uint8_t> chunk(payload.begin() + offset, payload.begin() + end);
         
-        size_t rem = chunk.size() % blockSize;
-        if (rem != 0) chunk.insert(chunk.end(), blockSize - rem, 0); // Pad if needed
+        // In MS-OFFCRYPTO, the final chunk can be padded (so if offset+4096 == payload.size(), is it the last chunk?)
+        // If the payload is e.g. 5192, 0 to 4096 is chunk 1. 4096 to 5192 is chunk 2.
+        // Wait, if the encrypted chunk is exactly 4096, the NEXT offset will be 4096. 4096 to 4112 is chunk 2?
+        // Let's just pass `isLastChunk` to unpad.
+        bool isLastChunk = (end == payload.size());
+        
+        std::vector<uint8_t> chunk(payload.begin() + offset, payload.begin() + end);
         
         // Generate IV for this chunk: H(keyDataSalt + ChunkIndex)
         std::vector<uint8_t> ivData = keyDataSalt;
@@ -524,7 +539,7 @@ std::vector<uint8_t> decryptAgilePackage(gsl::span<const uint8_t> encryptionInfo
         auto ivHash = hashSHA512(ivData);
         ivHash.resize(blockSize); // Truncate to block size (16 for AES)
         
-            auto decChunk = aesCbcDecrypt(chunk, packageKey, ivHash);
+        auto decChunk = aesCbcDecrypt(chunk, packageKey, ivHash, isLastChunk);
         decrypted.insert(decrypted.end(), decChunk.begin(), decChunk.end());
     }
     
@@ -596,10 +611,13 @@ std::vector<uint8_t> encryptAgilePackage(gsl::span<const uint8_t> zipData, const
     mbedtls_platform_zeroize(initialData.data(), initialData.size());
     mbedtls_platform_zeroize(H.data(), H.size());
     
-    auto aesCbcEncrypt = [&](const std::vector<uint8_t>& data, const std::vector<uint8_t>& key, const std::vector<uint8_t>& iv) {
+    auto aesCbcEncrypt = [&](const std::vector<uint8_t>& data, const std::vector<uint8_t>& key, const std::vector<uint8_t>& iv, bool pad = true) {
         std::vector<uint8_t> in(data);
-        size_t rem = in.size() % 16;
-        if (rem != 0) in.insert(in.end(), 16 - rem, 0); // Need block alignment for CBC
+        if (pad) {
+            size_t rem = in.size() % 16;
+            size_t padSize = 16 - rem;
+            in.insert(in.end(), padSize, static_cast<uint8_t>(padSize)); // PKCS#7 Padding!
+        }
 
         std::vector<uint8_t> out(in.size());
         mbedtls_aes_context ctx;
@@ -620,22 +638,24 @@ std::vector<uint8_t> encryptAgilePackage(gsl::span<const uint8_t> zipData, const
     
     // Data Integrity
     std::vector<uint8_t> blockKeyIntegrityKey = {0x5f, 0xb2, 0xad, 0x01, 0x0c, 0xb9, 0xe1, 0xf6};
-    std::vector<uint8_t> finalIntegrityKey = packageKey; finalIntegrityKey.insert(finalIntegrityKey.end(), blockKeyIntegrityKey.begin(), blockKeyIntegrityKey.end());
-    auto keyIntegrityKey = hashSHA512(finalIntegrityKey); keyIntegrityKey.resize(32);
+    std::vector<uint8_t> ivDataIntegrityKey = saltData; 
+    ivDataIntegrityKey.insert(ivDataIntegrityKey.end(), blockKeyIntegrityKey.begin(), blockKeyIntegrityKey.end());
+    auto ivHmacKey = hashSHA512(ivDataIntegrityKey); 
+    ivHmacKey.resize(16); // 16 bytes IV for AES
     
     std::vector<uint8_t> blockKeyIntegrityVal = {0xa0, 0x67, 0x7f, 0x02, 0xb2, 0x2c, 0x84, 0x33};
-    std::vector<uint8_t> finalIntegrityVal = packageKey; finalIntegrityVal.insert(finalIntegrityVal.end(), blockKeyIntegrityVal.begin(), blockKeyIntegrityVal.end());
-    auto keyIntegrityVal = hashSHA512(finalIntegrityVal); keyIntegrityVal.resize(32);
+    std::vector<uint8_t> ivDataIntegrityVal = saltData; 
+    ivDataIntegrityVal.insert(ivDataIntegrityVal.end(), blockKeyIntegrityVal.begin(), blockKeyIntegrityVal.end());
+    auto ivHmacVal = hashSHA512(ivDataIntegrityVal); 
+    ivHmacVal.resize(16); // 16 bytes IV for AES
     
-    // We need random 64-byte salt for HMAC key... wait, MS-OFFCRYPTO says it's just the AES encrypt using saltData!
-    // But DataIntegrity encryptedHmacKey is generated by encrypting a random HMAC key with keyIntegrityKey and saltData.
     std::vector<uint8_t> randomHmacKey(64);
     mbedtls_entropy_init(&entropy); mbedtls_ctr_drbg_init(&ctr_drbg);
     mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, (const unsigned char*)pers, std::strlen(pers));
     mbedtls_ctr_drbg_random(&ctr_drbg, randomHmacKey.data(), 64);
     mbedtls_ctr_drbg_free(&ctr_drbg); mbedtls_entropy_free(&entropy);
     
-    auto encHmacKey = aesCbcEncrypt(randomHmacKey, keyIntegrityKey, saltData);
+    auto encHmacKey = aesCbcEncrypt(randomHmacKey, packageKey, ivHmacKey, false);
     
     // Compute HMAC of package (using randomHmacKey and SHA512)
     std::vector<uint8_t> hmacHash(64);
@@ -649,15 +669,19 @@ std::vector<uint8_t> encryptAgilePackage(gsl::span<const uint8_t> zipData, const
     encPackage[0] = origSize & 0xFF; encPackage[1] = (origSize>>8) & 0xFF; encPackage[2] = (origSize>>16) & 0xFF; encPackage[3] = (origSize>>24) & 0xFF;
     encPackage[4] = (origSize>>32) & 0xFF; encPackage[5] = (origSize>>40) & 0xFF; encPackage[6] = (origSize>>48) & 0xFF; encPackage[7] = (origSize>>56) & 0xFF;
     
+    mbedtls_md_hmac_update(&md_ctx, encPackage.data(), 8); // VERY IMPORTANT: HMAC covers the 8-byte size header too!
+    
     for (size_t offset = 0, i = 0; offset < zipData.size(); offset += 4096, ++i) {
         size_t end = std::min(offset + 4096, zipData.size());
+        bool isLastChunk = (end == zipData.size());
+        
         std::vector<uint8_t> chunk(zipData.begin() + offset, zipData.begin() + end);
         
         std::vector<uint8_t> ivData = saltData;
         ivData.push_back(i & 0xFF); ivData.push_back((i>>8) & 0xFF); ivData.push_back((i>>16) & 0xFF); ivData.push_back((i>>24) & 0xFF);
         auto ivHash = hashSHA512(ivData); ivHash.resize(16);
         
-        auto encChunk = aesCbcEncrypt(chunk, packageKey, ivHash);
+        auto encChunk = aesCbcEncrypt(chunk, packageKey, ivHash, isLastChunk);
         encPackage.insert(encPackage.end(), encChunk.begin(), encChunk.end());
         mbedtls_md_hmac_update(&md_ctx, encChunk.data(), encChunk.size());
     }
@@ -665,7 +689,7 @@ std::vector<uint8_t> encryptAgilePackage(gsl::span<const uint8_t> zipData, const
     mbedtls_md_hmac_finish(&md_ctx, hmacHash.data());
     mbedtls_md_free(&md_ctx);
     
-    auto encHmacValue = aesCbcEncrypt(hmacHash, keyIntegrityVal, saltData);
+    auto encHmacValue = aesCbcEncrypt(hmacHash, packageKey, ivHmacVal, false);
     
         std::string xml = std::string("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n") + 
     "<encryption xmlns=\"http://schemas.microsoft.com/office/2006/encryption\" xmlns:p=\"http://schemas.microsoft.com/office/2006/keyEncryptor/password\" xmlns:c=\"http://schemas.microsoft.com/office/2006/keyEncryptor/certificate\">\r\n" + 
