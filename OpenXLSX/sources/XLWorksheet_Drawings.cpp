@@ -308,8 +308,30 @@ XLThreadedComment XLWorksheet::addThreadedComment(const std::string& cellRef, co
     std::string personId = parentDoc().persons().addPerson(author);
     auto tc = threadedComments().addComment(cellRef, personId, text);
     
-    // Add legacy comment for fallback and to generate the hidden VML box required by Excel
-    addComment(cellRef, text, author);
+    // Add legacy comment for fallback and to generate the hidden VML box required by Excel.
+    // Excel strictly requires the legacy author name to be "tc=" + the threaded comment ID!
+    std::string legacyAuthor = "tc=" + tc.id();
+    addComment(cellRef, text, legacyAuthor);
+
+    // Inject extLst to signal Excel that threaded comments exist here
+    XMLNode root = xmlDocument().document_element();
+    XMLNode extLst = root.child("extLst");
+    if (!extLst) {
+        extLst = root.append_child("extLst");
+    }
+    bool hasThreadedExt = false;
+    for (XMLNode ext = extLst.child("ext"); ext; ext = ext.next_sibling("ext")) {
+        if (std::string(ext.attribute("uri").value()) == "{C5A4FD07-D465-4E85-B267-3A3644040A51}") {
+            hasThreadedExt = true;
+            break;
+        }
+    }
+    if (!hasThreadedExt) {
+        XMLNode ext = extLst.append_child("ext");
+        ext.append_attribute("uri").set_value("{C5A4FD07-D465-4E85-B267-3A3644040A51}");
+        ext.append_attribute("xmlns:x14").set_value("http://schemas.microsoft.com/office/spreadsheetml/2009/9/main");
+        ext.append_child("x14:threadedComments");
+    }
     
     return tc;
 }
