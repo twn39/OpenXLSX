@@ -1015,8 +1015,24 @@ bool XLDocument::validateSheetName(std::string_view sheetName, bool throwOnInval
  * @details Overrides the default XML header attributes, allowing consumers to dictate XML standalone status or encoding during
  * serialization.
  */
-bool XLDocument::hasPersons() const { return m_persons.valid(); }
-XLPersons& XLDocument::persons() { return m_persons; }
+bool XLDocument::hasPersons() const { return m_archive.hasEntry("xl/persons/person.xml"); }
+
+XLPersons& XLDocument::persons() {
+    if (!m_persons.valid()) {
+        std::string personsFilename = "xl/persons/person.xml";
+        if (!m_archive.hasEntry(personsFilename)) {
+            m_archive.addEntry(personsFilename, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<personList xmlns=\"http://schemas.microsoft.com/office/2017/10/person\"/>");
+            m_contentTypes.addOverride("/" + personsFilename, XLContentType::Persons);
+            m_wbkRelationships.addRelationship(XLRelationshipType::Person, "persons/person.xml");
+        }
+        XLXmlData* xmlData = getXmlData(personsFilename, true);
+        if (xmlData == nullptr) {
+            xmlData = &m_data.emplace_back(this, personsFilename, "", XLContentType::Persons);
+        }
+        m_persons = XLPersons(xmlData);
+    }
+    return m_persons;
+}
 
 void XLDocument::setSavingDeclaration(XLXmlSavingDeclaration const& savingDeclaration) { m_xmlSavingDeclaration = savingDeclaration; }
 

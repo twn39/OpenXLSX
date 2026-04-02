@@ -58,6 +58,16 @@ namespace OpenXLSX
          * @brief Get all replies in a specific comment thread by parent ID.
          */
         std::vector<XLThreadedComment> replies(const std::string& parentId) const;
+
+        /**
+         * @brief Add a new top-level threaded comment.
+         */
+        XLThreadedComment addComment(const std::string& ref, const std::string& personId, const std::string& text);
+
+        /**
+         * @brief Add a reply to an existing threaded comment.
+         */
+        XLThreadedComment addReply(const std::string& parentId, const std::string& personId, const std::string& text);
     };
 
     /**
@@ -101,6 +111,12 @@ namespace OpenXLSX
          * @brief Retrieve a person entity by their unique personId.
          */
         XLPerson person(const std::string& id) const;
+
+        /**
+         * @brief Add a person by their display name, generating a new ID if it doesn't exist.
+         * @return The unique personId.
+         */
+        std::string addPerson(const std::string& displayName);
     };
 } // namespace OpenXLSX
 

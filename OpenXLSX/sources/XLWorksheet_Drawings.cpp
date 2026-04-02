@@ -303,6 +303,23 @@ void XLWorksheet::addComment(const std::string& cellRef, const std::string& text
     }
 }
 
+XLThreadedComment XLWorksheet::addThreadedComment(const std::string& cellRef, const std::string& text, const std::string& author)
+{
+    std::string personId = parentDoc().persons().addPerson(author);
+    auto tc = threadedComments().addComment(cellRef, personId, text);
+    
+    // Add legacy comment for fallback and to generate the hidden VML box required by Excel
+    addComment(cellRef, text, author);
+    
+    return tc;
+}
+
+XLThreadedComment XLWorksheet::addThreadedReply(const std::string& parentId, const std::string& text, const std::string& author)
+{
+    std::string personId = parentDoc().persons().addPerson(author);
+    return threadedComments().addReply(parentId, personId, text);
+}
+
 void XLWorksheet::insertImage(const std::string& cellReference, const std::string& imagePath)
 {
     XLImageOptions opts;

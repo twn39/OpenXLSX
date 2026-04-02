@@ -1,6 +1,35 @@
 #include "XLThreadedComments.hpp"
 
+#include <random>
+#include <sstream>
+#include <iomanip>
+
 using namespace OpenXLSX;
+
+namespace {
+    std::string GenerateGUID() {
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(0, 15);
+        std::uniform_int_distribution<> dis2(8, 11);
+
+        std::stringstream ss;
+        ss << std::hex << std::uppercase << std::setfill('0');
+        ss << "{";
+        for (int i = 0; i < 8; i++) ss << dis(gen);
+        ss << "-";
+        for (int i = 0; i < 4; i++) ss << dis(gen);
+        ss << "-4";
+        for (int i = 0; i < 3; i++) ss << dis(gen);
+        ss << "-";
+        ss << dis2(gen);
+        for (int i = 0; i < 3; i++) ss << dis(gen);
+        ss << "-";
+        for (int i = 0; i < 12; i++) ss << dis(gen);
+        ss << "}";
+        return ss.str();
+    }
+}
 
 // ===== XLThreadedComment Implementation ===== //
 
@@ -63,6 +92,55 @@ std::vector<XLThreadedComment> XLThreadedComments::replies(const std::string& pa
     return result;
 }
 
+XLThreadedComment XLThreadedComments::addComment(const std::string& ref, const std::string& personId, const std::string& text)
+{
+    XMLNode root = xmlDocument().document_element();
+    if (!root) {
+        root = xmlDocument().append_child("ThreadedComments");
+        root.append_attribute("xmlns").set_value("http://schemas.microsoft.com/office/2017/10/threadedcomments");
+    }
+    XMLNode commentNode = root.append_child("threadedComment");
+    commentNode.append_attribute("ref").set_value(ref.c_str());
+    commentNode.append_attribute("id").set_value(GenerateGUID().c_str());
+    commentNode.append_attribute("personId").set_value(personId.c_str());
+    
+    XMLNode textNode = commentNode.append_child("text");
+    textNode.text().set(text.c_str());
+
+    return XLThreadedComment(commentNode);
+}
+
+XLThreadedComment XLThreadedComments::addReply(const std::string& parentId, const std::string& personId, const std::string& text)
+{
+    XMLNode root = xmlDocument().document_element();
+    if (!root) {
+        root = xmlDocument().append_child("ThreadedComments");
+        root.append_attribute("xmlns").set_value("http://schemas.microsoft.com/office/2017/10/threadedcomments");
+    }
+    
+    // Attempt to find the parent to inherit the ref attribute (though OOXML typically omits or matches it)
+    std::string refStr = "";
+    for (XMLNode n = root.first_child(); n; n = n.next_sibling()) {
+        if (std::string(n.attribute("id").value()) == parentId) {
+            refStr = n.attribute("ref").value();
+            break;
+        }
+    }
+
+    XMLNode commentNode = root.append_child("threadedComment");
+    if (!refStr.empty()) {
+        commentNode.append_attribute("ref").set_value(refStr.c_str());
+    }
+    commentNode.append_attribute("parentId").set_value(parentId.c_str());
+    commentNode.append_attribute("id").set_value(GenerateGUID().c_str());
+    commentNode.append_attribute("personId").set_value(personId.c_str());
+    
+    XMLNode textNode = commentNode.append_child("text");
+    textNode.text().set(text.c_str());
+
+    return XLThreadedComment(commentNode);
+}
+
 // ===== XLPerson Implementation ===== //
 
 XLPerson::XLPerson(XMLNode node) : m_node(node) {}
@@ -90,4 +168,29 @@ XLPerson XLPersons::person(const std::string& id) const
         }
     }
     return XLPerson(XMLNode());
+}
+
+std::string XLPersons::addPerson(const std::string& displayName)
+{
+    XMLNode root = xmlDocument().document_element();
+    if (!root) {
+        root = xmlDocument().append_child("personList");
+        root.append_attribute("xmlns").set_value("http://schemas.microsoft.com/office/2017/10/person");
+    }
+
+    // Check if exists
+    for (XMLNode node = root.first_child(); node; node = node.next_sibling()) {
+        if (std::string(node.name()) == "person" && std::string(node.attribute("displayName").value()) == displayName) {
+            return node.attribute("id").value();
+        }
+    }
+
+    // Add new
+    XMLNode personNode = root.append_child("person");
+    std::string newId = GenerateGUID();
+    personNode.append_attribute("displayName").set_value(displayName.c_str());
+    personNode.append_attribute("id").set_value(newId.c_str());
+    personNode.append_attribute("userId").set_value(displayName.c_str()); // Mock generic user ID
+    personNode.append_attribute("providerId").set_value("None");
+    return newId;
 }

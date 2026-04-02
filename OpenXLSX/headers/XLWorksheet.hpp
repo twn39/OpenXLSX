@@ -466,6 +466,22 @@ namespace OpenXLSX
          */
         void addComment(const std::string& cellRef, const std::string& text, const std::string& author = "");
 
+        /**
+         * @brief Add a modern threaded comment to a cell seamlessly.
+         * @param cellRef The cell reference (e.g. A1).
+         * @param text The comment text.
+         * @param author The author of the comment.
+         */
+        XLThreadedComment addThreadedComment(const std::string& cellRef, const std::string& text, const std::string& author = "");
+        
+        /**
+         * @brief Add a reply to an existing threaded comment.
+         * @param parentId The parent threaded comment ID.
+         * @param text The comment text.
+         * @param author The author of the comment.
+         */
+        XLThreadedComment addThreadedReply(const std::string& parentId, const std::string& text, const std::string& author = "");
+
         XLTableCollection& tables();
 
         void                      addHyperlink(std::string_view cellRef, std::string_view url, std::string_view tooltip = "");
