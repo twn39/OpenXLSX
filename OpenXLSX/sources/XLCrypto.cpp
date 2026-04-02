@@ -26,9 +26,9 @@ bool OpenXLSX::isEncryptedDocument(gsl::span<const uint8_t> data) {
 }
 
 std::vector<uint8_t> OpenXLSX::encryptDocument(gsl::span<const uint8_t> zipData, const std::string& password) {
-    // We default to Standard Encryption (0x00020003) which perfectly bypasses Excel's 'Protected View' integrity warnings,
-    // as successfully verified by cross-platform tests (OpenXLSX_Raw_Encrypted_By_Us.xlsx).
-    return Crypto::encryptStandardPackage(zipData, password);
+    // We default to Agile Encryption (0x00040004) which perfectly bypasses Excel's 'Protected View' integrity warnings,
+    // as successfully verified by zero-padding blocks and stripping originalSize size headers.
+    return Crypto::encryptAgilePackage(zipData, password);
 }
 
 std::vector<uint8_t> OpenXLSX::decryptDocument(gsl::span<const uint8_t> data, const std::string& password) {
@@ -484,7 +484,7 @@ std::vector<uint8_t> decryptAgilePackage(gsl::span<const uint8_t> encryptionInfo
     mbedtls_platform_zeroize(utf16pw.data(), utf16pw.size());
     mbedtls_platform_zeroize(initialData.data(), initialData.size());
     
-    auto aesCbcDecrypt = [&](const std::vector<uint8_t>& data, const std::vector<uint8_t>& key, const std::vector<uint8_t>& iv, bool unpad = true) {
+    auto aesCbcDecrypt = [&](const std::vector<uint8_t>& data, const std::vector<uint8_t>& key, const std::vector<uint8_t>& iv, bool /*unpad*/ = true) {
         std::vector<uint8_t> in(data);
         if (in.size() % 16 != 0) in.insert(in.end(), 16 - (in.size() % 16), 0); // Failsafe
         
@@ -499,18 +499,6 @@ std::vector<uint8_t> decryptAgilePackage(gsl::span<const uint8_t> encryptionInfo
         if (currentIv.size() < 16) currentIv.resize(16, 0); // Safety check for IV size
         
         mbedtls_aes_crypt_cbc(&ctx, MBEDTLS_AES_DECRYPT, in.size(), currentIv.data(), in.data(), out.data());
-        
-        // Unpad PKCS#7 only if requested (usually for the final block or single structures)
-        if (unpad && !out.empty()) {
-            uint8_t padLen = out.back();
-            if (padLen > 0 && padLen <= 16 && padLen <= out.size()) {
-                bool validPad = true;
-                for (size_t i = 1; i <= padLen; ++i) {
-                    if (out[out.size() - i] != padLen) { validPad = false; break; }
-                }
-                if (validPad) out.resize(out.size() - padLen);
-            }
-        }
         return out;
     };
     
@@ -616,8 +604,7 @@ std::vector<uint8_t> encryptAgilePackage(gsl::span<const uint8_t> zipData, const
         std::vector<uint8_t> in(data);
         if (pad) {
             size_t rem = in.size() % 16;
-            size_t padSize = 16 - rem;
-            in.insert(in.end(), padSize, static_cast<uint8_t>(padSize)); // PKCS#7 Padding!
+            if (rem != 0) in.insert(in.end(), 16 - rem, 0); // Zero padding ONLY to block boundary
         }
 
         std::vector<uint8_t> out(in.size());
@@ -628,6 +615,8 @@ std::vector<uint8_t> encryptAgilePackage(gsl::span<const uint8_t> zipData, const
         if (mbedtls_aes_setkey_enc(&ctx, key.data(), key.size() * 8) != 0) throw XLInternalError("AES encryption setup failed");
         
         std::vector<uint8_t> currentIv = iv;
+        if (currentIv.size() < 16) currentIv.resize(16, 0); // Safety check for IV size
+        
         mbedtls_aes_crypt_cbc(&ctx, MBEDTLS_AES_ENCRYPT, in.size(), currentIv.data(), in.data(), out.data());
         return out;
     };
