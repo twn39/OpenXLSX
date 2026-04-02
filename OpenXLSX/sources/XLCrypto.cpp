@@ -26,8 +26,9 @@ bool OpenXLSX::isEncryptedDocument(gsl::span<const uint8_t> data) {
 }
 
 std::vector<uint8_t> OpenXLSX::encryptDocument(gsl::span<const uint8_t> zipData, const std::string& password) {
-    // We now default to Agile Encryption (0x00040004) to match modern Excel behavior.
-    return Crypto::encryptAgilePackage(zipData, password);
+    // We default to Standard Encryption (0x00020003) which perfectly bypasses Excel's 'Protected View' integrity warnings,
+    // as successfully verified by cross-platform tests (OpenXLSX_Raw_Encrypted_By_Us.xlsx).
+    return Crypto::encryptStandardPackage(zipData, password);
 }
 
 std::vector<uint8_t> OpenXLSX::decryptDocument(gsl::span<const uint8_t> data, const std::string& password) {
