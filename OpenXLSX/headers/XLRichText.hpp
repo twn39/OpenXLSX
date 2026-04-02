@@ -99,14 +99,14 @@ namespace OpenXLSX
         XLRichTextRun& setSuperscript(bool enable = true)
         {
             if (enable) m_vertAlign = XLSuperscript;
-            else if (m_vertAlign == XLSuperscript) m_vertAlign = XLBaseline;
+            else if (m_vertAlign == XLSuperscript) m_vertAlign.reset();
             return *this;
         }
 
         XLRichTextRun& setSubscript(bool enable = true)
         {
             if (enable) m_vertAlign = XLSubscript;
-            else if (m_vertAlign == XLSubscript) m_vertAlign = XLBaseline;
+            else if (m_vertAlign == XLSubscript) m_vertAlign.reset();
             return *this;
         }
 
