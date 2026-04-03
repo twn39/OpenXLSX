@@ -17,6 +17,7 @@
 #include "XLXmlFile.hpp"
 
 #include <memory>
+#include "XLRichText.hpp"
 
 namespace OpenXLSX
 {
@@ -280,7 +281,33 @@ namespace OpenXLSX
      * @brief An encapsulation of a drawing item (e.g. an image)
      */
 
-    enum class XLVectorShapeType { Rectangle, Ellipse, Line, Triangle, RightTriangle, Arrow, Diamond, Parallelogram, Hexagon };
+    enum class XLVectorShapeType {
+        Rectangle,
+        Ellipse,
+        Line,
+        Triangle,
+        RightTriangle,
+        Arrow,
+        Diamond,
+        Parallelogram,
+        Hexagon,
+        Star4,
+        Star5,
+        Star16,
+        Star24,
+        Heart,
+        SmileyFace,
+        Cloud,
+        Donut,
+        Ribbon,
+        Sun,
+        Moon,
+        LightningBolt,
+        FlowChartProcess,
+        FlowChartDecision,
+        FlowChartDocument,
+        FlowChartData
+    };
 
     struct XLVectorShapeOptions
     {
@@ -295,6 +322,27 @@ namespace OpenXLSX
         uint32_t height  = 100;
         int32_t  offsetX = 0;
         int32_t  offsetY = 0;
+
+        // If endRow and endCol are specified, the shape uses a twoCellAnchor (resizes with cells)
+        std::optional<uint32_t> endRow;
+        std::optional<uint32_t> endCol;
+        int32_t                 endOffsetX = 0;
+        int32_t                 endOffsetY = 0;
+
+        // Shape transformations
+        uint32_t rotation = 0; // rotation in degrees
+        bool     flipH    = false;
+        bool     flipV    = false;
+
+        // Advanced outline properties
+        std::string lineDash   = ""; // e.g. "dash", "sysDash", "dot", "dashDot"
+        std::string arrowStart = ""; // e.g. "triangle", "stealth", "diamond"
+        std::string arrowEnd   = "";
+
+        // Text properties
+        std::optional<XLRichText> richText = std::nullopt;
+        std::string               horzAlign = ""; // e.g. "ctr", "l", "r"
+        std::string               vertAlign = ""; // e.g. "ctr", "t", "b"
 
         std::string macro = "";
     };

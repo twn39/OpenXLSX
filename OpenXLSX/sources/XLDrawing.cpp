@@ -933,6 +933,38 @@ std::string vectorShapeTypeToString(XLVectorShapeType type)
             return "parallelogram";
         case XLVectorShapeType::Hexagon:
             return "hexagon";
+        case XLVectorShapeType::Star4:
+            return "star4";
+        case XLVectorShapeType::Star5:
+            return "star5";
+        case XLVectorShapeType::Star16:
+            return "star16";
+        case XLVectorShapeType::Star24:
+            return "star24";
+        case XLVectorShapeType::Heart:
+            return "heart";
+        case XLVectorShapeType::SmileyFace:
+            return "smileyFace";
+        case XLVectorShapeType::Cloud:
+            return "cloud";
+        case XLVectorShapeType::Donut:
+            return "donut";
+        case XLVectorShapeType::Ribbon:
+            return "ribbon";
+        case XLVectorShapeType::Sun:
+            return "sun";
+        case XLVectorShapeType::Moon:
+            return "moon";
+        case XLVectorShapeType::LightningBolt:
+            return "lightningBolt";
+        case XLVectorShapeType::FlowChartProcess:
+            return "flowChartProcess";
+        case XLVectorShapeType::FlowChartDecision:
+            return "flowChartDecision";
+        case XLVectorShapeType::FlowChartDocument:
+            return "flowChartDocument";
+        case XLVectorShapeType::FlowChartData:
+            return "flowChartData";
         default:
             return "rect";
     }
@@ -941,7 +973,13 @@ std::string vectorShapeTypeToString(XLVectorShapeType type)
 void XLDrawing::addShape(uint32_t row, uint32_t col, const XLVectorShapeOptions& options)
 {
     XMLNode rootNode = xmlDocument().document_element();
-    XMLNode anchor   = rootNode.append_child("xdr:oneCellAnchor");
+    
+    XMLNode anchor;
+    if (options.endRow.has_value() && options.endCol.has_value()) {
+        anchor = rootNode.append_child("xdr:twoCellAnchor");
+    } else {
+        anchor = rootNode.append_child("xdr:oneCellAnchor");
+    }
 
     XMLNode from = anchor.append_child("xdr:from");
     from.append_child("xdr:col").text().set(col);
@@ -952,9 +990,17 @@ void XLDrawing::addShape(uint32_t row, uint32_t col, const XLVectorShapeOptions&
     const uint64_t emuWidth  = static_cast<uint64_t>(options.width) * EMU_PER_PIXEL;
     const uint64_t emuHeight = static_cast<uint64_t>(options.height) * EMU_PER_PIXEL;
 
-    XMLNode ext = anchor.append_child("xdr:ext");
-    ext.append_attribute("cx").set_value(fmt::format("{}", emuWidth).c_str());
-    ext.append_attribute("cy").set_value(fmt::format("{}", emuHeight).c_str());
+    if (options.endRow.has_value() && options.endCol.has_value()) {
+        XMLNode to = anchor.append_child("xdr:to");
+        to.append_child("xdr:col").text().set(options.endCol.value());
+        to.append_child("xdr:colOff").text().set(options.endOffsetX * EMU_PER_PIXEL);
+        to.append_child("xdr:row").text().set(options.endRow.value());
+        to.append_child("xdr:rowOff").text().set(options.endOffsetY * EMU_PER_PIXEL);
+    } else {
+        XMLNode ext = anchor.append_child("xdr:ext");
+        ext.append_attribute("cx").set_value(fmt::format("{}", emuWidth).c_str());
+        ext.append_attribute("cy").set_value(fmt::format("{}", emuHeight).c_str());
+    }
 
     XMLNode sp = anchor.append_child("xdr:sp");
     if (!options.macro.empty()) {
@@ -971,6 +1017,18 @@ void XLDrawing::addShape(uint32_t row, uint32_t col, const XLVectorShapeOptions&
 
     XMLNode spPr = sp.append_child("xdr:spPr");
     XMLNode xfrm = spPr.append_child("a:xfrm");
+    
+    // Add rotation/flip properties
+    if (options.rotation > 0) {
+        xfrm.append_attribute("rot").set_value(fmt::format("{}", options.rotation * 60000).c_str());
+    }
+    if (options.flipH) {
+        xfrm.append_attribute("flipH").set_value("1");
+    }
+    if (options.flipV) {
+        xfrm.append_attribute("flipV").set_value("1");
+    }
+
     xfrm.append_child("a:off").append_attribute("x").set_value("0");
     xfrm.child("a:off").append_attribute("y").set_value("0");
     xfrm.append_child("a:ext").append_attribute("cx").set_value(fmt::format("{}", emuWidth).c_str());
@@ -994,21 +1052,72 @@ void XLDrawing::addShape(uint32_t row, uint32_t col, const XLVectorShapeOptions&
     else {
         ln.append_child("a:noFill");
     }
+    
+    // Advanced outline
+    if (!options.lineDash.empty()) {
+        ln.append_child("a:prstDash").append_attribute("val").set_value(options.lineDash.c_str());
+    }
+    if (!options.arrowStart.empty()) {
+        ln.append_child("a:headEnd").append_attribute("type").set_value(options.arrowStart.c_str());
+    }
+    if (!options.arrowEnd.empty()) {
+        ln.append_child("a:tailEnd").append_attribute("type").set_value(options.arrowEnd.c_str());
+    }
 
-    if (!options.text.empty() || !options.macro.empty()) {
+    if (!options.text.empty() || !options.macro.empty() || options.richText.has_value()) {
         XMLNode txBody = sp.append_child("xdr:txBody");
         XMLNode bodyPr = txBody.append_child("a:bodyPr");
+        
+        // vertical alignment within shape
+        if (!options.vertAlign.empty()) {
+            bodyPr.append_attribute("anchor").set_value(options.vertAlign.c_str());
+        } else if (!options.macro.empty()) {
+            bodyPr.append_attribute("anchor").set_value("ctr");
+        }
+
         if (!options.macro.empty()) {
             bodyPr.append_attribute("vertOverflow").set_value("clip");
             bodyPr.append_attribute("wrap").set_value("square");
         }
+        
         txBody.append_child("a:lstStyle");
-        XMLNode p   = txBody.append_child("a:p");
-        XMLNode r   = p.append_child("a:r");
-        XMLNode rPr = r.append_child("a:rPr");
-        rPr.append_attribute("lang").set_value("en-US");
-        rPr.append_attribute("sz").set_value("1100");
-        r.append_child("a:t").text().set(options.text.c_str());
+        XMLNode p = txBody.append_child("a:p");
+
+        // Horizontal alignment
+        if (!options.horzAlign.empty()) {
+            p.append_child("a:pPr").append_attribute("algn").set_value(options.horzAlign.c_str());
+        }
+
+        if (options.richText.has_value()) {
+            const auto& rt = options.richText.value();
+            for (const auto& run : rt.runs()) {
+                XMLNode rNode = p.append_child("a:r");
+                XMLNode rPrNode = rNode.append_child("a:rPr");
+                
+                // For a:rPr we must set sz (in 100ths of a point) and lang
+                uint32_t fontSize = run.fontSize().value_or(11) * 100;
+                rPrNode.append_attribute("sz").set_value(fmt::format("{}", fontSize).c_str());
+                rPrNode.append_attribute("lang").set_value("en-US");
+                
+                if (run.bold().value_or(false)) rPrNode.append_attribute("b").set_value("1");
+                if (run.italic().value_or(false)) rPrNode.append_attribute("i").set_value("1");
+                
+                if (run.fontColor().has_value()) {
+                    XMLNode solidFill = rPrNode.append_child("a:solidFill");
+                    solidFill.append_child("a:srgbClr").append_attribute("val").set_value(run.fontColor()->hex().c_str());
+                }
+                
+                XMLNode tNode = rNode.append_child("a:t");
+                tNode.text().set(run.text().c_str());
+            }
+        } else if (!options.text.empty()) {
+            XMLNode r = p.append_child("a:r");
+            XMLNode rPr = r.append_child("a:rPr");
+            rPr.append_attribute("lang").set_value("en-US");
+            rPr.append_attribute("sz").set_value("1100"); // 11pt default
+            XMLNode t = r.append_child("a:t");
+            t.text().set(options.text.c_str());
+        }
         p.append_child("a:endParaRPr").append_attribute("lang").set_value("en-US");
     }
 
