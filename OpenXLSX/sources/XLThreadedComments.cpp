@@ -64,6 +64,22 @@ std::string XLThreadedComment::text() const
     return "";
 }
 
+bool XLThreadedComment::isResolved() const
+{
+    return m_node.attribute("done").as_bool(false);
+}
+
+void XLThreadedComment::setResolved(bool resolved)
+{
+    if (resolved) {
+        auto attr = m_node.attribute("done");
+        if (!attr) attr = m_node.append_attribute("done");
+        attr.set_value("1");
+    } else {
+        m_node.remove_attribute("done");
+    }
+}
+
 // ===== XLThreadedComments Implementation ===== //
 
 XLThreadedComment XLThreadedComments::comment(const std::string& ref) const
@@ -143,6 +159,36 @@ XLThreadedComment XLThreadedComments::addReply(const std::string& parentId, cons
     textNode.text().set(text.c_str());
 
     return XLThreadedComment(commentNode);
+}
+
+bool XLThreadedComments::deleteComment(const std::string& ref)
+{
+    XMLNode root = xmlDocument().document_element();
+    std::string rootId = "";
+    
+    // Find the parent ID first
+    for (XMLNode node = root.first_child(); node; node = node.next_sibling()) {
+        if (std::string(node.name()) == "threadedComment" && std::string(node.attribute("ref").value()) == ref) {
+            if (node.attribute("parentId").empty()) {
+                rootId = node.attribute("id").value();
+                root.remove_child(node);
+                break;
+            }
+        }
+    }
+    
+    if (rootId.empty()) return false;
+
+    // Now loop and remove all children
+    XMLNode node = root.first_child();
+    while (node) {
+        XMLNode next = node.next_sibling();
+        if (std::string(node.name()) == "threadedComment" && std::string(node.attribute("parentId").value()) == rootId) {
+            root.remove_child(node);
+        }
+        node = next;
+    }
+    return true;
 }
 
 // ===== XLPerson Implementation ===== //

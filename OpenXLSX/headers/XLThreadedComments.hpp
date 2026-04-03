@@ -30,6 +30,9 @@ namespace OpenXLSX
         std::string parentId() const;
         std::string personId() const;
         std::string text() const;
+        
+        bool isResolved() const;
+        void setResolved(bool resolved);
 
     private:
         XMLNode m_node;
@@ -68,6 +71,11 @@ namespace OpenXLSX
          * @brief Add a reply to an existing threaded comment.
          */
         XLThreadedComment addReply(const std::string& parentId, const std::string& personId, const std::string& text);
+
+        /**
+         * @brief Removes a threaded comment and its replies.
+         */
+        bool deleteComment(const std::string& ref);
     };
 
     /**

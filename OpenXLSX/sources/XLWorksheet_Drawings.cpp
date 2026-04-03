@@ -339,7 +339,35 @@ XLThreadedComment XLWorksheet::addThreadedComment(const std::string& cellRef, co
 XLThreadedComment XLWorksheet::addThreadedReply(const std::string& parentId, const std::string& text, const std::string& author)
 {
     std::string personId = parentDoc().persons().addPerson(author);
-    return threadedComments().addReply(parentId, personId, text);
+    auto tc = threadedComments().addReply(parentId, personId, text);
+    
+    // Attempt to sync the legacy comment fallback string
+    std::string refStr = tc.ref();
+    if (!refStr.empty()) {
+        std::string fallbackText = comments().get(refStr);
+        fallbackText += "\nReply: " + text;
+        
+        // Retain the existing 'tc=' author from the parent
+        std::string parentAuthor = "tc=" + parentId;
+        addComment(refStr, fallbackText, parentAuthor);
+    }
+
+    return tc;
+}
+
+void XLWorksheet::deleteThreadedComment(const std::string& cellRef)
+{
+    if (hasThreadedComments()) {
+        threadedComments().deleteComment(cellRef);
+    }
+    deleteComment(cellRef); // remove the legacy hidden box
+}
+
+void XLWorksheet::deleteComment(const std::string& cellRef)
+{
+    if (hasComments()) {
+        comments().deleteComment(cellRef);
+    }
 }
 
 void XLWorksheet::insertImage(const std::string& cellReference, const std::string& imagePath)

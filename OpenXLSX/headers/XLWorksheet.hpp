@@ -467,13 +467,25 @@ namespace OpenXLSX
         void addComment(const std::string& cellRef, const std::string& text, const std::string& author = "");
 
         /**
+         * @brief Remove a modern threaded comment (and its replies) from a cell.
+         * @param cellRef The cell reference (e.g. A1).
+         */
+        void deleteThreadedComment(const std::string& cellRef);
+
+        /**
+         * @brief Remove a legacy comment from a cell.
+         * @param cellRef The cell reference (e.g. A1).
+         */
+        void deleteComment(const std::string& cellRef);
+
+        /**
          * @brief Add a modern threaded comment to a cell seamlessly.
          * @param cellRef The cell reference (e.g. A1).
          * @param text The comment text.
          * @param author The author of the comment.
          */
         XLThreadedComment addThreadedComment(const std::string& cellRef, const std::string& text, const std::string& author = "");
-        
+
         /**
          * @brief Add a reply to an existing threaded comment.
          * @param parentId The parent threaded comment ID.
