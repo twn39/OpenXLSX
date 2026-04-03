@@ -109,3 +109,124 @@ TEST_CASE("Shapes and Form Controls functionality and OOXML verification")
     REQUIRE(hasSpPr == true);
     REQUIRE(hasTxBody == true);
 }
+
+TEST_CASE("Vector Shape Enhancements: TwoCellAnchor, ARGB stripping, Transformations, RichText, and Schema valid Types")
+{
+    XLDocument doc;
+    doc.create("TestShapeEnhancements.xlsx", XLForceOverwrite);
+    auto wks = doc.workbook().worksheet("Sheet1");
+
+    // Shape 1: TwoCellAnchor with Advanced Types (FlowChartInputOutput) and ARGB RichText
+    XLVectorShapeOptions opts1;
+    opts1.type = XLVectorShapeType::FlowChartData; // Will output as flowChartInputOutput internally
+    opts1.endRow = 5;
+    opts1.endCol = 5;
+    opts1.endOffsetX = 10;
+    opts1.endOffsetY = 10;
+    
+    // Pass 8-character ARGB to ensure stripping mechanism drops the alpha channel down to 6-char RGB.
+    XLRichText rt("Data: ");
+    rt += XLRichTextRun("1234").setFontColor(XLColor(128, 255, 0, 0)); // alpha=128 (80 in hex)
+    opts1.richText = rt;
+    
+    opts1.vertAlign = "ctr";
+    opts1.horzAlign = "r";
+
+    wks.addShape("A1", opts1);
+
+    // Shape 2: Transformations and Outline properties
+    XLVectorShapeOptions opts2;
+    opts2.type = XLVectorShapeType::Star24;
+    opts2.rotation = 90;
+    opts2.flipH = true;
+    opts2.flipV = true;
+    opts2.lineDash = "dashDot";
+    opts2.arrowStart = "diamond";
+    opts2.arrowEnd = "triangle";
+
+    wks.addShape("B2", opts2);
+
+    doc.save();
+
+    // 1. Functionality Validation (Reload the document)
+    XLDocument doc2;
+    doc2.open("TestShapeEnhancements.xlsx");
+    auto wks2 = doc2.workbook().worksheet("Sheet1");
+
+    REQUIRE(wks2.hasDrawing() == true);
+    auto& drawing  = wks2.drawing();
+    auto  rootNode = drawing.xmlDocument().document_element();
+
+    // Verification logic
+    bool foundTwoCellAnchor = false;
+    bool foundValidFlowchartData = false;
+    bool foundValidRGBStrip = false;
+    bool foundValidAlignment = false;
+
+    bool foundOneCellAnchor = false;
+    bool foundTransforms = false;
+    bool foundDashes = false;
+
+    for (const auto& anchor : rootNode.children()) {
+        std::string anchorName = anchor.name();
+        
+        if (anchorName == "xdr:twoCellAnchor") {
+            foundTwoCellAnchor = true;
+            
+            auto sp = anchor.child("xdr:sp");
+            auto prstGeom = sp.child("xdr:spPr").child("a:prstGeom");
+            if (std::string(prstGeom.attribute("prst").value()) == "flowChartInputOutput") {
+                foundValidFlowchartData = true;
+            }
+
+            auto txBody = sp.child("xdr:txBody");
+            auto bodyPr = txBody.child("a:bodyPr");
+            if (std::string(bodyPr.attribute("anchor").value()) == "ctr") {
+                auto p = txBody.child("a:p");
+                if (std::string(p.child("a:pPr").attribute("algn").value()) == "r") {
+                    foundValidAlignment = true;
+                }
+                
+                // Verify the 2nd run's ARGB stripping. (128 = 80 in hex. Original was 80FF0000, must be FF0000)
+                auto rNodes = p.children("a:r");
+                auto it = rNodes.begin();
+                std::advance(it, 1); // Get second run ("1234")
+                if (it != rNodes.end()) {
+                    auto srgbClr = it->child("a:rPr").child("a:solidFill").child("a:srgbClr");
+                    if (std::string(srgbClr.attribute("val").value()) == "FF0000") {
+                        foundValidRGBStrip = true;
+                    }
+                }
+            }
+        } 
+        else if (anchorName == "xdr:oneCellAnchor") {
+            foundOneCellAnchor = true;
+            
+            auto sp = anchor.child("xdr:sp");
+            auto spPr = sp.child("xdr:spPr");
+            auto xfrm = spPr.child("a:xfrm");
+
+            if (std::string(xfrm.attribute("rot").value()) == "5400000" && 
+                std::string(xfrm.attribute("flipH").value()) == "1" &&
+                std::string(xfrm.attribute("flipV").value()) == "1") {
+                foundTransforms = true;
+            }
+
+            auto ln = spPr.child("a:ln");
+            if (std::string(ln.child("a:prstDash").attribute("val").value()) == "dashDot" &&
+                std::string(ln.child("a:headEnd").attribute("type").value()) == "diamond" &&
+                std::string(ln.child("a:tailEnd").attribute("type").value()) == "triangle") {
+                foundDashes = true;
+            }
+        }
+    }
+
+    REQUIRE(foundTwoCellAnchor == true);
+    REQUIRE(foundValidFlowchartData == true);
+    REQUIRE(foundValidRGBStrip == true);
+    REQUIRE(foundValidAlignment == true);
+    
+    REQUIRE(foundOneCellAnchor == true);
+    REQUIRE(foundTransforms == true);
+    REQUIRE(foundDashes == true);
+}
