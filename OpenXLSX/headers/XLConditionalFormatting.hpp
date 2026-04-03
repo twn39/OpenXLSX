@@ -69,6 +69,9 @@ namespace OpenXLSX
 
     enum class XLCfvoType : uint8_t { Min = 0, Max = 1, Number = 2, Percent = 3, Formula = 4, Percentile = 5, Invalid = 255 };
 
+    enum class XLDataBarDirection : uint8_t { Context = 0, LeftToRight = 1, RightToLeft = 2 };
+    enum class XLDataBarAxisPosition : uint8_t { Automatic = 0, Middle = 1, None = 2 };
+
     OPENXLSX_EXPORT XLCfType XLCfTypeFromString(std::string const& typeString);
     OPENXLSX_EXPORT std::string  XLCfTypeToString(XLCfType cfType);
     OPENXLSX_EXPORT XLCfOperator XLCfOperatorFromString(std::string const& operatorString);
@@ -77,6 +80,10 @@ namespace OpenXLSX
     OPENXLSX_EXPORT std::string XLCfTimePeriodToString(XLCfTimePeriod cfTimePeriod);
     OPENXLSX_EXPORT XLCfvoType  XLCfvoTypeFromString(std::string const& cfvoTypeString);
     OPENXLSX_EXPORT std::string XLCfvoTypeToString(XLCfvoType cfvoType);
+    OPENXLSX_EXPORT XLDataBarDirection XLDataBarDirectionFromString(std::string const& directionString);
+    OPENXLSX_EXPORT std::string        XLDataBarDirectionToString(XLDataBarDirection direction);
+    OPENXLSX_EXPORT XLDataBarAxisPosition XLDataBarAxisPositionFromString(std::string const& positionString);
+    OPENXLSX_EXPORT std::string           XLDataBarAxisPositionToString(XLDataBarAxisPosition position);
 
     class OPENXLSX_EXPORT XLCfvo
     {
@@ -106,6 +113,9 @@ namespace OpenXLSX
         XMLNode node() const { return m_cfvoNode; }
 
     private:
+        XMLNode getOrCreateExtNode() const;
+        XMLNode getExtNode() const;
+
         std::unique_ptr<XMLDocument> m_xmlDocument;
         mutable XMLNode              m_cfvoNode;
     };
@@ -131,6 +141,9 @@ namespace OpenXLSX
         XMLNode node() const { return m_colorScaleNode; }
 
     private:
+        XMLNode getOrCreateExtNode() const;
+        XMLNode getExtNode() const;
+
         std::unique_ptr<XMLDocument> m_xmlDocument;
         mutable XMLNode              m_colorScaleNode;
     };
@@ -158,9 +171,35 @@ namespace OpenXLSX
         bool showValue() const;
         void setShowValue(bool show);
 
+        // Extended properties (Excel 2010+)
+        uint32_t minLength() const;
+        void     setMinLength(uint32_t length);
+        uint32_t maxLength() const;
+        void     setMaxLength(uint32_t length);
+        bool border() const;
+        void setBorder(bool border);
+        bool gradient() const;
+        void setGradient(bool gradient);
+        XLDataBarDirection direction() const;
+        void               setDirection(XLDataBarDirection direction);
+        XLColor borderColor() const;
+        void    setBorderColor(const XLColor& color);
+        XLColor negativeFillColor() const;
+        void    setNegativeFillColor(const XLColor& color);
+        XLColor negativeBorderColor() const;
+        void    setNegativeBorderColor(const XLColor& color);
+        XLDataBarAxisPosition axisPosition() const;
+        void                  setAxisPosition(XLDataBarAxisPosition position);
+        XLColor axisColor() const;
+        void    setAxisColor(const XLColor& color);
+
+
         XMLNode node() const { return m_dataBarNode; }
 
     private:
+        XMLNode getOrCreateExtNode() const;
+        XMLNode getExtNode() const;
+
         std::unique_ptr<XMLDocument> m_xmlDocument;
         mutable XMLNode              m_dataBarNode;
     };
@@ -186,6 +225,29 @@ namespace OpenXLSX
 
         bool showValue() const;
         void setShowValue(bool show);
+
+        // Extended properties (Excel 2010+)
+        uint32_t minLength() const;
+        void     setMinLength(uint32_t length);
+        uint32_t maxLength() const;
+        void     setMaxLength(uint32_t length);
+        bool border() const;
+        void setBorder(bool border);
+        bool gradient() const;
+        void setGradient(bool gradient);
+        XLDataBarDirection direction() const;
+        void               setDirection(XLDataBarDirection direction);
+        XLColor borderColor() const;
+        void    setBorderColor(const XLColor& color);
+        XLColor negativeFillColor() const;
+        void    setNegativeFillColor(const XLColor& color);
+        XLColor negativeBorderColor() const;
+        void    setNegativeBorderColor(const XLColor& color);
+        XLDataBarAxisPosition axisPosition() const;
+        void                  setAxisPosition(XLDataBarAxisPosition position);
+        XLColor axisColor() const;
+        void    setAxisColor(const XLColor& color);
+
         bool percent() const;
         void setPercent(bool percent);
         bool reverse() const;
@@ -194,6 +256,9 @@ namespace OpenXLSX
         XMLNode node() const { return m_iconSetNode; }
 
     private:
+        XMLNode getOrCreateExtNode() const;
+        XMLNode getExtNode() const;
+
         std::unique_ptr<XMLDocument> m_xmlDocument;
         mutable XMLNode              m_iconSetNode;
     };

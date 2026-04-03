@@ -116,7 +116,95 @@ void XLWorksheet::addConditionalFormatting(const std::string& sqref, const XLCfR
 
     // The underlying XLCfRules::create also computes maxPrio internally but only within its parent CF node.
     // By setting it explicitly beforehand and relying on the `copyFrom` behavior, we can ensure it's copied properly.
-    cfTarget.cfRules().create(ruleWithPrio);
+    size_t newRuleIdx = cfTarget.cfRules().create(ruleWithPrio);
+    XLCfRule newRule = cfTarget.cfRules()[newRuleIdx];
+
+    // --- Handle Advanced ExtLst for DataBar (OOXML Excel 2010+ features) ---
+    if (newRule.type() == XLCfType::DataBar) {
+        auto dbNode = newRule.node().child("dataBar");
+        if (auto fakeExtLst = dbNode.child("extLst")) {
+            XMLNode extNode;
+            for (auto ext = fakeExtLst.child("ext"); ext; ext = ext.next_sibling("ext")) {
+                if (std::string(ext.attribute("uri").value()) == "{B469CE28-E4FAB-4e90-B891-B227B70C6CDA}") {
+                    extNode = ext;
+                    break;
+                }
+            }
+            if (extNode) {
+                // 1. Generate an ID (fake GUID, but matching valid UUID structure)
+                char guidStr[64];
+                snprintf(guidStr, sizeof(guidStr), "{%08X-0000-4000-8000-000000000000}", globalMaxPrio + 1);
+
+                // 2. Add real extLst to the cfRule element (NOT dataBar)
+                auto ruleExtLst = newRule.node().child("extLst");
+                if (!ruleExtLst) ruleExtLst = newRule.node().append_child("extLst");
+                auto ruleExt = ruleExtLst.append_child("ext");
+                ruleExt.append_attribute("uri") = "{B025F937-C7B1-47D3-B67F-A62EFF666E3E}";
+                ruleExt.append_attribute("xmlns:x14") = "http://schemas.microsoft.com/office/spreadsheetml/2009/9/main";
+                ruleExt.append_child("x14:id").text().set(guidStr);
+
+                // 3. Create or find worksheet-level extLst
+                auto wsNode = xmlDocument().document_element();
+                auto wsExtLst = wsNode.child("extLst");
+                if (!wsExtLst) wsExtLst = wsNode.append_child("extLst");
+                XMLNode wsExt;
+                for (auto e = wsExtLst.child("ext"); e; e = e.next_sibling("ext")) {
+                    if (std::string(e.attribute("uri").value()) == "{78C0D931-6437-407d-A8EE-F0AAD7539E65}") {
+                        wsExt = e;
+                        break;
+                    }
+                }
+                if (!wsExt) {
+                    wsExt = wsExtLst.append_child("ext");
+                    wsExt.append_attribute("uri") = "{78C0D931-6437-407d-A8EE-F0AAD7539E65}";
+                    wsExt.append_attribute("xmlns:x14") = "http://schemas.microsoft.com/office/spreadsheetml/2009/9/main";
+                }
+                auto condFmts = wsExt.child("x14:conditionalFormattings");
+                if (!condFmts) condFmts = wsExt.append_child("x14:conditionalFormattings");
+
+                // 4. Find or create the conditionalFormatting container inside the ext
+                XMLNode x14condFmt;
+                for (auto c = condFmts.child("x14:conditionalFormatting"); c; c = c.next_sibling("x14:conditionalFormatting")) {
+                    if (std::string(c.child("xm:sqref").text().get()) == sqref) {
+                        x14condFmt = c;
+                        break;
+                    }
+                }
+                if (!x14condFmt) {
+                    x14condFmt = condFmts.append_child("x14:conditionalFormatting");
+                    x14condFmt.append_attribute("xmlns:xm") = "http://schemas.microsoft.com/office/excel/2006/main";
+                    x14condFmt.append_child("xm:sqref").text().set(sqref.c_str());
+                }
+
+                // 5. Append the rule BEFORE <xm:sqref>
+                auto x14cfRule = x14condFmt.insert_child_before("x14:cfRule", x14condFmt.child("xm:sqref"));
+                x14cfRule.append_attribute("type") = "dataBar";
+                x14cfRule.append_attribute("id") = guidStr;
+
+                // Move the actual <x14:dataBar> node over
+                auto sourceDataBar = extNode.child("x14:dataBar");
+                if (sourceDataBar) {
+                    auto copiedDataBar = x14cfRule.append_copy(sourceDataBar);
+                    // Add mandatory child nodes if missing (Excel requires cfvo autoMin/autoMax)
+                    if (!copiedDataBar.child("x14:cfvo")) {
+                        auto minCfvo = copiedDataBar.prepend_child("x14:cfvo");
+                        minCfvo.append_attribute("type") = "autoMin";
+                        auto maxCfvo = copiedDataBar.insert_child_after("x14:cfvo", minCfvo);
+                        maxCfvo.append_attribute("type") = "autoMax";
+                    }
+                }
+
+                // 6. Clean up the fake extension from the original dataBar node
+                fakeExtLst.remove_child(extNode);
+                if (fakeExtLst.first_child().empty()) {
+                    dbNode.remove_child(fakeExtLst);
+                }
+
+                // 7. Ensure <extLst> is strictly the last element in the <worksheet> according to the OOXML Schema.
+                wsNode.append_move(wsExtLst);
+            }
+        }
+    }
 }
 
 void XLWorksheet::addConditionalFormatting(const std::string& sqref, const XLCfRule& rule, const XLDxf& dxf)

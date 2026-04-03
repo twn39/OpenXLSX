@@ -233,6 +233,38 @@ namespace OpenXLSX
                 return "num";
         }
     }
+
+    XLDataBarDirection XLDataBarDirectionFromString(std::string const& directionString)
+    {
+        if (directionString == "leftToRight") return XLDataBarDirection::LeftToRight;
+        if (directionString == "rightToLeft") return XLDataBarDirection::RightToLeft;
+        return XLDataBarDirection::Context;
+    }
+
+    std::string XLDataBarDirectionToString(XLDataBarDirection direction)
+    {
+        switch (direction) {
+            case XLDataBarDirection::LeftToRight: return "leftToRight";
+            case XLDataBarDirection::RightToLeft: return "rightToLeft";
+            default: return "context";
+        }
+    }
+
+    XLDataBarAxisPosition XLDataBarAxisPositionFromString(std::string const& positionString)
+    {
+        if (positionString == "middle") return XLDataBarAxisPosition::Middle;
+        if (positionString == "none") return XLDataBarAxisPosition::None;
+        return XLDataBarAxisPosition::Automatic;
+    }
+
+    std::string XLDataBarAxisPositionToString(XLDataBarAxisPosition position)
+    {
+        switch (position) {
+            case XLDataBarAxisPosition::Middle: return "middle";
+            case XLDataBarAxisPosition::None: return "none";
+            default: return "automatic";
+        }
+    }
 }    // namespace OpenXLSX
 
 XLCfvo::XLCfvo() : m_xmlDocument(std::make_unique<XMLDocument>()) { m_cfvoNode = m_xmlDocument->append_child("cfvo"); }
@@ -433,6 +465,193 @@ void XLCfDataBar::setShowValue(bool show)
     if (m_dataBarNode.attribute("showValue").empty()) m_dataBarNode.append_attribute("showValue");
     m_dataBarNode.attribute("showValue").set_value(show ? "1" : "0");
 }
+
+XMLNode XLCfDataBar::getExtNode() const
+{
+    auto extLst = m_dataBarNode.child("extLst");
+    if (extLst) {
+        for (auto ext = extLst.child("ext"); ext; ext = ext.next_sibling("ext")) {
+            if (std::string(ext.attribute("uri").value()) == "{B469CE28-E4FAB-4e90-B891-B227B70C6CDA}") {
+                return ext.child("x14:dataBar");
+            }
+        }
+    }
+    return XMLNode();
+}
+
+XMLNode XLCfDataBar::getOrCreateExtNode() const
+{
+    auto extLst = m_dataBarNode.child("extLst");
+    if (!extLst) {
+        extLst = m_dataBarNode.append_child("extLst");
+    }
+    XMLNode extNode;
+    for (auto ext = extLst.child("ext"); ext; ext = ext.next_sibling("ext")) {
+        if (std::string(ext.attribute("uri").value()) == "{B469CE28-E4FAB-4e90-B891-B227B70C6CDA}") {
+            extNode = ext;
+            break;
+        }
+    }
+    if (!extNode) {
+        extNode = extLst.append_child("ext");
+        extNode.append_attribute("uri") = "{B469CE28-E4FAB-4e90-B891-B227B70C6CDA}";
+        extNode.append_attribute("xmlns:x14") = "http://schemas.microsoft.com/office/spreadsheetml/2009/9/main";
+    }
+    auto x14DataBar = extNode.child("x14:dataBar");
+    if (!x14DataBar) {
+        x14DataBar = extNode.append_child("x14:dataBar");
+        x14DataBar.append_attribute("minLength") = "0";
+        x14DataBar.append_attribute("maxLength") = "100";
+    }
+    return x14DataBar;
+}
+
+uint32_t XLCfDataBar::minLength() const
+{
+    auto extNode = getExtNode();
+    return extNode ? extNode.attribute("minLength").as_uint(10) : 10;
+}
+
+void XLCfDataBar::setMinLength(uint32_t length)
+{
+    auto extNode = getOrCreateExtNode();
+    if (extNode.attribute("minLength").empty()) extNode.append_attribute("minLength");
+    extNode.attribute("minLength").set_value(length);
+}
+
+uint32_t XLCfDataBar::maxLength() const
+{
+    auto extNode = getExtNode();
+    return extNode ? extNode.attribute("maxLength").as_uint(90) : 90;
+}
+
+void XLCfDataBar::setMaxLength(uint32_t length)
+{
+    auto extNode = getOrCreateExtNode();
+    if (extNode.attribute("maxLength").empty()) extNode.append_attribute("maxLength");
+    extNode.attribute("maxLength").set_value(length);
+}
+
+bool XLCfDataBar::border() const
+{
+    auto extNode = getExtNode();
+    return extNode ? extNode.attribute("border").as_bool(false) : false;
+}
+
+void XLCfDataBar::setBorder(bool border)
+{
+    auto extNode = getOrCreateExtNode();
+    if (extNode.attribute("border").empty()) extNode.append_attribute("border");
+    extNode.attribute("border").set_value(border ? "1" : "0");
+}
+
+bool XLCfDataBar::gradient() const
+{
+    auto extNode = getExtNode();
+    return extNode ? extNode.attribute("gradient").as_bool(true) : true;
+}
+
+void XLCfDataBar::setGradient(bool gradient)
+{
+    auto extNode = getOrCreateExtNode();
+    if (extNode.attribute("gradient").empty()) extNode.append_attribute("gradient");
+    extNode.attribute("gradient").set_value(gradient ? "1" : "0");
+}
+
+XLDataBarDirection XLCfDataBar::direction() const
+{
+    auto extNode = getExtNode();
+    return extNode ? XLDataBarDirectionFromString(extNode.attribute("direction").value()) : XLDataBarDirection::Context;
+}
+
+void XLCfDataBar::setDirection(XLDataBarDirection direction)
+{
+    auto extNode = getOrCreateExtNode();
+    if (extNode.attribute("direction").empty()) extNode.append_attribute("direction");
+    extNode.attribute("direction").set_value(XLDataBarDirectionToString(direction).c_str());
+}
+
+XLColor XLCfDataBar::borderColor() const
+{
+    auto extNode = getExtNode();
+    if (!extNode) return XLColor();
+    auto attr = extNode.child("x14:borderColor").attribute("rgb");
+    return (!attr.empty() && std::string_view(attr.value()).size() >= 6) ? XLColor(attr.value()) : XLColor();
+}
+
+void XLCfDataBar::setBorderColor(const XLColor& color)
+{
+    auto extNode = getOrCreateExtNode();
+    auto node = extNode.child("x14:borderColor");
+    if (!node) node = extNode.append_child("x14:borderColor");
+    if (node.attribute("rgb").empty()) node.append_attribute("rgb");
+    node.attribute("rgb").set_value(color.hex().c_str());
+}
+
+XLColor XLCfDataBar::negativeFillColor() const
+{
+    auto extNode = getExtNode();
+    if (!extNode) return XLColor();
+    auto attr = extNode.child("x14:negativeFillColor").attribute("rgb");
+    return (!attr.empty() && std::string_view(attr.value()).size() >= 6) ? XLColor(attr.value()) : XLColor();
+}
+
+void XLCfDataBar::setNegativeFillColor(const XLColor& color)
+{
+    auto extNode = getOrCreateExtNode();
+    auto node = extNode.child("x14:negativeFillColor");
+    if (!node) node = extNode.append_child("x14:negativeFillColor");
+    if (node.attribute("rgb").empty()) node.append_attribute("rgb");
+    node.attribute("rgb").set_value(color.hex().c_str());
+}
+
+XLColor XLCfDataBar::negativeBorderColor() const
+{
+    auto extNode = getExtNode();
+    if (!extNode) return XLColor();
+    auto attr = extNode.child("x14:negativeBorderColor").attribute("rgb");
+    return (!attr.empty() && std::string_view(attr.value()).size() >= 6) ? XLColor(attr.value()) : XLColor();
+}
+
+void XLCfDataBar::setNegativeBorderColor(const XLColor& color)
+{
+    auto extNode = getOrCreateExtNode();
+    auto node = extNode.child("x14:negativeBorderColor");
+    if (!node) node = extNode.append_child("x14:negativeBorderColor");
+    if (node.attribute("rgb").empty()) node.append_attribute("rgb");
+    node.attribute("rgb").set_value(color.hex().c_str());
+}
+
+XLDataBarAxisPosition XLCfDataBar::axisPosition() const
+{
+    auto extNode = getExtNode();
+    return extNode ? XLDataBarAxisPositionFromString(extNode.attribute("axisPosition").value()) : XLDataBarAxisPosition::Automatic;
+}
+
+void XLCfDataBar::setAxisPosition(XLDataBarAxisPosition position)
+{
+    auto extNode = getOrCreateExtNode();
+    if (extNode.attribute("axisPosition").empty()) extNode.append_attribute("axisPosition");
+    extNode.attribute("axisPosition").set_value(XLDataBarAxisPositionToString(position).c_str());
+}
+
+XLColor XLCfDataBar::axisColor() const
+{
+    auto extNode = getExtNode();
+    if (!extNode) return XLColor();
+    auto attr = extNode.child("x14:axisColor").attribute("rgb");
+    return (!attr.empty() && std::string_view(attr.value()).size() >= 6) ? XLColor(attr.value()) : XLColor();
+}
+
+void XLCfDataBar::setAxisColor(const XLColor& color)
+{
+    auto extNode = getOrCreateExtNode();
+    auto node = extNode.child("x14:axisColor");
+    if (!node) node = extNode.append_child("x14:axisColor");
+    if (node.attribute("rgb").empty()) node.append_attribute("rgb");
+    node.attribute("rgb").set_value(color.hex().c_str());
+}
+
 
 XLCfIconSet::XLCfIconSet() : m_xmlDocument(std::make_unique<XMLDocument>()) { m_iconSetNode = m_xmlDocument->append_child("iconSet"); }
 XLCfIconSet::XLCfIconSet(const XMLNode& node) : m_iconSetNode(node) {}
