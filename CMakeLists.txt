@@ -60,6 +60,12 @@ add_subdirectory(third_party/zlib)
 set(zlib_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/zlib)
 set(zlib_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/third_party/zlib)
 
+# Explicitly set ZLIB variables for libzip's find_package(ZLIB) call
+set(ZLIB_INCLUDE_DIR "${zlib_SOURCE_DIR};${zlib_BINARY_DIR}" CACHE PATH "ZLIB include directory" FORCE)
+set(ZLIB_LIBRARY zlib CACHE FILEPATH "ZLIB library" FORCE)
+set(ZLIB_LIBRARIES zlib CACHE FILEPATH "ZLIB libraries" FORCE)
+set(ZLIB_FOUND TRUE CACHE BOOL "ZLIB found" FORCE)
+
 # Set up libzip
 set(ENABLE_BZIP2 OFF CACHE BOOL "" FORCE)
 set(ENABLE_LZMA OFF CACHE BOOL "" FORCE)
