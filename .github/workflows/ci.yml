@@ -36,6 +36,10 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Setup MSVC (Windows only)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Configure CMake
         env:
           CC: ${{ matrix.cc }}
