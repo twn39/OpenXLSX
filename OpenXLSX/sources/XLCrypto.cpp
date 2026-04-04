@@ -251,8 +251,8 @@ std::vector<uint8_t> buildCFB(const std::vector<uint8_t>& info, const std::vecto
     // EncryptionInfo (15) < EncryptedPackage (17).
     // Therefore, EncryptionInfo MUST be the left child of EncryptedPackage.
     writeDir(0, "Root Entry", 5, 0xFFFFFFFF, 0xFFFFFFFF, 1, miniStreamLoc, miniStreamSize);
-    writeDir(1, "EncryptionInfo", 2, 0xFFFFFFFF, 2, 0xFFFFFFFF, 0, info.size());
-    writeDir(2, "EncryptedPackage", 2, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, pkgLoc, pkg.size());
+    writeDir(1, "EncryptionInfo", 2, 0xFFFFFFFF, 2, 0xFFFFFFFF, 0, gsl::narrow_cast<uint32_t>(info.size()));
+    writeDir(2, "EncryptedPackage", 2, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, pkgLoc, gsl::narrow_cast<uint32_t>(pkg.size()));
     
     // Unused directory entries should have pointers = 0xFFFFFFFF
     for (uint32_t i=3; i<dirSectors*4; i++) {
@@ -612,7 +612,7 @@ std::vector<uint8_t> encryptAgilePackage(gsl::span<const uint8_t> zipData, const
         mbedtls_aes_init(&ctx);
         auto cleanup = gsl::finally([&] { mbedtls_aes_free(&ctx); });
         
-        if (mbedtls_aes_setkey_enc(&ctx, key.data(), key.size() * 8) != 0) throw XLInternalError("AES encryption setup failed");
+        if (mbedtls_aes_setkey_enc(&ctx, key.data(), gsl::narrow_cast<unsigned int>(key.size() * 8)) != 0) throw XLInternalError("AES encryption setup failed");
         
         std::vector<uint8_t> currentIv = iv;
         if (currentIv.size() < 16) currentIv.resize(16, 0); // Safety check for IV size
