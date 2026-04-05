@@ -172,7 +172,7 @@ endif()
 if(OPENXLSX_BUILD_TESTS)
     file(GLOB TEST_SOURCES Tests/testXL*.cpp)
     # Exclude fuzzer from regular Catch2 tests
-    list(FILTER TEST_SOURCES EXCLUDE REGEX "testXLFormulaFuzzer\\.cpp")
+    list(FILTER TEST_SOURCES EXCLUDE REGEX "testXL.*Fuzzer\\.cpp")
     
     add_executable(OpenXLSXTests ${TEST_SOURCES})
     target_link_libraries(OpenXLSXTests PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
@@ -222,9 +222,13 @@ endif()
 #=======================================================================================================================
 if(OPENXLSX_BUILD_FUZZERS)
     add_executable(OpenXLSXFuzzer Tests/testXLFormulaFuzzer.cpp)
+    add_executable(OpenXLSXOpenFuzzer Tests/testXLDocumentOpenFuzzer.cpp)
     target_link_libraries(OpenXLSXFuzzer PRIVATE OpenXLSX::OpenXLSX)
+    target_link_libraries(OpenXLSXOpenFuzzer PRIVATE OpenXLSX::OpenXLSX)
     target_compile_options(OpenXLSXFuzzer PRIVATE -fsanitize=fuzzer,address,undefined -fno-omit-frame-pointer)
+    target_compile_options(OpenXLSXOpenFuzzer PRIVATE -fsanitize=fuzzer,address,undefined -fno-omit-frame-pointer)
     target_link_options(OpenXLSXFuzzer PRIVATE -fsanitize=fuzzer,address,undefined)
+    target_link_options(OpenXLSXOpenFuzzer PRIVATE -fsanitize=fuzzer,address,undefined)
 endif()
 
 if(OPENXLSX_BUILD_BENCHMARKS)
