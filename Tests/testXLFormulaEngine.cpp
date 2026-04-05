@@ -773,6 +773,25 @@ TEST_CASE("XLFormulaEngine – Newly Implemented Functions", "[XLFormulaEngine][
         
         // PERMUT (5 pick 2 = 20)
         REQUIRE(eng.evaluate("=PERMUT(5, 2)").get<double>() == Catch::Approx(20.0));
+
+        // Newly added functions
+        REQUIRE(eng.evaluate("=CORREL(A1:A3, B1:B3)", resolver).get<double>() == Catch::Approx(1.0));
+        REQUIRE(eng.evaluate("=COVARIANCE.P(A1:A3, B1:B3)", resolver).get<double>() == Catch::Approx(0.6666667));
+        REQUIRE(eng.evaluate("=COVARIANCE.S(A1:A3, B1:B3)", resolver).get<double>() == Catch::Approx(1.0));
+        REQUIRE(eng.evaluate("=SLOPE(B1:B3, A1:A3)", resolver).get<double>() == Catch::Approx(1.0));
+        REQUIRE(eng.evaluate("=INTERCEPT(B1:B3, A1:A3)", resolver).get<double>() == Catch::Approx(2.0));
+        
+        // PERCENTILE / QUARTILE
+        REQUIRE(eng.evaluate("=PERCENTILE.INC(A1:A3, 0.5)", resolver).get<double>() == Catch::Approx(3.0));
+        REQUIRE(eng.evaluate("=QUARTILE.INC(A1:A3, 2)", resolver).get<double>() == Catch::Approx(3.0));
+
+        // TRIMMEAN
+        REQUIRE(eng.evaluate("=TRIMMEAN(A1:A3, 0.2)", resolver).get<double>() == Catch::Approx(3.0));
+        
+        // Logic & Text
+        REQUIRE(eng.evaluate("=ISNONTEXT(A1)", resolver).get<bool>() == true);
+        REQUIRE(eng.evaluate("=ISNONTEXT(C1)", resolver).get<bool>() == false);
+        REQUIRE(eng.evaluate("=ISLOGICAL(TRUE)").get<bool>() == true);
     }
 }
 TEST_CASE("XLFormulaEngine – Bugfixes", "[Bugfixes]")

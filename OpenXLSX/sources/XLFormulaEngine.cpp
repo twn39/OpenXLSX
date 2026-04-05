@@ -953,6 +953,7 @@ void XLFormulaEngine::registerBuiltins()
     m_functions["ISNA"]      = fnIsna;
     m_functions["IFNA"]      = fnIfna;
     m_functions["ISLOGICAL"] = fnIslogical;
+    m_functions["ISNONTEXT"] = fnIsnontext;
 
     // ---- Easy Additions ----
     m_functions["TRUE"]            = fnTrue;
@@ -981,6 +982,19 @@ void XLFormulaEngine::registerBuiltins()
     m_functions["FISHERINV"]       = fnFisherinv;
     m_functions["STANDARDIZE"]     = fnStandardize;
     m_functions["PEARSON"]         = fnPearson;
+    m_functions["CORREL"]          = fnPearson;
+    m_functions["COVAR"]           = fnCovarianceP;
+    m_functions["COVARIANCE.P"]    = fnCovarianceP;
+    m_functions["COVARIANCE.S"]    = fnCovarianceS;
+    m_functions["PERCENTILE"]      = fnPercentileInc;
+    m_functions["PERCENTILE.INC"]  = fnPercentileInc;
+    m_functions["PERCENTILE.EXC"]  = fnPercentileExc;
+    m_functions["QUARTILE"]        = fnQuartileInc;
+    m_functions["QUARTILE.INC"]    = fnQuartileInc;
+    m_functions["QUARTILE.EXC"]    = fnQuartileExc;
+    m_functions["TRIMMEAN"]        = fnTrimmean;
+    m_functions["SLOPE"]           = fnSlope;
+    m_functions["INTERCEPT"]       = fnIntercept;
     m_functions["RSQ"]             = fnRsq;
     m_functions["AVERAGEIFS"]      = fnAverageifs;
     m_functions["ISOWEEKNUM"]      = fnIsoweeknum;
@@ -3338,6 +3352,174 @@ XLCellValue XLFormulaEngine::fnDdb(const std::vector<XLFormulaArg>& args)
         total += dep;
     }
     return XLCellValue(dep);
+}
+
+XLCellValue XLFormulaEngine::fnCovarianceP(const std::vector<XLFormulaArg>& args)
+{
+    if (args.size() != 2) return errValue();
+    auto nums1 = numerics(args[0]);
+    auto nums2 = numerics(args[1]);
+    if (nums1.size() != nums2.size() || nums1.empty()) return errNA();
+    
+    double mean1 = std::accumulate(nums1.begin(), nums1.end(), 0.0) / nums1.size();
+    double mean2 = std::accumulate(nums2.begin(), nums2.end(), 0.0) / nums2.size();
+    
+    double cov = 0.0;
+    for (size_t i = 0; i < nums1.size(); ++i) {
+        cov += (nums1[i] - mean1) * (nums2[i] - mean2);
+    }
+    return XLCellValue(cov / nums1.size());
+}
+
+XLCellValue XLFormulaEngine::fnCovarianceS(const std::vector<XLFormulaArg>& args)
+{
+    if (args.size() != 2) return errValue();
+    auto nums1 = numerics(args[0]);
+    auto nums2 = numerics(args[1]);
+    if (nums1.size() != nums2.size() || nums1.size() < 2) return errDiv0();
+    
+    double mean1 = std::accumulate(nums1.begin(), nums1.end(), 0.0) / nums1.size();
+    double mean2 = std::accumulate(nums2.begin(), nums2.end(), 0.0) / nums2.size();
+    
+    double cov = 0.0;
+    for (size_t i = 0; i < nums1.size(); ++i) {
+        cov += (nums1[i] - mean1) * (nums2[i] - mean2);
+    }
+    return XLCellValue(cov / (nums1.size() - 1));
+}
+
+XLCellValue XLFormulaEngine::fnSlope(const std::vector<XLFormulaArg>& args)
+{
+    if (args.size() != 2) return errValue();
+    auto nums1 = numerics(args[0]); // y
+    auto nums2 = numerics(args[1]); // x
+    if (nums1.size() != nums2.size() || nums1.empty()) return errNA();
+    
+    double meanY = std::accumulate(nums1.begin(), nums1.end(), 0.0) / nums1.size();
+    double meanX = std::accumulate(nums2.begin(), nums2.end(), 0.0) / nums2.size();
+    
+    double num = 0.0, den = 0.0;
+    for (size_t i = 0; i < nums1.size(); ++i) {
+        num += (nums2[i] - meanX) * (nums1[i] - meanY);
+        den += (nums2[i] - meanX) * (nums2[i] - meanX);
+    }
+    if (den == 0.0) return errDiv0();
+    return XLCellValue(num / den);
+}
+
+XLCellValue XLFormulaEngine::fnIntercept(const std::vector<XLFormulaArg>& args)
+{
+    if (args.size() != 2) return errValue();
+    auto nums1 = numerics(args[0]); // y
+    auto nums2 = numerics(args[1]); // x
+    if (nums1.size() != nums2.size() || nums1.empty()) return errNA();
+    
+    double meanY = std::accumulate(nums1.begin(), nums1.end(), 0.0) / nums1.size();
+    double meanX = std::accumulate(nums2.begin(), nums2.end(), 0.0) / nums2.size();
+    
+    double num = 0.0, den = 0.0;
+    for (size_t i = 0; i < nums1.size(); ++i) {
+        num += (nums2[i] - meanX) * (nums1[i] - meanY);
+        den += (nums2[i] - meanX) * (nums2[i] - meanX);
+    }
+    if (den == 0.0) return errDiv0();
+    double slope = num / den;
+    return XLCellValue(meanY - slope * meanX);
+}
+
+XLCellValue XLFormulaEngine::fnTrimmean(const std::vector<XLFormulaArg>& args)
+{
+    if (args.size() != 2) return errValue();
+    auto nums = numerics(args[0]);
+    if (nums.empty() || args[1].empty()) return errNum();
+    
+    double p = toDouble(args[1][0]);
+    if (p < 0.0 || p >= 1.0) return errNum();
+    
+    size_t k = static_cast<size_t>(std::floor(nums.size() * p / 2.0));
+    if (nums.size() <= 2 * k) return errNum();
+    
+    std::sort(nums.begin(), nums.end());
+    double sum = 0.0;
+    for (size_t i = k; i < nums.size() - k; ++i) {
+        sum += nums[i];
+    }
+    return XLCellValue(sum / (nums.size() - 2 * k));
+}
+
+XLCellValue XLFormulaEngine::fnPercentileInc(const std::vector<XLFormulaArg>& args)
+{
+    if (args.size() != 2) return errValue();
+    auto nums = numerics(args[0]);
+    if (nums.empty() || args[1].empty()) return errNum();
+    
+    double k = toDouble(args[1][0]);
+    if (k < 0.0 || k > 1.0) return errNum();
+    
+    std::sort(nums.begin(), nums.end());
+    double pos = k * (nums.size() - 1);
+    size_t index = static_cast<size_t>(pos);
+    double frac = pos - index;
+    
+    if (index + 1 < nums.size()) {
+        return XLCellValue(nums[index] + frac * (nums[index + 1] - nums[index]));
+    } else {
+        return XLCellValue(nums[index]);
+    }
+}
+
+XLCellValue XLFormulaEngine::fnPercentileExc(const std::vector<XLFormulaArg>& args)
+{
+    if (args.size() != 2) return errValue();
+    auto nums = numerics(args[0]);
+    if (nums.empty() || args[1].empty()) return errNum();
+    
+    double k = toDouble(args[1][0]);
+    if (k <= 0.0 || k >= 1.0) return errNum();
+    
+    std::sort(nums.begin(), nums.end());
+    double pos = k * (nums.size() + 1) - 1.0;
+    if (pos < 0.0 || pos >= nums.size()) return errNum();
+    
+    size_t index = static_cast<size_t>(pos);
+    double frac = pos - index;
+    
+    if (index + 1 < nums.size()) {
+        return XLCellValue(nums[index] + frac * (nums[index + 1] - nums[index]));
+    } else {
+        return XLCellValue(nums[index]);
+    }
+}
+
+XLCellValue XLFormulaEngine::fnQuartileInc(const std::vector<XLFormulaArg>& args)
+{
+    if (args.size() != 2) return errValue();
+    if (args[1].empty()) return errNum();
+    int quart = static_cast<int>(std::floor(toDouble(args[1][0])));
+    if (quart < 0 || quart > 4) return errNum();
+    
+    std::vector<XLFormulaArg> newArgs = args;
+    newArgs[1] = { XLCellValue(quart / 4.0) };
+    return fnPercentileInc(newArgs);
+}
+
+XLCellValue XLFormulaEngine::fnQuartileExc(const std::vector<XLFormulaArg>& args)
+{
+    if (args.size() != 2) return errValue();
+    if (args[1].empty()) return errNum();
+    int quart = static_cast<int>(std::floor(toDouble(args[1][0])));
+    if (quart < 1 || quart > 3) return errNum();
+    
+    std::vector<XLFormulaArg> newArgs = args;
+    newArgs[1] = { XLCellValue(quart / 4.0) };
+    return fnPercentileExc(newArgs);
+}
+
+XLCellValue XLFormulaEngine::fnIsnontext(const std::vector<XLFormulaArg>& args)
+{
+    if (args.empty() || args[0].empty()) return XLCellValue(true); // blank is non-text
+    const auto& v = args[0][0];
+    return XLCellValue(v.type() != XLValueType::String);
 }
 
 

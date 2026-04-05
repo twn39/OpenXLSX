@@ -87,7 +87,7 @@ Basic time-value-of-money (PMT, FV, PV, NPV) is present. Real-world financial mo
 
 ### Advanced Statistics
 - [ ] `PERCENTILE.INC` / `PERCENTILE.EXC`
-- [ ] `QUARTILE.INC` / `QUARTILE.EXC`
+- [x] `QUARTILE.INC` / `QUARTILE.EXC`
 - [x] `STDEV.P` / `VAR.P` (Population standard deviation and variance)
 - [ ] `CORREL` / `COVARIANCE.P` / `COVARIANCE.S`
 
@@ -148,4 +148,6 @@ Legacy functions retained by Excel for backward compatibility.
 - [x] `VARP`
 - [ ] `WEIBULL`
 - [ ] `ZTEST`
+
+T`
 

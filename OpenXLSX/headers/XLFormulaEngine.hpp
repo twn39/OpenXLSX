@@ -516,6 +516,16 @@ namespace OpenXLSX
         static XLCellValue fnUnichar(const std::vector<XLFormulaArg>& args);
         static XLCellValue fnCode(const std::vector<XLFormulaArg>& args);
         static XLCellValue fnUnicode(const std::vector<XLFormulaArg>& args);
+        static XLCellValue fnCovarianceP(const std::vector<XLFormulaArg>& args);
+        static XLCellValue fnCovarianceS(const std::vector<XLFormulaArg>& args);
+        static XLCellValue fnTrimmean(const std::vector<XLFormulaArg>& args);
+        static XLCellValue fnSlope(const std::vector<XLFormulaArg>& args);
+        static XLCellValue fnIntercept(const std::vector<XLFormulaArg>& args);
+        static XLCellValue fnPercentileInc(const std::vector<XLFormulaArg>& args);
+        static XLCellValue fnPercentileExc(const std::vector<XLFormulaArg>& args);
+        static XLCellValue fnQuartileInc(const std::vector<XLFormulaArg>& args);
+        static XLCellValue fnQuartileExc(const std::vector<XLFormulaArg>& args);
+        static XLCellValue fnIsnontext(const std::vector<XLFormulaArg>& args);
     };
 
 }    // namespace OpenXLSX
