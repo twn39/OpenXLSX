@@ -715,6 +715,46 @@ void XLAxis::setDateAxis(bool isDateAxis)
     }
 }
 
+void XLAxis::setOrientation(XLAxisOrientation orientation)
+{
+    if (m_node.empty()) return;
+    XMLNode scaling = m_node.child("c:scaling");
+    if (scaling.empty()) scaling = appendAndGetNode(m_node, "c:scaling", XLAxisNodeOrder);
+    XMLNode orientationNode = appendAndGetNode(scaling, "c:orientation", XLScalingNodeOrder);
+
+    orientationNode.attribute("val") ? orientationNode.attribute("val").set_value(orientation == XLAxisOrientation::MinMax ? "minMax" : "maxMin")
+                                    : orientationNode.append_attribute("val").set_value(orientation == XLAxisOrientation::MinMax ? "minMax" : "maxMin");
+}
+
+void XLAxis::setCrosses(XLAxisCrosses crosses)
+{
+    if (m_node.empty()) return;
+    m_node.remove_child("c:crossesAt");
+    XMLNode crossesNode = appendAndGetNode(m_node, "c:crosses", XLAxisNodeOrder);
+
+    const char* val = "autoZero";
+    switch (crosses) {
+        case XLAxisCrosses::AutoZero:
+            val = "autoZero";
+            break;
+        case XLAxisCrosses::Min:
+            val = "min";
+            break;
+        case XLAxisCrosses::Max:
+            val = "max";
+            break;
+    }
+    crossesNode.attribute("val") ? crossesNode.attribute("val").set_value(val) : crossesNode.append_attribute("val").set_value(val);
+}
+
+void XLAxis::setCrossesAt(double value)
+{
+    if (m_node.empty()) return;
+    m_node.remove_child("c:crosses");
+    XMLNode crossesAtNode = appendAndGetNode(m_node, "c:crossesAt", XLAxisNodeOrder);
+    crossesAtNode.attribute("val") ? crossesAtNode.attribute("val").set_value(value) : crossesAtNode.append_attribute("val").set_value(value);
+}
+
 void XLAxis::setMajorGridlines(bool show)
 {
     if (m_node.empty()) return;

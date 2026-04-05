@@ -162,4 +162,70 @@ TEST_CASE("Advanced Chart Axis Features", "[XLChart][Axis]")
         }
         std::filesystem::remove(filename);
     }
+
+    SECTION("Axis Orientation and Crossing")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            for (int i = 1; i <= 5; ++i) {
+                wks.cell(i, 1).value() = i;
+                wks.cell(i, 2).value() = i * 10;
+            }
+            auto chart = wks.addChart(XLChartType::Line, "OrientTest", 1, 4, 400, 300);
+            chart.addSeries("Sheet1!$B$1:$B$5", "Data", "Sheet1!$A$1:$A$5");
+            
+            // Set X-axis to reverse order
+            chart.xAxis().setOrientation(XLAxisOrientation::MaxMin);
+            
+            // Set Y-axis to cross at 25
+            chart.yAxis().setCrossesAt(25.0);
+            
+            doc.save();
+            doc.close();
+        }
+        {
+            XLChartTestDoc td;
+            td.open(filename);
+            std::string xml = td.getRawXml("xl/charts/chart1.xml");
+            
+            // Check orientation in xAxis (catAx)
+            REQUIRE(xml.find("<c:catAx>") != std::string::npos);
+            REQUIRE(xml.find("<c:orientation val=\"maxMin") != std::string::npos);
+            
+            // Check crossesAt in yAxis (valAx)
+            REQUIRE(xml.find("<c:valAx>") != std::string::npos);
+            REQUIRE(xml.find("<c:crossesAt val=\"25") != std::string::npos);
+            
+            td.close();
+        }
+        std::filesystem::remove(filename);
+    }
+
+    SECTION("Axis Crossing Max")
+    {
+        {
+            XLDocument doc;
+            doc.create(filename, XLForceOverwrite);
+            auto wks = doc.workbook().worksheet("Sheet1");
+            for (int i = 1; i <= 3; ++i) wks.cell(i, 1).value() = i;
+            auto chart = wks.addChart(XLChartType::Bar, "CrossMaxTest", 1, 4, 400, 300);
+            chart.addSeries("Sheet1!$A$1:$A$3");
+            
+            // Set X-axis to cross at Max (moves Y-axis to the right)
+            chart.xAxis().setCrosses(XLAxisCrosses::Max);
+            
+            doc.save();
+            doc.close();
+        }
+        {
+            XLChartTestDoc td;
+            td.open(filename);
+            std::string xml = td.getRawXml("xl/charts/chart1.xml");
+            REQUIRE(xml.find("<c:crosses val=\"max") != std::string::npos);
+            td.close();
+        }
+        std::filesystem::remove(filename);
+    }
 }

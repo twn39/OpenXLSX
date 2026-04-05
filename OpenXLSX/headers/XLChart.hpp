@@ -68,6 +68,10 @@ namespace OpenXLSX
 
     enum class XLTrendlineType { Linear, Exponential, Logarithmic, Polynomial, Power, MovingAverage };
 
+    enum class XLAxisOrientation { MinMax, MaxMin };
+
+    enum class XLAxisCrosses { AutoZero, Min, Max };
+
     class OPENXLSX_EXPORT XLChartSeries
     {
     public:
@@ -151,6 +155,24 @@ namespace OpenXLSX
          * @param isDateAxis If true, the axis becomes a c:dateAx. If false, it reverts to c:catAx.
          */
         void setDateAxis(bool isDateAxis);
+
+        /**
+         * @brief Set the orientation of the axis (normal or reverse).
+         * @param orientation XLAxisOrientation::MinMax (normal) or XLAxisOrientation::MaxMin (reverse).
+         */
+        void setOrientation(XLAxisOrientation orientation);
+
+        /**
+         * @brief Set the axis crossing mode.
+         * @param crosses XLAxisCrosses::AutoZero, XLAxisCrosses::Min, or XLAxisCrosses::Max.
+         */
+        void setCrosses(XLAxisCrosses crosses);
+
+        /**
+         * @brief Set the axis to cross at a specific value.
+         * @param value The value at which the axis should cross.
+         */
+        void setCrossesAt(double value);
 
         void setMajorGridlines(bool show);
         void setMinorGridlines(bool show);
