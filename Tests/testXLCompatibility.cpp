@@ -18,7 +18,8 @@ TEST_CASE("Cross-Engine Compatibility", "[Compatibility]")
     auto resolvePath = [](const std::string& file) -> std::string {
         std::string filepath = "Fixtures/" + file;
         if (!std::filesystem::exists(filepath)) {
-            if (std::filesystem::exists(file)) { filepath = file; }
+            if (std::filesystem::exists("Tests/Fixtures/" + file)) { filepath = "Tests/Fixtures/" + file; }
+            else if (std::filesystem::exists(file)) { filepath = file; }
             else {
                 filepath = "../Tests/Fixtures/" + file;
             }

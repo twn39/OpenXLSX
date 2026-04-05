@@ -311,13 +311,13 @@ TEST_CASE("Chart Creation and Verification", "[XLChart][OOXML]")
 }
 TEST_CASE("Chart Series Fluent API", "[XLChart][Fluent]")
 {
-    std::string filename = "test_chart_fluent.xlsx";
+    std::string filename_fluent = "test_chart_fluent" + std::to_string(rand()) + ".xlsx";
 
     SECTION("Create Line Chart with Fluent API")
     {
         {
             XLDocument doc;
-            doc.create("test_chart_functional.xlsx", XLForceOverwrite);
+            doc.create(filename_fluent, XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
 
             for (int i = 1; i <= 5; ++i) {
@@ -338,7 +338,7 @@ TEST_CASE("Chart Series Fluent API", "[XLChart][Fluent]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(filename);
+            testDoc.open(filename_fluent);
 
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
             REQUIRE(chartXml.find("<c:chartSpace") != std::string::npos);
@@ -351,13 +351,13 @@ TEST_CASE("Chart Series Fluent API", "[XLChart][Fluent]")
 
 TEST_CASE("Chart Anchor API", "[XLChart][Anchor]")
 {
-    std::string filename = "test_chart_anchor.xlsx";
+    std::string filename_anchor = "test_chart_anchor" + std::to_string(rand()) + ".xlsx";
 
     SECTION("Create Line Chart with Strong Type Anchor API")
     {
         {
             XLDocument doc;
-            doc.create("test_chart_functional.xlsx", XLForceOverwrite);
+            doc.create(filename_anchor, XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
 
             for (int i = 1; i <= 5; ++i) {
@@ -387,7 +387,7 @@ TEST_CASE("Chart Anchor API", "[XLChart][Anchor]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(filename);
+            testDoc.open(filename_anchor);
 
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
             REQUIRE(chartXml.find("<c:chartSpace") != std::string::npos);
@@ -397,13 +397,13 @@ TEST_CASE("Chart Anchor API", "[XLChart][Anchor]")
 
 TEST_CASE("Chart Cell Range API", "[XLChart][Range]")
 {
-    std::string filename = "test_chart_range.xlsx";
+    std::string filename_range = "test_chart_range" + std::to_string(rand()) + ".xlsx";
 
     SECTION("Add series via XLCellRange")
     {
         {
             XLDocument doc;
-            doc.create("test_chart_functional.xlsx", XLForceOverwrite);
+            doc.create(filename_range, XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
 
             for (int i = 1; i <= 5; ++i) {
@@ -425,7 +425,7 @@ TEST_CASE("Chart Cell Range API", "[XLChart][Range]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(filename);
+            testDoc.open(filename_range);
 
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
             REQUIRE(chartXml.find("Sheet1!$B$1:$B$5") != std::string::npos);
