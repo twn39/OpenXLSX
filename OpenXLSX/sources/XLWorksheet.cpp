@@ -345,6 +345,7 @@ void XLWorksheet::applyAutoFilter()
             // 1. Basic Value Filters (<filters><filter val="..."/></filters>)
             XMLNode filtersNode = realColNode.child("filters");
             if (!filtersNode.empty()) {
+                colMatches = false;
                 for (XMLNode f : filtersNode.children("filter")) {
                     if (f.attribute("val").value() == cellValue) {
                         colMatches = true;
@@ -352,15 +353,51 @@ void XLWorksheet::applyAutoFilter()
                     }
                 }
             }
-            else {
-                // If there are no basic filters, but custom filters exist, default to match until proven otherwise
-                colMatches = true;
+            
+            // 2. Custom Filters (<customFilters and="1">...)
+            XMLNode customFiltersNode = realColNode.child("customFilters");
+            if (!customFiltersNode.empty()) {
+                bool isAnd = customFiltersNode.attribute("and").as_bool(false);
+                bool matchedFirst = false;
+                bool matchedSecond = false;
+                
+                auto evaluateCustomFilter = [](XMLNode f, const std::string& cvStr) -> bool {
+                    if (f.empty()) return false;
+                    std::string op = f.attribute("operator").value();
+                    std::string valStr = f.attribute("val").value();
+                    if (op.empty()) op = "equal"; // Default if omitted
+                    
+                    try {
+                        double cv = std::stod(cvStr);
+                        double thresh = std::stod(valStr);
+                        if (op == "equal") return cv == thresh;
+                        if (op == "notEqual") return cv != thresh;
+                        if (op == "greaterThan") return cv > thresh;
+                        if (op == "greaterThanOrEqual") return cv >= thresh;
+                        if (op == "lessThan") return cv < thresh;
+                        if (op == "lessThanOrEqual") return cv <= thresh;
+                    } catch(...) {
+                        // String comparison fallback
+                        if (op == "equal") return cvStr == valStr;
+                        if (op == "notEqual") return cvStr != valStr;
+                    }
+                    return false;
+                };
+
+                auto childIt = customFiltersNode.children("customFilter").begin();
+                if (childIt != customFiltersNode.children("customFilter").end()) {
+                    matchedFirst = evaluateCustomFilter(*childIt, cellValue);
+                    ++childIt;
+                    if (childIt != customFiltersNode.children("customFilter").end()) {
+                        matchedSecond = evaluateCustomFilter(*childIt, cellValue);
+                        colMatches = isAnd ? (matchedFirst && matchedSecond) : (matchedFirst || matchedSecond);
+                    } else {
+                        colMatches = matchedFirst; // Only 1 condition
+                    }
+                }
             }
 
-            // Note: We skip complex custom filter logic (>, <, and/or) in this basic implementation
-            // A full implementation would require an expression evaluator
-
-            if (!filtersNode.empty() && !colMatches) {
+            if ((!filtersNode.empty() || !customFiltersNode.empty()) && !colMatches) {
                 rowMatches = false;
                 break;
             }
