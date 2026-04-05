@@ -501,6 +501,13 @@ std::optional<XLCell> XLWorksheet::peekCell(uint32_t rowNumber, uint16_t columnN
 
 void XLWorksheet::addSparkline(const std::string& location, const std::string& dataRange, XLSparklineType type)
 {
+    XLSparklineOptions options;
+    options.type = type;
+    addSparkline(location, dataRange, options);
+}
+
+void XLWorksheet::addSparkline(const std::string& location, const std::string& dataRange, const XLSparklineOptions& options)
+{
     XMLNode rootNode = xmlDocument().document_element();
 
     // Ensure x14 namespace is registered at the root worksheet level
@@ -536,40 +543,28 @@ void XLWorksheet::addSparkline(const std::string& location, const std::string& d
     }
 
     XMLNode sparklineGroup                                 = sparklineGroups.append_child("x14:sparklineGroup");
-    sparklineGroup.append_attribute("displayEmptyCellsAs") = "gap";
+    sparklineGroup.append_attribute("displayEmptyCellsAs") = options.displayEmptyCellsAs.c_str();
 
-    // Default standard colors
-    XMLNode colorSeries                   = sparklineGroup.append_child("x14:colorSeries");
-    colorSeries.append_attribute("theme") = "4";
-    colorSeries.append_attribute("tint")  = "-0.499984740745262";
+    if (options.markers) sparklineGroup.append_attribute("markers").set_value("1");
+    if (options.high) sparklineGroup.append_attribute("high").set_value("1");
+    if (options.low) sparklineGroup.append_attribute("low").set_value("1");
+    if (options.first) sparklineGroup.append_attribute("first").set_value("1");
+    if (options.last) sparklineGroup.append_attribute("last").set_value("1");
+    if (options.negative) sparklineGroup.append_attribute("negative").set_value("1");
+    if (options.displayXAxis) sparklineGroup.append_attribute("displayXAxis").set_value("1");
 
-    XMLNode colorNegative                   = sparklineGroup.append_child("x14:colorNegative");
-    colorNegative.append_attribute("theme") = "5";
-
-    // Required colorAxis node
-    XMLNode colorAxis                 = sparklineGroup.append_child("x14:colorAxis");
-    colorAxis.append_attribute("rgb") = "FF000000";
-
-    XMLNode colorMarkers                   = sparklineGroup.append_child("x14:colorMarkers");
-    colorMarkers.append_attribute("theme") = "4";
-    colorMarkers.append_attribute("tint")  = "-0.499984740745262";
-
-    XMLNode colorFirst                   = sparklineGroup.append_child("x14:colorFirst");
-    colorFirst.append_attribute("theme") = "4";
-    colorFirst.append_attribute("tint")  = "0.39997558519241921";
-
-    XMLNode colorLast                   = sparklineGroup.append_child("x14:colorLast");
-    colorLast.append_attribute("theme") = "4";
-    colorLast.append_attribute("tint")  = "0.39997558519241921";
-
-    XMLNode colorHigh                   = sparklineGroup.append_child("x14:colorHigh");
-    colorHigh.append_attribute("theme") = "4";
-
-    XMLNode colorLow                   = sparklineGroup.append_child("x14:colorLow");
-    colorLow.append_attribute("theme") = "4";
+    // Colors
+    sparklineGroup.append_child("x14:colorSeries").append_attribute("rgb").set_value(options.seriesColor.c_str());
+    sparklineGroup.append_child("x14:colorNegative").append_attribute("rgb").set_value(options.negativeColor.c_str());
+    sparklineGroup.append_child("x14:colorAxis").append_attribute("rgb").set_value("FF000000"); // Base line color
+    sparklineGroup.append_child("x14:colorMarkers").append_attribute("rgb").set_value(options.markersColor.c_str());
+    sparklineGroup.append_child("x14:colorFirst").append_attribute("rgb").set_value(options.firstMarkerColor.c_str());
+    sparklineGroup.append_child("x14:colorLast").append_attribute("rgb").set_value(options.lastMarkerColor.c_str());
+    sparklineGroup.append_child("x14:colorHigh").append_attribute("rgb").set_value(options.highMarkerColor.c_str());
+    sparklineGroup.append_child("x14:colorLow").append_attribute("rgb").set_value(options.lowMarkerColor.c_str());
 
     XLSparkline sparkline(sparklineGroup);
-    sparkline.setType(type);
+    sparkline.setType(options.type);
     sparkline.setLocation(location);
 
     // Format the data range to include the sheet name (e.g. "Sheet1!A1:B2") if it doesn't already have one

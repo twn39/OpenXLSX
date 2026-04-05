@@ -63,3 +63,55 @@ TEST_CASE("Sparkline Creation", "[XLSparkline]")
 
     doc2.close();
 }
+
+TEST_CASE("Sparkline Advanced Configuration", "[XLSparkline]")
+{
+    XLDocument doc;
+    doc.create("./SparklineAdvTest.xlsx", XLForceOverwrite);
+    auto wks = doc.workbook().worksheet("Sheet1");
+
+    for (uint16_t col = 1; col <= 5; ++col) {
+        wks.cell(1, col).value() = col * 10;
+    }
+
+    XLSparklineOptions opts;
+    opts.type = XLSparklineType::Column;
+    opts.high = true;
+    opts.low = true;
+    opts.first = true;
+    opts.last = true;
+    opts.negative = true;
+    opts.markers = true;
+    opts.displayXAxis = true;
+    opts.displayEmptyCellsAs = "zero";
+    opts.seriesColor = "FF112233";
+    opts.highMarkerColor = "FF445566";
+    
+    wks.addSparkline("F1", "A1:E1", opts);
+
+    doc.save();
+    doc.close();
+
+    // Verify
+    XLDocument doc2;
+    doc2.open("./SparklineAdvTest.xlsx");
+    std::string sheetXmlStr = doc2.extractXmlFromArchive("xl/worksheets/sheet1.xml");
+
+    REQUIRE(sheetXmlStr.find("displayEmptyCellsAs=\"zero\"") != std::string::npos);
+    REQUIRE(sheetXmlStr.find("markers=\"1\"") != std::string::npos);
+    REQUIRE(sheetXmlStr.find("high=\"1\"") != std::string::npos);
+    REQUIRE(sheetXmlStr.find("low=\"1\"") != std::string::npos);
+    REQUIRE(sheetXmlStr.find("first=\"1\"") != std::string::npos);
+    REQUIRE(sheetXmlStr.find("last=\"1\"") != std::string::npos);
+    REQUIRE(sheetXmlStr.find("negative=\"1\"") != std::string::npos);
+    REQUIRE(sheetXmlStr.find("displayXAxis=\"1\"") != std::string::npos);
+    
+    // Verify custom colors
+    bool ok1 = sheetXmlStr.find("<x14:colorSeries rgb=\"FF112233\" />") != std::string::npos || sheetXmlStr.find("<x14:colorSeries rgb=\"FF112233\"/>") != std::string::npos;
+    REQUIRE(ok1);
+    bool ok2 = sheetXmlStr.find("<x14:colorHigh rgb=\"FF445566\" />") != std::string::npos || sheetXmlStr.find("<x14:colorHigh rgb=\"FF445566\"/>") != std::string::npos;
+    REQUIRE(ok2);
+
+    doc2.close();
+    std::remove("./SparklineAdvTest.xlsx");
+}

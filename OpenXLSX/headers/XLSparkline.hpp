@@ -13,6 +13,30 @@ namespace OpenXLSX
     enum class XLSparklineType { Line, Column, Stacked };
 
     /**
+     * @brief The XLSparklineOptions struct encapsulates configuration for a sparkline group.
+     */
+    struct XLSparklineOptions
+    {
+        XLSparklineType type {XLSparklineType::Line};
+        std::string     seriesColor {"FF376092"}; // Default blue-ish
+        std::string     negativeColor {"FFD00000"}; // Default red
+        std::string     markersColor {"FFD00000"};
+        std::string     firstMarkerColor {"FFD00000"};
+        std::string     lastMarkerColor {"FFD00000"};
+        std::string     highMarkerColor {"FFD00000"};
+        std::string     lowMarkerColor {"FFD00000"};
+
+        bool            markers {false}; // Show markers
+        bool            high {false};    // Highlight highest point
+        bool            low {false};     // Highlight lowest point
+        bool            first {false};   // Highlight first point
+        bool            last {false};    // Highlight last point
+        bool            negative {false};// Highlight negative points
+        bool            displayXAxis {false}; // Show horizontal axis
+        std::string     displayEmptyCellsAs {"gap"}; // gap, zero, span
+    };
+
+    /**
      * @brief The XLSparkline class encapsulates a single sparkline group in a worksheet.
      */
     class OPENXLSX_EXPORT XLSparkline

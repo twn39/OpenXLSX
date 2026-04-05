@@ -384,6 +384,14 @@ namespace OpenXLSX
          * @param type The type of the sparkline (Line, Column, Stacked).
          */
         void addSparkline(const std::string& location, const std::string& dataRange, XLSparklineType type = XLSparklineType::Line);
+        
+        /**
+         * @brief Add a sparkline graph with advanced configuration options.
+         * @param location The cell or range where the sparkline will be rendered (e.g. "F1").
+         * @param dataRange The source data range for the sparkline (e.g. "A1:E1").
+         * @param options A structure containing extensive visual formatting options.
+         */
+        void addSparkline(const std::string& location, const std::string& dataRange, const XLSparklineOptions& options);
 
         bool hasRelationships() const;
         bool hasDrawing() const;
