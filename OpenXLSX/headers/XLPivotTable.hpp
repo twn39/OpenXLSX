@@ -16,6 +16,7 @@ namespace OpenXLSX
         std::string     name;
         XLPivotSubtotal subtotal = XLPivotSubtotal::Sum;
         std::string     customName;
+        uint32_t        numFmtId = 0; // Number format ID (e.g., 3 for '#,##0', 4 for '#,##0.00', 9 for '0%')
     };
 
     struct XLPivotTableOptions
@@ -29,6 +30,7 @@ namespace OpenXLSX
         std::vector<XLPivotField> data;
         std::vector<XLPivotField> filters;
 
+        bool dataOnRows        {false}; // Place multiple data fields in rows rather than columns
         bool rowGrandTotals    {true};
         bool colGrandTotals    {true};
         bool showDrill         {true};

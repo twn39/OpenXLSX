@@ -240,23 +240,27 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
     }
 
     bool hasVirtualDataField = (options.data.size() > 1);
+    bool virtualDataOnRows = options.dataOnRows;
 
-    if (!rowIndices.empty()) {
+    if (!rowIndices.empty() || (hasVirtualDataField && virtualDataOnRows)) {
         rowFieldsNode = ptRoot.insert_child_after("rowFields", pivotFieldsNode);
-        rowFieldsNode.append_attribute("count").set_value(rowIndices.size());
+        rowFieldsNode.append_attribute("count").set_value(rowIndices.size() + (hasVirtualDataField && virtualDataOnRows ? 1 : 0));
         for (int idx : rowIndices) { rowFieldsNode.append_child("field").append_attribute("x").set_value(idx); }
+        if (hasVirtualDataField && virtualDataOnRows) {
+            rowFieldsNode.append_child("field").append_attribute("x").set_value("-2"); // -2 represents the Values field in Excel
+        }
 
         rowItemsNode = ptRoot.insert_child_after("rowItems", rowFieldsNode);
         rowItemsNode.append_attribute("count").set_value("1");
         rowItemsNode.append_child("i").append_child("x");
     }
 
-    if (!colIndices.empty() || hasVirtualDataField) {
+    if (!colIndices.empty() || (hasVirtualDataField && !virtualDataOnRows)) {
         XMLNode insertAfter   = rowItemsNode.empty() ? (rowFieldsNode.empty() ? pivotFieldsNode : rowFieldsNode) : rowItemsNode;
         XMLNode colFieldsNode = ptRoot.insert_child_after("colFields", insertAfter);
-        colFieldsNode.append_attribute("count").set_value(colIndices.size() + (hasVirtualDataField ? 1 : 0));
+        colFieldsNode.append_attribute("count").set_value(colIndices.size() + (hasVirtualDataField && !virtualDataOnRows ? 1 : 0));
         for (int idx : colIndices) { colFieldsNode.append_child("field").append_attribute("x").set_value(idx); }
-        if (hasVirtualDataField) {
+        if (hasVirtualDataField && !virtualDataOnRows) {
             colFieldsNode.append_child("field").append_attribute("x").set_value("-2"); // -2 represents the Values field in Excel
         }
 
@@ -290,6 +294,10 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
             std::string dName = dataFld.customName.empty() ? ("Sum of " + dataFld.name) : dataFld.customName;
             dfield.append_attribute("name").set_value(dName.c_str());
             dfield.append_attribute("fld").set_value(idx);
+            
+            if (dataFld.numFmtId != 0) {
+                dfield.append_attribute("numFmtId").set_value(dataFld.numFmtId);
+            }
 
             std::string subType = "sum";
             switch (dataFld.subtotal) {

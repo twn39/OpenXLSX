@@ -142,3 +142,73 @@ TEST_CASE("Advanced Pivot Table Multi-Data Fields and Edge Cases", "[XLPivotTabl
     
     std::remove("./PivotMultiDataTest.xlsx");
 }
+
+TEST_CASE("Advanced Pivot Table DataOnRows and NumFmt", "[XLPivotTable]")
+{
+    XLDocument doc;
+    doc.create("./PivotDataOnRowsTest.xlsx", XLForceOverwrite);
+    auto wks = doc.workbook().worksheet("Sheet1");
+
+    wks.cell("A1").value() = "Region";
+    wks.cell("B1").value() = "Revenue";
+    wks.cell("C1").value() = "Costs";
+
+    wks.cell("A2").value() = "North";
+    wks.cell("B2").value() = 1000.50;
+    wks.cell("C2").value() = 800.25;
+
+    wks.cell("A3").value() = "South";
+    wks.cell("B3").value() = 1500.75;
+    wks.cell("C3").value() = 1200.00;
+
+    XLPivotTableOptions options;
+    options.name        = "DataOnRowsPivot";
+    options.sourceRange = "Sheet1!A1:C3";
+    options.targetCell  = "E1";
+
+    // Request values to be stacked in rows instead of spread across columns
+    options.dataOnRows = true;
+
+    options.rows.push_back({"Region", XLPivotSubtotal::Sum, ""}); 
+    
+    XLPivotField revField;
+    revField.name = "Revenue";
+    revField.subtotal = XLPivotSubtotal::Sum;
+    revField.customName = "Total Revenue";
+    revField.numFmtId = 4; // '#,##0.00' format
+
+    XLPivotField costField;
+    costField.name = "Costs";
+    costField.subtotal = XLPivotSubtotal::Sum;
+    costField.customName = "Total Costs";
+    costField.numFmtId = 3; // '#,##0' format
+    
+    options.data.push_back(revField);
+    options.data.push_back(costField);
+
+    REQUIRE_NOTHROW(wks.addPivotTable(options));
+    REQUIRE_NOTHROW(doc.save());
+    doc.close();
+
+    // Verify written values
+    XLDocument doc2;
+    REQUIRE_NOTHROW(doc2.open("./PivotDataOnRowsTest.xlsx"));
+
+    std::string ptDefXmlStr = doc2.extractXmlFromArchive("xl/pivotTables/pivotTable1.xml");
+
+    // Verify rowFields contains the x="-2" virtual field
+    auto rowFieldsPos = ptDefXmlStr.find("<rowFields");
+    REQUIRE(ptDefXmlStr.find("x=\"-2\"", rowFieldsPos) != std::string::npos);
+    
+    // Verify colFields does NOT contain x="-2"
+    auto colFieldsPos = ptDefXmlStr.find("<colFields");
+    if (colFieldsPos != std::string::npos) {
+        REQUIRE(ptDefXmlStr.find("x=\"-2\"", colFieldsPos) == std::string::npos);
+    }
+
+    // Verify numFmtId is correctly applied to dataFields
+    REQUIRE(ptDefXmlStr.find("name=\"Total Revenue\" fld=\"1\" numFmtId=\"4\"") != std::string::npos);
+    REQUIRE(ptDefXmlStr.find("name=\"Total Costs\" fld=\"2\" numFmtId=\"3\"") != std::string::npos);
+    
+    std::remove("./PivotDataOnRowsTest.xlsx");
+}
