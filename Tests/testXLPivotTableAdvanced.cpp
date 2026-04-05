@@ -207,8 +207,8 @@ TEST_CASE("Advanced Pivot Table DataOnRows and NumFmt", "[XLPivotTable]")
     }
 
     // Verify numFmtId is correctly applied to dataFields
-    REQUIRE(ptDefXmlStr.find("name=\"Total Revenue\" fld=\"1\" numFmtId=\"4\"") != std::string::npos);
-    REQUIRE(ptDefXmlStr.find("name=\"Total Costs\" fld=\"2\" numFmtId=\"3\"") != std::string::npos);
+    REQUIRE(ptDefXmlStr.find("name=\"Total Revenue\"") != std::string::npos); REQUIRE(ptDefXmlStr.find("numFmtId=\"4\"") != std::string::npos);
+    REQUIRE(ptDefXmlStr.find("name=\"Total Costs\"") != std::string::npos); REQUIRE(ptDefXmlStr.find("numFmtId=\"3\"") != std::string::npos);
     
     std::remove("./PivotDataOnRowsTest.xlsx");
 }

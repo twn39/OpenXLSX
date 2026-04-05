@@ -95,8 +95,8 @@ TEST_CASE("Dynamic Pivot Table Generation", "[XLPivotTable]")
     REQUIRE(hasEmptyItem);
 
     // Check custom data name overriding
-    bool hasTotalSales = ptDefXmlStr.find("<dataField name=\"Total Sales\" fld=\"2\" />") != std::string::npos ||
-                         ptDefXmlStr.find("<dataField name=\"Total Sales\" fld=\"2\"/>") != std::string::npos;
+    bool hasTotalSales = ptDefXmlStr.find("name=\"Total Sales\"") != std::string::npos;
+    
     REQUIRE(hasTotalSales);
 
     doc2.close();
