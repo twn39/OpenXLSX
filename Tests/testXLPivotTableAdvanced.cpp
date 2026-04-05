@@ -263,3 +263,64 @@ TEST_CASE("Advanced Pivot Table Styling and Formatting Regression", "[XLPivotTab
     
     std::remove("./PivotStyleRegressionTest.xlsx");
 }
+
+TEST_CASE("Advanced Pivot Table Multiple Data Fields Base Attributes Regression", "[XLPivotTable][Regression]")
+{
+    // This test ensures we NEVER regress on the critical OOXML requirement where multiple
+    // <dataField> items MUST possess baseField="0" and baseItem="0". Without these, Microsoft Excel 
+    // flags the workbook as corrupted.
+    
+    XLDocument doc;
+    doc.create("./PivotBaseFieldTest.xlsx", XLForceOverwrite);
+    auto wks = doc.workbook().worksheet("Sheet1");
+
+    wks.cell("A1").value() = "Category";
+    wks.cell("B1").value() = "Metric1";
+    wks.cell("C1").value() = "Metric2";
+
+    wks.cell("A2").value() = "X"; wks.cell("B2").value() = 10; wks.cell("C2").value() = 100;
+    wks.cell("A3").value() = "Y"; wks.cell("B3").value() = 20; wks.cell("C3").value() = 200;
+
+    XLPivotTableOptions options;
+    options.name        = "BaseFieldPivot";
+    options.sourceRange = "Sheet1!A1:C3";
+    options.targetCell  = "E1";
+
+    options.rows.push_back({"Category", XLPivotSubtotal::Sum, ""});
+    
+    // Inject multiple data fields to trigger Excel's strict validation mode
+    options.data.push_back({"Metric1", XLPivotSubtotal::Sum, "Sum of Metric1"});
+    options.data.push_back({"Metric2", XLPivotSubtotal::Sum, "Sum of Metric2"});
+
+    REQUIRE_NOTHROW(wks.addPivotTable(options));
+    REQUIRE_NOTHROW(doc.save());
+    doc.close();
+
+    XLDocument doc2;
+    REQUIRE_NOTHROW(doc2.open("./PivotBaseFieldTest.xlsx"));
+
+    std::string ptDefXmlStr = doc2.extractXmlFromArchive("xl/pivotTables/pivotTable1.xml");
+
+    // Critical assertion: verify the existence of the baseField and baseItem attributes for EVERY dataField
+    // We expect 2 dataFields
+    size_t dataFieldPos = 0;
+    int dataFieldCount = 0;
+    while ((dataFieldPos = ptDefXmlStr.find("<dataField ", dataFieldPos)) != std::string::npos) {
+        // Find the end of this specific tag
+        size_t endTag = ptDefXmlStr.find(">", dataFieldPos);
+        REQUIRE(endTag != std::string::npos);
+        
+        std::string tagContent = ptDefXmlStr.substr(dataFieldPos, endTag - dataFieldPos);
+        
+        // Assert the mandated anti-corruption attributes are injected
+        REQUIRE(tagContent.find("baseField=\"0\"") != std::string::npos);
+        REQUIRE(tagContent.find("baseItem=\"0\"") != std::string::npos);
+        
+        dataFieldCount++;
+        dataFieldPos = endTag;
+    }
+    
+    REQUIRE(dataFieldCount == 2);
+    
+    std::remove("./PivotBaseFieldTest.xlsx");
+}
