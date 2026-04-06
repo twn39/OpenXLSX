@@ -56,3 +56,5 @@ venv
 build_asan
 build_fuzz
 /Tests/Fixtures/Generators
+/*.xlsx
+/*.png
