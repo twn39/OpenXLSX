@@ -260,14 +260,21 @@ TEST_CASE("Formula Engine vs Excelize Standard", "[XLFormulaEngine][Excelize]") 
         } else {
             try {
                 double e_val = std::stod(testCase.expected);
-                double a_val = val.type() == XLValueType::Float ? val.get<double>() : (val.type() == XLValueType::Integer ? val.get<int64_t>() : std::stod(res));
-                REQUIRE_THAT(a_val, Catch::Matchers::WithinRel(e_val, 1e-4));
-            } catch (...) {
+                double a_val = val.type() == XLValueType::Float ? val.get<double>() : (val.type() == XLValueType::Integer ? static_cast<double>(val.get<int64_t>()) : std::stod(res));
+                
+                if (std::abs(e_val) < 1e-9 || std::abs(a_val) < 1e-9) {
+                    REQUIRE_THAT(a_val, Catch::Matchers::WithinAbs(e_val, 1e-9));
+                } else {
+                    REQUIRE_THAT(a_val, Catch::Matchers::WithinRel(e_val, 1e-4));
+                }
+            } catch (const std::invalid_argument&) {
                 if (testCase.expected == "TRUE" || testCase.expected == "FALSE") {
                     // Sometimes Excelize gives 1 / 0 for bools
                     if (testCase.expected == "TRUE" && res == "1") res = "TRUE";
                     if (testCase.expected == "FALSE" && res == "0") res = "FALSE";
                 }
+                REQUIRE(res == testCase.expected);
+            } catch (const std::out_of_range&) {
                 REQUIRE(res == testCase.expected);
             }
         }
