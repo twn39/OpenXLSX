@@ -746,3 +746,36 @@ TEST_CASE("Chart Phase1 Phase2 Features", "[XLChart][Phase12]")
         }
     }
 }
+
+TEST_CASE("Stock OHLC Chart Comparison Test", "[XLChart][Stock]")
+{
+    const std::string fname = "test_stock_ohlc.xlsx";
+    {
+        XLDocument doc;
+        doc.create(fname, XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
+
+        // Row 1: Headers
+        wks.cell("A1").value() = "Date";
+        wks.cell("B1").value() = "Open";
+        wks.cell("C1").value() = "High";
+        wks.cell("D1").value() = "Low";
+        wks.cell("E1").value() = "Close";
+
+        // Row 2
+        wks.cell("A2").value() = "01/01"; wks.cell("B2").value() = 100; wks.cell("C2").value() = 110; wks.cell("D2").value() = 90; wks.cell("E2").value() = 105;
+        // Row 3
+        wks.cell("A3").value() = "01/02"; wks.cell("B3").value() = 105; wks.cell("C3").value() = 115; wks.cell("D3").value() = 100; wks.cell("E3").value() = 110;
+        // Row 4
+        wks.cell("A4").value() = "01/03"; wks.cell("B4").value() = 110; wks.cell("C4").value() = 120; wks.cell("D4").value() = 105; wks.cell("E4").value() = 115;
+
+        auto stockChart = wks.addChart(XLChartType::StockOHLC, "Stock Performance", 2, 7, 500, 350);
+        stockChart.addSeries("Sheet1!$B$2:$B$4", "Open", "Sheet1!$A$2:$A$4");
+        stockChart.addSeries("Sheet1!$C$2:$C$4", "High", "Sheet1!$A$2:$A$4");
+        stockChart.addSeries("Sheet1!$D$2:$D$4", "Low", "Sheet1!$A$2:$A$4");
+        stockChart.addSeries("Sheet1!$E$2:$E$4", "Close", "Sheet1!$A$2:$A$4");
+
+        doc.save();
+        doc.close();
+    }
+}

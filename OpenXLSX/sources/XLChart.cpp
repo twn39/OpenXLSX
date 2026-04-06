@@ -311,6 +311,40 @@ namespace OpenXLSX
       </c:serAx>
 </dummy>)";
                 }
+                else if (type == XLChartType::StockHLC || type == XLChartType::StockOHLC) {
+                    axesTemplate = R"(<dummy>
+      <c:dateAx>
+        <c:axId val="100000000"/>
+        <c:scaling><c:orientation val="minMax"/></c:scaling>
+        <c:delete val="0"/>
+        <c:axPos val="b"/>
+        <c:numFmt formatCode="General" sourceLinked="0"/>
+        <c:majorTickMark val="none"/>
+        <c:minorTickMark val="none"/>
+        <c:tickLblPos val="nextTo"/>
+        <c:crossAx val="100000001"/>
+        <c:crosses val="autoZero"/>
+        <c:auto val="1"/>
+        <c:lblAlgn val="ctr"/>
+        <c:lblOffset val="100"/>
+        <c:noMultiLvlLbl val="0"/>
+      </c:dateAx>
+      <c:valAx>
+        <c:axId val="100000001"/>
+        <c:scaling><c:orientation val="minMax"/></c:scaling>
+        <c:delete val="0"/>
+        <c:axPos val="l"/>
+        <c:majorGridlines/>
+        <c:numFmt formatCode="General" sourceLinked="0"/>
+        <c:majorTickMark val="none"/>
+        <c:minorTickMark val="none"/>
+        <c:tickLblPos val="nextTo"/>
+        <c:crossAx val="100000000"/>
+        <c:crosses val="autoZero"/>
+        <c:crossBetween val="between"/>
+      </c:valAx>
+</dummy>)";
+                }
                 else {
                     axesTemplate = R"(<dummy>
       <c:catAx>
