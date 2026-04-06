@@ -1026,7 +1026,7 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT = "@CMAKE_CURRENT_SOURCE_DIR@/OpenXLSX/headers" "@CMAKE_CURRENT_SOURCE_DIR@/OpenXLSX/sources" "@CMAKE_CURRENT_SOURCE_DIR@/README.md"
+INPUT = "@CMAKE_CURRENT_SOURCE_DIR@/OpenXLSX/headers" "@CMAKE_CURRENT_SOURCE_DIR@/OpenXLSX/sources" "@CMAKE_CURRENT_SOURCE_DIR@/README.md" "@CMAKE_CURRENT_SOURCE_DIR@/Documentation/RichTextTutorial.md" "@CMAKE_CURRENT_SOURCE_DIR@/Documentation/QuickStart.md" "@CMAKE_CURRENT_SOURCE_DIR@/Documentation/PivotTableTutorial.md" "@CMAKE_CURRENT_SOURCE_DIR@/Documentation/ChartTutorial.md" "@CMAKE_CURRENT_SOURCE_DIR@/Documentation/FormulaTutorial.md" "@CMAKE_CURRENT_SOURCE_DIR@/Documentation/PageLayoutTutorial.md" "@CMAKE_CURRENT_SOURCE_DIR@/Documentation/PanesTutorial.md" "@CMAKE_CURRENT_SOURCE_DIR@/Documentation/CommentsTutorial.md"
 
 # This tag can be used to specify the character encoding of the source files
 # that Doxygen parses. Internally Doxygen uses the UTF-8 encoding. Doxygen uses
