@@ -114,6 +114,16 @@ Use `ScatterSmoothMarker` for curved lines with dots, or `ScatterLine` for strai
     scatterChart.addSeries("Data!$C$2:$C$5", "Profit vs Sales", "Data!$B$2:$B$5");
 ```
 
+### Bubble Charts
+
+Bubble charts are a variation of scatter charts where the size of each marker represents a third dimension of data. Because bubble charts require three data ranges (X values, Y values, and Bubble Sizes), you must use the specialized `addBubbleSeries()` method.
+
+```cpp
+    auto bubbleChart = wks.addChart(XLChartType::Bubble, "Market Bubbles", 50, 12, 450, 300);
+    // Signature: addBubbleSeries(xValuesRange, yValuesRange, sizesRange, SeriesName)
+    bubbleChart.addBubbleSeries("Data!$A$2:$A$5", "Data!$B$2:$B$5", "Data!$C$2:$C$5", "Market Share");
+```
+
 ### Stock (OHLC) Financial Charts
 
 Stock charts require data to be added in a very specific order to represent Open, High, Low, and Close values.

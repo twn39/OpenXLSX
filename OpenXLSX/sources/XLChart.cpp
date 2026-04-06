@@ -228,7 +228,10 @@ namespace OpenXLSX
                 }
 
                 std::string axesTemplate;
-                if (type == XLChartType::Scatter) {
+                if (type == XLChartType::Scatter || type == XLChartType::ScatterLine ||
+                    type == XLChartType::ScatterLineMarker || type == XLChartType::ScatterSmooth ||
+                    type == XLChartType::ScatterSmoothMarker || type == XLChartType::ScatterMarker ||
+                    type == XLChartType::Bubble) {
                     axesTemplate = R"(<dummy>
       <c:valAx>
         <c:axId val="100000000"/>
@@ -529,8 +532,16 @@ namespace OpenXLSX
             }
             if (!hasSecValAx) {
                 // We must create secondary axes
+                std::string secXAxisType = "catAx";
+                if (targetChartType && (*targetChartType == XLChartType::Scatter || *targetChartType == XLChartType::ScatterLine ||
+                    *targetChartType == XLChartType::ScatterLineMarker || *targetChartType == XLChartType::ScatterSmooth ||
+                    *targetChartType == XLChartType::ScatterSmoothMarker || *targetChartType == XLChartType::ScatterMarker ||
+                    *targetChartType == XLChartType::Bubble)) {
+                    secXAxisType = "valAx";
+                }
+
                 std::string secAxesTemplate = fmt::format(R"(<dummy>
-      <c:catAx>
+      <c:{}>
         <c:axId val="{}"/>
         <c:scaling><c:orientation val="minMax"/></c:scaling>
         <c:delete val="0"/>
@@ -544,7 +555,7 @@ namespace OpenXLSX
         <c:lblAlgn val="ctr"/>
         <c:lblOffset val="100"/>
         <c:noMultiLvlLbl val="0"/>
-      </c:catAx>
+      </c:{}>
       <c:valAx>
         <c:axId val="{}"/>
         <c:scaling><c:orientation val="minMax"/></c:scaling>
@@ -560,8 +571,10 @@ namespace OpenXLSX
         <c:crossBetween val="between"/>
       </c:valAx>
 </dummy>)",
+                                                          secXAxisType,
                                                           expectedCatAxId,
                                                           expectedValAxId,
+                                                          secXAxisType,
                                                           expectedValAxId,
                                                           expectedCatAxId);
 
