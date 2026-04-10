@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
-project(OpenXLSX-NX VERSION 1.8.1 LANGUAGES CXX C)
+project(OpenXLSX-NX VERSION 1.8.2 LANGUAGES CXX C)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -258,3 +258,29 @@ if(OPENXLSX_CREATE_DOCS)
         )
     endif()
 endif()
+
+#=======================================================================================================================
+# INSTALLATION
+#=======================================================================================================================
+include(GNUInstallDirs)
+
+install(TARGETS OpenXLSX
+    EXPORT OpenXLSXTargets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(FILES OpenXLSX/OpenXLSX.hpp
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenXLSX
+)
+
+install(DIRECTORY OpenXLSX/headers/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenXLSX/headers
+    FILES_MATCHING PATTERN "*.hpp"
+)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/OpenXLSX-Exports.hpp
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenXLSX
+)
+

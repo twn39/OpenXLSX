@@ -6,8 +6,95 @@ on:
       - 'v*' # Trigger on tags starting with v (e.g., v1.5.0)
 
 jobs:
+  build_binaries:
+    name: Build (${{ matrix.os }}, ${{ matrix.linkage }}, ${{ matrix.runtime || 'Default' }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows
+          - os: windows-latest
+            linkage: STATIC
+            runtime: MT
+            cmake_args: -DOPENXLSX_LIBRARY_TYPE=STATIC -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+            artifact_name: OpenXLSX-${{ github.ref_name }}-windows-static-MT
+
+          - os: windows-latest
+            linkage: STATIC
+            runtime: MD
+            cmake_args: -DOPENXLSX_LIBRARY_TYPE=STATIC -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL
+            artifact_name: OpenXLSX-${{ github.ref_name }}-windows-static-MD
+
+          - os: windows-latest
+            linkage: SHARED
+            runtime: MT
+            cmake_args: -DOPENXLSX_LIBRARY_TYPE=SHARED -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+            artifact_name: OpenXLSX-${{ github.ref_name }}-windows-shared-MT
+
+          - os: windows-latest
+            linkage: SHARED
+            runtime: MD
+            cmake_args: -DOPENXLSX_LIBRARY_TYPE=SHARED -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL
+            artifact_name: OpenXLSX-${{ github.ref_name }}-windows-shared-MD
+
+          # Linux
+          - os: ubuntu-latest
+            linkage: STATIC
+            cmake_args: -DOPENXLSX_LIBRARY_TYPE=STATIC
+            artifact_name: OpenXLSX-${{ github.ref_name }}-linux-static
+
+          - os: ubuntu-latest
+            linkage: SHARED
+            cmake_args: -DOPENXLSX_LIBRARY_TYPE=SHARED
+            artifact_name: OpenXLSX-${{ github.ref_name }}-linux-shared
+
+          # macOS
+          - os: macos-latest
+            linkage: STATIC
+            cmake_args: -DOPENXLSX_LIBRARY_TYPE=STATIC
+            artifact_name: OpenXLSX-${{ github.ref_name }}-macos-static
+
+          - os: macos-latest
+            linkage: SHARED
+            cmake_args: -DOPENXLSX_LIBRARY_TYPE=SHARED
+            artifact_name: OpenXLSX-${{ github.ref_name }}-macos-shared
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DOPENXLSX_BUILD_TESTS=OFF -DOPENXLSX_BUILD_BENCHMARKS=OFF ${{ matrix.cmake_args }}
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Install
+        run: cmake --install build --config Release --prefix install_dir
+
+      - name: Archive artifacts (Zip)
+        if: runner.os == 'Windows'
+        run: Compress-Archive -Path install_dir\* -DestinationPath ${{ matrix.artifact_name }}.zip
+
+      - name: Archive artifacts (Tar)
+        if: runner.os != 'Windows'
+        run: tar -czvf ${{ matrix.artifact_name }}.tar.gz -C install_dir .
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: OpenXLSX-${{ github.ref_name }}-*.*
+          if-no-files-found: error
+
   release:
     name: Create Release
+    needs: build_binaries
     runs-on: ubuntu-latest
     permissions:
       contents: write # Needed to create a release
@@ -17,7 +104,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: recursive
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Move artifacts to root
+        run: |
+          find artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \) -exec mv {} . \;
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -26,3 +121,6 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
+          files: |
+            *.zip
+            *.tar.gz
