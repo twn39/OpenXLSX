@@ -578,11 +578,11 @@ namespace OpenXLSX
       <c:{}>
         <c:axId val="{}"/>
         <c:scaling><c:orientation val="minMax"/></c:scaling>
-        <c:delete val="0"/>
+        <c:delete val="1"/>
         <c:axPos val="b"/>
         <c:majorTickMark val="none"/>
         <c:minorTickMark val="none"/>
-        <c:tickLblPos val="nextTo"/>
+        <c:tickLblPos val="none"/>
         <c:crossAx val="{}"/>
         <c:crosses val="autoZero"/>
         <c:auto val="1"/>
@@ -595,7 +595,6 @@ namespace OpenXLSX
         <c:scaling><c:orientation val="minMax"/></c:scaling>
         <c:delete val="0"/>
         <c:axPos val="r"/>
-        <c:majorGridlines/>
         <c:numFmt formatCode="General" sourceLinked="0"/>
         <c:majorTickMark val="none"/>
         <c:minorTickMark val="none"/>
