@@ -457,11 +457,24 @@ namespace OpenXLSX
         XLChart addChart(XLChartType type, const XLChartAnchor& anchor);
 
         /**
+         * @brief Retrieves all pivot tables belonging to this worksheet.
+         * @return A vector of XLPivotTable objects.
+         */
+        std::vector<XLPivotTable> pivotTables();
+
+        /**
          * @brief Create and add a pivot table to this worksheet.
          * @param options The configuration options for the pivot table.
          * @return The created XLPivotTable object.
          */
         XLPivotTable addPivotTable(const XLPivotTableOptions& options);
+
+        /**
+         * @brief Delete a pivot table by name from this worksheet.
+         * @param name The name of the pivot table to delete.
+         * @return True if successfully deleted, false if not found.
+         */
+        bool deletePivotTable(std::string_view name);
 
         XLVmlDrawing& vmlDrawing();
         XLComments&   comments();

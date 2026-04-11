@@ -257,4 +257,41 @@ TEST_CASE("Pivot Table Advanced: Slicers and RefreshOnLoad", "[XLPivotTable]")
     XLDocument doc3;
     doc3.open("./PivotSlicerTest_SaveAs.xlsx");
     REQUIRE(doc3.workbook().worksheet("Pivot").hasDrawing() == true);
+    
+    // --- NEW: Test CRUD operations ---
+    auto crudWks = doc3.workbook().worksheet("Pivot");
+    
+    // 1. Read: Verify the pivot table can be read and its properties matched
+    auto ptList = crudWks.pivotTables();
+    REQUIRE(ptList.size() == 1);
+    REQUIRE(ptList[0].name() == "MyPivot");
+    REQUIRE(ptList[0].targetCell() == "A1");
+    REQUIRE(ptList[0].sourceRange() == "Sheet1!A1:B3");
+    
+    // 2. Update: Change source range and verify
+    ptList[0].changeSourceRange("Sheet1!A1:B10");
+    REQUIRE(ptList[0].sourceRange() == "Sheet1!A1:B10");
+    
+    // 3. Delete: Remove the pivot table
+    bool deleted = crudWks.deletePivotTable("MyPivot");
+    REQUIRE(deleted == true);
+    REQUIRE(crudWks.pivotTables().empty() == true);
+    
+    // Deleting non-existent
+    REQUIRE(crudWks.deletePivotTable("NonExistent") == false);
+
+    // --- NEW: Test Pivot Cache Sharing ---
+    XLPivotTableOptions opts2;
+    opts2.name        = "AnotherPivot";
+    opts2.sourceRange = "Sheet1!A1:B10"; // EXACT SAME RANGE AS THE UPDATED ONE
+    opts2.targetCell  = "D1";
+    XLPivotField rf2;
+    rf2.name = "Region";
+    opts2.rows.push_back(rf2);
+    auto pt2 = crudWks.addPivotTable(opts2);
+
+    auto cacheList = doc3.workbook().xmlDocument().document_element().child("pivotCaches");
+    int cacheCount = 0;
+    for (auto c : cacheList.children("pivotCache")) { cacheCount++; }
+    REQUIRE(cacheCount == 1); // Should reuse existing cache since range matches
 }

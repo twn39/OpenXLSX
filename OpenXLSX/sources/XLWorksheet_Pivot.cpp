@@ -6,33 +6,182 @@
 
 using namespace OpenXLSX;
 
+std::vector<XLPivotTable> XLWorksheet::pivotTables()
+{
+    std::vector<XLPivotTable> result;
+    XMLNode ptNode = xmlDocument().document_element().child("pivotTables");
+    if (!ptNode.empty()) {
+        for (auto pt : ptNode.children("pivotTable")) {
+            std::string rId = pt.attribute("r:id").value();
+            if (!rId.empty()) {
+                std::string targetPath = relationships().relationshipById(rId).target();
+                // Resolve to absolute path
+                if (targetPath[0] != '/') {
+                    std::string sourcePath = getXmlPath();
+                    auto slashPos = sourcePath.find_last_of('/');
+                    if (slashPos != std::string::npos) {
+                        targetPath = sourcePath.substr(0, slashPos + 1) + targetPath;
+                    } else {
+                        targetPath = "/" + targetPath;
+                    }
+                }
+                
+                // Normalizing path
+                while (targetPath.find("/../") != std::string::npos) {
+                    auto pos = targetPath.find("/../");
+                    auto prevSlash = targetPath.find_last_of('/', pos - 1);
+                    if (prevSlash != std::string::npos) {
+                        targetPath.erase(prevSlash + 1, pos - prevSlash + 3);
+                    } else {
+                        targetPath.erase(0, pos + 4);
+                    }
+                }
+                
+                if (targetPath[0] == '/') targetPath = targetPath.substr(1);
+
+                XLXmlData* xmlData = const_cast<XLDocument&>(parentDoc()).getXmlData(targetPath, true);
+                if (xmlData == nullptr) {
+                    xmlData = &const_cast<XLDocument&>(parentDoc()).m_data.emplace_back(&const_cast<XLDocument&>(parentDoc()), targetPath, rId, XLContentType::PivotTable);
+                }
+                result.emplace_back(xmlData);
+            }
+        }
+    }
+    return result;
+}
+
+bool XLWorksheet::deletePivotTable(std::string_view name)
+{
+    XMLNode ptNode = xmlDocument().document_element().child("pivotTables");
+    if (ptNode.empty()) return false;
+
+    std::string targetRId;
+    XMLNode targetNode;
+
+    for (auto pt : ptNode.children("pivotTable")) {
+        std::string rId = pt.attribute("r:id").value();
+        if (!rId.empty()) {
+            std::string targetPath = relationships().relationshipById(rId).target();
+            if (targetPath[0] != '/') {
+                std::string sourcePath = getXmlPath();
+                auto slashPos = sourcePath.find_last_of('/');
+                if (slashPos != std::string::npos) targetPath = sourcePath.substr(0, slashPos + 1) + targetPath;
+            }
+            
+            while (targetPath.find("/../") != std::string::npos) {
+                auto pos = targetPath.find("/../");
+                auto prevSlash = targetPath.find_last_of('/', pos - 1);
+                if (prevSlash != std::string::npos) targetPath.erase(prevSlash + 1, pos - prevSlash + 3);
+                else targetPath.erase(0, pos + 4);
+            }
+            if (targetPath[0] == '/') targetPath = targetPath.substr(1);
+
+            XLXmlData* xmlData = const_cast<XLDocument&>(parentDoc()).getXmlData(targetPath, true);
+            if (xmlData == nullptr) {
+                xmlData = &const_cast<XLDocument&>(parentDoc()).m_data.emplace_back(&const_cast<XLDocument&>(parentDoc()), targetPath, rId, XLContentType::PivotTable);
+            }
+            XLPivotTable ptObj(xmlData);
+            if (ptObj.name() == name) {
+                targetRId = rId;
+                targetNode = pt;
+                break;
+            }
+        }
+    }
+
+    if (!targetNode.empty()) {
+        ptNode.remove_child(targetNode);
+        if (ptNode.first_child().empty()) {
+            xmlDocument().document_element().remove_child(ptNode);
+        }
+        relationships().deleteRelationship(targetRId);
+        return true;
+    }
+
+    return false;
+}
+
 XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
 {
     auto& doc = parentDoc();
     auto  wb  = parentDoc().workbook();
 
-    auto pivotTable = doc.createPivotTable();
-    auto cacheDef   = doc.createPivotCacheDefinition();
-
-    std::string cacheDefRelPath = getPathARelativeToPathB(cacheDef.getXmlPath(), wb.getXmlPath());
-    auto        cacheRel        = doc.workbookRelationships().addRelationship(XLRelationshipType::PivotCacheDefinition, cacheDefRelPath);
-
     XMLNode wbNode          = wb.xmlDocument().document_element();
     XMLNode pivotCachesNode = wbNode.child("pivotCaches");
-    if (pivotCachesNode.empty()) {
-        pivotCachesNode = wbNode.insert_child_before("pivotCaches", wbNode.child("extLst"));
-        if (pivotCachesNode.empty()) pivotCachesNode = wbNode.append_child("pivotCaches");
+
+    std::string targetSourceRange = options.sourceRange;
+    auto bang = targetSourceRange.find('!');
+    if (bang != std::string::npos) {
+        std::string sheet = targetSourceRange.substr(0, bang);
+        if (sheet.length() >= 2 && sheet.front() == '\'' && sheet.back() == '\'') {
+            targetSourceRange = sheet.substr(1, sheet.length() - 2) + "!" + targetSourceRange.substr(bang + 1);
+        }
     }
 
-    uint32_t newCacheId = 1;
-    for (auto cache : pivotCachesNode.children("pivotCache")) {
-        uint32_t id = cache.attribute("cacheId").as_uint();
-        if (id >= newCacheId) newCacheId = id + 1;
+    uint32_t newCacheId = 0;
+    XLPivotCacheDefinition cacheDef(nullptr);
+
+    if (!pivotCachesNode.empty()) {
+        for (auto cache : pivotCachesNode.children("pivotCache")) {
+            std::string rId = cache.attribute("r:id").value();
+            if (!rId.empty()) {
+                std::string targetPath = doc.workbookRelationships().relationshipById(rId).target();
+                if (targetPath[0] != '/') targetPath = "/xl/" + targetPath;
+
+                while (targetPath.find("/../") != std::string::npos) {
+                    auto pos = targetPath.find("/../");
+                    auto prevSlash = targetPath.find_last_of('/', pos - 1);
+                    if (prevSlash != std::string::npos) targetPath.erase(prevSlash + 1, pos - prevSlash + 3);
+                    else targetPath.erase(0, pos + 4);
+                }
+                if (targetPath[0] == '/') targetPath = targetPath.substr(1);
+
+                XLXmlData* xmlData = doc.getXmlData(targetPath, true);
+                if (xmlData != nullptr) {
+                    XLPivotCacheDefinition existingCache(xmlData);
+                    std::string existingRange = existingCache.sourceRange();
+                    auto exBang = existingRange.find('!');
+                    if (exBang != std::string::npos) {
+                        std::string sheet = existingRange.substr(0, exBang);
+                        if (sheet.length() >= 2 && sheet.front() == '\'' && sheet.back() == '\'') {
+                            existingRange = sheet.substr(1, sheet.length() - 2) + "!" + existingRange.substr(exBang + 1);
+                        }
+                    }
+                    if (existingRange == targetSourceRange) {
+                        newCacheId = cache.attribute("cacheId").as_uint();
+                        cacheDef = existingCache;
+                        break;
+                    }
+                }
+            }
+        }
     }
 
-    XMLNode pcNode = pivotCachesNode.append_child("pivotCache");
-    pcNode.append_attribute("cacheId").set_value(newCacheId);
-    pcNode.append_attribute("r:id").set_value(cacheRel.id().c_str());
+    bool isNewCache = (newCacheId == 0);
+
+    if (isNewCache) {
+        cacheDef = doc.createPivotCacheDefinition();
+
+        std::string cacheDefRelPath = getPathARelativeToPathB(cacheDef.getXmlPath(), wb.getXmlPath());
+        auto        cacheRel        = doc.workbookRelationships().addRelationship(XLRelationshipType::PivotCacheDefinition, cacheDefRelPath);
+
+        if (pivotCachesNode.empty()) {
+            pivotCachesNode = wbNode.insert_child_before("pivotCaches", wbNode.child("extLst"));
+            if (pivotCachesNode.empty()) pivotCachesNode = wbNode.append_child("pivotCaches");
+        }
+
+        newCacheId = 1;
+        for (auto cache : pivotCachesNode.children("pivotCache")) {
+            uint32_t id = cache.attribute("cacheId").as_uint();
+            if (id >= newCacheId) newCacheId = id + 1;
+        }
+
+        XMLNode pcNode = pivotCachesNode.append_child("pivotCache");
+        pcNode.append_attribute("cacheId").set_value(newCacheId);
+        pcNode.append_attribute("r:id").set_value(cacheRel.id().c_str());
+    }
+
+    auto pivotTable = doc.createPivotTable();
 
     std::string cacheDefRelPathFromPt = getPathARelativeToPathB(cacheDef.getXmlPath(), pivotTable.getXmlPath());
     pivotTable.relationships().addRelationship(XLRelationshipType::PivotCacheDefinition, cacheDefRelPathFromPt);
@@ -45,8 +194,6 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
         ptRelPathNode      = appendAndGetNode(docElement, "pivotTables", m_nodeOrder);
     }
 
-    // Get or Create
-
     XLRelationshipItem ptRel;
     if (!relationships().targetExists(ptRelPath)) { ptRel = relationships().addRelationship(XLRelationshipType::PivotTable, ptRelPath); }
     else {
@@ -58,23 +205,20 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
     ptEntry.append_attribute("cacheId").set_value(newCacheId);
 
     XMLNode cacheDefRoot = cacheDef.xmlDocument().document_element();
-    XMLNode sourceNode   = cacheDefRoot.child("cacheSource").child("worksheetSource");
 
     std::string sourceSheet = "";
-    std::string sourceRef   = options.sourceRange;
-    size_t      exclaPos    = options.sourceRange.find('!');
+    std::string sourceRef   = targetSourceRange;
+    size_t      exclaPos    = targetSourceRange.find('!');
     if (exclaPos != std::string::npos) {
-        sourceSheet = options.sourceRange.substr(0, exclaPos);
-        sourceRef   = options.sourceRange.substr(exclaPos + 1);
+        sourceSheet = targetSourceRange.substr(0, exclaPos);
+        sourceRef   = targetSourceRange.substr(exclaPos + 1);
     }
 
-    sourceNode.attribute("ref").set_value(sourceRef.c_str());
-    if (!sourceSheet.empty()) { sourceNode.attribute("sheet").set_value(sourceSheet.c_str()); }
-
-    // Attempt to read headers from source range to populate cacheFields
-    XMLNode cacheFieldsNode = cacheDefRoot.child("cacheFields");
-    if (cacheFieldsNode.empty()) cacheFieldsNode = cacheDefRoot.append_child("cacheFields");
-    cacheFieldsNode.remove_children();    // clean up template
+    if (isNewCache) {
+        XMLNode sourceNode   = cacheDefRoot.child("cacheSource").child("worksheetSource");
+        sourceNode.attribute("ref").set_value(sourceRef.c_str());
+        if (!sourceSheet.empty()) { sourceNode.attribute("sheet").set_value(sourceSheet.c_str()); }
+    }
 
     XMLNode ptRoot = pivotTable.xmlDocument().document_element();
 
@@ -115,23 +259,46 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
     pivotFieldsNode.remove_children();
 
     std::vector<std::string> headers;
-    try {
-        XLWorksheet     srcWks = sourceSheet.empty() ? wb.worksheet(name()) : wb.worksheet(sourceSheet);
-        XLCellReference startRef(sourceRef.substr(0, sourceRef.find(':')));
-        XLCellReference endRef(sourceRef.substr(sourceRef.find(':') + 1));
+    
+    if (isNewCache) {
+        try {
+            XLWorksheet     srcWks = sourceSheet.empty() ? wb.worksheet(name()) : wb.worksheet(sourceSheet);
+            XLCellReference startRef(sourceRef.substr(0, sourceRef.find(':')));
+            XLCellReference endRef(sourceRef.substr(sourceRef.find(':') + 1));
 
-        for (uint16_t col = startRef.column(); col <= endRef.column(); ++col) {
-            XLCellValue val        = srcWks.cell(startRef.row(), col).value();
-            std::string headerName = val.type() == XLValueType::String ? val.get<std::string>() : "Field" + std::to_string(col);
-            headers.push_back(headerName);
+            for (uint16_t col = startRef.column(); col <= endRef.column(); ++col) {
+                XLCellValue val        = srcWks.cell(startRef.row(), col).value();
+                std::string headerName = val.type() == XLValueType::String ? val.get<std::string>() : "Field" + std::to_string(col);
+                headers.push_back(headerName);
+            }
+        }
+        catch (...) {
+            // Fallback if parsing fails
+            if (headers.empty()) headers.push_back("Field1");
+        }
+
+        XMLNode cacheFieldsNode = cacheDefRoot.child("cacheFields");
+        if (cacheFieldsNode.empty()) cacheFieldsNode = cacheDefRoot.append_child("cacheFields");
+        cacheFieldsNode.remove_children();    // clean up template
+        if (!cacheFieldsNode.attribute("count")) cacheFieldsNode.append_attribute("count").set_value(headers.size());
+        else cacheFieldsNode.attribute("count").set_value(headers.size());
+
+        for (const auto& h : headers) {
+            XMLNode fieldNode = cacheFieldsNode.append_child("cacheField");
+            fieldNode.append_attribute("name").set_value(h.c_str());
+            fieldNode.append_attribute("numFmtId").set_value("0");
+            
+            XMLNode sharedItemsNode = fieldNode.append_child("sharedItems");
+            sharedItemsNode.append_attribute("containsBlank").set_value("1");
+            sharedItemsNode.append_attribute("count").set_value("0");
+            sharedItemsNode.append_child("m");
+        }
+    } else {
+        XMLNode cacheFieldsNode = cacheDefRoot.child("cacheFields");
+        for (auto cf : cacheFieldsNode.children("cacheField")) {
+            headers.push_back(cf.attribute("name").value());
         }
     }
-    catch (...) {
-        // Fallback if parsing fails
-        if (headers.empty()) headers.push_back("Field1");
-    }
-
-    cacheFieldsNode.attribute("count").set_value(headers.size());
 
     // remove all old template children
     pivotFieldsNode.remove_children();
@@ -181,15 +348,7 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
 
     int i = 0;
     for (const auto& h : headers) {
-        XMLNode fieldNode = cacheFieldsNode.append_child("cacheField");
-        fieldNode.append_attribute("name").set_value(h.c_str());
-        fieldNode.append_attribute("numFmtId").set_value("0");
-        
-        XMLNode sharedItemsNode = fieldNode.append_child("sharedItems");
-        sharedItemsNode.append_attribute("containsBlank").set_value("1");
-        sharedItemsNode.append_attribute("count").set_value("0");
-        sharedItemsNode.append_child("m");
-
+        (void)h;
         XMLNode ptFieldNode = pivotFieldsNode.append_child("pivotField");
 
         bool isRow  = std::find(rowIndices.begin(), rowIndices.end(), i) != rowIndices.end();

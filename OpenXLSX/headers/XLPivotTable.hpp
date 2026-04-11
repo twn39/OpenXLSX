@@ -72,6 +72,27 @@ namespace OpenXLSX
          * @brief Get the name of the pivot table.
          */
         std::string name() const;
+
+        /**
+         * @brief Get the target location (e.g., "A3") of the pivot table in the worksheet.
+         */
+        std::string targetCell() const;
+
+        /**
+         * @brief Get the data source range (e.g., "Sheet1!A1:D100").
+         */
+        std::string sourceRange() const;
+
+        /**
+         * @brief Get the pivot cache definition object.
+         */
+        class XLPivotCacheDefinition cacheDefinition() const;
+
+        /**
+         * @brief Change the data source range for the pivot table.
+         * @param newRange The new source range (e.g., "Sheet1!A1:E200").
+         */
+        void changeSourceRange(std::string_view newRange);
     };
 
     class OPENXLSX_EXPORT XLPivotCacheDefinition final : public XLXmlFile
@@ -86,6 +107,17 @@ namespace OpenXLSX
         XLPivotCacheDefinition(XLPivotCacheDefinition&& other) noexcept            = default;
         XLPivotCacheDefinition& operator=(const XLPivotCacheDefinition& other)     = default;
         XLPivotCacheDefinition& operator=(XLPivotCacheDefinition&& other) noexcept = default;
+
+        /**
+         * @brief Get the data source range (e.g., "Sheet1!A1:D100").
+         */
+        std::string sourceRange() const;
+
+        /**
+         * @brief Change the data source range for the pivot cache.
+         * @param newRange The new source range (e.g., "Sheet1!A1:E200").
+         */
+        void changeSourceRange(std::string_view newRange);
     };
 
     class OPENXLSX_EXPORT XLPivotCacheRecords final : public XLXmlFile

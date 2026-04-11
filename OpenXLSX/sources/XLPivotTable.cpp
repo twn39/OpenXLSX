@@ -20,6 +20,53 @@ namespace OpenXLSX
 
     std::string XLPivotTable::name() const { return xmlDocument().document_element().attribute("name").value(); }
 
+    std::string XLPivotTable::targetCell() const
+    {
+        XMLNode locNode = xmlDocument().document_element().child("location");
+        if (locNode) return locNode.attribute("ref").value();
+        return "";
+    }
+
+    XLPivotCacheDefinition XLPivotTable::cacheDefinition() const
+    {
+        XMLNode     root       = xmlDocument().document_element();
+        std::string cacheIdStr = root.attribute("cacheId").value();
+
+        // Find in workbook pivot caches
+        XMLNode     wbRoot      = parentDoc().workbook().xmlDocument().document_element();
+        XMLNode     pivotCaches = wbRoot.child("pivotCaches");
+        std::string rId         = "";
+        for (auto pc : pivotCaches.children("pivotCache")) {
+            if (std::string(pc.attribute("cacheId").value()) == cacheIdStr) {
+                rId = pc.attribute("r:id").value();
+                break;
+            }
+        }
+
+        if (!rId.empty()) {
+            std::string cacheTargetPath = const_cast<XLDocument&>(parentDoc()).workbookRelationships().relationshipById(rId).target();
+            if (cacheTargetPath[0] != '/') cacheTargetPath = "/xl/" + cacheTargetPath;
+            std::string targetPath = cacheTargetPath.substr(1);
+            
+            XLXmlData* xmlData = const_cast<XLDocument&>(parentDoc()).getXmlData(targetPath, true);
+            if (xmlData == nullptr) {
+                xmlData = &const_cast<XLDocument&>(parentDoc()).m_data.emplace_back(&const_cast<XLDocument&>(parentDoc()), targetPath, rId, XLContentType::PivotCacheDefinition);
+            }
+            return XLPivotCacheDefinition(xmlData);
+        }
+        throw XLInternalError("Could not locate pivot cache definition for pivot table.");
+    }
+
+    std::string XLPivotTable::sourceRange() const
+    {
+        return cacheDefinition().sourceRange();
+    }
+
+    void XLPivotTable::changeSourceRange(std::string_view newRange)
+    {
+        cacheDefinition().changeSourceRange(newRange);
+    }
+
     void XLPivotTable::setRefreshOnLoad(bool refresh)
     {
         // We will just let the user set it. But without parent pointer, it's hard to get the cache.
@@ -69,6 +116,37 @@ namespace OpenXLSX
         if (xmlData && xmlData->getXmlType() != XLContentType::PivotCacheDefinition) {
             throw XLInternalError("XLPivotCacheDefinition constructor: Invalid XML data.");
         }
+    }
+
+    std::string XLPivotCacheDefinition::sourceRange() const
+    {
+        XMLNode sourceNode = xmlDocument().document_element().child("cacheSource").child("worksheetSource");
+        if (sourceNode) {
+            std::string sheet = sourceNode.attribute("sheet").value();
+            std::string ref   = sourceNode.attribute("ref").value();
+            return sheet + "!" + ref;
+        }
+        return "";
+    }
+
+    void XLPivotCacheDefinition::changeSourceRange(std::string_view newRange)
+    {
+        XMLNode sourceNode = xmlDocument().document_element().child("cacheSource").child("worksheetSource");
+        if (!sourceNode) throw XLInternalError("Could not locate worksheetSource in pivot cache.");
+
+        std::string rangeStr(newRange);
+        auto        bangPos = rangeStr.find('!');
+        if (bangPos == std::string::npos) throw XLInputError("Invalid range format. Expected 'Sheet!A1:Z100'");
+
+        std::string sheet = rangeStr.substr(0, bangPos);
+        std::string ref   = rangeStr.substr(bangPos + 1);
+
+        if (sheet.length() >= 2 && sheet.front() == '\'' && sheet.back() == '\'') {
+            sheet = sheet.substr(1, sheet.length() - 2);
+        }
+
+        sourceNode.attribute("sheet").set_value(sheet.c_str());
+        sourceNode.attribute("ref").set_value(ref.c_str());
     }
 
     XLPivotCacheRecords::XLPivotCacheRecords(XLXmlData* xmlData) : XLXmlFile(xmlData)
