@@ -128,6 +128,7 @@ TEST_CASE("PivotTableAdvancedSlicersandRefreshOnLoad", "[XLPivotTable]")
     pivotWks.addPivotSlicer("D1", pt, "Region", sOpts);
 
     doc.save();
+    doc.close();
 
     // Verify
     XLDocument doc2;

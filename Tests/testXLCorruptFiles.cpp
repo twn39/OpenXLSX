@@ -28,50 +28,47 @@ TEST_CASE("NegativeTestsCorruptFilesandExceptions", "[CorruptFiles]")
 
     SECTION("Valid ZIP but missing Content_Types.xml")
     {
-        int res = system("echo 'hello' > dummy.txt && zip -q bad_archive.xlsx dummy.txt && rm dummy.txt");
-        if (res == 0) {
-            XLDocument doc;
-            REQUIRE_THROWS_AS(doc.open("bad_archive.xlsx"), XLException);
-            std::remove("bad_archive.xlsx");
-        }
-    }
-
-    SECTION("Valid ZIP but malformed XML inside")
-    {
-        // 1. Create a valid document first
-        const std::string malformed_zip_file = "malformed_xml.xlsx";
+        const std::string testFile = "bad_archive.xlsx";
         {
-            XLDocument doc;
-            doc.create(malformed_zip_file, XLForceOverwrite);
-            doc.save();
-            doc.close();
+            XLZipArchive archive;
+            archive.open(testFile);
+            archive.addEntry("dummy.txt", "hello");
+            archive.save();
+            archive.close();
         }
-
-        // 2. We inject bad xml into [Content_Types].xml
-        // We use python to copy the zip but replace the file, since zipfile 'a' mode appends a duplicate name.
-        const char* py_script = "import zipfile, os\n"
-                                "with zipfile.ZipFile('malformed_xml.xlsx', 'r') as zin:\n"
-                                "    with zipfile.ZipFile('malformed_xml_bad.xlsx', 'w') as zout:\n"
-                                "        for item in zin.infolist():\n"
-                                "            if item.filename == '[Content_Types].xml':\n"
-                                "                zout.writestr(item, '<Types "
-                                "xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"xml\" ')\n"
-                                "            else:\n"
-                                "                zout.writestr(item, zin.read(item.filename))\n"
-                                "os.replace('malformed_xml_bad.xlsx', 'malformed_xml.xlsx')\n";
-
-        std::ofstream script("corrupt.py");
-        script << py_script;
-        script.close();
-
-        int res = system("python3 corrupt.py");
-
-        if (res == 0) {
-            XLDocument doc;
-            // The XML parser should throw XLException when trying to parse the malformed XML
-            REQUIRE_THROWS_AS(doc.open(malformed_zip_file), XLException);
-        }
-        std::remove(malformed_zip_file.c_str());
-        std::remove("corrupt.py");
+        
+        XLDocument doc;
+        REQUIRE_THROWS_AS(doc.open(testFile), XLException);
+        std::remove(testFile.c_str());
     }
+SECTION("Valid ZIP but malformed XML inside")
+{
+    // 1. Create a valid document first
+    const std::string malformed_zip_file = "malformed_xml.xlsx";
+    {
+        XLDocument doc;
+        doc.create(malformed_zip_file, XLForceOverwrite);
+        doc.save();
+        doc.close();
+    }
+
+    // 2. We inject bad xml into [Content_Types].xml natively
+    {
+        XLZipArchive archive;
+        archive.open(malformed_zip_file);
+        if (archive.hasEntry("[Content_Types].xml")) {
+            archive.deleteEntry("[Content_Types].xml");
+        }
+        std::string badXml = "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"xml\" ";
+        archive.addEntry("[Content_Types].xml", badXml);
+        archive.save();
+        archive.close();
+    }
+
+    // 3. Trying to open it should cause pugi to throw, caught by OpenXLSX
+    XLDocument doc;
+    REQUIRE_THROWS_AS(doc.open(malformed_zip_file), XLException);
+
+    std::remove(malformed_zip_file.c_str());
+}
 }

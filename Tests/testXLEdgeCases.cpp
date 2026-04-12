@@ -9,26 +9,30 @@ TEST_CASE("SecurityandExploitationEdgeCases", "[EdgeCases][Security]")
 {
     SECTION("Billion Laughs (XXE) Prevention")
     {
-        // Create a ZIP with a malicious Content_Types.xml
-        int res = system(
-            "echo '<!DOCTYPE Types [<!ENTITY xxe \"bar\">]><Types "
-            "xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"xml\" "
-            "ContentType=\"&xxe;\"/></Types>' > [Content_Types].xml && zip -q xxe_test.xlsx [Content_Types].xml && rm [Content_Types].xml");
-        if (res == 0) {
-            XLDocument doc;
-            // Depending on pugi_parse_settings, this will either throw or just not evaluate the entity.
-            // PugiXML default parser does NOT evaluate external/internal entities.
-            // So it should safely open without memory exhaustion.
-            try {
-                doc.open("xxe_test.xlsx");
-            }
-            catch (...) {
-                // If it throws because of missing relationships or workbook, that's fine too.
-                // The key is it didn't hang or crash.
-            }
-            std::remove("xxe_test.xlsx");
-            REQUIRE(true);    // If we reached here, no OOM/Hang occurred.
+        // Create a ZIP with a malicious Content_Types.xml using OpenXLSX's XLZipArchive
+        const std::string testFile = "xxe_test.xlsx";
+        {
+            XLZipArchive archive;
+            archive.open(testFile);
+            std::string maliciousXml = "<!DOCTYPE Types [<!ENTITY xxe \"bar\">]><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"xml\" ContentType=\"&xxe;\"/></Types>";
+            archive.addEntry("[Content_Types].xml", maliciousXml);
+            archive.save();
+            archive.close();
         }
+
+        XLDocument doc;
+        // Depending on pugi_parse_settings, this will either throw or just not evaluate the entity.
+        // PugiXML default parser does NOT evaluate external/internal entities.
+        // So it should safely open without memory exhaustion.
+        try {
+            doc.open(testFile);
+        }
+        catch (...) {
+            // If it throws because of missing relationships or workbook, that's fine too.
+            // The key is it didn't hang or crash.
+        }
+        std::remove(testFile.c_str());
+        REQUIRE(true);    // If we reached here, no OOM/Hang occurred.
     }
 }
 
