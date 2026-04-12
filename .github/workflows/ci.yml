@@ -50,6 +50,7 @@ jobs:
           -DOPENXLSX_BUILD_TESTS=ON
           -DOPENXLSX_BUILD_BENCHMARKS=OFF
           -DOPENXLSX_ENABLE_LTO=OFF
+          -DOPENXLSX_ENABLE_UNITY_BUILD=OFF
 
       - name: Build
         run: cmake --build build
