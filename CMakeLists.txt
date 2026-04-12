@@ -180,11 +180,6 @@ if(OPENXLSX_BUILD_TESTS)
     
     add_executable(OpenXLSXTests ${TEST_SOURCES})
     add_test(NAME OpenXLSX_All_Tests COMMAND OpenXLSXTests)
-
-    add_executable(OpenXLSXTestsTSAN ${TEST_SOURCES})
-    target_link_libraries(OpenXLSXTestsTSAN PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
-    target_compile_options(OpenXLSXTestsTSAN PRIVATE -fsanitize=thread -fno-omit-frame-pointer)
-    target_link_options(OpenXLSXTestsTSAN PRIVATE -fsanitize=thread -fno-omit-frame-pointer)
     target_link_libraries(OpenXLSXTests PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
     
     if(OPENXLSX_ENABLE_SANITIZERS AND NOT MSVC)
