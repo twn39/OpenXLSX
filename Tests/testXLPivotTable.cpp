@@ -240,6 +240,8 @@ TEST_CASE("PivotTableAdvancedSlicersandRefreshOnLoad", "[XLPivotTable]")
 
     // Test double save for robustness
     doc2.saveAs("./PivotSlicerTest_SaveAs.xlsx", XLForceOverwrite);
+    doc2.close();
+    
     XLDocument doc3;
     doc3.open("./PivotSlicerTest_SaveAs.xlsx");
     REQUIRE(doc3.workbook().worksheet("Pivot").hasDrawing() == true);
@@ -274,4 +276,5 @@ TEST_CASE("PivotTableAdvancedSlicersandRefreshOnLoad", "[XLPivotTable]")
     int cacheCount = 0;
     for (auto c : cacheList.children("pivotCache")) { cacheCount++; }
     REQUIRE(cacheCount == 1); // Should reuse existing cache since range matches
+    doc3.close();
 }

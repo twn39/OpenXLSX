@@ -46,11 +46,11 @@ TEST_CASE("MacroPreservationxlsm", "[XLMacro]")
         REQUIRE(doc3.hasMacro() == true);
 
         // Extract it to memory to verify the payload is identical
-        std::string payload = doc3.archive().getEntry("xl/vbaProject.bin");
+        std::string payload = doc3.extractXmlFromArchive("xl/vbaProject.bin");
         REQUIRE(payload == "FAKE_MACRO_PAYLOAD_12345");
 
         // Check content types
-        std::string ctStr = doc3.archive().getEntry("[Content_Types].xml");
+        std::string ctStr = doc3.extractXmlFromArchive("[Content_Types].xml");
         REQUIRE(ctStr.find("vbaProject") != std::string::npos);
         // The root workbook override should be macroEnabled
     }

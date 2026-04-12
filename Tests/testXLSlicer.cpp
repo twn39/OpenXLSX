@@ -125,6 +125,7 @@ TEST_CASE("TableSlicerAPIandOOXMLValidation", "[XLSlicer]")
 
     // 4. Double Save to ensure memory stream doesn't break dependencies
     doc2.saveAs("./TableSlicerFullTest_SaveAs.xlsx", XLForceOverwrite);
+    doc2.close();
     XLDocument doc3;
     doc3.open("./TableSlicerFullTest_SaveAs.xlsx");
     REQUIRE(doc3.workbook().worksheet("Sheet1").hasDrawing() == true);
