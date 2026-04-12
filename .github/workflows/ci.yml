@@ -60,8 +60,9 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release
           -DOPENXLSX_BUILD_TESTS=ON
           -DOPENXLSX_BUILD_BENCHMARKS=OFF
-          -DOPENXLSX_ENABLE_LTO=OFF
-          -DOPENXLSX_ENABLE_UNITY_BUILD=OFF
+          -DOPENXLSX_ENABLE_LTO=ON
+          -DOPENXLSX_ENABLE_UNITY_BUILD=ON
+          -DOPENXLSX_OPTIMIZE_NATIVE=ON
 
       - name: Build
         run: cmake --build build
