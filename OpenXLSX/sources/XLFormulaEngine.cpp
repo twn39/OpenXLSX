@@ -3249,7 +3249,11 @@ XLCellValue XLFormulaEngine::fnIsoweeknum(const std::vector<XLFormulaArg>& args)
     // let's use a quick approx if needed, but wait:
     char buf[16] = {0};
     if (std::strftime(buf, sizeof(buf), "%V", &tm) > 0) {
-        return XLCellValue(static_cast<double>(std::stoi(buf)));
+        try {
+            return XLCellValue(static_cast<double>(std::stoi(buf)));
+        } catch (...) {
+            return errNum();
+        }
     }
     return errNum();
 }
@@ -3280,7 +3284,12 @@ XLCellValue XLFormulaEngine::fnWeeknum(const std::vector<XLFormulaArg>& args)
     
     // strftime returns 00-53. Excel might expect 1-53 if Jan 1 is not start of week.
     // For simplicity:
-    int w = std::stoi(buf);
+    int w = 0;
+    try {
+        w = std::stoi(buf);
+    } catch (...) {
+        return errNum();
+    }
     
     // Excel Weeknum System 1 fix
     std::tm tm_jan1 = tm;
