@@ -16,7 +16,7 @@ std::vector<XLPivotTable> XLWorksheet::pivotTables()
             if (!rId.empty()) {
                 std::string targetPath = relationships().relationshipById(rId).target();
                 // Resolve to absolute path
-                if (targetPath[0] != '/') {
+                if (!targetPath.empty() && targetPath[0] != '/') {
                     std::string sourcePath = getXmlPath();
                     auto slashPos = sourcePath.find_last_of('/');
                     if (slashPos != std::string::npos) {
@@ -29,7 +29,7 @@ std::vector<XLPivotTable> XLWorksheet::pivotTables()
                 // Normalizing path
                 while (targetPath.find("/../") != std::string::npos) {
                     auto pos = targetPath.find("/../");
-                    auto prevSlash = targetPath.find_last_of('/', pos - 1);
+                    auto prevSlash = pos > 0 ? targetPath.find_last_of('/', pos - 1) : std::string::npos;
                     if (prevSlash != std::string::npos) {
                         targetPath.erase(prevSlash + 1, pos - prevSlash + 3);
                     } else {
@@ -37,7 +37,7 @@ std::vector<XLPivotTable> XLWorksheet::pivotTables()
                     }
                 }
                 
-                if (targetPath[0] == '/') targetPath = targetPath.substr(1);
+                if (!targetPath.empty() && targetPath[0] == '/') targetPath = targetPath.substr(1);
 
                 XLXmlData* xmlData = const_cast<XLDocument&>(parentDoc()).getXmlData(targetPath, true);
                 if (xmlData == nullptr) {
@@ -62,7 +62,7 @@ bool XLWorksheet::deletePivotTable(std::string_view name)
         std::string rId = pt.attribute("r:id").value();
         if (!rId.empty()) {
             std::string targetPath = relationships().relationshipById(rId).target();
-            if (targetPath[0] != '/') {
+            if (!targetPath.empty() && targetPath[0] != '/') {
                 std::string sourcePath = getXmlPath();
                 auto slashPos = sourcePath.find_last_of('/');
                 if (slashPos != std::string::npos) targetPath = sourcePath.substr(0, slashPos + 1) + targetPath;
@@ -70,11 +70,11 @@ bool XLWorksheet::deletePivotTable(std::string_view name)
             
             while (targetPath.find("/../") != std::string::npos) {
                 auto pos = targetPath.find("/../");
-                auto prevSlash = targetPath.find_last_of('/', pos - 1);
+                auto prevSlash = pos > 0 ? targetPath.find_last_of('/', pos - 1) : std::string::npos;
                 if (prevSlash != std::string::npos) targetPath.erase(prevSlash + 1, pos - prevSlash + 3);
                 else targetPath.erase(0, pos + 4);
             }
-            if (targetPath[0] == '/') targetPath = targetPath.substr(1);
+            if (!targetPath.empty() && targetPath[0] == '/') targetPath = targetPath.substr(1);
 
             XLXmlData* xmlData = const_cast<XLDocument&>(parentDoc()).getXmlData(targetPath, true);
             if (xmlData == nullptr) {
@@ -126,15 +126,15 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
             std::string rId = cache.attribute("r:id").value();
             if (!rId.empty()) {
                 std::string targetPath = doc.workbookRelationships().relationshipById(rId).target();
-                if (targetPath[0] != '/') targetPath = "/xl/" + targetPath;
+                if (!targetPath.empty() && targetPath[0] != '/') targetPath = "/xl/" + targetPath;
 
                 while (targetPath.find("/../") != std::string::npos) {
                     auto pos = targetPath.find("/../");
-                    auto prevSlash = targetPath.find_last_of('/', pos - 1);
+                    auto prevSlash = pos > 0 ? targetPath.find_last_of('/', pos - 1) : std::string::npos;
                     if (prevSlash != std::string::npos) targetPath.erase(prevSlash + 1, pos - prevSlash + 3);
                     else targetPath.erase(0, pos + 4);
                 }
-                if (targetPath[0] == '/') targetPath = targetPath.substr(1);
+                if (!targetPath.empty() && targetPath[0] == '/') targetPath = targetPath.substr(1);
 
                 XLXmlData* xmlData = doc.getXmlData(targetPath, true);
                 if (xmlData != nullptr) {

@@ -45,7 +45,7 @@ namespace OpenXLSX
 
         if (!rId.empty()) {
             std::string cacheTargetPath = const_cast<XLDocument&>(parentDoc()).workbookRelationships().relationshipById(rId).target();
-            if (cacheTargetPath[0] != '/') cacheTargetPath = "/xl/" + cacheTargetPath;
+            if (!cacheTargetPath.empty() && cacheTargetPath[0] != '/') cacheTargetPath = "/xl/" + cacheTargetPath;
             std::string targetPath = cacheTargetPath.substr(1);
             
             XLXmlData* xmlData = const_cast<XLDocument&>(parentDoc()).getXmlData(targetPath, true);
@@ -90,7 +90,7 @@ namespace OpenXLSX
         if (!rId.empty()) {
             std::string cacheTargetPath = parentDoc().workbookRelationships().relationshipById(rId).target();
             // Resolve relative path to absolute
-            if (cacheTargetPath[0] != '/') cacheTargetPath = "/xl/" + cacheTargetPath;
+            if (!cacheTargetPath.empty() && cacheTargetPath[0] != '/') cacheTargetPath = "/xl/" + cacheTargetPath;
 
             // Get the xml document for cache
             XLPivotCacheDefinition cacheDef(parentDoc().getXmlData(cacheTargetPath.substr(1)));
