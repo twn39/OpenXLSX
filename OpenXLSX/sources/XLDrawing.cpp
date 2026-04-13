@@ -807,7 +807,7 @@ std::vector<uint8_t> XLDrawingItem::imageBinary() const
             std::string relsContent = m_parentDoc->archive().getEntry(entry);
             if (relsContent.find(relId) != std::string::npos) {
                 pugi::xml_document relsDoc;
-                relsDoc.load_string(relsContent.c_str());
+                relsDoc.load_buffer(relsContent.data(), relsContent.size());
                 for (const auto& rel : relsDoc.document_element().children("Relationship")) {
                     if (std::string(rel.attribute("Id").value()) == relId) {
                         targetPath = rel.attribute("Target").value();

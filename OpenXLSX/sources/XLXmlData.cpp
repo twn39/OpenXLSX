@@ -29,7 +29,7 @@ XLXmlData::~XLXmlData() = default;
  */
 void XLXmlData::setRawData(const std::string& data)    // NOLINT
 {
-    auto result = m_xmlDoc->load_string(data.c_str(), pugi_parse_settings);
+    auto result = m_xmlDoc->load_buffer(data.data(), data.size(), pugi_parse_settings);
     if (!result && result.status != pugi::status_no_document_element) {
         throw XLException("Failed to parse raw XML data. Error: " + std::string(result.description()));
     }
@@ -116,7 +116,7 @@ XMLDocument* XLXmlData::getXmlDocument()
     if (!m_xmlDoc->document_element()) {
         std::string xmlContent = m_parentDoc->extractXmlFromArchive(m_xmlPath);
         if (!xmlContent.empty()) {
-            auto result = m_xmlDoc->load_string(xmlContent.c_str(), pugi_parse_settings);
+            auto result = m_xmlDoc->load_buffer(xmlContent.data(), xmlContent.size(), pugi_parse_settings);
             if (!result && result.status != pugi::status_no_document_element) {
                 throw XLException("Failed to parse XML: " + m_xmlPath + ", Error: " + result.description());
             }
@@ -134,7 +134,7 @@ const XMLDocument* XLXmlData::getXmlDocument() const
     if (!m_xmlDoc->document_element()) {
         std::string xmlContent = m_parentDoc->extractXmlFromArchive(m_xmlPath);
         if (!xmlContent.empty()) {
-            auto result = m_xmlDoc->load_string(xmlContent.c_str(), pugi_parse_settings);
+            auto result = m_xmlDoc->load_buffer(xmlContent.data(), xmlContent.size(), pugi_parse_settings);
             if (!result && result.status != pugi::status_no_document_element) {
                 throw XLException("Failed to parse XML: " + m_xmlPath + ", Error: " + result.description());
             }

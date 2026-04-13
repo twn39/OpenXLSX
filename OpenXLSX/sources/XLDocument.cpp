@@ -231,8 +231,15 @@ void XLDocument::open(std::string_view fileName)
     XLXmlData*   sstData       = getXmlData("xl/sharedStrings.xml", true);
     XMLDocument* sharedStrings = sstData ? sstData->getXmlDocument() : nullptr;
     if (sharedStrings && sharedStrings->document_element()) {
-        if (not sharedStrings->document_element().attribute("uniqueCount").empty())
+        auto uniqueCountAttr = sharedStrings->document_element().attribute("uniqueCount");
+        if (not uniqueCountAttr.empty()) {
+            auto count = uniqueCountAttr.as_ullong();
+            if (count > 0) {
+                m_sharedStringCache.reserve(count);
+                m_sharedStringIndex.reserve(count);
+            }
             sharedStrings->document_element().remove_attribute("uniqueCount");
+        }
         if (not sharedStrings->document_element().attribute("count").empty()) sharedStrings->document_element().remove_attribute("count");
     }
 

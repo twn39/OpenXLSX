@@ -40,7 +40,7 @@ namespace OpenXLSX
   </c:chart>
 </c:chartSpace>)";
 
-            doc.load_string(baseTemplate.data(), pugi_parse_settings);
+            doc.load_buffer(baseTemplate.data(), baseTemplate.size(), pugi_parse_settings);
 
             XMLNode plotArea = doc.document_element().child("c:chart").child("c:plotArea");
             bool    hasAxes  = true;
@@ -380,7 +380,7 @@ namespace OpenXLSX
 </dummy>)";
                 }
                 XMLDocument axesDoc;
-                axesDoc.load_string(axesTemplate.data(), pugi_parse_settings);
+                axesDoc.load_buffer(axesTemplate.data(), axesTemplate.size(), pugi_parse_settings);
                 for (auto child : axesDoc.child("dummy").children()) { plotArea.append_copy(child); }
             }
         }
@@ -612,7 +612,7 @@ namespace OpenXLSX
                                                           expectedCatAxId);
 
                 XMLDocument tempDoc;
-                tempDoc.load_string(secAxesTemplate.c_str());
+                tempDoc.load_buffer(secAxesTemplate.data(), secAxesTemplate.size());
                 for (auto child : tempDoc.document_element().children()) { plotArea.append_copy(child); }
             }
         }

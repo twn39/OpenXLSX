@@ -107,7 +107,7 @@ XLChart XLChartsheet::addChart(XLChartType type, std::string_view name)
     if (wsDrNode.empty()) {
         constexpr std::string_view drwTemplate = R"(<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"></xdr:wsDr>)";
-        drwDoc.load_string(drwTemplate.data(), pugi_parse_settings);
+        drwDoc.load_buffer(drwTemplate.data(), drwTemplate.size(), pugi_parse_settings);
         wsDrNode = drwDoc.document_element();
     }
 
