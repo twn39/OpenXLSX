@@ -62,7 +62,7 @@ jobs:
           -DOPENXLSX_BUILD_BENCHMARKS=OFF
           -DOPENXLSX_ENABLE_LTO=ON
           -DOPENXLSX_ENABLE_UNITY_BUILD=ON
-          -DOPENXLSX_OPTIMIZE_NATIVE=ON
+          -DOPENXLSX_OPTIMIZE_NATIVE=OFF
 
       - name: Build
         run: cmake --build build
