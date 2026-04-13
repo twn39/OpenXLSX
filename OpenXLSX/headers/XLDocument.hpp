@@ -36,6 +36,7 @@
 #include "XLWorkbook.hpp"
 #include "XLXmlData.hpp"
 #include "XLZipArchive.hpp"
+#include "XLInternalAccess.hpp"
 
 namespace OpenXLSX
 {
@@ -79,15 +80,34 @@ namespace OpenXLSX
      */
     class OPENXLSX_EXPORT XLDocument final
     {
-        //----- Friends
-        friend class XLXmlFile;
-        friend class XLWorkbook;
-        friend class XLSheet;
-        friend class XLWorksheet;
-        friend class XLXmlData;
-        friend class XLTableCollection;
-        friend class XLPivotTable;
-        friend class XLFormulaProxy;
+    public:
+        struct SharedFormula
+        {
+            std::string formula;
+            uint32_t    baseRow;
+            uint16_t    baseCol;
+        };
+
+        // =========================================================================
+        // 受限的内部特权 API (Restricted Internal API)
+        // 只有持有 XLInternalAccess 通行证的类才能调用，普通用户代码无法编译。
+        // =========================================================================
+
+        [[nodiscard]] XLXmlData* getXmlData(XLInternalAccess, std::string_view path, bool doNotThrow = false) {
+            return getXmlData(path, doNotThrow);
+        }
+
+        [[nodiscard]] const XLXmlData* getXmlData(XLInternalAccess, std::string_view path, bool doNotThrow = false) const {
+            return getXmlData(path, doNotThrow);
+        }
+
+        XLXmlData* addXmlData(XLInternalAccess, const std::string& path, const std::string& id, XLContentType type) {
+            return &m_data.emplace_back(this, path, id, type);
+        }
+
+        std::map<void*, std::unordered_map<uint32_t, SharedFormula>>& sharedFormulas(XLInternalAccess) const {
+            return m_sharedFormulas;
+        }
 
         //---------- Public Member Functions
     public:
@@ -425,13 +445,6 @@ namespace OpenXLSX
         std::string m_defaultAuthor{"System Admin"};
 
         XLXmlSavingDeclaration m_xmlSavingDeclaration;
-
-        struct SharedFormula
-        {
-            std::string formula;
-            uint32_t    baseRow;
-            uint16_t    baseCol;
-        };
 
         mutable std::list<XLXmlData>                                         m_data{};
         mutable XLStringArena                                                m_sharedStringArena{};

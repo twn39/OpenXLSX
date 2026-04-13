@@ -36,10 +36,10 @@ namespace OpenXLSX
             std::string absolutePath  = eliminateDotAndDotDotFromPath(
                 !target.empty() && target.front() == '/' ? target : worksheetPath.substr(0, worksheetPath.find_last_of('/') + 1) + target);
             if (!absolutePath.empty() && absolutePath.front() == '/') absolutePath.erase(0, 1);
-            XLXmlData* xmlData = m_worksheet->parentDoc().getXmlData(absolutePath, true);
+            XLXmlData* xmlData = m_worksheet->parentDoc().getXmlData(XLInternalAccess{}, absolutePath, true);
             if (!xmlData && m_worksheet->parentDoc().archive().hasEntry(absolutePath)) {
                 m_worksheet->parentDoc().contentTypes().addOverride("/" + absolutePath, XLContentType::Table);
-                xmlData = &m_worksheet->parentDoc().m_data.emplace_back(&m_worksheet->parentDoc(), absolutePath, "", XLContentType::Table);
+                xmlData = m_worksheet->parentDoc().addXmlData(XLInternalAccess{}, absolutePath, "", XLContentType::Table);
             }
             if (xmlData) m_tables.emplace_back(xmlData);
         }
@@ -119,7 +119,7 @@ namespace OpenXLSX
         m_worksheet->parentDoc().contentTypes().addOverride("/" + tablesFilename, XLContentType::Table);
 
         XLXmlData* xmlData =
-            &m_worksheet->parentDoc().m_data.emplace_back(&(m_worksheet->parentDoc()), tablesFilename, "", XLContentType::Table);
+            m_worksheet->parentDoc().addXmlData(XLInternalAccess{}, tablesFilename, "", XLContentType::Table);
         m_loaded = false;    // Force reload
         return XLTable(xmlData);
     }

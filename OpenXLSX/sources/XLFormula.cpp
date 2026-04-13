@@ -317,7 +317,7 @@ XLFormula XLFormulaProxy::getFormula() const
             void*   sheetKey  = sheetData.internal_object();
 
             // Access the document's shared formulas cache
-            auto& formulasCache = doc.m_sharedFormulas[sheetKey];
+            auto& formulasCache = doc.sharedFormulas(XLInternalAccess{})[sheetKey];
 
             // If cache is empty for this sheet, populate it in one single pass (O(N))
             if (formulasCache.empty()) {

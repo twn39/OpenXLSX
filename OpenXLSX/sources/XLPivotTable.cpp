@@ -48,9 +48,9 @@ namespace OpenXLSX
             if (!cacheTargetPath.empty() && cacheTargetPath[0] != '/') cacheTargetPath = "/xl/" + cacheTargetPath;
             std::string targetPath = !cacheTargetPath.empty() && cacheTargetPath[0] == '/' ? cacheTargetPath.substr(1) : cacheTargetPath;
             
-            XLXmlData* xmlData = const_cast<XLDocument&>(parentDoc()).getXmlData(targetPath, true);
+            XLXmlData* xmlData = const_cast<XLDocument&>(parentDoc()).getXmlData(XLInternalAccess{}, targetPath, true);
             if (xmlData == nullptr) {
-                xmlData = &const_cast<XLDocument&>(parentDoc()).m_data.emplace_back(&const_cast<XLDocument&>(parentDoc()), targetPath, rId, XLContentType::PivotCacheDefinition);
+                xmlData = const_cast<XLDocument&>(parentDoc()).addXmlData(XLInternalAccess{}, targetPath, rId, XLContentType::PivotCacheDefinition);
             }
             return XLPivotCacheDefinition(xmlData);
         }
@@ -94,7 +94,7 @@ namespace OpenXLSX
             std::string targetPath = !cacheTargetPath.empty() && cacheTargetPath[0] == '/' ? cacheTargetPath.substr(1) : cacheTargetPath;
 
             // Get the xml document for cache
-            XLPivotCacheDefinition cacheDef(parentDoc().getXmlData(targetPath));
+            XLPivotCacheDefinition cacheDef(parentDoc().getXmlData(XLInternalAccess{}, targetPath));
             XMLDocument&           cacheDoc  = cacheDef.xmlDocument();
             XMLNode                cacheRoot = cacheDoc.document_element();
             if (refresh) {

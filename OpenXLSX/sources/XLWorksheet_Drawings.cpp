@@ -609,7 +609,7 @@ void XLWorksheet::addPivotSlicer(std::string_view       cellReference,
         std::string targetPath = !pcTargetPath.empty() && pcTargetPath[0] == '/' ? pcTargetPath.substr(1) : pcTargetPath;
         
         // Use XLDocument's private getXmlData via our new friend status
-        XLXmlData* data = parentDoc().getXmlData(targetPath);
+        XLXmlData* data = parentDoc().getXmlData(XLInternalAccess{}, targetPath);
         if (data) {
             XMLNode cacheRoot = data->getXmlDocument()->document_element();
             XMLNode extLst    = cacheRoot.child("extLst");

@@ -39,9 +39,9 @@ std::vector<XLPivotTable> XLWorksheet::pivotTables()
                 
                 if (!targetPath.empty() && targetPath[0] == '/') targetPath = targetPath.substr(1);
 
-                XLXmlData* xmlData = const_cast<XLDocument&>(parentDoc()).getXmlData(targetPath, true);
+                XLXmlData* xmlData = const_cast<XLDocument&>(parentDoc()).getXmlData(XLInternalAccess{}, targetPath, true);
                 if (xmlData == nullptr) {
-                    xmlData = &const_cast<XLDocument&>(parentDoc()).m_data.emplace_back(&const_cast<XLDocument&>(parentDoc()), targetPath, rId, XLContentType::PivotTable);
+                    xmlData = const_cast<XLDocument&>(parentDoc()).addXmlData(XLInternalAccess{}, targetPath, rId, XLContentType::PivotTable);
                 }
                 result.emplace_back(xmlData);
             }
@@ -76,9 +76,9 @@ bool XLWorksheet::deletePivotTable(std::string_view name)
             }
             if (!targetPath.empty() && targetPath[0] == '/') targetPath = targetPath.substr(1);
 
-            XLXmlData* xmlData = const_cast<XLDocument&>(parentDoc()).getXmlData(targetPath, true);
+            XLXmlData* xmlData = const_cast<XLDocument&>(parentDoc()).getXmlData(XLInternalAccess{}, targetPath, true);
             if (xmlData == nullptr) {
-                xmlData = &const_cast<XLDocument&>(parentDoc()).m_data.emplace_back(&const_cast<XLDocument&>(parentDoc()), targetPath, rId, XLContentType::PivotTable);
+                xmlData = const_cast<XLDocument&>(parentDoc()).addXmlData(XLInternalAccess{}, targetPath, rId, XLContentType::PivotTable);
             }
             XLPivotTable ptObj(xmlData);
             if (ptObj.name() == name) {
@@ -136,7 +136,7 @@ XLPivotTable XLWorksheet::addPivotTable(const XLPivotTableOptions& options)
                 }
                 if (!targetPath.empty() && targetPath[0] == '/') targetPath = targetPath.substr(1);
 
-                XLXmlData* xmlData = doc.getXmlData(targetPath, true);
+                XLXmlData* xmlData = doc.getXmlData(XLInternalAccess{}, targetPath, true);
                 if (xmlData != nullptr) {
                     XLPivotCacheDefinition existingCache(xmlData);
                     std::string existingRange = existingCache.sourceRange();
