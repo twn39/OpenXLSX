@@ -163,18 +163,18 @@ OpenXLSX-NX is engineered for extreme performance. Below are the benchmark resul
 ### Basic I/O (800,000 Cells: 100,000 rows × 8 columns)
 | Operation | Data Type | Average Time | Throughput |
 | :--- | :--- | :--- | :--- |
-| **Write** | Strings (`std::string`) | ~2.64 s | 303,000 cells/sec |
-| **Write** | Integers (`int64_t`) | ~3.06 s | 261,000 cells/sec |
-| **Write** | Floats (`double`) | ~3.49 s | 229,000 cells/sec |
-| **Write** | Booleans (`bool`) | ~2.42 s | 330,000 cells/sec |
-| **Read** | Strings | ~1.05 s | **761,000 cells/sec** |
-| **Read** | Integers | ~0.84 s | **952,000 cells/sec** |
+| **Write** | Strings (`std::string`) | ~296 ms | **2,700,000 cells/sec** |
+| **Write** | Integers (`int64_t`) | ~240 ms | **3,330,000 cells/sec** |
+| **Write** | Floats (`double`) | ~313 ms | **2,550,000 cells/sec** |
+| **Write** | Booleans (`bool`) | ~271 ms | **2,950,000 cells/sec** |
+| **Read** | Strings | ~202 ms | **3,960,000 cells/sec** |
+| **Read** | Integers | ~157 ms | **5,090,000 cells/sec** |
 
 ### Advanced Engine Capabilities
 | Component | Test Description | Average Time | Operations/sec |
 | :--- | :--- | :--- | :--- |
-| **Formula Engine** | Lexing, parsing, and evaluating `SUM(A1:A3)` **10,000 times**. | ~110 ms | 90,000 evals/sec |
-| **Style Pool** | Invoking `findOrCreateStyle(s)` **50,000 times** to deduplicate identical complex styles. | ~911 ms | 54,000 lookups/sec |
+| **Formula Engine** | Lexing, parsing, and evaluating `SUM(A1:A3)` **10,000 times**. | ~13 ms | **769,000 evals/sec** |
+| **Style Pool** | Invoking `findOrCreateStyle(s)` **50,000 times** to deduplicate identical complex styles. | ~210 ms | **238,000 lookups/sec** |
 
 *Note: Benchmarks can be compiled by setting `-DOPENXLSX_BUILD_BENCHMARKS=ON` in CMake.*
 
