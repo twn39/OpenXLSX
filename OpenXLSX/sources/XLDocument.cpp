@@ -404,6 +404,18 @@ void XLDocument::close()
         }
     }
 
+    if (!m_tempDecryptedPath.empty()) {
+        std::error_code ec;
+        if (std::filesystem::exists(m_tempDecryptedPath, ec)) {
+            std::filesystem::remove(m_tempDecryptedPath, ec);
+        }
+        m_tempDecryptedPath.clear();
+    }
+    m_isEncryptedSession = false;
+    m_encryptionPassword.clear();
+    m_unhandledEntries.clear();
+    m_formulaNeedsRecalculation = false;
+
     m_data.clear();
     m_sharedStringArena.clear();
     m_sharedStringCache.clear();
