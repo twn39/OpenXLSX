@@ -239,4 +239,69 @@ TEST_CASE("CommentsFluentandWorksheetDX", "[XLComments][Fluent]")
             doc.close();
         }
     }
+
+    SECTION("Human Verification Demo Generation")
+    {
+        XLDocument doc;
+        // Hardcode a nice name to the root directory for manual verification
+        std::string filename = "OpenXLSX_Comments_Demo_For_Human.xlsx";
+        doc.create(filename, XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
+
+        // 1. Basic Legacy Comment
+        wks.cell("B2").value() = "Basic Comment";
+        wks.comments().set("B2", "This is a basic legacy comment.", 0);
+
+        // 2. Custom Author Legacy Comment
+        wks.cell("D2").value() = "Custom Author";
+        uint16_t adminId = wks.comments().addAuthor("System Admin");
+        wks.comments().set("D2", "This comment is from a specific author.", adminId);
+
+        // 3. Custom Shape Size and Visibility
+        wks.cell("B4").value() = "Visible & Resized";
+        wks.comments().set("B4", "This comment box is customized in size and remains visible.", adminId);
+        auto shape = wks.comments().shape("B4");
+        shape.style().show();
+        shape.style().setWidth(300);
+        shape.style().setHeight(150);
+
+        // 4. Rich Text Legacy Comment
+        wks.cell("D4").value() = "Rich Text Comment";
+        XLRichText rt;
+        XLRichTextRun run1("Bold Red Text. ");
+        run1.setBold(true);
+        run1.setFontColor(XLColor(255, 0, 0));
+        run1.setFontSize(14);
+        
+        XLRichTextRun run2("Normal Italic Text.");
+        run2.setItalic(true);
+        run2.setFontColor(XLColor(0, 0, 255));
+        
+        rt.addRun(run1);
+        rt.addRun(run2);
+        
+        uint16_t designerId = wks.comments().addAuthor("Designer");
+        wks.comments().setRichText("D4", rt, designerId);
+
+        // 5. Modern Threaded Comment (Excel 365 / 2019+)
+        wks.cell("B8").value() = "Threaded Comment";
+        // Seamless API creates both modern threaded comment and legacy fallback!
+        wks.addComment("B8", "This is a modern threaded comment!", "Alice");
+
+        // 6. Threaded Comment Reply
+        wks.cell("D8").value() = "Thread with Reply";
+        wks.addComment("D8", "Is this report ready?", "Alice");
+        
+        auto tc = wks.threadedComments().comment("D8");
+        if (tc.valid()) {
+            std::string bobId = doc.persons().addPerson("Bob");
+            wks.threadedComments().addReply(tc.id(), bobId, "Yes, it is completed.");
+        }
+
+        doc.save();
+        doc.close();
+
+        // Note: we do NOT std::remove this file because it is for human verification.
+        REQUIRE(std::filesystem::exists(filename));
+    }
 }
