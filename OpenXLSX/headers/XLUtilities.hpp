@@ -113,7 +113,7 @@ namespace OpenXLSX
      * @param buffer Output buffer (must be at least 16 bytes)
      * @return Pointer to the buffer
      */
-    inline char* makeCellAddress(uint32_t row, uint16_t col, char* buffer) noexcept
+    __attribute__((always_inline)) inline char* makeCellAddress(uint32_t row, uint16_t col, char* buffer) noexcept
     {
         // Generate column letters
         char* p = buffer;

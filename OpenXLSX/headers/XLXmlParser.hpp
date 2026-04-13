@@ -23,7 +23,7 @@ namespace OpenXLSX
     // The C++ standard guarantees that temporary objects are destroyed as the last step in evaluating the
     // full-expression that (lexically) contains the point where they were created.
     // This makes it completely thread-safe and re-entrant without any static buffer side-effects.
-#    define NAMESPACED_NAME(name_, force_ns_) namespaced_name_shared_ptr(name_, force_ns_).get()
+#    define NAMESPACED_NAME(name_, force_ns_) namespaced_name_proxy(name_, force_ns_).c_str()
 #else
     // ===== Optimized version when no namespace support is desired - ignores force_ns_ setting
 #    define NAMESPACED_NAME(name_, force_ns_) name_
@@ -70,6 +70,16 @@ namespace OpenXLSX
 #endif
 
     // ===== Custom OpenXLSX_xml_node to add functionality to pugi::xml_node
+    
+    class NameProxy {
+        std::string m_str;
+        const pugi::char_t* m_ptr;
+    public:
+        NameProxy(const pugi::char_t* ptr) : m_ptr(ptr) {}
+        NameProxy(std::string str) : m_str(std::move(str)), m_ptr(m_str.c_str()) {}
+        const pugi::char_t* c_str() const { return m_ptr; }
+    };
+
     class OpenXLSX_xml_node : public pugi::xml_node
     {
     public:
@@ -112,7 +122,7 @@ namespace OpenXLSX
          * @param force_ns if true, will return name_ unmodified
          * @return this node's current namespace + ":" + name_ as a shared_ptr to pugi::char_t
          */
-        std::shared_ptr<pugi::char_t> namespaced_name_shared_ptr(const pugi::char_t* name_, bool force_ns) const;
+        NameProxy namespaced_name_proxy(const pugi::char_t* name_, bool force_ns) const;
 
         // ===== BEGIN: Wrappers for xml_node member functions to ensure OpenXLSX_xml_node return values
         //                and overrides for xml_node member functions to support ignoring the node namespace

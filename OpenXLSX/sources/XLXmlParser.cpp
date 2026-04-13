@@ -41,17 +41,12 @@ namespace OpenXLSX
 
     
 
-    std::shared_ptr<pugi::char_t> XMLNode::namespaced_name_shared_ptr(const pugi::char_t* name_, bool force_ns) const
+    NameProxy OpenXLSX_xml_node::namespaced_name_proxy(const pugi::char_t* name_, bool force_ns) const
     {
-        // ===== If node has no namespace: Early pass-through return with noop-deleter
-        if (!name_begin or force_ns) return std::shared_ptr<pugi::char_t>(const_cast<pugi::char_t*>(name_), [](pugi::char_t*) {});
-
-        // ===== If node has a namespace: allocate memory for concatenation and create a namespaced version of name_
-        std::shared_ptr<pugi::char_t> namespaced_name_(new pugi::char_t[name_begin + strlen(name_) + 1],
-                                                       std::default_delete<pugi::char_t[]>());
-        memcpy(namespaced_name_.get(), xml_node::name(), name_begin);    // copy the node namespace
-        strcpy(namespaced_name_.get() + name_begin, name_);              // concatenate the name_ with terminating zero
-        return namespaced_name_;
+        if (!name_begin or force_ns) return NameProxy(name_);
+        std::string namespaced_name_(xml_node::name(), name_begin);
+        namespaced_name_.append(name_);
+        return NameProxy(std::move(namespaced_name_));
     }
 
     XMLNode XMLNode::first_child_of_type(pugi::xml_node_type type_) const

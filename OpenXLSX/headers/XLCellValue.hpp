@@ -133,7 +133,7 @@ namespace OpenXLSX
                      std::is_integral_v<T> or std::is_floating_point_v<T> or std::is_same_v<std::decay_t<T>, std::string> ||
                      std::is_same_v<std::decay_t<T>, std::string_view> or std::is_same_v<std::decay_t<T>, const char*> ||
                      std::is_same_v<std::decay_t<T>, char*> or std::is_same_v<T, OpenXLSX::XLRichText> or std::is_same_v<T, XLDateTime>>>
-        XLCellValue(T value)    // NOLINT
+        XLCellValue(const T& value)    // NOLINT
         {
             // ===== If the argument is a bool, set the m_type attribute to Boolean.
             if constexpr (std::is_integral_v<T> and std::is_same_v<T, bool>) {
@@ -435,7 +435,7 @@ namespace OpenXLSX
                      std::is_same_v<std::decay_t<T>, std::string_view> or std::is_same_v<std::decay_t<T>, const char*> ||
                      std::is_same_v<std::decay_t<T>, char*> or std::is_same_v<T, XLCellValue> or std::is_same_v<T, XLDateTime> or
                      std::is_same_v<T, OpenXLSX::XLRichText>>>
-        XLCellValueProxy& operator=(T value)
+        XLCellValueProxy& operator=(const T& value)
         {    // NOLINT
 
             if constexpr (std::is_integral_v<T> and std::is_same_v<T, bool>)    // if bool
@@ -500,7 +500,7 @@ namespace OpenXLSX
                      std::is_same_v<std::decay_t<T>, std::string_view> or std::is_same_v<std::decay_t<T>, const char*> ||
                      std::is_same_v<std::decay_t<T>, char*> or std::is_same_v<T, XLCellValue> or std::is_same_v<T, XLDateTime> or
                      std::is_same_v<T, OpenXLSX::XLRichText>>>
-        void set(T value)
+        void set(const T& value)
         { *this = value; }
 
         /**
