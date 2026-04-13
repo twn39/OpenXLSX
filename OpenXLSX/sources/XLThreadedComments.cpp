@@ -3,6 +3,7 @@
 #include <random>
 #include <sstream>
 #include <iomanip>
+#include "XLWorksheet.hpp"
 
 using namespace OpenXLSX;
 
@@ -33,9 +34,17 @@ namespace {
 
 // ===== XLThreadedComment Implementation ===== //
 
-XLThreadedComment::XLThreadedComment(XMLNode node) : m_node(node) {}
+XLThreadedComment::XLThreadedComment(XMLNode node, XLWorksheet* wks) : m_node(node), m_wks(wks) {}
 
 bool XLThreadedComment::valid() const { return m_node != nullptr; }
+
+XLThreadedComment& XLThreadedComment::addReply(const std::string& text, const std::string& author)
+{
+    if (m_wks && valid()) {
+        m_wks->addReply(id(), text, author);
+    }
+    return *this;
+}
 
 std::string XLThreadedComment::ref() const
 {

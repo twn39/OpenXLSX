@@ -31,6 +31,9 @@ namespace OpenXLSX
 
     class XLCellRange;
 
+    class XLWorksheet;
+    class XLThreadedComment;
+
     /**
      * @brief An implementation class encapsulating the properties and behaviours of a spreadsheet cell.
      */
@@ -53,8 +56,9 @@ namespace OpenXLSX
          * @brief Constructs an XLCell mapped to an XML node.
          * @param cellNode The underlying XML node representing the cell.
          * @param sharedStrings Reference to the workbook's shared strings table.
+         * @param wks Pointer to the parent worksheet for fluent API support.
          */
-        XLCell(const XMLNode& cellNode, const XLSharedStrings& sharedStrings);
+        XLCell(const XMLNode& cellNode, const XLSharedStrings& sharedStrings, XLWorksheet* wks = nullptr);
 
         /**
          * @brief Copy constructor
@@ -188,6 +192,16 @@ namespace OpenXLSX
         XLCell& setStyle(const XLStyle& style);
 
         /**
+         * @brief Add a modern threaded comment (Excel 365) to this cell fluently.
+         */
+        XLThreadedComment addComment(const std::string& text, const std::string& author = "");
+
+        /**
+         * @brief Add a legacy yellow note to this cell fluently.
+         */
+        XLCell& addNote(const std::string& text, const std::string& author = "");
+
+        /**
          * @brief Print the XML contents of the XLCell using the underlying XMLNode print function
          */
         void print(std::basic_ostream<char>& ostr) const;
@@ -203,6 +217,7 @@ namespace OpenXLSX
         XLSharedStringsRef       m_sharedStrings; /**< */
         XLCellValueProxy         m_valueProxy;    /**< */
         XLFormulaProxy           m_formulaProxy;  /**< */
+        XLWorksheet*             m_wks{nullptr};  /**< Pointer to the parent worksheet for fluent capabilities. */
     };
 
     class OPENXLSX_EXPORT XLCellAssignable : public XLCell
@@ -244,6 +259,21 @@ namespace OpenXLSX
          */
         XLCellAssignable& operator=(XLCell&& other) noexcept override;
         XLCellAssignable& operator=(XLCellAssignable&& other) noexcept;
+
+        XLCellAssignable& addNote(const std::string& text, const std::string& author = "") {
+            XLCell::addNote(text, author);
+            return *this;
+        }
+
+        XLCellAssignable& setCellFormat(XLStyleIndex cellFormatIndex) {
+            XLCell::setCellFormat(cellFormatIndex);
+            return *this;
+        }
+
+        XLCellAssignable& setStyle(const XLStyle& style) {
+            XLCell::setStyle(style);
+            return *this;
+        }
 
         /**
          * @brief Templated assignment operator.

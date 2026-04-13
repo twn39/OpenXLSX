@@ -485,19 +485,19 @@ namespace OpenXLSX
          * @param text The comment text.
          * @param author The author of the comment.
          */
-        void addComment(const std::string& cellRef, const std::string& text, const std::string& author = "");
+        void addNote(const std::string& cellRef, const std::string& text, const std::string& author = "");
 
         /**
          * @brief Remove a modern threaded comment (and its replies) from a cell.
          * @param cellRef The cell reference (e.g. A1).
          */
-        void deleteThreadedComment(const std::string& cellRef);
+        void deleteComment(const std::string& cellRef);
 
         /**
          * @brief Remove a legacy comment from a cell.
          * @param cellRef The cell reference (e.g. A1).
          */
-        void deleteComment(const std::string& cellRef);
+        void deleteNote(const std::string& cellRef);
 
         /**
          * @brief Add a modern threaded comment to a cell seamlessly.
@@ -505,7 +505,7 @@ namespace OpenXLSX
          * @param text The comment text.
          * @param author The author of the comment.
          */
-        XLThreadedComment addThreadedComment(const std::string& cellRef, const std::string& text, const std::string& author = "");
+        XLThreadedComment addComment(const std::string& cellRef, const std::string& text, const std::string& author = "");
 
         /**
          * @brief Add a reply to an existing threaded comment.
@@ -513,7 +513,7 @@ namespace OpenXLSX
          * @param text The comment text.
          * @param author The author of the comment.
          */
-        XLThreadedComment addThreadedReply(const std::string& parentId, const std::string& text, const std::string& author = "");
+        XLThreadedComment addReply(const std::string& parentId, const std::string& text, const std::string& author = "");
 
         XLTableCollection& tables();
 

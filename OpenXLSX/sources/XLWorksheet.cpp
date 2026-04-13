@@ -165,7 +165,7 @@ XLCellAssignable XLWorksheet::cell(uint32_t rowNumber, uint16_t columnNumber) co
 {
     const XMLNode rowNode  = getRowNode(xmlDocument().document_element().child("sheetData"), rowNumber, &m_hintRowNumber, &m_hintRowNode);
     const XMLNode cellNode = getCellNode(rowNode, columnNumber, rowNumber, {}, &m_hintColNumber, &m_hintCellNode);
-    return XLCellAssignable(XLCell(cellNode, parentDoc().sharedStrings()));
+    return XLCellAssignable(XLCell(cellNode, parentDoc().sharedStrings(), const_cast<XLWorksheet*>(this)));
 }
 
 XLCellAssignable XLWorksheet::findCell(const std::string& ref) const { return findCell(XLCellReference(ref)); }
@@ -174,7 +174,7 @@ XLCellAssignable XLWorksheet::findCell(const XLCellReference& ref) const { retur
 XLCellAssignable XLWorksheet::findCell(uint32_t rowNumber, uint16_t columnNumber) const
 {
     return XLCellAssignable(XLCell(findCellNode(findRowNode(xmlDocument().document_element().child("sheetData"), rowNumber), columnNumber),
-                                   parentDoc().sharedStrings()));
+                                   parentDoc().sharedStrings(), const_cast<XLWorksheet*>(this)));
 }
 
 XLCellRange XLWorksheet::range() const { return range(XLCellReference("A1"), lastCell()); }
@@ -571,7 +571,7 @@ std::optional<XLCell> XLWorksheet::peekCell(uint32_t rowNumber, uint16_t columnN
 {
     XMLNode cellNode = findCellNode(findRowNode(xmlDocument().document_element().child("sheetData"), rowNumber), columnNumber);
     if (!cellNode) return std::nullopt;
-    return XLCell(cellNode, parentDoc().sharedStrings());
+    return XLCell(cellNode, parentDoc().sharedStrings(), const_cast<XLWorksheet*>(this));
 }
 
 void XLWorksheet::addSparkline(const std::string& location, const std::string& dataRange, XLSparklineType type)

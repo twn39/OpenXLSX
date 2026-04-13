@@ -42,7 +42,7 @@ namespace OpenXLSX
          * @param rowNode
          * @param sharedStrings
          */
-        XLRow(const XMLNode& rowNode, const XLSharedStrings& sharedStrings);
+        XLRow(const XMLNode& rowNode, const XLSharedStrings& sharedStrings, XLWorksheet* wks = nullptr);
 
         /**
          * @brief Copy Constructor
@@ -244,6 +244,7 @@ namespace OpenXLSX
         std::unique_ptr<XMLNode> m_rowNode;       /**< The XMLNode object for the row. */
         XLSharedStringsRef       m_sharedStrings; /**< */
         XLRowDataProxy           m_rowDataProxy;  /**< */
+        XLWorksheet*             m_wks{nullptr};  /**< Pointer to the parent worksheet. */
     };
 
     /**

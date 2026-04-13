@@ -16,7 +16,7 @@ namespace OpenXLSX
     {
     public:
         XLThreadedComment() = default;
-        explicit XLThreadedComment(XMLNode node);
+        explicit XLThreadedComment(XMLNode node, XLWorksheet* wks = nullptr);
         ~XLThreadedComment() = default;
         XLThreadedComment(const XLThreadedComment& other) = default;
         XLThreadedComment(XLThreadedComment&& other) = default;
@@ -34,9 +34,19 @@ namespace OpenXLSX
         bool isResolved() const;
         void setResolved(bool resolved);
 
+        /**
+         * @brief Add a reply to this thread (only works if initialized with Worksheet context).
+         */
+        XLThreadedComment& addReply(const std::string& text, const std::string& author = "");
+
+        void setWorksheet(XLWorksheet* wks) { m_wks = wks; }
+
     private:
         XMLNode m_node;
+        XLWorksheet* m_wks{nullptr};
     };
+
+    class XLWorksheet;
 
     /**
      * @brief A class encapsulating modern Excel threaded comments (ThreadedComments.xml)

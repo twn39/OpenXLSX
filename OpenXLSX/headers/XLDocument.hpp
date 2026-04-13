@@ -261,6 +261,16 @@ namespace OpenXLSX
         int compressionLevel() const;
 
         /**
+         * @brief Set the default author for comments and notes.
+         */
+        void setDefaultAuthor(const std::string& author);
+
+        /**
+         * @brief Get the default author for comments and notes.
+         */
+        std::string defaultAuthor() const;
+
+        /**
          * @brief Provides access to shared document styles (fonts, fills, borders, cell formats).
          */
         [[nodiscard]] XLStyles& styles();
@@ -412,6 +422,7 @@ namespace OpenXLSX
     private:
         bool        m_suppressWarnings{true};
         std::string m_filePath{};
+        std::string m_defaultAuthor{"System Admin"};
 
         XLXmlSavingDeclaration m_xmlSavingDeclaration;
 

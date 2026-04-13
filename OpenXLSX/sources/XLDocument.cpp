@@ -687,6 +687,10 @@ void XLDocument::setCompressionLevel(int level) { m_archive.setCompressionLevel(
 
 int XLDocument::compressionLevel() const { return m_archive.compressionLevel(); }
 
+void XLDocument::setDefaultAuthor(const std::string& author) { m_defaultAuthor = author; }
+
+std::string XLDocument::defaultAuthor() const { return m_defaultAuthor; }
+
 /**
  * @details Provides access to the global stylesheet manager to retrieve or define fonts, fills, borders, and number formats used across the
  * workbook.

@@ -295,23 +295,22 @@ XLChart XLWorksheet::addChart(XLChartType type, const XLChartAnchor& anchor)
     return chart;
 }
 
-void XLWorksheet::addComment(const std::string& cellRef, const std::string& text, const std::string& author)
+void XLWorksheet::addNote(const std::string& cellRef, const std::string& text, const std::string& author)
 {
-    if (!author.empty()) { comments().set(cellRef, text, author); }
-    else {
-        comments().set(cellRef, text, static_cast<uint16_t>(0));
-    }
+    std::string finalAuthor = author.empty() ? parentDoc().defaultAuthor() : author;
+    comments().set(cellRef, text, finalAuthor);
 }
 
-XLThreadedComment XLWorksheet::addThreadedComment(const std::string& cellRef, const std::string& text, const std::string& author)
+XLThreadedComment XLWorksheet::addComment(const std::string& cellRef, const std::string& text, const std::string& author)
 {
-    std::string personId = parentDoc().persons().addPerson(author);
+    std::string finalAuthor = author.empty() ? parentDoc().defaultAuthor() : author;
+    std::string personId = parentDoc().persons().addPerson(finalAuthor);
     auto tc = threadedComments().addComment(cellRef, personId, text);
     
-    // Add legacy comment for fallback and to generate the hidden VML box required by Excel.
+    // Add legacy note for fallback and to generate the hidden VML box required by Excel.
     // Excel strictly requires the legacy author name to be "tc=" + the threaded comment ID!
     std::string legacyAuthor = "tc=" + tc.id();
-    addComment(cellRef, text, legacyAuthor);
+    addNote(cellRef, text, legacyAuthor);
 
     // Inject extLst to signal Excel that threaded comments exist here
     XMLNode root = xmlDocument().document_element();
@@ -333,12 +332,14 @@ XLThreadedComment XLWorksheet::addThreadedComment(const std::string& cellRef, co
         ext.append_child("x14:threadedComments");
     }
     
-    return tc;
+    // Set the worksheet reference for fluent replies
+    tc.setWorksheet(this); return tc;
 }
 
-XLThreadedComment XLWorksheet::addThreadedReply(const std::string& parentId, const std::string& text, const std::string& author)
+XLThreadedComment XLWorksheet::addReply(const std::string& parentId, const std::string& text, const std::string& author)
 {
-    std::string personId = parentDoc().persons().addPerson(author);
+    std::string finalAuthor = author.empty() ? parentDoc().defaultAuthor() : author;
+    std::string personId = parentDoc().persons().addPerson(finalAuthor);
     auto tc = threadedComments().addReply(parentId, personId, text);
     
     // Attempt to sync the legacy comment fallback string
@@ -349,21 +350,21 @@ XLThreadedComment XLWorksheet::addThreadedReply(const std::string& parentId, con
         
         // Retain the existing 'tc=' author from the parent
         std::string parentAuthor = "tc=" + parentId;
-        addComment(refStr, fallbackText, parentAuthor);
+        addNote(refStr, fallbackText, parentAuthor);
     }
 
-    return tc;
+    tc.setWorksheet(this); return tc;
 }
 
-void XLWorksheet::deleteThreadedComment(const std::string& cellRef)
+void XLWorksheet::deleteComment(const std::string& cellRef)
 {
     if (hasThreadedComments()) {
         threadedComments().deleteComment(cellRef);
     }
-    deleteComment(cellRef); // remove the legacy hidden box
+    deleteNote(cellRef); // remove the legacy hidden box
 }
 
-void XLWorksheet::deleteComment(const std::string& cellRef)
+void XLWorksheet::deleteNote(const std::string& cellRef)
 {
     if (hasComments()) {
         comments().deleteComment(cellRef);

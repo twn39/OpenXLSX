@@ -7,6 +7,8 @@
 #include "XLCellRange.hpp"
 #include "XLDocument.hpp"
 #include "XLUtilities.hpp"
+#include "XLWorksheet.hpp"
+#include "XLThreadedComments.hpp"
 
 using namespace OpenXLSX;
 
@@ -14,7 +16,8 @@ XLCell::XLCell()
     : m_cellNode(nullptr),
       m_sharedStrings(XLSharedStringsDefaulted),
       m_valueProxy(XLCellValueProxy(this, m_cellNode.get())),
-      m_formulaProxy(XLFormulaProxy(this, m_cellNode.get()))
+      m_formulaProxy(XLFormulaProxy(this, m_cellNode.get())),
+      m_wks(nullptr)
 {}
 
 /**
@@ -23,25 +26,28 @@ XLCell::XLCell()
  * If a cell XMLNode does not exist (i.e., the cell is empty), use the relevant constructor to create an XLCell
  * from a XLCellReference parameter.
  */
-XLCell::XLCell(const XMLNode& cellNode, const XLSharedStrings& sharedStrings)
+XLCell::XLCell(const XMLNode& cellNode, const XLSharedStrings& sharedStrings, XLWorksheet* wks)
     : m_cellNode(std::make_unique<XMLNode>(cellNode)),
       m_sharedStrings(sharedStrings),
       m_valueProxy(XLCellValueProxy(this, m_cellNode.get())),
-      m_formulaProxy(XLFormulaProxy(this, m_cellNode.get()))
+      m_formulaProxy(XLFormulaProxy(this, m_cellNode.get())),
+      m_wks(wks)
 {}
 
 XLCell::XLCell(const XLCell& other)
     : m_cellNode(other.m_cellNode ? std::make_unique<XMLNode>(*other.m_cellNode) : nullptr),
       m_sharedStrings(other.m_sharedStrings),
       m_valueProxy(XLCellValueProxy(this, m_cellNode.get())),
-      m_formulaProxy(XLFormulaProxy(this, m_cellNode.get()))
+      m_formulaProxy(XLFormulaProxy(this, m_cellNode.get())),
+      m_wks(other.m_wks)
 {}
 
 XLCell::XLCell(XLCell&& other) noexcept
     : m_cellNode(std::move(other.m_cellNode)),
       m_sharedStrings(std::move(other.m_sharedStrings)),
       m_valueProxy(XLCellValueProxy(this, m_cellNode.get())),
-      m_formulaProxy(XLFormulaProxy(this, m_cellNode.get()))
+      m_formulaProxy(XLFormulaProxy(this, m_cellNode.get())),
+      m_wks(std::move(other.m_wks))
 {}
 
 XLCell::~XLCell() = default;
@@ -63,6 +69,7 @@ XLCell& XLCell::operator=(XLCell&& other) noexcept
         m_sharedStrings = std::move(other.m_sharedStrings);
         m_valueProxy    = XLCellValueProxy(this, m_cellNode.get());
         m_formulaProxy  = XLFormulaProxy(this, m_cellNode.get());    // pull request #160
+        m_wks           = std::move(other.m_wks);
     }
 
     return *this;
@@ -250,6 +257,22 @@ bool XLCell::isEqual(const XLCell& lhs, const XLCell& rhs) { return *lhs.m_cellN
 /**
  * @details Applies a high-level XLStyle object by resolving it into the underlying OpenXLSX XLStyles system.
  */
+XLCell& XLCell::addNote(const std::string& text, const std::string& author)
+{
+    if (m_wks && m_cellNode) {
+        m_wks->addNote(m_cellNode->attribute("r").value(), text, author);
+    }
+    return *this;
+}
+
+XLThreadedComment XLCell::addComment(const std::string& text, const std::string& author)
+{
+    if (m_wks && m_cellNode) {
+        return m_wks->addComment(m_cellNode->attribute("r").value(), text, author);
+    }
+    return XLThreadedComment();
+}
+
 XLCell& XLCell::setStyle(const XLStyle& style)
 {
     // Cells don't have direct access to document, but m_sharedStrings inherits from XLXmlFile which has parentDoc()

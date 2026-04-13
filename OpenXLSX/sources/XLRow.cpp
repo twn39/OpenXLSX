@@ -12,22 +12,24 @@
 
 namespace OpenXLSX
 {
-    XLRow::XLRow() : m_rowNode(nullptr), m_sharedStrings(XLSharedStringsDefaulted), m_rowDataProxy(this, m_rowNode.get()) {}
+    XLRow::XLRow() : m_rowNode(nullptr), m_sharedStrings(XLSharedStringsDefaulted), m_rowDataProxy(this, m_rowNode.get()), m_wks(nullptr) {}
 
     /**
      * @details Constructs a new XLRow object from information in the underlying XML file. A pointer to the corresponding
      * node in the underlying XML file must be provided.
      */
-    XLRow::XLRow(const XMLNode& rowNode, const XLSharedStrings& sharedStrings)
+    XLRow::XLRow(const XMLNode& rowNode, const XLSharedStrings& sharedStrings, XLWorksheet* wks)
         : m_rowNode(std::make_unique<XMLNode>(rowNode)),
           m_sharedStrings(sharedStrings),
-          m_rowDataProxy(this, m_rowNode.get())
+          m_rowDataProxy(this, m_rowNode.get()),
+          m_wks(wks)
     {}
 
     XLRow::XLRow(const XLRow& other)
         : m_rowNode(other.m_rowNode ? std::make_unique<XMLNode>(*other.m_rowNode) : nullptr),
           m_sharedStrings(other.m_sharedStrings),
-          m_rowDataProxy(this, m_rowNode.get())
+          m_rowDataProxy(this, m_rowNode.get()),
+          m_wks(other.m_wks)
     {}
 
     /**
@@ -37,7 +39,8 @@ namespace OpenXLSX
     XLRow::XLRow(XLRow&& other) noexcept
         : m_rowNode(std::move(other.m_rowNode)),
           m_sharedStrings(std::move(other.m_sharedStrings)),
-          m_rowDataProxy(this, m_rowNode.get())
+          m_rowDataProxy(this, m_rowNode.get()),
+          m_wks(std::move(other.m_wks))
     {}
 
     XLRow::~XLRow() = default;
@@ -60,6 +63,7 @@ namespace OpenXLSX
         if (&other != this) {
             m_rowNode       = std::move(other.m_rowNode);
             m_sharedStrings = std::move(other.m_sharedStrings);
+            m_wks           = std::move(other.m_wks);
             m_rowDataProxy  = XLRowDataProxy(this, m_rowNode.get());
         }
         return *this;
