@@ -298,6 +298,35 @@ TEST_CASE("XLCellValueTests", "[XLCellValue]")
         REQUIRE_THROWS(value.get<bool>());
     }
 
+    SECTION("Control Characters Corruption Resistance")
+    {
+        XLDocument doc;
+        doc.create("control_chars.xlsx", XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
+
+        // String with valid and invalid XML 1.0 characters
+        // \x09 (\t), \x0A (\n), \x0D (\r) are VALID.
+        // \x0B (vertical tab), \x01, \x1F are INVALID.
+        std::string maliciousString = "Valid \x09\x0A Invalid \x0B\x01\x1F Text";
+        std::string expectedString  = "Valid \x09\x0A Invalid  Text"; // \x0B, \x01, \x1F stripped out
+
+        wks.cell("A1").value() = maliciousString;
+
+        doc.save();
+        doc.close();
+
+        // Should successfully reopen without pugixml crash
+        doc.open("control_chars.xlsx");
+        wks = doc.workbook().worksheet("Sheet1");
+
+        // The read-back value should be exactly the sanitized string
+        std::string readBack = wks.cell("A1").value().get<std::string>();
+        REQUIRE(readBack == expectedString);
+
+        doc.close();
+        std::remove("control_chars.xlsx");
+    }
+
     SECTION("Clear")
     {
         XLCellValue value;

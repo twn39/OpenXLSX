@@ -120,6 +120,10 @@ const char* XLSharedStrings::getString(int32_t index) const
  */
 int32_t XLSharedStrings::appendString(const std::string& str) const
 {
+    if (!isCleanXmlString(str)) {
+        return appendString(sanitizeXmlString(str));
+    }
+
     Expects(m_stringCache != nullptr);
     Expects(m_stringArena != nullptr);
 
@@ -161,8 +165,14 @@ int32_t XLSharedStrings::appendString(const std::string& str) const
  * @details Get or create a string index in O(1) time. This is the optimized path for setting cell values.
  * It avoids the separate stringExists() + getStringIndex()/appendString() pattern.
  */
-int32_t XLSharedStrings::getOrCreateStringIndex(const std::string& str) const
+int32_t XLSharedStrings::getOrCreateStringIndex(std::string_view str) const
 {
+    std::string cleanStr;
+    if (!isCleanXmlString(str)) {
+        cleanStr = sanitizeXmlString(str);
+        str = cleanStr; // Point the view to the clean string
+    }
+
     if (m_mutex) {
         std::shared_lock<std::shared_mutex> lock(*m_mutex);
         if (m_stringIndex) {
@@ -182,8 +192,7 @@ int32_t XLSharedStrings::getOrCreateStringIndex(const std::string& str) const
         }
     }
 
-    // String doesn't exist, append it (which handles double-checking and unique locking)
-    return appendString(str);
+    return appendString(std::string(str));
 }
 
 /**

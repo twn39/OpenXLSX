@@ -170,7 +170,7 @@ namespace OpenXLSX
          * @return The index of the string (existing or newly added).
          * @note This is the optimized method for setting cell string values.
          */
-        int32_t getOrCreateStringIndex(const std::string& str) const;
+        int32_t getOrCreateStringIndex(std::string_view str) const;
 
         /**
          * @brief Clear the string at the given index.

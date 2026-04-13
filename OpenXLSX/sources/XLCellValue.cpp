@@ -1,5 +1,6 @@
 // ===== External Includes ===== //
 #include <cassert>
+#include <charconv>
 #include <cstring>
 #include <fast_float/fast_float.h>
 
@@ -336,7 +337,12 @@ void XLCellValueProxy::setRichText(const XLRichText& richTextValue)
 
         // Add text
         XMLNode tNode = rNode.append_child("t");
-        tNode.text().set(run.text().c_str());
+        std::string_view runText = run.text();
+        if (isCleanXmlString(runText)) {
+            tNode.text().set(run.text().c_str());
+        } else {
+            tNode.text().set(sanitizeXmlString(runText).c_str());
+        }
 
         // Handle space preservation
         if (!run.text().empty() && (run.text().front() == ' ' || run.text().back() == ' ')) {
@@ -388,8 +394,11 @@ void XLCellValueProxy::setInteger(int64_t numberValue)    // NOLINT
     // ===== The type ("t") attribute is not required for number values.
     m_cellNode->remove_attribute("t");
 
-    // ===== Set the text of the value node.
-    m_cellNode->child("v").text().set(numberValue);
+    // ===== Set the text of the value node using std::to_chars for speed.
+    char buffer[24]; // Enough for int64_t
+    auto [ptr, ec] = std::to_chars(buffer, buffer + sizeof(buffer), numberValue);
+    *ptr = '\0';
+    m_cellNode->child("v").text().set(buffer);
 
     // ===== Disable space preservation (only relevant for strings).
     m_cellNode->child("v").remove_attribute(m_cellNode->child("v").attribute("xml:space"));
@@ -420,7 +429,7 @@ void XLCellValueProxy::setBoolean(bool numberValue)    // NOLINT
     m_cellNode->attribute("t").set_value("b");
 
     // ===== Set the text of the value node.
-    m_cellNode->child("v").text().set(numberValue ? 1 : 0);
+    m_cellNode->child("v").text().set(numberValue ? "1" : "0");
 
     // ===== Disable space preservation (only relevant for strings).
     m_cellNode->child("v").remove_attribute(m_cellNode->child("v").attribute("xml:space"));
@@ -492,8 +501,11 @@ void XLCellValueProxy::setString(const char* stringValue)    // NOLINT
     // OPTIMIZED: Use getOrCreateStringIndex() for O(1) lookup instead of separate stringExists() + getStringIndex()/appendString()
     const auto index = m_cell->m_sharedStrings.get().getOrCreateStringIndex(stringValue);
 
-    // ===== Set the text of the value node.
-    m_cellNode->child("v").text().set(index);
+    // ===== Set the text of the value node using std::to_chars.
+    char buffer[16];
+    auto [ptr, ec] = std::to_chars(buffer, buffer + sizeof(buffer), index);
+    *ptr = '\0';
+    m_cellNode->child("v").text().set(buffer);
 
     // ===== Remove the is node (only relevant in case previous cell type was "inlineStr"). // pull request #188
     m_cellNode->remove_child("is");

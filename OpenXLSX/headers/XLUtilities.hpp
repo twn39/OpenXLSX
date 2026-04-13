@@ -21,6 +21,40 @@ namespace OpenXLSX
     constexpr const bool XLKeepAttributes   = false;    //
 
     /**
+     * @brief Checks if a string contains only valid XML 1.0 characters.
+     * @param sv The string view to check
+     * @return true if string is clean, false if it contains invalid control characters
+     */
+    inline bool isCleanXmlString(std::string_view sv) noexcept
+    {
+        for (char c : sv) {
+            unsigned char uc = static_cast<unsigned char>(c);
+            if (uc < 0x20 && uc != 0x09 && uc != 0x0A && uc != 0x0D) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @brief Removes invalid XML 1.0 control characters from a string to prevent file corruption.
+     * @param sv The string view to sanitize
+     * @return A new std::string containing only valid XML 1.0 characters
+     */
+    inline std::string sanitizeXmlString(std::string_view sv)
+    {
+        std::string result;
+        result.reserve(sv.size());
+        for (char c : sv) {
+            unsigned char uc = static_cast<unsigned char>(c);
+            if (uc >= 0x20 || uc == 0x09 || uc == 0x0A || uc == 0x0D) {
+                result.push_back(c);
+            }
+        }
+        return result;
+    }
+
+    /**
      * @brief Lightweight function to extract column number from a cell reference string.
      * This is a performance-optimized alternative to creating XLCellReference objects.
      * @param cellRef The cell reference string (e.g., "A1", "BC42", "XFD1048576")
