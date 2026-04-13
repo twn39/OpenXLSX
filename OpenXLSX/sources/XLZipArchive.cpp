@@ -139,9 +139,13 @@ void XLZipArchive::save(std::string_view path)
         m_archive->isModified = true;    // Mark as modified
         close();                         // Commits changes to the original file
         if (std::filesystem::exists(std::filesystem::u8path(current))) {
-            std::filesystem::copy_file(std::filesystem::u8path(current),
-                                       std::filesystem::u8path(path),
-                                       std::filesystem::copy_options::overwrite_existing);
+            try {
+                std::filesystem::copy_file(std::filesystem::u8path(current),
+                                           std::filesystem::u8path(path),
+                                           std::filesystem::copy_options::overwrite_existing);
+            } catch (const std::filesystem::filesystem_error& e) {
+                throw XLInternalError(std::string("Failed to save to new path: ") + e.what());
+            }
         }
         open(current);
     }

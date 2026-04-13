@@ -468,9 +468,13 @@ void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
         m_archive.close();
 
         // 2. Safely copy the pure, untouched original file to the new destination.
-        std::filesystem::copy_file(std::filesystem::u8path(m_filePath),
-                                   std::filesystem::u8path(fileName),
-                                   std::filesystem::copy_options::overwrite_existing);
+        try {
+            std::filesystem::copy_file(std::filesystem::u8path(m_filePath),
+                                       std::filesystem::u8path(fileName),
+                                       std::filesystem::copy_options::overwrite_existing);
+        } catch (const std::filesystem::filesystem_error& e) {
+            throw XLException(std::string("Failed to copy document to new path: ") + e.what());
+        }
 
         // 3. Re-open the archive, now pointing exclusively to the new target file.
         m_archive.open(std::string(fileName));
