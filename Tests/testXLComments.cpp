@@ -286,17 +286,14 @@ TEST_CASE("CommentsFluentandWorksheetDX", "[XLComments][Fluent]")
         // 5. Modern Threaded Comment (Excel 365 / 2019+)
         wks.cell("B8").value() = "Threaded Comment";
         // Seamless API creates both modern threaded comment and legacy fallback!
-        wks.addComment("B8", "This is a modern threaded comment!", "Alice");
+        wks.addThreadedComment("B8", "This is a modern threaded comment!", "Alice");
 
         // 6. Threaded Comment Reply
         wks.cell("D8").value() = "Thread with Reply";
-        wks.addComment("D8", "Is this report ready?", "Alice");
+        auto tcBase = wks.addThreadedComment("D8", "Is this report ready?", "Alice");
         
-        auto tc = wks.threadedComments().comment("D8");
-        if (tc.valid()) {
-            std::string bobId = doc.persons().addPerson("Bob");
-            wks.threadedComments().addReply(tc.id(), bobId, "Yes, it is completed.");
-        }
+        wks.addThreadedReply(tcBase.id(), "I am still gathering the marketing data.", "Bob");
+        wks.addThreadedReply(tcBase.id(), "Thanks Bob, waiting on your data.", "Alice");
 
         doc.save();
         doc.close();
@@ -314,30 +311,24 @@ TEST_CASE("CommentsFluentandWorksheetDX", "[XLComments][Fluent]")
 
         // Scenario 1: Simple Modern Threaded Comment
         wks.cell("B2").value() = "Review Needed";
-        wks.addComment("B2", "Please check these Q3 figures.", "Alice Manager");
+        wks.addThreadedComment("B2", "Please check these Q3 figures.", "Alice Manager");
 
         // Scenario 2: Active Discussion (Thread with multiple replies from different users)
         wks.cell("D2").value() = "Active Discussion";
-        wks.addComment("D2", "Is the final report ready for presentation?", "Alice Manager");
+        auto tcDiscussion = wks.addThreadedComment("D2", "Is the final report ready for presentation?", "Alice Manager");
         
-        auto tcDiscussion = wks.threadedComments().comment("D2");
         if (tcDiscussion.valid()) {
-            std::string bobId = doc.persons().addPerson("Bob Data");
-            std::string charlieId = doc.persons().addPerson("Charlie Sales");
-            
-            wks.threadedComments().addReply(tcDiscussion.id(), bobId, "I am still gathering the marketing data.");
-            wks.threadedComments().addReply(tcDiscussion.id(), charlieId, "Sales data has been uploaded to the shared drive.");
-            wks.threadedComments().addReply(tcDiscussion.id(), bobId, "Thanks Charlie, compiling the final slides now.");
+            wks.addThreadedReply(tcDiscussion.id(), "I am still gathering the marketing data.", "Bob Data");
+            wks.addThreadedReply(tcDiscussion.id(), "Sales data has been uploaded to the shared drive.", "Charlie Sales");
+            wks.addThreadedReply(tcDiscussion.id(), "Thanks Charlie, compiling the final slides now.", "Bob Data");
         }
 
         // Scenario 3: Resolved Threaded Comment
         wks.cell("B6").value() = "Resolved Issue";
-        wks.addComment("B6", "There is a calculation error in this cell.", "Bob Data");
+        auto tcResolved = wks.addThreadedComment("B6", "There is a calculation error in this cell.", "Bob Data");
         
-        auto tcResolved = wks.threadedComments().comment("B6");
         if (tcResolved.valid()) {
-            std::string aliceId = doc.persons().addPerson("Alice Manager");
-            wks.threadedComments().addReply(tcResolved.id(), aliceId, "Good catch. I've updated the formula.");
+            wks.addThreadedReply(tcResolved.id(), "Good catch. I've updated the formula.", "Alice Manager");
             
             // Mark the entire thread as resolved (Supported in Excel 365+)
             tcResolved.setResolved(true);
