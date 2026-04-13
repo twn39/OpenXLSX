@@ -256,7 +256,7 @@ endif()
 
 if(OPENXLSX_BUILD_BENCHMARKS)
     add_executable(OpenXLSXBenchmark Benchmarks/Benchmark.cpp)
-    target_link_libraries(OpenXLSXBenchmark PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2)
+    target_link_libraries(OpenXLSXBenchmark PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
     if(OPENXLSX_ENABLE_LTO)
         set_property(TARGET OpenXLSXBenchmark PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
     endif()

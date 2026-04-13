@@ -1,6 +1,7 @@
 // ===== External Includes ===== //
 #include <cassert>
 #include <charconv>
+#include <system_error>
 #include <cstring>
 #include <fast_float/fast_float.h>
 
@@ -395,10 +396,14 @@ void XLCellValueProxy::setInteger(int64_t numberValue)    // NOLINT
     m_cellNode->remove_attribute("t");
 
     // ===== Set the text of the value node using std::to_chars for speed.
-    char buffer[24]; // Enough for int64_t
-    auto [ptr, ec] = std::to_chars(buffer, buffer + sizeof(buffer), numberValue);
-    *ptr = '\0';
-    m_cellNode->child("v").text().set(buffer);
+    char buffer[32]; // Enough for int64_t
+    auto res = std::to_chars(buffer, buffer + sizeof(buffer) - 1, numberValue);
+    if (res.ec == std::errc()) {
+        *res.ptr = '\0';
+        m_cellNode->child("v").text().set(buffer);
+    } else {
+        m_cellNode->child("v").text().set(std::to_string(numberValue).c_str());
+    }
 
     // ===== Disable space preservation (only relevant for strings).
     m_cellNode->child("v").remove_attribute(m_cellNode->child("v").attribute("xml:space"));
@@ -502,10 +507,14 @@ void XLCellValueProxy::setString(const char* stringValue)    // NOLINT
     const auto index = m_cell->m_sharedStrings.get().getOrCreateStringIndex(stringValue);
 
     // ===== Set the text of the value node using std::to_chars.
-    char buffer[16];
-    auto [ptr, ec] = std::to_chars(buffer, buffer + sizeof(buffer), index);
-    *ptr = '\0';
-    m_cellNode->child("v").text().set(buffer);
+    char buffer[32];
+    auto res = std::to_chars(buffer, buffer + sizeof(buffer) - 1, index);
+    if (res.ec == std::errc()) {
+        *res.ptr = '\0';
+        m_cellNode->child("v").text().set(buffer);
+    } else {
+        m_cellNode->child("v").text().set(std::to_string(index).c_str());
+    }
 
     // ===== Remove the is node (only relevant in case previous cell type was "inlineStr"). // pull request #188
     m_cellNode->remove_child("is");
