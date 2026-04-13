@@ -9,6 +9,7 @@
 
 namespace OpenXLSX
 {
+    class XLWorksheet;
     /**
      * @brief A proxy class encapsulating a single modern threaded comment.
      */

@@ -21,6 +21,8 @@
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
 #include "XLCellValue.hpp"
+#include "XLCellReference.hpp"
+
 
 // Forward declare XLWorksheet so callers can use makeResolver without pulling the full header.
 namespace OpenXLSX
