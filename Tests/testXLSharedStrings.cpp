@@ -5,32 +5,32 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLSharedStrings_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("SharedStrings_Cache_Test_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLSharedStrings_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLSharedStrings_mem_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_2() {
+inline const std::string& __global_unique_testXLSharedStrings_2() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLSharedStringsLarge_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_3() {
+inline const std::string& __global_unique_testXLSharedStrings_3() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLSharedStrings_lazy_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_4() {
+inline const std::string& __global_unique_testXLSharedStrings_4() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLSharedStrings_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_5() {
+inline const std::string& __global_unique_testXLSharedStrings_5() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLSharedStrings_reserve_xlsx") + ".xlsx";
     return name;
 }
@@ -42,7 +42,7 @@ TEST_CASE("XLSharedStringsTests", "[XLSharedStrings]")
     SECTION("Basic String Operations")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_4(), XLForceOverwrite);
+        doc.create(__global_unique_testXLSharedStrings_4(), XLForceOverwrite);
 
         // Shared strings are managed via the document but can be accessed
         auto& ss = doc.sharedStrings();
@@ -74,7 +74,7 @@ TEST_CASE("XLSharedStringsTests", "[XLSharedStrings]")
     SECTION("Large number of strings")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_2(), XLForceOverwrite);
+        doc.create(__global_unique_testXLSharedStrings_2(), XLForceOverwrite);
         auto&   ss           = doc.sharedStrings();
         int32_t initialCount = ss.stringCount();
 
@@ -90,7 +90,7 @@ TEST_CASE("XLSharedStringsTests", "[XLSharedStrings]")
 TEST_CASE("SharedStringsIndexCacheCoherency", "[SharedStrings][Bugfix]")
 {
     XLDocument doc;
-    doc.create(__global_unique_file_0(), XLForceOverwrite);
+    doc.create(__global_unique_testXLSharedStrings_0(), XLForceOverwrite);
     auto wks               = doc.workbook().worksheet("Sheet1");
     wks.cell("A1").value() = "Hello World";
     auto    ss             = doc.sharedStrings();
@@ -109,7 +109,7 @@ TEST_CASE("SharedStringsLazyDOMandReservation", "[XLSharedStrings]")
     SECTION("reserveStrings pre-allocates capacity")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_5(), XLForceOverwrite);
+        doc.create(__global_unique_testXLSharedStrings_5(), XLForceOverwrite);
         auto& ss = doc.sharedStrings();
 
         constexpr int kCount = 1000;
@@ -127,7 +127,7 @@ TEST_CASE("SharedStringsLazyDOMandReservation", "[XLSharedStrings]")
     SECTION("memoryUsageBytes returns non-zero value after strings are added")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_1(), XLForceOverwrite);
+        doc.create(__global_unique_testXLSharedStrings_1(), XLForceOverwrite);
         auto& ss = doc.sharedStrings();
 
         ss.getOrCreateStringIndex("alpha");
@@ -144,7 +144,7 @@ TEST_CASE("SharedStringsLazyDOMandReservation", "[XLSharedStrings]")
         // shared strings XML file.
         {
             XLDocument doc;
-            doc.create(__global_unique_file_3(), XLForceOverwrite);
+            doc.create(__global_unique_testXLSharedStrings_3(), XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
 
             // Write strings via the cell API (goes through appendString/lazy DOM)
@@ -156,7 +156,7 @@ TEST_CASE("SharedStringsLazyDOMandReservation", "[XLSharedStrings]")
 
         // Reopen and verify every string is correctly preserved
         XLDocument doc;
-        doc.open(__global_unique_file_3());
+        doc.open(__global_unique_testXLSharedStrings_3());
         auto wks = doc.workbook().worksheet("Sheet1");
 
         for (uint16_t i = 0; i < 50; ++i) {

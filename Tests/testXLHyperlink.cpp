@@ -6,17 +6,17 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLHyperlink_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testHyperlinkCRUD_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLHyperlink_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testInternalLink_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_2() {
+inline const std::string& __global_unique_testXLHyperlink_2() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testHyperlink_xlsx") + ".xlsx";
     return name;
 }
@@ -28,7 +28,7 @@ TEST_CASE("XLWorksheetHyperlinkSupport", "[XLWorksheet]")
     SECTION("Add External Hyperlink")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_2(), XLForceOverwrite);
+        doc.create(__global_unique_testXLHyperlink_2(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.cell("A1").value() = "Google";
@@ -39,7 +39,7 @@ TEST_CASE("XLWorksheetHyperlinkSupport", "[XLWorksheet]")
 
         // Verification
         XLDocument doc2;
-        doc2.open(__global_unique_file_2());
+        doc2.open(__global_unique_testXLHyperlink_2());
         auto wks2 = doc2.workbook().worksheet("Sheet1");
 
         pugi::xml_document sheetDoc;
@@ -58,7 +58,7 @@ TEST_CASE("XLWorksheetHyperlinkSupport", "[XLWorksheet]")
     SECTION("Add Internal Hyperlink")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_1(), XLForceOverwrite);
+        doc.create(__global_unique_testXLHyperlink_1(), XLForceOverwrite);
         doc.workbook().addWorksheet("TargetSheet");
         auto wks = doc.workbook().worksheet("Sheet1");
 
@@ -70,7 +70,7 @@ TEST_CASE("XLWorksheetHyperlinkSupport", "[XLWorksheet]")
 
         // Verification
         XLDocument doc2;
-        doc2.open(__global_unique_file_1());
+        doc2.open(__global_unique_testXLHyperlink_1());
         auto wks2 = doc2.workbook().worksheet("Sheet1");
 
         pugi::xml_document sheetDoc;
@@ -85,7 +85,7 @@ TEST_CASE("XLWorksheetHyperlinkSupport", "[XLWorksheet]")
     SECTION("Hyperlink CRUD Operations")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLHyperlink_0(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         // 1. Initial state

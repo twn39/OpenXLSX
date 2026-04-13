@@ -6,12 +6,12 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLConditionalFormattingFinal_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("CF_OOXML_Validation_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLConditionalFormattingFinal_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("CF_Advanced_Deletion_xlsx") + ".xlsx";
     return name;
 }
@@ -21,7 +21,7 @@ inline const std::string& __global_unique_file_1() {
 TEST_CASE("ConditionalFormattingOOXMLStructureValidation", "[ConditionalFormatting][OOXML]")
 {
     XLDocument doc;
-    doc.create(__global_unique_file_0(), XLForceOverwrite);
+    doc.create(__global_unique_testXLConditionalFormattingFinal_0(), XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     // 1. Color Scale Rule
@@ -87,7 +87,7 @@ TEST_CASE("ConditionalFormattingOOXMLStructureValidation", "[ConditionalFormatti
 TEST_CASE("ConditionalFormattingAdvancedRulesandDeletion", "[ConditionalFormatting][OOXML]")
 {
     XLDocument doc;
-    doc.create(__global_unique_file_1(), XLForceOverwrite);
+    doc.create(__global_unique_testXLConditionalFormattingFinal_1(), XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     wks.addConditionalFormatting("A1:A10", XLIconSetRule("3Arrows"));

@@ -5,17 +5,17 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLColumn_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLColumnCreation_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLColumn_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLColumn_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_2() {
+inline const std::string& __global_unique_testXLColumn_2() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLColumnByName_xlsx") + ".xlsx";
     return name;
 }
@@ -27,7 +27,7 @@ TEST_CASE("XLColumnTests", "[XLColumn]")
     SECTION("Basic Column Operations")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_1(), XLForceOverwrite);
+        doc.create(__global_unique_testXLColumn_1(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto col1 = wks.column(1);
@@ -51,7 +51,7 @@ TEST_CASE("XLColumnTests", "[XLColumn]")
     SECTION("Column Access by Name")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_2(), XLForceOverwrite);
+        doc.create(__global_unique_testXLColumn_2(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto colB = wks.column("B");
@@ -64,7 +64,7 @@ TEST_CASE("XLColumnTests", "[XLColumn]")
     SECTION("Automatic Column Node Creation")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLColumn_0(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         // Column 10 doesn't exist yet

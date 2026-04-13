@@ -5,7 +5,7 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_fluent() {
+inline const std::string& __global_unique_testXLFluentAPI_fluent() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("test_fluent") + ".xlsx";
     return name;
 }
@@ -16,7 +16,7 @@ TEST_CASE("Fluent API and Object-Oriented Comments", "[Fluent][DX]")
     SECTION("Chaining Value and Notes on XLCell")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_fluent(), XLForceOverwrite);
+        doc.create(__global_unique_testXLFluentAPI_fluent(), XLForceOverwrite);
         
         // 1. Redundant Author Removal
         doc.setDefaultAuthor("System Manager");
@@ -39,7 +39,7 @@ TEST_CASE("Fluent API and Object-Oriented Comments", "[Fluent][DX]")
         doc.close();
 
         // Verification
-        doc.open(__global_unique_file_fluent());
+        doc.open(__global_unique_testXLFluentAPI_fluent());
         wks = doc.workbook().worksheet("Sheet1");
 
         // Verify Legacy Note
@@ -58,6 +58,6 @@ TEST_CASE("Fluent API and Object-Oriented Comments", "[Fluent][DX]")
         REQUIRE(replies[1].text() == "Got it, waiting for the upload.");
 
         doc.close();
-        std::remove(__global_unique_file_fluent().c_str());
+        std::remove(__global_unique_testXLFluentAPI_fluent().c_str());
     }
 }

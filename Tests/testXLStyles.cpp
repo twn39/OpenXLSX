@@ -6,52 +6,52 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLStyles_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLStylesFills_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLStyles_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLStylesDiffCellFormats_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_2() {
+inline const std::string& __global_unique_testXLStyles_2() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLStylesBorders_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_3() {
+inline const std::string& __global_unique_testXLStyles_3() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLStylesCustomNumFmt_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_4() {
+inline const std::string& __global_unique_testXLStyles_4() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLStylesFacadeDedup_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_5() {
+inline const std::string& __global_unique_testXLStyles_5() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLStylesCellStyles_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_6() {
+inline const std::string& __global_unique_testXLStyles_6() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLStylesNumFmt_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_7() {
+inline const std::string& __global_unique_testXLStyles_7() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLStylesDedup_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_8() {
+inline const std::string& __global_unique_testXLStyles_8() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLStylesXf_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_9() {
+inline const std::string& __global_unique_testXLStyles_9() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLStylesFonts_xlsx") + ".xlsx";
     return name;
 }
@@ -63,7 +63,7 @@ TEST_CASE("XLStylesTests", "[XLStyles]")
     SECTION("Number Formats")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_6(), XLForceOverwrite);
+        doc.create(__global_unique_testXLStyles_6(), XLForceOverwrite);
         auto styles = doc.styles();
 
         auto   numFmts      = styles.numberFormats();
@@ -84,7 +84,7 @@ TEST_CASE("XLStylesTests", "[XLStyles]")
     SECTION("Custom Number Formats")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_3(), XLForceOverwrite);
+        doc.create(__global_unique_testXLStyles_3(), XLForceOverwrite);
         auto styles = doc.styles();
 
         size_t initialCount = styles.numberFormats().count();
@@ -108,17 +108,17 @@ TEST_CASE("XLStylesTests", "[XLStyles]")
 
         // Open it again to verify persistence
         XLDocument doc2;
-        doc2.open(__global_unique_file_3());
+        doc2.open(__global_unique_testXLStyles_3());
         REQUIRE(doc2.styles().numberFormats().count() == initialCount + 2);
         doc2.close();
 
-        std::filesystem::remove(__global_unique_file_3());
+        std::filesystem::remove(__global_unique_testXLStyles_3());
     }
 
     SECTION("Fonts")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_9(), XLForceOverwrite);
+        doc.create(__global_unique_testXLStyles_9(), XLForceOverwrite);
         auto styles = doc.styles();
         auto fonts  = styles.fonts();
 
@@ -145,7 +145,7 @@ TEST_CASE("XLStylesTests", "[XLStyles]")
     SECTION("Fills")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLStyles_0(), XLForceOverwrite);
         auto styles = doc.styles();
         auto fills  = styles.fills();
 
@@ -166,7 +166,7 @@ TEST_CASE("XLStylesTests", "[XLStyles]")
     SECTION("Borders")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_2(), XLForceOverwrite);
+        doc.create(__global_unique_testXLStyles_2(), XLForceOverwrite);
         auto styles  = doc.styles();
         auto borders = styles.borders();
 
@@ -190,7 +190,7 @@ TEST_CASE("XLStylesTests", "[XLStyles]")
     SECTION("Cell Formats (Xf) & Alignment")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_8(), XLForceOverwrite);
+        doc.create(__global_unique_testXLStyles_8(), XLForceOverwrite);
         auto styles = doc.styles();
 
         auto   cellFormats = styles.cellFormats();
@@ -223,7 +223,7 @@ TEST_CASE("XLStylesTests", "[XLStyles]")
     SECTION("Cell Styles")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_5(), XLForceOverwrite);
+        doc.create(__global_unique_testXLStyles_5(), XLForceOverwrite);
         auto styles = doc.styles();
 
         auto   cellStyles   = styles.cellStyles();
@@ -248,13 +248,13 @@ TEST_CASE("XLStylesTests", "[XLStyles]")
         REQUIRE(cellStyle.customBuiltin() == true);
 
         doc.close();
-        std::filesystem::remove(__global_unique_file_5());
+        std::filesystem::remove(__global_unique_testXLStyles_5());
     }
 
     SECTION("Diff Cell Formats")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_1(), XLForceOverwrite);
+        doc.create(__global_unique_testXLStyles_1(), XLForceOverwrite);
         auto styles = doc.styles();
 
         auto   diffCellFormats = styles.diffCellFormats();
@@ -278,13 +278,13 @@ TEST_CASE("XLStylesTests", "[XLStyles]")
         REQUIRE(diffCellFormat.fill().backgroundColor().hex() == "FF00FF00");
 
         doc.close();
-        std::filesystem::remove(__global_unique_file_1());
+        std::filesystem::remove(__global_unique_testXLStyles_1());
     }
 
     SECTION("Style Deduplication - findOrCreate on sub-pools")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_7(), XLForceOverwrite);
+        doc.create(__global_unique_testXLStyles_7(), XLForceOverwrite);
         auto  styles   = doc.styles();
         auto& fontsRef = styles.fonts();
 
@@ -313,13 +313,13 @@ TEST_CASE("XLStylesTests", "[XLStyles]")
         REQUIRE(cellFmts.count() == xfA + 1);    // pool size is stable
 
         doc.close();
-        std::filesystem::remove(__global_unique_file_7());
+        std::filesystem::remove(__global_unique_testXLStyles_7());
     }
 
     SECTION("Style Deduplication - findOrCreateStyle facade")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_4(), XLForceOverwrite);
+        doc.create(__global_unique_testXLStyles_4(), XLForceOverwrite);
         auto styles = doc.styles();
 
         XLStyle s;
@@ -343,6 +343,6 @@ TEST_CASE("XLStylesTests", "[XLStyles]")
 
         doc.save();
         doc.close();
-        std::filesystem::remove(__global_unique_file_4());
+        std::filesystem::remove(__global_unique_testXLStyles_4());
     }
 }

@@ -5,27 +5,27 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLComments_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLCommentsRichText_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLComments_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLComments_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_2() {
+inline const std::string& __global_unique_testXLComments_2() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLCommentsOptimizations_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_3() {
+inline const std::string& __global_unique_testXLComments_3() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLCommentsShapes_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_4() {
+inline const std::string& __global_unique_testXLComments_4() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLCommentsMultiple_xlsx") + ".xlsx";
     return name;
 }
@@ -64,7 +64,7 @@ TEST_CASE("XLCommentsTests", "[XLComments]")
     SECTION("Basic Comment Operations")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_1(), XLForceOverwrite);
+        doc.create(__global_unique_testXLComments_1(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         REQUIRE(wks.hasComments() == false);
@@ -90,7 +90,7 @@ TEST_CASE("XLCommentsTests", "[XLComments]")
     SECTION("Multiple Authors and Comments")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_4(), XLForceOverwrite);
+        doc.create(__global_unique_testXLComments_4(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto&    comments = wks.comments();
@@ -113,7 +113,7 @@ TEST_CASE("XLCommentsTests", "[XLComments]")
     SECTION("Comment Shape Properties")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_3(), XLForceOverwrite);
+        doc.create(__global_unique_testXLComments_3(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.comments().set("D4", "Shape test");
@@ -131,7 +131,7 @@ TEST_CASE("XLCommentsTests", "[XLComments]")
     SECTION("Rich Text Comment Operations")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLComments_0(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         XLRichText    rt;
@@ -162,7 +162,7 @@ TEST_CASE("XLCommentsTests", "[XLComments]")
 
         // Re-open and verify formatting
         XLDocument doc2;
-        doc2.open(__global_unique_file_0());
+        doc2.open(__global_unique_testXLComments_0());
         auto wks2 = doc2.workbook().worksheet("Sheet1");
 
         auto rt2 = wks2.comments().get(0).richText();
@@ -178,7 +178,7 @@ TEST_CASE("XLCommentsTests", "[XLComments]")
     SECTION("Optimized Comments Overloads, Deduplication and Custom Size")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_2(), XLForceOverwrite);
+        doc.create(__global_unique_testXLComments_2(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         // 1. Author Deduplication Test

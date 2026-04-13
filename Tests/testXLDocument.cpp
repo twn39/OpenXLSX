@@ -6,12 +6,12 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLDocument_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("TestDocumentCreationNew_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLDocument_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("testXLDocument_xlsx") + ".xlsx";
     return name;
 }

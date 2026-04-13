@@ -6,12 +6,12 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLCellRange_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLCellRange_bulk_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLCellRange_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLCellRange_xlsx") + ".xlsx";
     return name;
 }
@@ -21,7 +21,7 @@ inline const std::string& __global_unique_file_1() {
 TEST_CASE("XLCellRangeTests", "[XLCellRange]")
 {
     XLDocument doc;
-    doc.create(__global_unique_file_1(), XLForceOverwrite);
+    doc.create(__global_unique_testXLCellRange_1(), XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     SECTION("Constructor")
@@ -231,7 +231,7 @@ TEST_CASE("XLCellRangeTests", "[XLCellRange]")
 TEST_CASE("XLCellRangeBulkOperations", "[XLCellRange]")
 {
     XLDocument doc;
-    doc.create(__global_unique_file_0(), XLForceOverwrite);
+    doc.create(__global_unique_testXLCellRange_0(), XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     auto range = wks.range("B2:D4");
@@ -265,7 +265,7 @@ TEST_CASE("XLCellRangeBulkOperations", "[XLCellRange]")
 
     // Reopen and verify
     XLDocument doc2;
-    doc2.open(__global_unique_file_0());
+    doc2.open(__global_unique_testXLCellRange_0());
     auto  wks2   = doc2.workbook().worksheet("Sheet1");
     auto& styles = doc2.styles();
 

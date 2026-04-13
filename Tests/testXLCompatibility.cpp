@@ -9,7 +9,7 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLCompatibility_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("excelize_generated_xlsx") + ".xlsx";
     return name;
 }

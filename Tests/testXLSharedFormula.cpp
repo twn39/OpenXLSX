@@ -7,7 +7,7 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLSharedFormula_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__TrickyFormulaTest_xlsx") + ".xlsx";
     return name;
 }
@@ -19,7 +19,7 @@ TEST_CASE("SharedFormulaLexerTest", "[XLFormula]")
     SECTION("Tricky string tokenization")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLSharedFormula_0(), XLForceOverwrite);
 
         doc.workbook().addWorksheet("My Sheet");
         auto wks = doc.workbook().worksheet("Sheet1");
@@ -34,7 +34,7 @@ TEST_CASE("SharedFormulaLexerTest", "[XLFormula]")
         doc.save();
 
         XLDocument doc2;
-        doc2.open(__global_unique_file_0());
+        doc2.open(__global_unique_testXLSharedFormula_0());
         auto wks2 = doc2.workbook().worksheet("Sheet1");
 
         // Validate the formulas remain uncorrupted upon retrieval

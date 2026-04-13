@@ -6,7 +6,7 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLCell_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLCell_xlsx") + ".xlsx";
     return name;
 }
@@ -36,7 +36,7 @@ TEST_CASE("XLCellTests", "[XLCell]")
     SECTION("Create from worksheet")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCell_0(), XLForceOverwrite);
         XLWorksheet wks  = doc.workbook().sheet(1);
         auto        cell = wks.cell("A1");
         cell.value()     = 42;
@@ -50,7 +50,7 @@ TEST_CASE("XLCellTests", "[XLCell]")
     SECTION("Copy constructor")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCell_0(), XLForceOverwrite);
         XLWorksheet wks  = doc.workbook().sheet(1);
         auto        cell = wks.cell("A1");
         cell.value()     = 42;
@@ -66,7 +66,7 @@ TEST_CASE("XLCellTests", "[XLCell]")
     SECTION("Move constructor")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCell_0(), XLForceOverwrite);
         XLWorksheet wks  = doc.workbook().sheet(1);
         auto        cell = wks.cell("A1");
         cell.value()     = 42;
@@ -82,7 +82,7 @@ TEST_CASE("XLCellTests", "[XLCell]")
     SECTION("Copy assignment operator")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCell_0(), XLForceOverwrite);
         XLWorksheet wks  = doc.workbook().sheet(1);
         auto        cell = wks.cell("A1");
         cell.value()     = 42;
@@ -99,7 +99,7 @@ TEST_CASE("XLCellTests", "[XLCell]")
     SECTION("Move assignment operator")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCell_0(), XLForceOverwrite);
         XLWorksheet wks  = doc.workbook().sheet(1);
         auto        cell = wks.cell("A1");
         cell.value()     = 42;
@@ -116,7 +116,7 @@ TEST_CASE("XLCellTests", "[XLCell]")
     SECTION("Setters and Getters")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCell_0(), XLForceOverwrite);
         XLWorksheet wks  = doc.workbook().sheet(1);
         auto        cell = wks.cell("A1");
         cell.formula().set("=1+1");
@@ -135,7 +135,7 @@ TEST_CASE("XLCellTests", "[XLCell]")
     SECTION("Relational operators")
     {
         auto doc = XLDocument();
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCell_0(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto cell1 = wks.cell("B2");
@@ -151,7 +151,7 @@ TEST_CASE("XLCellTests", "[XLCell]")
     SECTION("Offset function")
     {
         auto doc = XLDocument();
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCell_0(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         auto cell1    = wks.cell("B2");

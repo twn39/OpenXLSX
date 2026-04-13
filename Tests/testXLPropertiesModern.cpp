@@ -6,17 +6,17 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLPropertiesModern_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("AppPropertiesTest_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLPropertiesModern_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("PropertiesTest_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_2() {
+inline const std::string& __global_unique_testXLPropertiesModern_2() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("CustomPropertiesTest_xlsx") + ".xlsx";
     return name;
 }
@@ -28,7 +28,7 @@ TEST_CASE("ModernXLPropertiesTests", "[XLProperties]")
     SECTION("Core Properties Getters/Setters")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_1(), XLForceOverwrite);
+        doc.create(__global_unique_testXLPropertiesModern_1(), XLForceOverwrite);
         auto& props = doc.coreProperties();
 
         props.setTitle("Test Title");
@@ -67,7 +67,7 @@ TEST_CASE("ModernXLPropertiesTests", "[XLProperties]")
     SECTION("Custom Properties with XLDateTime")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_2(), XLForceOverwrite);
+        doc.create(__global_unique_testXLPropertiesModern_2(), XLForceOverwrite);
         auto& customProps = doc.customProperties();
 
         customProps.setProperty("StringProp", "Hello");
@@ -91,7 +91,7 @@ TEST_CASE("ModernXLPropertiesTests", "[XLProperties]")
     SECTION("App Properties Modern Defaults")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLPropertiesModern_0(), XLForceOverwrite);
         auto& appProps = doc.appProperties();
 
         // The template has its own defaults. Let's set ours and verify.

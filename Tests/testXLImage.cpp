@@ -7,7 +7,7 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLImage_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testImage_xlsx") + ".xlsx";
     return name;
 }
@@ -27,7 +27,7 @@ TEST_CASE("XLImageTests", "[XLImage]")
     SECTION("Add and read images")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLImage_0(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         std::string imgData = readBinaryFile("./Tests/test.png");
@@ -45,7 +45,7 @@ TEST_CASE("XLImageTests", "[XLImage]")
 
         // Re-open and verify
         XLDocument doc2;
-        doc2.open(__global_unique_file_0());
+        doc2.open(__global_unique_testXLImage_0());
         auto wks2 = doc2.workbook().worksheet("Sheet1");
 
         auto imgs = wks2.images();

@@ -8,12 +8,12 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLSlicer_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__TableSlicerFullTest_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLSlicer_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__TableSlicerFullTest_SaveAs_xlsx") + ".xlsx";
     return name;
 }
@@ -24,7 +24,7 @@ TEST_CASE("TableSlicerAPIandOOXMLValidation", "[XLSlicer]")
 {
     // 1. Create a document with a table and two slicers
     XLDocument doc;
-    doc.create(__global_unique_file_0(), XLForceOverwrite);
+    doc.create(__global_unique_testXLSlicer_0(), XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     wks.cell("A1").value() = "Region";
@@ -56,7 +56,7 @@ TEST_CASE("TableSlicerAPIandOOXMLValidation", "[XLSlicer]")
 
     // 2. Functional Reload and Relationship Verification
     XLDocument doc2;
-    doc2.open(__global_unique_file_0());
+    doc2.open(__global_unique_testXLSlicer_0());
     auto wks2 = doc2.workbook().worksheet("Sheet1");
 
     // Verify worksheet has drawing (since slicers are injected into drawings)
@@ -138,10 +138,10 @@ TEST_CASE("TableSlicerAPIandOOXMLValidation", "[XLSlicer]")
     REQUIRE(cacheRefCount == 2);
 
     // 4. Double Save to ensure memory stream doesn't break dependencies
-    doc2.saveAs(__global_unique_file_1(), XLForceOverwrite);
+    doc2.saveAs(__global_unique_testXLSlicer_1(), XLForceOverwrite);
     doc2.close();
     XLDocument doc3;
-    doc3.open(__global_unique_file_1());
+    doc3.open(__global_unique_testXLSlicer_1());
     REQUIRE(doc3.workbook().worksheet("Sheet1").hasDrawing() == true);
 
     // Ensure table parsing still works

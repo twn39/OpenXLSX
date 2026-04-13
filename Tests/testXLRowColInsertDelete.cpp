@@ -6,62 +6,62 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLRowColInsertDelete_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testInsDelRow_formulaInsert_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLRowColInsertDelete_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testInsDelRow_multiInsert_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_2() {
+inline const std::string& __global_unique_testXLRowColInsertDelete_2() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testInsDelCol_basic_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_3() {
+inline const std::string& __global_unique_testXLRowColInsertDelete_3() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testInsDelRow_merge_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_4() {
+inline const std::string& __global_unique_testXLRowColInsertDelete_4() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testInsDelRow_mergeEdgeCases_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_5() {
+inline const std::string& __global_unique_testXLRowColInsertDelete_5() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testInsDelCol_insert_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_6() {
+inline const std::string& __global_unique_testXLRowColInsertDelete_6() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testInsDelRow_mergeInsert_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_7() {
+inline const std::string& __global_unique_testXLRowColInsertDelete_7() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testInsDelRow_formula_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_8() {
+inline const std::string& __global_unique_testXLRowColInsertDelete_8() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testInsDelCol_formula_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_9() {
+inline const std::string& __global_unique_testXLRowColInsertDelete_9() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testInsDelRow_multi_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_10() {
+inline const std::string& __global_unique_testXLRowColInsertDelete_10() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testInsDelRow_basic_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_11() {
+inline const std::string& __global_unique_testXLRowColInsertDelete_11() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testInsDelRow_insert_xlsx") + ".xlsx";
     return name;
 }
@@ -77,7 +77,7 @@ TEST_CASE("XLRowColInsertDeleteTests", "[XLRowColInsertDelete]")
     SECTION("deleteRow basic — subsequent rows shift up")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_10(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRowColInsertDelete_10(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.cell("A1").value() = "Row1";
@@ -99,7 +99,7 @@ TEST_CASE("XLRowColInsertDeleteTests", "[XLRowColInsertDelete]")
     SECTION("insertRow basic — existing rows shift down")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_11(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRowColInsertDelete_11(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.cell("A1").value() = "Row1";
@@ -120,7 +120,7 @@ TEST_CASE("XLRowColInsertDeleteTests", "[XLRowColInsertDelete]")
     SECTION("deleteRow multi-count — removes multiple rows and shifts")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_9(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRowColInsertDelete_9(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         for (int i = 1; i <= 5; ++i) wks.cell(static_cast<uint32_t>(i), 1).value() = i * 10;
@@ -139,7 +139,7 @@ TEST_CASE("XLRowColInsertDeleteTests", "[XLRowColInsertDelete]")
     SECTION("insertRow multi-count — inserts multiple empty rows")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_1(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRowColInsertDelete_1(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.cell("A1").value() = 100;
@@ -160,7 +160,7 @@ TEST_CASE("XLRowColInsertDeleteTests", "[XLRowColInsertDelete]")
     SECTION("deleteRow updates formulas in cells below")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_7(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRowColInsertDelete_7(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.cell("A1").value()   = 1;
@@ -183,7 +183,7 @@ TEST_CASE("XLRowColInsertDeleteTests", "[XLRowColInsertDelete]")
     SECTION("insertRow updates formula references")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRowColInsertDelete_0(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.cell("A1").value()   = 10;
@@ -205,7 +205,7 @@ TEST_CASE("XLRowColInsertDeleteTests", "[XLRowColInsertDelete]")
     SECTION("deleteRow updates mergeCells below")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_3(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRowColInsertDelete_3(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         // Merge in row 1 (above delete) — should be unchanged
@@ -225,7 +225,7 @@ TEST_CASE("XLRowColInsertDeleteTests", "[XLRowColInsertDelete]")
     SECTION("deleteRow edge cases: collapsing and destruction of mergeCells")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_4(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRowColInsertDelete_4(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         // 1. Merge cell that will be partially deleted (shrink/collapse)
@@ -263,7 +263,7 @@ TEST_CASE("XLRowColInsertDeleteTests", "[XLRowColInsertDelete]")
     SECTION("insertRow updates mergeCells at/below insertion point")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_6(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRowColInsertDelete_6(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.mergeCells("A1:B1");    // above insertion point — should not move
@@ -284,7 +284,7 @@ TEST_CASE("XLRowColInsertDeleteTests", "[XLRowColInsertDelete]")
     SECTION("deleteColumn basic — subsequent columns shift left")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_2(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRowColInsertDelete_2(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.cell("A1").value() = "ColA";
@@ -306,7 +306,7 @@ TEST_CASE("XLRowColInsertDeleteTests", "[XLRowColInsertDelete]")
     SECTION("insertColumn basic — existing columns shift right")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_5(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRowColInsertDelete_5(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.cell("A1").value() = "ColA";
@@ -327,7 +327,7 @@ TEST_CASE("XLRowColInsertDeleteTests", "[XLRowColInsertDelete]")
     SECTION("deleteColumn updates formulas")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_8(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRowColInsertDelete_8(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.cell("A1").value()   = 1;

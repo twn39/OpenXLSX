@@ -6,7 +6,7 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLCellValueProxy_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLCellValueProxy_xlsx") + ".xlsx";
     return name;
 }
@@ -18,7 +18,7 @@ TEST_CASE("XLCellValueProxyTests", "[XLCellValue]")
     SECTION("XLCellValueProxy conversion to XLCellValue (XLCellValue constructor)")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCellValueProxy_0(), XLForceOverwrite);
         XLWorksheet wks = doc.workbook().sheet(1);
 
         {
@@ -70,7 +70,7 @@ TEST_CASE("XLCellValueProxyTests", "[XLCellValue]")
     {
         XLCellValue value;
         XLDocument  doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCellValueProxy_0(), XLForceOverwrite);
         XLWorksheet wks = doc.workbook().sheet(1);
 
         wks.cell("A1").value() = "Hello OpenXLSX!";
@@ -150,7 +150,7 @@ TEST_CASE("XLCellValueProxyTests", "[XLCellValue]")
     {
         XLCellValue value;
         XLDocument  doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCellValueProxy_0(), XLForceOverwrite);
         XLWorksheet wks = doc.workbook().sheet(1);
 
         wks.cell("A1").value() = "Hello OpenXLSX!";
@@ -212,7 +212,7 @@ TEST_CASE("XLCellValueProxyTests", "[XLCellValue]")
     {
         XLCellValue value;
         XLDocument  doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCellValueProxy_0(), XLForceOverwrite);
         XLWorksheet wks = doc.workbook().sheet(1);
 
         wks.cell("A2").value().set("Hello OpenXLSX!");

@@ -7,7 +7,7 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLCorruptFiles_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("non_existent_random_file_123_xlsx") + ".xlsx";
     return name;
 }
@@ -19,7 +19,7 @@ TEST_CASE("NegativeTestsCorruptFilesandExceptions", "[CorruptFiles]")
     SECTION("File Not Found")
     {
         XLDocument doc;
-        REQUIRE_THROWS_AS(doc.open(__global_unique_file_0()), XLException);
+        REQUIRE_THROWS_AS(doc.open(__global_unique_testXLCorruptFiles_0()), XLException);
     }
 
     SECTION("Not a ZIP Archive")

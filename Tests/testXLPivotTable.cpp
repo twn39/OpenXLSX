@@ -6,17 +6,17 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLPivotTable_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__PivotSlicerTest_SaveAs_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLPivotTable_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__PivotSlicerTest_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_2() {
+inline const std::string& __global_unique_testXLPivotTable_2() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__PivotTest_xlsx") + ".xlsx";
     return name;
 }
@@ -27,7 +27,7 @@ TEST_CASE("DynamicPivotTableGeneration", "[XLPivotTable]")
 {
     // === Functionality Setup ===
     XLDocument doc;
-    doc.create(__global_unique_file_2(), XLForceOverwrite);
+    doc.create(__global_unique_testXLPivotTable_2(), XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     // Add some sample data
@@ -60,7 +60,7 @@ TEST_CASE("DynamicPivotTableGeneration", "[XLPivotTable]")
 
     // === Read-back and OOXML Verification ===
     XLDocument doc2;
-    doc2.open(__global_unique_file_2());
+    doc2.open(__global_unique_testXLPivotTable_2());
 
     // Verify XML structure in Pivot Cache Definition
     std::string cacheDefXmlStr = doc2.extractXmlFromArchive("xl/pivotCache/pivotCacheDefinition1.xml");
@@ -120,7 +120,7 @@ TEST_CASE("DynamicPivotTableGeneration", "[XLPivotTable]")
 TEST_CASE("PivotTableAdvancedSlicersandRefreshOnLoad", "[XLPivotTable]")
 {
     XLDocument doc;
-    doc.create(__global_unique_file_1(), XLForceOverwrite);
+    doc.create(__global_unique_testXLPivotTable_1(), XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     wks.cell("A1").value() = "Region";
@@ -151,7 +151,7 @@ TEST_CASE("PivotTableAdvancedSlicersandRefreshOnLoad", "[XLPivotTable]")
 
     // Verify
     XLDocument doc2;
-    doc2.open(__global_unique_file_1());
+    doc2.open(__global_unique_testXLPivotTable_1());
     auto ptWks2 = doc2.workbook().worksheet("Pivot");
     REQUIRE(ptWks2.hasDrawing() == true);
 
@@ -258,11 +258,11 @@ TEST_CASE("PivotTableAdvancedSlicersandRefreshOnLoad", "[XLPivotTable]")
     REQUIRE(foundA14Choice == true);
 
     // Test double save for robustness
-    doc2.saveAs(__global_unique_file_0(), XLForceOverwrite);
+    doc2.saveAs(__global_unique_testXLPivotTable_0(), XLForceOverwrite);
     doc2.close();
     
     XLDocument doc3;
-    doc3.open(__global_unique_file_0());
+    doc3.open(__global_unique_testXLPivotTable_0());
     REQUIRE(doc3.workbook().worksheet("Pivot").hasDrawing() == true);
     
     // --- NEW: Test CRUD operations ---

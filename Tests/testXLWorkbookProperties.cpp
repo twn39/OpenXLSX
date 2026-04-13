@@ -5,22 +5,22 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLWorkbookProperties_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLAppProperties_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLWorkbookProperties_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLWorkbookNames_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_2() {
+inline const std::string& __global_unique_testXLWorkbookProperties_2() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLWorkbook_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_3() {
+inline const std::string& __global_unique_testXLWorkbookProperties_3() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLProperties_xlsx") + ".xlsx";
     return name;
 }
@@ -32,7 +32,7 @@ TEST_CASE("XLPropertiesTests", "[XLProperties]")
     SECTION("Core Properties")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_3(), XLForceOverwrite);
+        doc.create(__global_unique_testXLWorkbookProperties_3(), XLForceOverwrite);
 
         doc.setProperty(XLProperty::Title, "Test Title");
         doc.setProperty(XLProperty::Creator, "Test Creator");
@@ -53,7 +53,7 @@ TEST_CASE("XLPropertiesTests", "[XLProperties]")
     SECTION("App Properties")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLWorkbookProperties_0(), XLForceOverwrite);
 
         // App properties are usually set via the doc object as well,
         // though some are managed internally (like sheet names).
@@ -75,7 +75,7 @@ TEST_CASE("XLWorkbookTests", "[XLWorkbook]")
     SECTION("Sheet Management")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_2(), XLForceOverwrite);
+        doc.create(__global_unique_testXLWorkbookProperties_2(), XLForceOverwrite);
         auto wb = doc.workbook();
 
         // Initial state
@@ -114,7 +114,7 @@ TEST_CASE("XLWorkbookTests", "[XLWorkbook]")
     SECTION("Sheet Names and Types")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_1(), XLForceOverwrite);
+        doc.create(__global_unique_testXLWorkbookProperties_1(), XLForceOverwrite);
         auto wb = doc.workbook();
 
         wb.addWorksheet("Data");

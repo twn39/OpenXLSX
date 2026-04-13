@@ -5,7 +5,7 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLStylesIntegration_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLStyleFacade_xlsx") + ".xlsx";
     return name;
 }
@@ -117,7 +117,7 @@ TEST_CASE("XLStylesIntegrationTests", "[XLStyles]")
 TEST_CASE("HighLevelXLStyleFacadeIntegration", "[XLStyle]")
 {
     XLDocument doc;
-    doc.create(__global_unique_file_0(), XLForceOverwrite);
+    doc.create(__global_unique_testXLStylesIntegration_0(), XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     XLStyle style;
@@ -145,7 +145,7 @@ TEST_CASE("HighLevelXLStyleFacadeIntegration", "[XLStyle]")
 
     // Verify it was correctly persisted
     XLDocument doc2;
-    doc2.open(__global_unique_file_0());
+    doc2.open(__global_unique_testXLStylesIntegration_0());
     auto wks2 = doc2.workbook().worksheet("Sheet1");
     auto cell = wks2.cell("A1");
 

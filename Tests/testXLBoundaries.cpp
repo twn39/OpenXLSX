@@ -6,7 +6,7 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLBoundaries_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLBoundaries_xlsx") + ".xlsx";
     return name;
 }
@@ -16,7 +16,7 @@ inline const std::string& __global_unique_file_0() {
 TEST_CASE("ExcelPhysicalBoundaries", "[Boundaries]")
 {
     XLDocument doc;
-    doc.create(__global_unique_file_0(), XLForceOverwrite);
+    doc.create(__global_unique_testXLBoundaries_0(), XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     SECTION("Row and Column Limits")
@@ -58,7 +58,7 @@ TEST_CASE("ExcelPhysicalBoundaries", "[Boundaries]")
         doc.save();
         doc.close();
 
-        doc.open(__global_unique_file_0());
+        doc.open(__global_unique_testXLBoundaries_0());
         auto wks2 = doc.workbook().worksheet("Sheet1");
         REQUIRE(wks2.cell("A1").value().get<std::string>() == hugeString);
     }

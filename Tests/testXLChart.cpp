@@ -7,7 +7,7 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLChart_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("test_chart_functional_xlsx") + ".xlsx";
     return name;
 }
@@ -56,7 +56,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
     {
         {
             XLDocument doc;
-            doc.create(__global_unique_file_0(), XLForceOverwrite);
+            doc.create(__global_unique_testXLChart_0(), XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
             for (int i = 1; i <= 5; ++i) { wks.cell(i, 1).value() = i; }
 
@@ -90,7 +90,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
     {
         {
             XLDocument doc;
-            doc.create(__global_unique_file_0(), XLForceOverwrite);
+            doc.create(__global_unique_testXLChart_0(), XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
             for (int i = 1; i <= 3; ++i) { wks.cell(i, 1).value() = i; }
 
@@ -122,7 +122,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
     {
         {
             XLDocument doc;
-            doc.create(__global_unique_file_0(), XLForceOverwrite);
+            doc.create(__global_unique_testXLChart_0(), XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
 
             // Add some data
@@ -138,7 +138,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(__global_unique_file_0());
+            testDoc.open(__global_unique_testXLChart_0());
 
             // 1. Verify that chart1.xml exists and has correct tags
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
@@ -181,7 +181,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
     {
         {
             XLDocument doc;
-            doc.create(__global_unique_file_0(), XLForceOverwrite);
+            doc.create(__global_unique_testXLChart_0(), XLForceOverwrite);
             auto wks   = doc.workbook().worksheet("Sheet1");
             auto chart = wks.addChart(XLChartType::Line, "Line Chart", 2, 4, 400, 300);
             chart.addSeries("Sheet1!$A$1:$A$10");
@@ -191,7 +191,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(__global_unique_file_0());
+            testDoc.open(__global_unique_testXLChart_0());
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
             REQUIRE(chartXml.find("<c:lineChart>") != std::string::npos);
             REQUIRE(chartXml.find("<c:ser>") != std::string::npos);
@@ -204,7 +204,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
     {
         {
             XLDocument doc;
-            doc.create(__global_unique_file_0(), XLForceOverwrite);
+            doc.create(__global_unique_testXLChart_0(), XLForceOverwrite);
             auto wks   = doc.workbook().worksheet("Sheet1");
             auto chart = wks.addChart(XLChartType::Pie, "Pie Chart", 2, 4, 400, 300);
             chart.addSeries("Sheet1!$A$1:$A$10");
@@ -214,7 +214,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(__global_unique_file_0());
+            testDoc.open(__global_unique_testXLChart_0());
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
             REQUIRE(chartXml.find("<c:pieChart>") != std::string::npos);
             REQUIRE(chartXml.find("<c:ser>") != std::string::npos);
@@ -228,7 +228,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
     {
         {
             XLDocument doc;
-            doc.create(__global_unique_file_0(), XLForceOverwrite);
+            doc.create(__global_unique_testXLChart_0(), XLForceOverwrite);
             auto wks   = doc.workbook().worksheet("Sheet1");
             auto chart = wks.addChart(XLChartType::Scatter, "Scatter Chart", 2, 4, 400, 300);
             chart.addSeries("Sheet1!$A$1:$A$10");
@@ -238,7 +238,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(__global_unique_file_0());
+            testDoc.open(__global_unique_testXLChart_0());
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
             REQUIRE(chartXml.find("<c:scatterChart>") != std::string::npos);
             REQUIRE(chartXml.find("<c:scatterStyle val=\"lineMarker\"") != std::string::npos);
@@ -252,7 +252,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
     {
         {
             XLDocument doc;
-            doc.create(__global_unique_file_0(), XLForceOverwrite);
+            doc.create(__global_unique_testXLChart_0(), XLForceOverwrite);
             auto wks   = doc.workbook().worksheet("Sheet1");
             auto chart = wks.addChart(XLChartType::Bar, "Bar Chart", 2, 4, 400, 300);
 
@@ -266,7 +266,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(__global_unique_file_0());
+            testDoc.open(__global_unique_testXLChart_0());
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
 
             // Check literal string title
@@ -286,7 +286,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
     {
         {
             XLDocument doc;
-            doc.create(__global_unique_file_0(), XLForceOverwrite);
+            doc.create(__global_unique_testXLChart_0(), XLForceOverwrite);
             auto wks   = doc.workbook().worksheet("Sheet1");
             auto chart = wks.addChart(XLChartType::Scatter, "Scatter", 2, 4, 400, 300);
 
@@ -299,7 +299,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(__global_unique_file_0());
+            testDoc.open(__global_unique_testXLChart_0());
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
 
             // For Scatter chart, the "category" is mapped to X values (c:xVal) and value is Y values (c:yVal)
@@ -669,7 +669,7 @@ TEST_CASE("ChartPhase1Phase2Features", "[XLChart][Phase12]")
     {
         {
             XLDocument doc;
-            doc.create(__global_unique_file_0(), XLForceOverwrite);
+            doc.create(__global_unique_testXLChart_0(), XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
             
             // Base Data
@@ -720,7 +720,7 @@ TEST_CASE("ChartPhase1Phase2Features", "[XLChart][Phase12]")
     {
         {
             XLDocument doc;
-            doc.create(__global_unique_file_0(), XLForceOverwrite);
+            doc.create(__global_unique_testXLChart_0(), XLForceOverwrite);
             auto wks = doc.workbook().worksheet("Sheet1");
             for (int i = 1; i <= 5; ++i) { wks.cell(i, 1).value() = i * i; } // 1, 4, 9, 16, 25
             

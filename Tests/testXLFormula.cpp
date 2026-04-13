@@ -6,7 +6,7 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLFormula_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLFormula_xlsx") + ".xlsx";
     return name;
 }
@@ -114,7 +114,7 @@ TEST_CASE("XLFormulaTests", "[XLFormula]")
     SECTION("FormulaProxy")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLFormula_0(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         wks.cell("A1").formula() = "=1+1";

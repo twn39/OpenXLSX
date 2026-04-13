@@ -7,17 +7,17 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLEdgeCases_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("sheetnames_test_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLEdgeCases_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("coercion_test_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_2() {
+inline const std::string& __global_unique_testXLEdgeCases_2() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("whitespace_test_xlsx") + ".xlsx";
     return name;
 }
@@ -86,7 +86,7 @@ TEST_CASE("DateSystemEdgeCases1900LeapYearBug", "[EdgeCases][Date]")
 TEST_CASE("WhitespacePreservationEdgeCases", "[EdgeCases][Whitespace]")
 {
     XLDocument doc;
-    doc.create(__global_unique_file_2(), XLForceOverwrite);
+    doc.create(__global_unique_testXLEdgeCases_2(), XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     SECTION("xml:space=\"preserve\" attribute")
@@ -100,18 +100,18 @@ TEST_CASE("WhitespacePreservationEdgeCases", "[EdgeCases][Whitespace]")
         // that saving and loading preserves the whitespace exactly.
         doc.close();
 
-        doc.open(__global_unique_file_2());
+        doc.open(__global_unique_testXLEdgeCases_2());
         auto wks2 = doc.workbook().worksheet("Sheet1");
         REQUIRE(wks2.cell("A1").value().get<std::string>() == "   Hello World   ");
         doc.close();
     }
-    std::filesystem::remove(__global_unique_file_2());
+    std::filesystem::remove(__global_unique_testXLEdgeCases_2());
 }
 
 TEST_CASE("SheetNamingandEscapingEdgeCases", "[EdgeCases][SheetNames]")
 {
     XLDocument doc;
-    doc.create(__global_unique_file_0(), XLForceOverwrite);
+    doc.create(__global_unique_testXLEdgeCases_0(), XLForceOverwrite);
 
     SECTION("Illegal Characters Rejection")
     {
@@ -130,13 +130,13 @@ TEST_CASE("SheetNamingandEscapingEdgeCases", "[EdgeCases][SheetNames]")
     SECTION("Valid Spaces") { REQUIRE_NOTHROW(doc.workbook().addWorksheet("Revenue 2026")); }
 
     doc.close();
-    std::filesystem::remove(__global_unique_file_0());
+    std::filesystem::remove(__global_unique_testXLEdgeCases_0());
 }
 
 TEST_CASE("StringtoNumberCoercionEdgeCases", "[EdgeCases][Coercion]")
 {
     XLDocument doc;
-    doc.create(__global_unique_file_1(), XLForceOverwrite);
+    doc.create(__global_unique_testXLEdgeCases_1(), XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     SECTION("Leading Zeros in Strings")
@@ -152,11 +152,11 @@ TEST_CASE("StringtoNumberCoercionEdgeCases", "[EdgeCases][Coercion]")
         doc.save();
         doc.close();
 
-        doc.open(__global_unique_file_1());
+        doc.open(__global_unique_testXLEdgeCases_1());
         auto wks2 = doc.workbook().worksheet("Sheet1");
         REQUIRE(wks2.cell("A1").value().type() == XLValueType::String);
         REQUIRE(wks2.cell("A1").value().get<std::string>() == "01234");
         doc.close();
     }
-    std::filesystem::remove(__global_unique_file_1());
+    std::filesystem::remove(__global_unique_testXLEdgeCases_1());
 }

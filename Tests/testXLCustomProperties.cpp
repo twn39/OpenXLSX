@@ -6,12 +6,12 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLCustomProperties_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testCustomProps_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLCustomProperties_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testCustomPropsDelete_xlsx") + ".xlsx";
     return name;
 }
@@ -23,7 +23,7 @@ TEST_CASE("XLCustomPropertiesTests", "[XLCustomProperties]")
     SECTION("Create and set custom properties")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCustomProperties_0(), XLForceOverwrite);
 
         auto& customProps = doc.customProperties();
         customProps.setProperty("MyStringProp", "Hello OpenXLSX");
@@ -35,7 +35,7 @@ TEST_CASE("XLCustomPropertiesTests", "[XLCustomProperties]")
         doc.close();
 
         XLDocument doc2;
-        doc2.open(__global_unique_file_0());
+        doc2.open(__global_unique_testXLCustomProperties_0());
 
         auto& customProps2 = doc2.customProperties();
         REQUIRE(customProps2.property("MyStringProp") == "Hello OpenXLSX");
@@ -49,7 +49,7 @@ TEST_CASE("XLCustomPropertiesTests", "[XLCustomProperties]")
     SECTION("Delete custom properties")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_1(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCustomProperties_1(), XLForceOverwrite);
 
         auto& customProps = doc.customProperties();
         customProps.setProperty("ToByDeleted", "Gone soon");

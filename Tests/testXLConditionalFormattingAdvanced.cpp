@@ -6,12 +6,12 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLConditionalFormattingAdvanced_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("CF_Advanced_OOXML_Test_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLConditionalFormattingAdvanced_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("CF_DataBar_Advanced_Test_xlsx") + ".xlsx";
     return name;
 }
@@ -21,7 +21,7 @@ inline const std::string& __global_unique_file_1() {
 TEST_CASE("ConditionalFormattingAdvancedFeaturesandOOXMLValidation", "[ConditionalFormatting][OOXML]")
 {
     XLDocument doc;
-    doc.create(__global_unique_file_0(), XLForceOverwrite);
+    doc.create(__global_unique_testXLConditionalFormattingAdvanced_0(), XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     // 1. Setup Test Rules and Styles
@@ -126,7 +126,7 @@ TEST_CASE("ConditionalFormattingAdvancedFeaturesandOOXMLValidation", "[Condition
 TEST_CASE("ConditionalFormattingAdvancedDataBarExtensions", "[ConditionalFormatting][OOXML]")
 {
     XLDocument doc;
-    doc.create(__global_unique_file_1(), XLForceOverwrite);
+    doc.create(__global_unique_testXLConditionalFormattingAdvanced_1(), XLForceOverwrite);
     auto wks = doc.workbook().worksheet("Sheet1");
 
     auto rule = XLDataBarRule(XLColor(0, 255, 0));

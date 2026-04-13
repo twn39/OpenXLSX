@@ -6,12 +6,12 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLCellValue_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("control_chars_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLCellValue_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("__testXLCellValue_xlsx") + ".xlsx";
     return name;
 }
@@ -194,7 +194,7 @@ TEST_CASE("XLCellValueTests", "[XLCellValue]")
     {
         XLCellValue value;
         XLDocument  doc;
-        doc.create(__global_unique_file_1(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCellValue_1(), XLForceOverwrite);
         XLWorksheet wks = doc.workbook().sheet(1);
 
         wks.cell("A1").value() = "Hello OpenXLSX!";
@@ -322,7 +322,7 @@ TEST_CASE("XLCellValueTests", "[XLCellValue]")
     SECTION("Control Characters Corruption Resistance")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLCellValue_0(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         // String with valid and invalid XML 1.0 characters
@@ -337,7 +337,7 @@ TEST_CASE("XLCellValueTests", "[XLCellValue]")
         doc.close();
 
         // Should successfully reopen without pugixml crash
-        doc.open(__global_unique_file_0());
+        doc.open(__global_unique_testXLCellValue_0());
         wks = doc.workbook().worksheet("Sheet1");
 
         // The read-back value should be exactly the sanitized string
@@ -345,7 +345,7 @@ TEST_CASE("XLCellValueTests", "[XLCellValue]")
         REQUIRE(readBack == expectedString);
 
         doc.close();
-        std::remove(__global_unique_file_0().c_str());
+        std::remove(__global_unique_testXLCellValue_0().c_str());
     }
 
     SECTION("Clear")

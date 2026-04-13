@@ -6,17 +6,17 @@
 using namespace OpenXLSX;
 
 namespace { 
-inline const std::string& __global_unique_file_0() {
+inline const std::string& __global_unique_testXLRichText_0() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("richtext_test_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_1() {
+inline const std::string& __global_unique_testXLRichText_1() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("richtext_shared_test_xlsx") + ".xlsx";
     return name;
 }
 
-inline const std::string& __global_unique_file_2() {
+inline const std::string& __global_unique_testXLRichText_2() {
     static std::string name = OpenXLSX::TestHelpers::getUniqueFilename("richtext_adv_test_xlsx") + ".xlsx";
     return name;
 }
@@ -28,7 +28,7 @@ TEST_CASE("RichTextFluidAPITests", "[XLRichText]")
     SECTION("Create and Serialize Rich Text")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_0(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRichText_0(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         // Use the fluid API to construct a rich text object
@@ -43,7 +43,7 @@ TEST_CASE("RichTextFluidAPITests", "[XLRichText]")
 
         // Re-open and verify
         XLDocument doc2;
-        doc2.open(__global_unique_file_0());
+        doc2.open(__global_unique_testXLRichText_0());
         auto wks2 = doc2.workbook().worksheet("Sheet1");
 
         auto cellType = wks2.cell("A1").value().type();
@@ -68,12 +68,12 @@ TEST_CASE("RichTextFluidAPITests", "[XLRichText]")
         REQUIRE(runs[2].fontColor().has_value() == false);
 
         doc2.close();
-        std::filesystem::remove(__global_unique_file_0());
+        std::filesystem::remove(__global_unique_testXLRichText_0());
     }
     SECTION("Advanced Rich Text Properties")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_2(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRichText_2(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         XLRichText rt;
@@ -95,7 +95,7 @@ TEST_CASE("RichTextFluidAPITests", "[XLRichText]")
 
         // Re-open and verify
         XLDocument doc2;
-        doc2.open(__global_unique_file_2());
+        doc2.open(__global_unique_testXLRichText_2());
         auto wks2 = doc2.workbook().worksheet("Sheet1");
 
         auto rtRead = wks2.cell("A1").value().get<XLRichText>();
@@ -122,13 +122,13 @@ TEST_CASE("RichTextFluidAPITests", "[XLRichText]")
         REQUIRE(runs[4].fontSize() == 24);
 
         doc2.close();
-        std::remove(__global_unique_file_2().c_str());
+        std::remove(__global_unique_testXLRichText_2().c_str());
     }
 
     SECTION("Shared Strings Rich Text Integration")
     {
         XLDocument doc;
-        doc.create(__global_unique_file_1(), XLForceOverwrite);
+        doc.create(__global_unique_testXLRichText_1(), XLForceOverwrite);
         auto wks = doc.workbook().worksheet("Sheet1");
 
         // Set rich text but force it to be stored as a shared string?
@@ -140,6 +140,6 @@ TEST_CASE("RichTextFluidAPITests", "[XLRichText]")
         // Since XLSharedStrings API doesn't fully expose adding raw XML or RichText objects easily,
         // we'll mainly verify the core parseRichText works on advanced nodes.
         doc.close();
-        std::remove(__global_unique_file_1().c_str());
+        std::remove(__global_unique_testXLRichText_1().c_str());
     }
 }
