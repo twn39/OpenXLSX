@@ -161,14 +161,16 @@ void XLZipArchive::addEntry(std::string_view name, std::string_view data)
     // We use new char[] instead of malloc to follow C++ guidelines slightly better,
     // though malloc is also fine here since libzip's zip_source_buffer(..., 1) will internally call free().
     // Actually, libzip *requires* the buffer to be allocated with malloc() when using free_data=1
-    void* rawBuffer = std::malloc(data.size());
-    if (!rawBuffer) throw std::bad_alloc();
+    void* rawBuffer = nullptr;
+    if (data.size() > 0) {
+        rawBuffer = std::malloc(data.size());
+        if (!rawBuffer) throw std::bad_alloc();
+        std::memcpy(rawBuffer, data.data(), data.size());
+    }
 
-    std::memcpy(rawBuffer, data.data(), data.size());
-
-    ZipSourcePtr s(zip_source_buffer(m_archive->archive.get(), rawBuffer, static_cast<zip_uint64_t>(data.size()), 1));
+    ZipSourcePtr s(zip_source_buffer(m_archive->archive.get(), rawBuffer ? rawBuffer : "", static_cast<zip_uint64_t>(data.size()), rawBuffer ? 1 : 0));
     if (!s) {
-        std::free(rawBuffer);    // Free immediately if source creation fails
+        if (rawBuffer) std::free(rawBuffer);    // Free immediately if source creation fails
         throw XLInternalError("Failed to create zip source");
     }
 
