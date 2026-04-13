@@ -58,3 +58,4 @@ build_fuzz
 /Tests/Fixtures/Generators
 /*.xlsx
 /*.png
+tmp

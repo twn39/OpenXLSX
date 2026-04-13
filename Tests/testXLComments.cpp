@@ -228,7 +228,7 @@ TEST_CASE("CommentsFluentandWorksheetDX", "[XLComments][Fluent]")
             auto wks = doc.workbook().worksheet("Sheet1");
 
             // DX feature 1: Add a comment directly from worksheet without querying the comments object first
-            wks.addComment("A1", "My simple comment", "Reviewer");
+            wks.addNote("A1", "My simple comment", "Reviewer");
 
             // Verify
             REQUIRE(wks.hasComments() == true);
@@ -286,14 +286,14 @@ TEST_CASE("CommentsFluentandWorksheetDX", "[XLComments][Fluent]")
         // 5. Modern Threaded Comment (Excel 365 / 2019+)
         wks.cell("B8").value() = "Threaded Comment";
         // Seamless API creates both modern threaded comment and legacy fallback!
-        wks.addThreadedComment("B8", "This is a modern threaded comment!", "Alice");
+        wks.addComment("B8", "This is a modern threaded comment!", "Alice");
 
         // 6. Threaded Comment Reply
         wks.cell("D8").value() = "Thread with Reply";
-        auto tcBase = wks.addThreadedComment("D8", "Is this report ready?", "Alice");
+        auto tcBase = wks.addComment("D8", "Is this report ready?", "Alice");
         
-        wks.addThreadedReply(tcBase.id(), "I am still gathering the marketing data.", "Bob");
-        wks.addThreadedReply(tcBase.id(), "Thanks Bob, waiting on your data.", "Alice");
+        wks.addReply(tcBase.id(), "I am still gathering the marketing data.", "Bob");
+        wks.addReply(tcBase.id(), "Thanks Bob, waiting on your data.", "Alice");
 
         doc.save();
         doc.close();
@@ -311,24 +311,24 @@ TEST_CASE("CommentsFluentandWorksheetDX", "[XLComments][Fluent]")
 
         // Scenario 1: Simple Modern Threaded Comment
         wks.cell("B2").value() = "Review Needed";
-        wks.addThreadedComment("B2", "Please check these Q3 figures.", "Alice Manager");
+        wks.addComment("B2", "Please check these Q3 figures.", "Alice Manager");
 
         // Scenario 2: Active Discussion (Thread with multiple replies from different users)
         wks.cell("D2").value() = "Active Discussion";
-        auto tcDiscussion = wks.addThreadedComment("D2", "Is the final report ready for presentation?", "Alice Manager");
+        auto tcDiscussion = wks.addComment("D2", "Is the final report ready for presentation?", "Alice Manager");
         
         if (tcDiscussion.valid()) {
-            wks.addThreadedReply(tcDiscussion.id(), "I am still gathering the marketing data.", "Bob Data");
-            wks.addThreadedReply(tcDiscussion.id(), "Sales data has been uploaded to the shared drive.", "Charlie Sales");
-            wks.addThreadedReply(tcDiscussion.id(), "Thanks Charlie, compiling the final slides now.", "Bob Data");
+            wks.addReply(tcDiscussion.id(), "I am still gathering the marketing data.", "Bob Data");
+            wks.addReply(tcDiscussion.id(), "Sales data has been uploaded to the shared drive.", "Charlie Sales");
+            wks.addReply(tcDiscussion.id(), "Thanks Charlie, compiling the final slides now.", "Bob Data");
         }
 
         // Scenario 3: Resolved Threaded Comment
         wks.cell("B6").value() = "Resolved Issue";
-        auto tcResolved = wks.addThreadedComment("B6", "There is a calculation error in this cell.", "Bob Data");
+        auto tcResolved = wks.addComment("B6", "There is a calculation error in this cell.", "Bob Data");
         
         if (tcResolved.valid()) {
-            wks.addThreadedReply(tcResolved.id(), "Good catch. I've updated the formula.", "Alice Manager");
+            wks.addReply(tcResolved.id(), "Good catch. I've updated the formula.", "Alice Manager");
             
             // Mark the entire thread as resolved (Supported in Excel 365+)
             tcResolved.setResolved(true);
