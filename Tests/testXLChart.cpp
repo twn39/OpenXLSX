@@ -138,7 +138,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(filename);
+            testDoc.open(__global_unique_file_0());
 
             // 1. Verify that chart1.xml exists and has correct tags
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
@@ -191,7 +191,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(filename);
+            testDoc.open(__global_unique_file_0());
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
             REQUIRE(chartXml.find("<c:lineChart>") != std::string::npos);
             REQUIRE(chartXml.find("<c:ser>") != std::string::npos);
@@ -214,7 +214,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(filename);
+            testDoc.open(__global_unique_file_0());
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
             REQUIRE(chartXml.find("<c:pieChart>") != std::string::npos);
             REQUIRE(chartXml.find("<c:ser>") != std::string::npos);
@@ -238,7 +238,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(filename);
+            testDoc.open(__global_unique_file_0());
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
             REQUIRE(chartXml.find("<c:scatterChart>") != std::string::npos);
             REQUIRE(chartXml.find("<c:scatterStyle val=\"lineMarker\"") != std::string::npos);
@@ -266,7 +266,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(filename);
+            testDoc.open(__global_unique_file_0());
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
 
             // Check literal string title
@@ -299,7 +299,7 @@ TEST_CASE("ChartCreationandVerification", "[XLChart][OOXML]")
 
         {
             XLChartTestDoc testDoc;
-            testDoc.open(filename);
+            testDoc.open(__global_unique_file_0());
             std::string chartXml = testDoc.getRawXml("xl/charts/chart1.xml");
 
             // For Scatter chart, the "category" is mapped to X values (c:xVal) and value is Y values (c:yVal)

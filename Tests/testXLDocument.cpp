@@ -44,7 +44,7 @@ TEST_CASE("XLDocumentTests", "[XLDocument]")
         doc.create(file, XLForceOverwrite);
         std::ifstream f(file);
         REQUIRE(f.good());
-        REQUIRE(doc.name() == __global_unique_file_1());
+        REQUIRE(doc.name() == std::filesystem::path(file).filename().string());
         doc.close();
     }
 
@@ -56,7 +56,7 @@ TEST_CASE("XLDocumentTests", "[XLDocument]")
             doc1.close();
         }
         XLDocument doc2(file);
-        REQUIRE(doc2.name() == __global_unique_file_1());
+        REQUIRE(doc2.name() == std::filesystem::path(file).filename().string());
         doc2.close();
     }
 
@@ -69,7 +69,7 @@ TEST_CASE("XLDocumentTests", "[XLDocument]")
         }
         XLDocument doc2;
         doc2.open(file);
-        REQUIRE(doc2.name() == __global_unique_file_1());
+        REQUIRE(doc2.name() == std::filesystem::path(file).filename().string());
         doc2.close();
     }
 
@@ -84,7 +84,7 @@ TEST_CASE("XLDocumentTests", "[XLDocument]")
         doc2.saveAs(newfile, XLForceOverwrite);
         std::ifstream n(newfile);
         REQUIRE(n.good());
-        REQUIRE(doc2.name() == __global_unique_file_0());
+        REQUIRE(doc2.name() == std::filesystem::path(newfile).filename().string());
         doc2.close();
     }
 
