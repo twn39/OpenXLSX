@@ -196,9 +196,8 @@ if(OPENXLSX_BUILD_TESTS)
     catch_discover_tests(OpenXLSXTests)
     target_link_libraries(OpenXLSXTests PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
     
-    if(OPENXLSX_ENABLE_LTO)
-        set_property(TARGET OpenXLSXTests PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-    endif()
+    # Disable LTO for Catch2 test executable to prevent GCC LTO SIGILL bugs during static initialization
+    set_property(TARGET OpenXLSXTests PROPERTY INTERPROCEDURAL_OPTIMIZATION FALSE)
 
     if(OPENXLSX_ENABLE_SANITIZERS AND NOT MSVC)
         target_compile_options(OpenXLSXTests PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
@@ -257,9 +256,7 @@ endif()
 if(OPENXLSX_BUILD_BENCHMARKS)
     add_executable(OpenXLSXBenchmark Benchmarks/Benchmark.cpp)
     target_link_libraries(OpenXLSXBenchmark PRIVATE OpenXLSX::OpenXLSX Catch2::Catch2WithMain)
-    if(OPENXLSX_ENABLE_LTO)
-        set_property(TARGET OpenXLSXBenchmark PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-    endif()
+    set_property(TARGET OpenXLSXBenchmark PROPERTY INTERPROCEDURAL_OPTIMIZATION FALSE)
 endif()
 
 #=======================================================================================================================
