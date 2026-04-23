@@ -1,156 +1,90 @@
-# Streaming Large Files: XLStreamWriter {#stream_writer_tutorial}
+# OpenXLSX XLStreamWriter Tutorial & Best Practices
 
-[TOC]
+The `XLStreamWriter` is a highly optimized, zero-allocation module designed for generating massive Excel worksheets (millions of cells) with virtually zero memory footprint. It bypasses the standard `pugixml` DOM engine and writes XML data directly to a temporary file stream.
 
-## Introduction
+## Core Concepts & Limitations
 
-When generating very large Excel files (e.g., hundreds of thousands of rows), writing data cell-by-cell can consume a significant amount of memory. To solve this, OpenXLSX provides the `XLStreamWriter` interface.
+Because `XLStreamWriter` streams data directly to disk:
+1. **No In-Memory DOM**: Cells written via `XLStreamWriter` **do not exist** in the `XLDocument`'s memory. You cannot read them back using `wks.cell(...)` during the same session.
+2. **Sequential Writing Only**: You must write data row by row, from top to bottom. You cannot go back to modify a previous row.
+3. **Exclusive Lock**: While a stream writer is active, you should not modify the worksheet using the standard DOM methods (`wks.cell(...)`, `wks.row(...)`).
 
-The `XLStreamWriter` allows you to append rows to a worksheet sequentially. As rows are appended, the underlying XML is flushed directly to the disk/archive rather than being kept in memory, ensuring that the memory footprint remains small (O(1)) and constant, regardless of the number of rows.
+## ⚠️ Critical Lifecycle Trap: Destruction Before `save()`
 
-This tutorial covers:
-- Basic unstyled data streaming.
-- Advanced streaming with rich styling and cell-level formatting.
+The `XLStreamWriter` keeps the XML stream open and buffers data. It relies on its **destructor** (`~XLStreamWriter()`) to flush the final XML footers (like `</sheetData>`) and register the temporary file with the main `XLDocument` archive.
 
----
+**If you call `doc.save()` before the `XLStreamWriter` is destroyed, the resulting Excel file will be CORRUPTED.**
 
-## 1. Basic Data Streaming
-
-For pure data extraction, you can simply stream vectors of `XLCellValue` objects.
+### ❌ Incorrect Usage (Will Corrupt File)
 
 ```cpp
-#include <OpenXLSX.hpp>
-#include <iostream>
-#include <vector>
+XLDocument doc;
+auto wks = doc.workbook().worksheet("Sheet1");
+auto stream = wks.streamWriter();
 
-using namespace OpenXLSX;
+std::vector<XLCellValue> row = {1, 2, 3};
+stream.appendRow(row);
 
-int main() {
-    XLDocument doc;
-    doc.create("StreamingBasicTest.xlsx", XLForceOverwrite);
-    auto wks = doc.workbook().worksheet("Sheet1");
+doc.save(); // ERROR: stream is still alive! The XML footers haven't been written.
+```
 
-    // Initialize the StreamWriter on the target worksheet
+### ✅ Correct Usage (Using Scope Blocks)
+
+Always wrap your streaming logic in a local scope `{ ... }` so the stream writer is destroyed and flushed before you save.
+
+```cpp
+XLDocument doc;
+auto wks = doc.workbook().worksheet("Sheet1");
+
+{ // Open scope for stream writer
     auto stream = wks.streamWriter();
+    
+    std::vector<XLCellValue> row = {1, 2, 3};
+    stream.appendRow(row);
+} // stream is destroyed here. XML footers are written safely to disk.
 
-    // Append a header row
-    std::vector<XLCellValue> headerRow = {"ID", "Name", "Score"};
-    stream.appendRow(headerRow);
+doc.save(); // SUCCESS: The archive packs the fully completed stream file.
+```
 
-    // Append 100,000 rows of data with minimal memory usage
-    for (int i = 1; i <= 100000; ++i) {
-        std::vector<XLCellValue> row = {
-            i, 
-            "Player " + std::to_string(i), 
-            i * 3.14
-        };
+## ⚠️ Streaming Data for Pivot Tables
+
+When creating an `XLPivotTable` based on a data source range (`RawData!A1:D1000`), the `addPivotTable()` method needs to read the **Header Row (Row 1)** of the source data to define the internal pivot cache fields.
+
+Since `XLStreamWriter` bypasses the DOM, if you write your header row using the stream writer, `addPivotTable()` **will not find the column names**, resulting in generic names like `"Field1", "Field2"`, which will break your pivot table rendering in Excel.
+
+### ✅ Correct Usage: Hybrid DOM + Stream Approach
+
+Write your Header Row using the standard DOM methods so they are cached in memory. Then, switch to `XLStreamWriter` for the massive data rows.
+
+```cpp
+auto wksData = doc.workbook().worksheet("RawData");
+
+// 1. Write headers using DOM (Loaded in memory, accessible by Pivot Cache generator)
+wksData.cell("A1").value() = "Region";
+wksData.cell("B1").value() = "Sales";
+
+// 2. Write massive data using Stream Writer (Zero memory footprint)
+{
+    auto stream = wksData.streamWriter();
+    for (int i = 0; i < 1000000; ++i) {
+        std::vector<XLCellValue> row = {"North", 500.0};
         stream.appendRow(row);
     }
-
-    // Always close the stream before saving the document!
-    stream.close();
-
-    doc.save();
-    doc.close();
-    
-    return 0;
 }
+
+// 3. Create Pivot Table safely
+auto pivotWks = doc.workbook().worksheet("PivotDashboard");
+XLPivotTableOptions options("MyPivot", "RawData!A1:B1000001", "A3");
+options.addRowField("Region").addDataField("Sales");
+
+auto pt = pivotWks.addPivotTable(options);
+pt.setRefreshOnLoad(true); // Tell Excel to parse the 1,000,000 rows on open
+
+doc.save();
 ```
 
-## 2. Advanced Streaming with Styles
+## Supported Types & Zero-Allocation Features
 
-If you need to generate professional reports, you can mix streaming with cell-level styling using `XLStreamCell`. `XLStreamCell` pairs an `XLCellValue` with an `XLStyle` ID.
+Thanks to recent optimizations, `XLStreamWriter` uses `std::to_chars` and stack buffers internally. It performs zero heap allocations during the writing of standard data types.
 
-First, pre-define all the styles you will need using `findOrCreateStyle()`.
-
-```cpp
-#include <OpenXLSX.hpp>
-#include <iostream>
-
-using namespace OpenXLSX;
-
-int main() {
-    XLDocument doc;
-    doc.create("StreamingStyledTest.xlsx", XLForceOverwrite);
-    
-    // 1. Define a Header Style (Blue background, White bold text)
-    XLStyle headerStyle;
-    headerStyle.font.bold = true;
-    headerStyle.font.color = XLColor("FFFFFF");
-    headerStyle.fill.pattern = XLPatternSolid;
-    headerStyle.fill.fgColor = XLColor("4F81BD");
-    auto headerId = doc.styles().findOrCreateStyle(headerStyle);
-
-    // 2. Define standard Currency and Percentage formatting styles
-    XLStyle currencyStyle;
-    currencyStyle.numberFormat = "$#,##0.00";
-    auto currencyId = doc.styles().findOrCreateStyle(currencyStyle);
-
-    XLStyle percentageStyle;
-    percentageStyle.numberFormat = "0.00%";
-    auto percentId = doc.styles().findOrCreateStyle(percentageStyle);
-
-    // 3. Define an Alternate Row (Zebra-striping) Style
-    XLStyle altRowStyle;
-    altRowStyle.fill.pattern = XLPatternSolid;
-    altRowStyle.fill.fgColor = XLColor("DCE6F1");
-    auto altRowId = doc.styles().findOrCreateStyle(altRowStyle);
-
-    auto wks = doc.workbook().worksheet("Sheet1");
-    
-    // You can set column widths before streaming
-    wks.column(1).setWidth(15);
-    wks.column(2).setWidth(12);
-    wks.column(3).setWidth(12);
-
-    auto stream = wks.streamWriter();
-
-    // Write the styled header row using XLStreamCell
-    stream.appendRow({
-        XLStreamCell("Product", headerId),
-        XLStreamCell("Price", headerId),
-        XLStreamCell("Margin", headerId)
-    });
-
-    // Write data rows with zebra striping and number formats
-    for (int i = 1; i <= 20; ++i) {
-        
-        // Determine base background color for zebra striping
-        uint32_t styleId = (i % 2 == 0) ? altRowId : 0; 
-        
-        // We must compose the Alternate Row color with the specific Number Formats
-        XLStyle rowCurrencyStyle = currencyStyle;
-        if (i % 2 == 0) {
-            rowCurrencyStyle.fill.pattern = XLPatternSolid;
-            rowCurrencyStyle.fill.fgColor = XLColor("DCE6F1");
-        }
-        auto rowCurrencyId = doc.styles().findOrCreateStyle(rowCurrencyStyle);
-
-        XLStyle rowPercentStyle = percentageStyle;
-        if (i % 2 == 0) {
-            rowPercentStyle.fill.pattern = XLPatternSolid;
-            rowPercentStyle.fill.fgColor = XLColor("DCE6F1");
-        }
-        auto rowPercentId = doc.styles().findOrCreateStyle(rowPercentStyle);
-
-        // Stream the fully styled row
-        stream.appendRow({
-            XLStreamCell("Product " + std::to_string(i), styleId),
-            XLStreamCell(10.5 * i, rowCurrencyId),
-            XLStreamCell(0.15 + (i * 0.01), rowPercentId)
-        });
-    }
-
-    // Always close the stream before saving the document!
-    stream.close();
-    doc.save();
-    doc.close();
-
-    return 0;
-}
-```
-
-### Important Streaming Considerations
-1. **No going back:** Once `appendRow()` is called, that row is written to the archive. You cannot modify it later or go back to previous rows.
-2. **`stream.close()` is mandatory:** You must call `.close()` on the `XLStreamWriter` object before calling `doc.save()`. This flushes and finalizes the XML stream.
-3. **Style Combination:** Because styles in Excel are uniquely identified integer IDs representing a combination of attributes, if you want a cell to be both "Currency Formatted" AND have a "Blue Background", you must find/create a style ID that combines both attributes beforehand, as shown in the zebra-striping example above.
+You can mix and match types (Integers, Floats, Booleans, Strings, and even `XLRichText`) within the same row by using `std::vector<XLCellValue>`.
