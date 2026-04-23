@@ -182,3 +182,45 @@ TEST_CASE("HighLevelXLStyleFacadeIntegration", "[XLStyle]")
     auto numFmt = styles.numberFormats().numberFormatById(format.numberFormatId());
     REQUIRE(numFmt.formatCode() == "#,##0.00");
 }
+
+TEST_CASE("AdvancedStylePropertiesOOXMLVerification", "[XLStyle]")
+{
+    std::string filename = "TestAdvancedStylesOOXML.xlsx";
+    {
+        XLDocument doc;
+        doc.create(filename, XLForceOverwrite);
+        auto wks = doc.workbook().worksheet("Sheet1");
+
+        XLStyle style;
+        style.alignment.textRotation = 45;
+        style.alignment.indent       = 2;
+        style.border.diagonalUp      = true;
+        style.border.diagonalDown    = true;
+        style.border.diagonal.style  = XLLineStyleDashed;
+        style.border.diagonal.color  = XLColor("FF000000");
+
+        wks.cell("A1").value() = "Test";
+        wks.cell("A1").setStyle(style);
+        doc.save();
+    }
+
+    // Verify OOXML round-trip through properties
+    {
+        XLDocument doc;
+        doc.open(filename);
+        auto wks = doc.workbook().worksheet("Sheet1");
+        auto formatId = wks.cell("A1").cellFormat();
+        auto format = doc.styles().cellFormats().cellFormatByIndex(formatId);
+        
+        REQUIRE(format.alignment().textRotation() == 45);
+        REQUIRE(format.alignment().indent() == 2);
+        
+        auto border = doc.styles().borders().borderByIndex(format.borderIndex());
+        REQUIRE(border.diagonalUp() == true);
+        REQUIRE(border.diagonalDown() == true);
+        REQUIRE(border.diagonal().style() == XLLineStyleDashed);
+        REQUIRE(border.diagonal().color().rgb().hex() == "FF000000");
+    }
+    
+    std::remove(filename.c_str());
+}
