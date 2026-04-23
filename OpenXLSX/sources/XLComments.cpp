@@ -28,31 +28,37 @@ namespace
                 XLRichTextRun run;
                 XMLNode       tNode = element.child("t");
                 if (!tNode.empty()) run.setText(tNode.text().get());
-// Properties are in <rPr> child of <r>
-XMLNode rPrNode = element.child("rPr");
-if (!rPrNode.empty()) {
-    if (!rPrNode.child("b").empty()) run.setBold(true);
-    if (!rPrNode.child("i").empty()) run.setItalic(true);
+                // Properties are in <rPr> child of <r>
+                XMLNode rPrNode = element.child("rPr");
+                if (!rPrNode.empty()) {
+                    if (!rPrNode.child("b").empty()) run.setBold(true);
+                    if (!rPrNode.child("i").empty()) run.setItalic(true);
 
-    XMLNode uNode = rPrNode.child("u");
-    if (!uNode.empty()) {
-        std::string uVal = uNode.attribute("val").value();
-        if (uVal == "double") run.setUnderlineStyle(XLUnderlineDouble);
-        else if (uVal == "singleAccounting") run.setUnderlineStyle(XLUnderlineSingleAccounting);
-        else if (uVal == "doubleAccounting") run.setUnderlineStyle(XLUnderlineDoubleAccounting);
-        else run.setUnderlineStyle(XLUnderlineSingle);
-    }
+                    XMLNode uNode = rPrNode.child("u");
+                    if (!uNode.empty()) {
+                        std::string uVal = uNode.attribute("val").value();
+                        if (uVal == "double")
+                            run.setUnderlineStyle(XLUnderlineDouble);
+                        else if (uVal == "singleAccounting")
+                            run.setUnderlineStyle(XLUnderlineSingleAccounting);
+                        else if (uVal == "doubleAccounting")
+                            run.setUnderlineStyle(XLUnderlineDoubleAccounting);
+                        else
+                            run.setUnderlineStyle(XLUnderlineSingle);
+                    }
 
-    if (!rPrNode.child("strike").empty()) run.setStrikethrough(true);
+                    if (!rPrNode.child("strike").empty()) run.setStrikethrough(true);
 
-    XMLNode vertAlignNode = rPrNode.child("vertAlign");
-    if (!vertAlignNode.empty()) {
-        std::string vVal = vertAlignNode.attribute("val").value();
-        if (vVal == "superscript") run.setVertAlign(XLSuperscript);
-        else if (vVal == "subscript") run.setVertAlign(XLSubscript);
-    }
+                    XMLNode vertAlignNode = rPrNode.child("vertAlign");
+                    if (!vertAlignNode.empty()) {
+                        std::string vVal = vertAlignNode.attribute("val").value();
+                        if (vVal == "superscript")
+                            run.setVertAlign(XLSuperscript);
+                        else if (vVal == "subscript")
+                            run.setVertAlign(XLSubscript);
+                    }
 
-    XMLNode rFontNode = rPrNode.child("rFont");
+                    XMLNode rFontNode = rPrNode.child("rFont");
                     if (!rFontNode.empty()) run.setFontName(rFontNode.attribute("val").value());
 
                     XMLNode szNode = rPrNode.child("sz");
@@ -127,7 +133,9 @@ XLComment& XLComment::setRichText(const XLRichText& richText)
         XMLNode rNode = textNode.append_child("r");
 
         // Add properties if any are set
-        if (run.fontName() || run.fontSize() || run.fontColor() || run.bold() || run.italic() || run.underlineStyle().has_value() || run.strikethrough() || run.vertAlign().has_value()) {
+        if (run.fontName() || run.fontSize() || run.fontColor() || run.bold() || run.italic() || run.underlineStyle().has_value() ||
+            run.strikethrough() || run.vertAlign().has_value())
+        {
             XMLNode rPrNode = rNode.append_child("rPr");
             if (run.fontName()) {
                 XMLNode rFontNode = rPrNode.append_child("rFont");
@@ -143,18 +151,26 @@ XLComment& XLComment::setRichText(const XLRichText& richText)
             }
             if (run.bold() && *run.bold()) { rPrNode.append_child("b"); }
             if (run.italic() && *run.italic()) { rPrNode.append_child("i"); }
-            if (run.underlineStyle().has_value() && run.underlineStyle().value() != XLUnderlineNone && run.underlineStyle().value() != XLUnderlineInvalid) {
+            if (run.underlineStyle().has_value() && run.underlineStyle().value() != XLUnderlineNone &&
+                run.underlineStyle().value() != XLUnderlineInvalid)
+            {
                 XMLNode uNode = rPrNode.append_child("u");
-                if (run.underlineStyle().value() == XLUnderlineDouble) uNode.append_attribute("val").set_value("double");
-                else if (run.underlineStyle().value() == XLUnderlineSingleAccounting) uNode.append_attribute("val").set_value("singleAccounting");
-                else if (run.underlineStyle().value() == XLUnderlineDoubleAccounting) uNode.append_attribute("val").set_value("doubleAccounting");
-                else if (run.underlineStyle().value() == XLUnderlineSingle) uNode.append_attribute("val").set_value("single");
+                if (run.underlineStyle().value() == XLUnderlineDouble)
+                    uNode.append_attribute("val").set_value("double");
+                else if (run.underlineStyle().value() == XLUnderlineSingleAccounting)
+                    uNode.append_attribute("val").set_value("singleAccounting");
+                else if (run.underlineStyle().value() == XLUnderlineDoubleAccounting)
+                    uNode.append_attribute("val").set_value("doubleAccounting");
+                else if (run.underlineStyle().value() == XLUnderlineSingle)
+                    uNode.append_attribute("val").set_value("single");
             }
             if (run.strikethrough() && *run.strikethrough()) { rPrNode.append_child("strike"); }
             if (run.vertAlign()) {
                 XMLNode vertAlignNode = rPrNode.append_child("vertAlign");
-                if (*run.vertAlign() == XLSuperscript) vertAlignNode.append_attribute("val").set_value("superscript");
-                else if (*run.vertAlign() == XLSubscript) vertAlignNode.append_attribute("val").set_value("subscript");
+                if (*run.vertAlign() == XLSuperscript)
+                    vertAlignNode.append_attribute("val").set_value("superscript");
+                else if (*run.vertAlign() == XLSubscript)
+                    vertAlignNode.append_attribute("val").set_value("subscript");
             }
         }
 
