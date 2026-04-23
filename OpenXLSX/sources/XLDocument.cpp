@@ -70,9 +70,6 @@ void XLDocument::suppressWarnings() { m_suppressWarnings = true; }
  * primary entry point for accessing and mutating any existing workbook.
  */
 
-
-
-
 void XLDocument::open(std::string_view fileName, const std::string& password)
 {
     if (m_archive.isOpen()) close();
@@ -83,9 +80,7 @@ void XLDocument::open(std::string_view fileName, const std::string& password)
     auto size = file.tellg();
     file.seekg(0, std::ios::beg);
     std::vector<uint8_t> buffer(size);
-    if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
-        throw XLInternalError("Failed to read encrypted document");
-    }
+    if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) { throw XLInternalError("Failed to read encrypted document"); }
 
     if (!isEncryptedDocument(buffer)) {
         open(fileName);
@@ -93,22 +88,20 @@ void XLDocument::open(std::string_view fileName, const std::string& password)
     }
 
     auto decrypted = decryptDocument(buffer, password);
-    if (decrypted.empty()) {
-        throw XLInternalError("Decryption failed or not implemented");
-    }
+    if (decrypted.empty()) { throw XLInternalError("Decryption failed or not implemented"); }
 
     std::random_device rd;
-    auto tempPath = std::filesystem::temp_directory_path() / ("openxlsx_" + std::to_string(rd()) + ".xlsx");
-    std::ofstream out(tempPath, std::ios::binary);
+    auto               tempPath = std::filesystem::temp_directory_path() / ("openxlsx_" + std::to_string(rd()) + ".xlsx");
+    std::ofstream      out(tempPath, std::ios::binary);
     out.write(reinterpret_cast<const char*>(decrypted.data()), decrypted.size());
     out.close();
 
     open(tempPath.string());
-    
+
     m_isEncryptedSession = true;
     m_encryptionPassword = password;
-    m_tempDecryptedPath = tempPath.string();
-    m_filePath = std::string(fileName); 
+    m_tempDecryptedPath  = tempPath.string();
+    m_filePath           = std::string(fileName);
 }
 
 void XLDocument::open(std::string_view fileName)
@@ -167,8 +160,9 @@ void XLDocument::open(std::string_view fileName)
 
         bool isWorkbookPath = (item.path().substr(1) == workbookPath);    // determine once, use thrice
         if (!isWorkbookPath and item.path().substr(0, 4) == "/xl/") {
-            if ((item.path().substr(4, 7) == "comment") or (item.path().substr(4, 15) == "threadedComment") or (item.path().substr(4, 12) == "tables/table") ||
-                (item.path().substr(4, 19) == "drawings/vmlDrawing") or (item.path().substr(4, 22) == "worksheets/_rels/sheet"))
+            if ((item.path().substr(4, 7) == "comment") or (item.path().substr(4, 15) == "threadedComment") or
+                (item.path().substr(4, 12) == "tables/table") || (item.path().substr(4, 19) == "drawings/vmlDrawing") or
+                (item.path().substr(4, 22) == "worksheets/_rels/sheet"))
             {
                 // no-op - worksheet dependencies will be loaded on access through the worksheet
             }
@@ -273,7 +267,8 @@ void XLDocument::open(std::string_view fileName)
         }
         // ===== Append an empty string even if elem.empty(), to keep the index aligned with the <si> tag index in the shared strings table
         // <sst>
-        m_sharedStringsState.cache.emplace_back(m_sharedStringsState.arena.store(result));    // store result string in arena and get a persistent view
+        m_sharedStringsState.cache.emplace_back(
+            m_sharedStringsState.arena.store(result));    // store result string in arena and get a persistent view
         // 2024-09-01 TBC BUGFIX: previously, a shared strings table entry that had neither <t> nor
         /**/    //     <r> nodes would not have appended to m_sharedStringsState.cache, causing an index misalignment
 
@@ -299,16 +294,13 @@ void XLDocument::open(std::string_view fileName)
     m_appProperties.alignWorksheets(m_workbook.sheetNames());
 
     if (getXmlData("xl/sharedStrings.xml", true)) {
-        m_sharedStrings = XLSharedStrings(getXmlData("xl/sharedStrings.xml"),
-                                          &m_sharedStringsState);
+        m_sharedStrings = XLSharedStrings(getXmlData("xl/sharedStrings.xml"), &m_sharedStringsState);
     }
     else {
         m_sharedStrings = XLSharedStrings();
     }
 
-    if (getXmlData("xl/persons/person.xml", true)) {
-        m_persons = XLPersons(getXmlData("xl/persons/person.xml"));
-    }
+    if (getXmlData("xl/persons/person.xml", true)) { m_persons = XLPersons(getXmlData("xl/persons/person.xml")); }
 
     m_styles = XLStyles(getXmlData("xl/styles.xml"), m_suppressWarnings);    // 2024-10-14: forward supress warnings setting to XLStyles
 }
@@ -407,9 +399,7 @@ void XLDocument::close()
 
     if (!m_tempDecryptedPath.empty()) {
         std::error_code ec;
-        if (std::filesystem::exists(m_tempDecryptedPath, ec)) {
-            std::filesystem::remove(m_tempDecryptedPath, ec);
-        }
+        if (std::filesystem::exists(m_tempDecryptedPath, ec)) { std::filesystem::remove(m_tempDecryptedPath, ec); }
         m_tempDecryptedPath.clear();
     }
     m_isEncryptedSession = false;
@@ -465,8 +455,6 @@ void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
         throw XLException("XLDocument::saveAs: refusing to overwrite existing file "s + std::string(fileName));
     }
 
-
-
     // [CRITICAL FIX: Prevent source file corruption during saveAs]
     // If the target filename is different from the currently opened file, we must clone the archive FIRST.
     // Otherwise, libzip will commit all pending XML modifications into the original source file.
@@ -483,7 +471,8 @@ void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
             std::filesystem::copy_file(std::filesystem::u8path(m_filePath),
                                        std::filesystem::u8path(fileName),
                                        std::filesystem::copy_options::overwrite_existing);
-        } catch (const std::filesystem::filesystem_error& e) {
+        }
+        catch (const std::filesystem::filesystem_error& e) {
             throw XLException(std::string("Failed to copy document to new path: ") + e.what());
         }
 
@@ -555,7 +544,7 @@ void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
         }
     }
 
-        if (m_isEncryptedSession) {
+    if (m_isEncryptedSession) {
         m_archive.save(m_tempDecryptedPath);
         std::ifstream file(m_tempDecryptedPath, std::ios::binary | std::ios::ate);
         if (file) {
@@ -565,12 +554,13 @@ void XLDocument::saveAs(std::string_view fileName, bool forceOverwrite)
             file.read(reinterpret_cast<char*>(zipData.data()), size);
             file.close();
 
-            auto encryptedData = encryptDocument(zipData, m_encryptionPassword);
+            auto          encryptedData = encryptDocument(zipData, m_encryptionPassword);
             std::ofstream out(m_filePath, std::ios::binary | std::ios::trunc);
             out.write(reinterpret_cast<const char*>(encryptedData.data()), encryptedData.size());
             out.close();
         }
-    } else {
+    }
+    else {
         m_archive.save(m_filePath);
     }
 }
@@ -954,7 +944,10 @@ XLThreadedComments XLDocument::sheetThreadedComments(uint16_t sheetXmlNo)
     std::string commentsFilename = fmt::format("xl/threadedComments/threadedComment{}.xml", sheetXmlNo);
 
     if (!m_archive.hasEntry(commentsFilename)) {
-        m_archive.addEntry(commentsFilename, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<ThreadedComments xmlns=\"http://schemas.microsoft.com/office/spreadsheetml/2018/threadedcomments\" xmlns:x=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"/>");
+        m_archive.addEntry(commentsFilename,
+                           "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<ThreadedComments "
+                           "xmlns=\"http://schemas.microsoft.com/office/spreadsheetml/2018/threadedcomments\" "
+                           "xmlns:x=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"/>");
         m_contentTypes.addOverride("/" + commentsFilename, XLContentType::ThreadedComments);
     }
     constexpr bool DO_NOT_THROW = true;
@@ -1040,18 +1033,20 @@ bool XLDocument::validateSheetName(std::string_view sheetName, bool throwOnInval
  */
 bool XLDocument::hasPersons() const { return m_archive.hasEntry("xl/persons/person.xml"); }
 
-XLPersons& XLDocument::persons() {
+XLPersons& XLDocument::persons()
+{
     if (!m_persons.valid()) {
         std::string personsFilename = "xl/persons/person.xml";
         if (!m_archive.hasEntry(personsFilename)) {
-            m_archive.addEntry(personsFilename, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<personList xmlns=\"http://schemas.microsoft.com/office/spreadsheetml/2018/threadedcomments\" xmlns:x=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"/>");
+            m_archive.addEntry(personsFilename,
+                               "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<personList "
+                               "xmlns=\"http://schemas.microsoft.com/office/spreadsheetml/2018/threadedcomments\" "
+                               "xmlns:x=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"/>");
             m_contentTypes.addOverride("/" + personsFilename, XLContentType::Persons);
             m_wbkRelationships.addRelationship(XLRelationshipType::Person, "persons/person.xml");
         }
         XLXmlData* xmlData = getXmlData(personsFilename, true);
-        if (xmlData == nullptr) {
-            xmlData = &m_data.emplace_back(this, personsFilename, "", XLContentType::Persons);
-        }
+        if (xmlData == nullptr) { xmlData = &m_data.emplace_back(this, personsFilename, "", XLContentType::Persons); }
         m_persons = XLPersons(xmlData);
     }
     return m_persons;
@@ -1073,8 +1068,8 @@ void XLDocument::cleanupSharedStrings()
     const size_t                        oldStringCount = m_sharedStringsState.cache.size();
     if (oldStringCount == 0) return;
 
-    std::vector<int32_t>                indexMap(oldStringCount, -1);
-    int32_t                             newStringCount = 1;
+    std::vector<int32_t> indexMap(oldStringCount, -1);
+    int32_t              newStringCount = 1;
 
     for (uint16_t wIndex = 1; wIndex <= m_workbook.worksheetCount(); ++wIndex) {
         XLWorksheet wks       = m_workbook.worksheet(wIndex);
