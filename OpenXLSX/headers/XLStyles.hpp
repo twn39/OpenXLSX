@@ -1424,6 +1424,7 @@ namespace OpenXLSX
      */
     class OPENXLSX_EXPORT XLAlignment
     {
+        friend class XLStyles;
     public:    // ---------- Public Member Functions ---------- //
         /**
          * @brief

@@ -377,7 +377,8 @@ XLStyleIndex XLStyles::findOrCreateStyle(const XLStyle& style)
     // ===== Step 3: Resolve border index (deduplicated) ======================
     XLStyleIndex borderIdx = 0;    // default border
     if (style.border.left.style || style.border.left.color || style.border.right.style || style.border.right.color ||
-        style.border.top.style || style.border.top.color || style.border.bottom.style || style.border.bottom.color)
+        style.border.top.style || style.border.top.color || style.border.bottom.style || style.border.bottom.color ||
+        style.border.diagonal.style || style.border.diagonal.color || style.border.diagonalUp || style.border.diagonalDown)
     {
         XMLNode tempBorderNode = tempDoc.append_child("border");
         XLBorder border(tempBorderNode);
@@ -386,6 +387,10 @@ XLStyleIndex XLStyles::findOrCreateStyle(const XLStyle& style)
         if (style.border.top.style) border.setTop(*style.border.top.style, style.border.top.color.value_or(XLColor("FF000000")));
         if (style.border.bottom.style)
             border.setBottom(*style.border.bottom.style, style.border.bottom.color.value_or(XLColor("FF000000")));
+            
+        if (style.border.diagonal.style) border.setDiagonal(*style.border.diagonal.style, style.border.diagonal.color.value_or(XLColor("FF000000")));
+        if (style.border.diagonalUp) border.setDiagonalUp(*style.border.diagonalUp);
+        if (style.border.diagonalDown) border.setDiagonalDown(*style.border.diagonalDown);
             
         borderIdx = borders().findOrCreate(border);
     }
@@ -409,11 +414,16 @@ XLStyleIndex XLStyles::findOrCreateStyle(const XLStyle& style)
     if (fontIdx > 0) xf.setApplyFont(true);
     if (fillIdx > 0) xf.setApplyFill(true);
     if (borderIdx > 0) xf.setApplyBorder(true);
-    if (style.alignment.horizontal || style.alignment.vertical || style.alignment.wrapText) {
-        auto align = xf.alignment(XLCreateIfMissing);
+    if (style.alignment.horizontal || style.alignment.vertical || style.alignment.wrapText || style.alignment.textRotation || style.alignment.indent) {
+        XMLNode tempAlignmentNode = tempXfNode.child("alignment");
+        if (tempAlignmentNode.empty()) tempAlignmentNode = tempXfNode.append_child("alignment");
+        
+        XLAlignment align(tempAlignmentNode);
         if (style.alignment.horizontal) align.setHorizontal(*style.alignment.horizontal);
         if (style.alignment.vertical) align.setVertical(*style.alignment.vertical);
         if (style.alignment.wrapText) align.setWrapText(*style.alignment.wrapText);
+        if (style.alignment.textRotation) align.setTextRotation(*style.alignment.textRotation);
+        if (style.alignment.indent) align.setIndent(*style.alignment.indent);
         xf.setApplyAlignment(true);
     }
 

@@ -47,6 +47,9 @@ namespace OpenXLSX
             BorderElement right;
             BorderElement top;
             BorderElement bottom;
+            BorderElement diagonal;
+            std::optional<bool> diagonalUp;
+            std::optional<bool> diagonalDown;
         } border;
 
         struct Alignment
@@ -54,6 +57,8 @@ namespace OpenXLSX
             std::optional<XLAlignmentStyle> horizontal;
             std::optional<XLAlignmentStyle> vertical;
             std::optional<bool>             wrapText;
+            std::optional<uint16_t>         textRotation;
+            std::optional<uint32_t>         indent;
         } alignment;
 
         std::optional<std::string> numberFormat;
