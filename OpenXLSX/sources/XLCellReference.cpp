@@ -12,6 +12,7 @@
 #include "XLCellReference.hpp"
 #include "XLConstants.hpp"
 #include "XLException.hpp"
+#include "XLUtilities.hpp"
 
 using namespace OpenXLSX;
 
@@ -154,7 +155,8 @@ void XLCellReference::setRow(uint32_t row)
     if (!addressIsValid(row, m_column)) throw XLCellAddressError("Cell reference is invalid");
 
     m_row         = row;
-    m_cellAddress = columnAsString(m_column) + rowAsString(m_row);
+    char buf[16];
+    m_cellAddress = makeCellAddress(m_row, m_column, buf);
 }
 
 /**
@@ -170,7 +172,8 @@ void XLCellReference::setColumn(uint16_t column)
     if (!addressIsValid(m_row, column)) throw XLCellAddressError("Cell reference is invalid");
 
     m_column      = column;
-    m_cellAddress = columnAsString(m_column) + rowAsString(m_row);
+    char buf[16];
+    m_cellAddress = makeCellAddress(m_row, m_column, buf);
 }
 
 /**
@@ -183,7 +186,8 @@ void XLCellReference::setRowAndColumn(uint32_t row, uint16_t column)
 
     m_row         = row;
     m_column      = column;
-    m_cellAddress = columnAsString(m_column) + rowAsString(m_row);
+    char buf[16];
+    m_cellAddress = makeCellAddress(m_row, m_column, buf);
 }
 
 /**
@@ -232,28 +236,8 @@ uint32_t XLCellReference::rowAsNumber(std::string_view row)
 std::string XLCellReference::columnAsString(uint16_t column)
 {
     Expects(column >= 1 && column <= MAX_COLS);
-    std::string result;
-
-    constexpr uint16_t oneLetterMax = alphabetSize;
-    constexpr uint16_t twoLetterMax = alphabetSize + alphabetSize * alphabetSize;
-
-    // ===== If there is one letter in the Column Name:
-    if (column <= oneLetterMax) result += gsl::narrow_cast<char>(column + asciiOffset);
-
-    // ===== If there are two letters in the Column Name:
-    else if (column > oneLetterMax and column <= twoLetterMax) {
-        result += gsl::narrow_cast<char>((column - (oneLetterMax + 1)) / alphabetSize + asciiOffset + 1);
-        result += gsl::narrow_cast<char>((column - (oneLetterMax + 1)) % alphabetSize + asciiOffset + 1);
-    }
-
-    // ===== If there are three letters in the Column Name:
-    else {
-        result += gsl::narrow_cast<char>((column - (twoLetterMax + 1)) / (alphabetSize * alphabetSize) + asciiOffset + 1);
-        result += gsl::narrow_cast<char>(((column - (twoLetterMax + 1)) / alphabetSize) % alphabetSize + asciiOffset + 1);
-        result += gsl::narrow_cast<char>((column - (twoLetterMax + 1)) % alphabetSize + asciiOffset + 1);
-    }
-
-    return result;
+    char buf[4];
+    return std::string(columnToLetters(column, buf));
 }
 
 /**
