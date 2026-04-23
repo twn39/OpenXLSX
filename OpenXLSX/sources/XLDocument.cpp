@@ -52,6 +52,13 @@ XLDocument::XLDocument(const std::string& docPath, const IZipArchive& zipArchive
 XLDocument::~XLDocument()
 {
     if (isOpen()) close();
+
+    // Ensure temp decrypted path is ALWAYS cleaned up regardless of whether the document was fully open.
+    if (!m_tempDecryptedPath.empty()) {
+        std::error_code ec;
+        if (std::filesystem::exists(m_tempDecryptedPath, ec)) { std::filesystem::remove(m_tempDecryptedPath, ec); }
+        m_tempDecryptedPath.clear();
+    }
 }
 
 /**
@@ -96,12 +103,27 @@ void XLDocument::open(std::string_view fileName, const std::string& password)
     out.write(reinterpret_cast<const char*>(decrypted.data()), decrypted.size());
     out.close();
 
+    // RAII guard to ensure the temp file is deleted if open() throws or if XLDocument is destroyed without closing.
+    struct TempFileGuard
+    {
+        std::string path;
+        bool        active = true;
+        ~TempFileGuard()
+        {
+            if (active && !path.empty()) {
+                std::error_code ec;
+                if (std::filesystem::exists(path, ec)) { std::filesystem::remove(path, ec); }
+            }
+        }
+    } guard{tempPath.string(), true};
+
     open(tempPath.string());
 
     m_isEncryptedSession = true;
     m_encryptionPassword = password;
     m_tempDecryptedPath  = tempPath.string();
     m_filePath           = std::string(fileName);
+    guard.active         = false;    // Successfully opened and tracked by XLDocument
 }
 
 void XLDocument::open(std::string_view fileName)
