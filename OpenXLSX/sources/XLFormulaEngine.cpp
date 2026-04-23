@@ -183,8 +183,9 @@ XLCellValue XLFormulaEngine::evalNode(const XLASTNode& node, const XLCellResolve
         }
 
         case XLNodeKind::FuncCall: {
-            auto it = m_functions.find(node.text);
-            if (it == m_functions.end()) return errName();
+            const auto& funcs = getBuiltins();
+            auto        it    = funcs.find(node.text);
+            if (it == funcs.end()) return errName();
 
             // Build per-arg vectors (ranges are expanded, scalars wrapped)
             std::vector<XLFormulaArg> argVecs;
@@ -251,213 +252,218 @@ XLCellResolver XLFormulaEngine::makeResolver(const XLWorksheet& wks)
 // Built-in function registrations
 // =============================================================================
 
-XLFormulaEngine::XLFormulaEngine() { registerBuiltins(); }
+XLFormulaEngine::XLFormulaEngine() = default;
 
-void XLFormulaEngine::registerBuiltins()
+const std::unordered_map<std::string, XLFormulaEngine::FuncImpl>& XLFormulaEngine::getBuiltins()
 {
-    m_functions["SUM"]         = fnSum;
-    m_functions["AVERAGE"]     = fnAverage;
-    m_functions["AVG"]         = fnAverage;    // alias
-    m_functions["MIN"]         = fnMin;
-    m_functions["MAX"]         = fnMax;
-    m_functions["COUNT"]       = fnCount;
-    m_functions["COUNTA"]      = fnCounta;
-    m_functions["IF"]          = fnIf;
-    m_functions["IFS"]         = fnIfs;
-    m_functions["SWITCH"]      = fnSwitch;
-    m_functions["AND"]         = fnAnd;
-    m_functions["OR"]          = fnOr;
-    m_functions["NOT"]         = fnNot;
-    m_functions["IFERROR"]     = fnIferror;
-    m_functions["ABS"]         = fnAbs;
-    m_functions["ROUND"]       = fnRound;
-    m_functions["ROUNDUP"]     = fnRoundup;
-    m_functions["ROUNDDOWN"]   = fnRounddown;
-    m_functions["SQRT"]        = fnSqrt;
-    m_functions["PI"]          = fnPi;
-    m_functions["SIN"]         = fnSin;
-    m_functions["COS"]         = fnCos;
-    m_functions["TAN"]         = fnTan;
-    m_functions["ASIN"]        = fnAsin;
-    m_functions["ACOS"]        = fnAcos;
-    m_functions["DEGREES"]     = fnDegrees;
-    m_functions["RADIANS"]     = fnRadians;
-    m_functions["RAND"]        = fnRand;
-    m_functions["RANDBETWEEN"] = fnRandbetween;
-    m_functions["INT"]         = fnInt;
-    m_functions["MOD"]         = fnMod;
-    m_functions["POWER"]       = fnPower;
-    m_functions["VLOOKUP"]     = fnVlookup;
-    m_functions["HLOOKUP"]     = fnHlookup;
-    m_functions["XLOOKUP"]     = fnXlookup;
-    m_functions["INDEX"]       = fnIndex;
-    m_functions["MATCH"]       = fnMatch;
-    m_functions["CONCATENATE"] = fnConcatenate;
-    m_functions["CONCAT"]      = fnConcatenate;    // alias
-    m_functions["LEN"]         = fnLen;
-    m_functions["LEFT"]        = fnLeft;
-    m_functions["RIGHT"]       = fnRight;
-    m_functions["MID"]         = fnMid;
-    m_functions["UPPER"]       = fnUpper;
-    m_functions["LOWER"]       = fnLower;
-    m_functions["TRIM"]        = fnTrim;
-    m_functions["TEXT"]        = fnText;
-    m_functions["ISNUMBER"]    = fnIsnumber;
-    m_functions["ISBLANK"]     = fnIsblank;
-    m_functions["ISERROR"]     = fnIserror;
-    m_functions["ISTEXT"]      = fnIstext;
+    static const std::unordered_map<std::string, FuncImpl> builtins = []() {
+        std::unordered_map<std::string, FuncImpl> map;
+        map["SUM"]         = fnSum;
+        map["AVERAGE"]     = fnAverage;
+        map["AVG"]         = fnAverage;    // alias
+        map["MIN"]         = fnMin;
+        map["MAX"]         = fnMax;
+        map["COUNT"]       = fnCount;
+        map["COUNTA"]      = fnCounta;
+        map["IF"]          = fnIf;
+        map["IFS"]         = fnIfs;
+        map["SWITCH"]      = fnSwitch;
+        map["AND"]         = fnAnd;
+        map["OR"]          = fnOr;
+        map["NOT"]         = fnNot;
+        map["IFERROR"]     = fnIferror;
+        map["ABS"]         = fnAbs;
+        map["ROUND"]       = fnRound;
+        map["ROUNDUP"]     = fnRoundup;
+        map["ROUNDDOWN"]   = fnRounddown;
+        map["SQRT"]        = fnSqrt;
+        map["PI"]          = fnPi;
+        map["SIN"]         = fnSin;
+        map["COS"]         = fnCos;
+        map["TAN"]         = fnTan;
+        map["ASIN"]        = fnAsin;
+        map["ACOS"]        = fnAcos;
+        map["DEGREES"]     = fnDegrees;
+        map["RADIANS"]     = fnRadians;
+        map["RAND"]        = fnRand;
+        map["RANDBETWEEN"] = fnRandbetween;
+        map["INT"]         = fnInt;
+        map["MOD"]         = fnMod;
+        map["POWER"]       = fnPower;
+        map["VLOOKUP"]     = fnVlookup;
+        map["HLOOKUP"]     = fnHlookup;
+        map["XLOOKUP"]     = fnXlookup;
+        map["INDEX"]       = fnIndex;
+        map["MATCH"]       = fnMatch;
+        map["CONCATENATE"] = fnConcatenate;
+        map["CONCAT"]      = fnConcatenate;    // alias
+        map["LEN"]         = fnLen;
+        map["LEFT"]        = fnLeft;
+        map["RIGHT"]       = fnRight;
+        map["MID"]         = fnMid;
+        map["UPPER"]       = fnUpper;
+        map["LOWER"]       = fnLower;
+        map["TRIM"]        = fnTrim;
+        map["TEXT"]        = fnText;
+        map["ISNUMBER"]    = fnIsnumber;
+        map["ISBLANK"]     = fnIsblank;
+        map["ISERROR"]     = fnIserror;
+        map["ISTEXT"]      = fnIstext;
 
-    // ---- Date / Time ----
-    m_functions["TODAY"]       = fnToday;
-    m_functions["NOW"]         = fnNow;
-    m_functions["DATE"]        = fnDate;
-    m_functions["TIME"]        = fnTime;
-    m_functions["YEAR"]        = fnYear;
-    m_functions["MONTH"]       = fnMonth;
-    m_functions["DAY"]         = fnDay;
-    m_functions["HOUR"]        = fnHour;
-    m_functions["MINUTE"]      = fnMinute;
-    m_functions["SECOND"]      = fnSecond;
-    m_functions["DAYS"]         = fnDays;
-    m_functions["_xlfn.DAYS"]   = fnDays;
-    m_functions["WEEKDAY"]      = fnWeekday;
-    m_functions["EDATE"]        = fnEdate;
-    m_functions["EOMONTH"]      = fnEomonth;
-    m_functions["WORKDAY"]      = fnWorkday;
-    m_functions["NETWORKDAYS"]  = fnNetworkdays;
+        // ---- Date / Time ----
+        map["TODAY"]       = fnToday;
+        map["NOW"]         = fnNow;
+        map["DATE"]        = fnDate;
+        map["TIME"]        = fnTime;
+        map["YEAR"]        = fnYear;
+        map["MONTH"]       = fnMonth;
+        map["DAY"]         = fnDay;
+        map["HOUR"]        = fnHour;
+        map["MINUTE"]      = fnMinute;
+        map["SECOND"]      = fnSecond;
+        map["DAYS"]        = fnDays;
+        map["_xlfn.DAYS"]  = fnDays;
+        map["WEEKDAY"]     = fnWeekday;
+        map["EDATE"]       = fnEdate;
+        map["EOMONTH"]     = fnEomonth;
+        map["WORKDAY"]     = fnWorkday;
+        map["NETWORKDAYS"] = fnNetworkdays;
 
-    // ---- Financial ----
-    m_functions["PMT"] = fnPmt;
-    m_functions["FV"]  = fnFv;
-    m_functions["PV"]  = fnPv;
-    m_functions["NPV"] = fnNpv;
+        // ---- Financial ----
+        map["PMT"] = fnPmt;
+        map["FV"]  = fnFv;
+        map["PV"]  = fnPv;
+        map["NPV"] = fnNpv;
 
-    // ---- Math extended ----
-    m_functions["SUMPRODUCT"] = fnSumproduct;
-    m_functions["CEILING"]    = fnCeil;
-    m_functions["CEIL"]       = fnCeil;
-    m_functions["FLOOR"]      = fnFloor;
-    m_functions["LOG"]        = fnLog;
-    m_functions["LOG10"]      = fnLog10;
-    m_functions["EXP"]        = fnExp;
-    m_functions["SIGN"]       = fnSign;
+        // ---- Math extended ----
+        map["SUMPRODUCT"] = fnSumproduct;
+        map["CEILING"]    = fnCeil;
+        map["CEIL"]       = fnCeil;
+        map["FLOOR"]      = fnFloor;
+        map["LOG"]        = fnLog;
+        map["LOG10"]      = fnLog10;
+        map["EXP"]        = fnExp;
+        map["SIGN"]       = fnSign;
 
-    // ---- Text extended ----
-    m_functions["FIND"]       = fnFind;
-    m_functions["SEARCH"]     = fnSearch;
-    m_functions["SUBSTITUTE"] = fnSubstitute;
-    m_functions["REPLACE"]    = fnReplace;
-    m_functions["REPT"]       = fnRept;
-    m_functions["EXACT"]      = fnExact;
-    m_functions["T"]          = fnT;
-    m_functions["VALUE"]      = fnValue;
-    m_functions["TEXTJOIN"]   = fnTextjoin;
-    m_functions["_xlfn.TEXTJOIN"] = fnTextjoin;
-    m_functions["CLEAN"]      = fnClean;
-    m_functions["PROPER"]     = fnProper;
+        // ---- Text extended ----
+        map["FIND"]           = fnFind;
+        map["SEARCH"]         = fnSearch;
+        map["SUBSTITUTE"]     = fnSubstitute;
+        map["REPLACE"]        = fnReplace;
+        map["REPT"]           = fnRept;
+        map["EXACT"]          = fnExact;
+        map["T"]              = fnT;
+        map["VALUE"]          = fnValue;
+        map["TEXTJOIN"]       = fnTextjoin;
+        map["_xlfn.TEXTJOIN"] = fnTextjoin;
+        map["CLEAN"]          = fnClean;
+        map["PROPER"]         = fnProper;
 
-    // ---- Statistical / Conditional ----
-    m_functions["SUMIF"]        = fnSumif;
-    m_functions["COUNTIF"]      = fnCountif;
-    m_functions["SUMIFS"]       = fnSumifs;
-    m_functions["COUNTIFS"]     = fnCountifs;
-    m_functions["MAXIFS"]       = fnMaxifs;
-    m_functions["_xlfn.MAXIFS"] = fnMaxifs;
-    m_functions["MINIFS"]       = fnMinifs;
-    m_functions["_xlfn.MINIFS"] = fnMinifs;
-    m_functions["AVERAGEIF"]    = fnAverageif;
-    m_functions["RANK"]       = fnRank;
-    m_functions["RANK.EQ"]    = fnRank;
-    m_functions["LARGE"]      = fnLarge;
-    m_functions["SMALL"]      = fnSmall;
-    m_functions["STDEV"]      = fnStdev;
-    m_functions["STDEV.S"]    = fnStdev;
-    m_functions["VAR"]        = fnVar;
-    m_functions["VAR.S"]      = fnVar;
-    m_functions["MEDIAN"]     = fnMedian;
-    m_functions["COUNTBLANK"] = fnCountblank;
+        // ---- Statistical / Conditional ----
+        map["SUMIF"]        = fnSumif;
+        map["COUNTIF"]      = fnCountif;
+        map["SUMIFS"]       = fnSumifs;
+        map["COUNTIFS"]     = fnCountifs;
+        map["MAXIFS"]       = fnMaxifs;
+        map["_xlfn.MAXIFS"] = fnMaxifs;
+        map["MINIFS"]       = fnMinifs;
+        map["_xlfn.MINIFS"] = fnMinifs;
+        map["AVERAGEIF"]    = fnAverageif;
+        map["RANK"]         = fnRank;
+        map["RANK.EQ"]      = fnRank;
+        map["LARGE"]        = fnLarge;
+        map["SMALL"]        = fnSmall;
+        map["STDEV"]        = fnStdev;
+        map["STDEV.S"]      = fnStdev;
+        map["VAR"]          = fnVar;
+        map["VAR.S"]        = fnVar;
+        map["MEDIAN"]       = fnMedian;
+        map["COUNTBLANK"]   = fnCountblank;
 
-    // ---- Info extended ----
-    m_functions["ISNA"]      = fnIsna;
-    m_functions["IFNA"]      = fnIfna;
-    m_functions["ISLOGICAL"] = fnIslogical;
-    m_functions["ISNONTEXT"] = fnIsnontext;
+        // ---- Info extended ----
+        map["ISNA"]      = fnIsna;
+        map["IFNA"]      = fnIfna;
+        map["ISLOGICAL"] = fnIslogical;
+        map["ISNONTEXT"] = fnIsnontext;
 
-    // ---- Easy Additions ----
-    m_functions["TRUE"]            = fnTrue;
-    m_functions["FALSE"]           = fnFalse;
-    m_functions["ISEVEN"]          = fnIseven;
-    m_functions["ISODD"]           = fnIsodd;
-    m_functions["MROUND"]          = fnMround;
-    m_functions["CEILING.MATH"]    = fnCeilingMath;
-    m_functions["_xlfn.CEILING.MATH"] = fnCeilingMath;
-    m_functions["FLOOR.MATH"]      = fnFloorMath;
-    m_functions["_xlfn.FLOOR.MATH"]= fnFloorMath;
-    m_functions["VAR.P"]           = fnVarp;
-    m_functions["_xlfn.VAR.P"]     = fnVarp;
-    m_functions["VARP"]            = fnVarp;
-    m_functions["STDEV.P"]         = fnStdevp;
-    m_functions["_xlfn.STDEV.P"]   = fnStdevp;
-    m_functions["STDEVP"]          = fnStdevp;
-    m_functions["VARA"]            = fnVara;
-    m_functions["VARPA"]           = fnVarpa;
-    m_functions["STDEVA"]          = fnStdeva;
-    m_functions["STDEVPA"]         = fnStdevpa;
-    m_functions["PERMUT"]          = fnPermut;
-    m_functions["PERMUTATIONA"]    = fnPermutationa;
-    m_functions["_xlfn.PERMUTATIONA"] = fnPermutationa;
-    m_functions["FISHER"]          = fnFisher;
-    m_functions["FISHERINV"]       = fnFisherinv;
-    m_functions["STANDARDIZE"]     = fnStandardize;
-    m_functions["PEARSON"]         = fnPearson;
-    m_functions["CORREL"]          = fnPearson;
-    m_functions["COVAR"]           = fnCovarianceP;
-    m_functions["COVARIANCE.P"]    = fnCovarianceP;
-    m_functions["COVARIANCE.S"]    = fnCovarianceS;
-    m_functions["PERCENTILE"]      = fnPercentileInc;
-    m_functions["PERCENTILE.INC"]  = fnPercentileInc;
-    m_functions["PERCENTILE.EXC"]  = fnPercentileExc;
-    m_functions["QUARTILE"]        = fnQuartileInc;
-    m_functions["QUARTILE.INC"]    = fnQuartileInc;
-    m_functions["QUARTILE.EXC"]    = fnQuartileExc;
-    m_functions["TRIMMEAN"]        = fnTrimmean;
-    m_functions["SLOPE"]           = fnSlope;
-    m_functions["INTERCEPT"]       = fnIntercept;
-    m_functions["RSQ"]             = fnRsq;
-    m_functions["AVERAGEIFS"]      = fnAverageifs;
-    m_functions["ISOWEEKNUM"]      = fnIsoweeknum;
-    m_functions["_xlfn.ISOWEEKNUM"]= fnIsoweeknum;
-    m_functions["WEEKNUM"]         = fnWeeknum;
-    m_functions["DAYS360"]         = fnDays360;
-    m_functions["NPER"]            = fnNper;
-    m_functions["DB"]              = fnDb;
-    m_functions["DDB"]             = fnDdb;
+        // ---- Easy Additions ----
+        map["TRUE"]               = fnTrue;
+        map["FALSE"]              = fnFalse;
+        map["ISEVEN"]             = fnIseven;
+        map["ISODD"]              = fnIsodd;
+        map["MROUND"]             = fnMround;
+        map["CEILING.MATH"]       = fnCeilingMath;
+        map["_xlfn.CEILING.MATH"] = fnCeilingMath;
+        map["FLOOR.MATH"]         = fnFloorMath;
+        map["_xlfn.FLOOR.MATH"]   = fnFloorMath;
+        map["VAR.P"]              = fnVarp;
+        map["_xlfn.VAR.P"]        = fnVarp;
+        map["VARP"]               = fnVarp;
+        map["STDEV.P"]            = fnStdevp;
+        map["_xlfn.STDEV.P"]      = fnStdevp;
+        map["STDEVP"]             = fnStdevp;
+        map["VARA"]               = fnVara;
+        map["VARPA"]              = fnVarpa;
+        map["STDEVA"]             = fnStdeva;
+        map["STDEVPA"]            = fnStdevpa;
+        map["PERMUT"]             = fnPermut;
+        map["PERMUTATIONA"]       = fnPermutationa;
+        map["_xlfn.PERMUTATIONA"] = fnPermutationa;
+        map["FISHER"]             = fnFisher;
+        map["FISHERINV"]          = fnFisherinv;
+        map["STANDARDIZE"]        = fnStandardize;
+        map["PEARSON"]            = fnPearson;
+        map["CORREL"]             = fnPearson;
+        map["COVAR"]              = fnCovarianceP;
+        map["COVARIANCE.P"]       = fnCovarianceP;
+        map["COVARIANCE.S"]       = fnCovarianceS;
+        map["PERCENTILE"]         = fnPercentileInc;
+        map["PERCENTILE.INC"]     = fnPercentileInc;
+        map["PERCENTILE.EXC"]     = fnPercentileExc;
+        map["QUARTILE"]           = fnQuartileInc;
+        map["QUARTILE.INC"]       = fnQuartileInc;
+        map["QUARTILE.EXC"]       = fnQuartileExc;
+        map["TRIMMEAN"]           = fnTrimmean;
+        map["SLOPE"]              = fnSlope;
+        map["INTERCEPT"]          = fnIntercept;
+        map["RSQ"]                = fnRsq;
+        map["AVERAGEIFS"]         = fnAverageifs;
+        map["ISOWEEKNUM"]         = fnIsoweeknum;
+        map["_xlfn.ISOWEEKNUM"]   = fnIsoweeknum;
+        map["WEEKNUM"]            = fnWeeknum;
+        map["DAYS360"]            = fnDays360;
+        map["NPER"]               = fnNper;
+        map["DB"]                 = fnDb;
+        map["DDB"]                = fnDdb;
 
-    // Fix mapped functions from earlier additions
-    m_functions["ISERR"]           = fnIserr;
-    m_functions["TRUNC"]           = fnTrunc;
-    m_functions["SUMSQ"]           = fnSumsq;
-    m_functions["SUMX2MY2"]        = fnSumx2my2;
-    m_functions["SUMX2PY2"]        = fnSumx2py2;
-    m_functions["SUMXMY2"]         = fnSumxmy2;
-    m_functions["AVEDEV"]          = fnAvedev;
-    m_functions["DEVSQ"]           = fnDevsq;
-    m_functions["AVERAGEA"]        = fnAveragea;
+        // Fix mapped functions from earlier additions
+        map["ISERR"]    = fnIserr;
+        map["TRUNC"]    = fnTrunc;
+        map["SUMSQ"]    = fnSumsq;
+        map["SUMX2MY2"] = fnSumx2my2;
+        map["SUMX2PY2"] = fnSumx2py2;
+        map["SUMXMY2"]  = fnSumxmy2;
+        map["AVEDEV"]   = fnAvedev;
+        map["DEVSQ"]    = fnDevsq;
+        map["AVERAGEA"] = fnAveragea;
 
-    // Missing checklist functions
-    m_functions["SLN"]             = fnSln;
-    m_functions["SYD"]             = fnSyd;
-    m_functions["CHAR"]            = fnChar;
-    m_functions["UNICHAR"]         = fnUnichar;
-    m_functions["CODE"]            = fnCode;
-    m_functions["UNICODE"]         = fnUnicode;
-    m_functions["NOW"]             = fnNow;
-    m_functions["TODAY"]           = fnToday;
-    m_functions["TRUE"]            = fnTrue;
-    m_functions["FALSE"]           = fnFalse;
+        // Missing checklist functions
+        map["SLN"]     = fnSln;
+        map["SYD"]     = fnSyd;
+        map["CHAR"]    = fnChar;
+        map["UNICHAR"] = fnUnichar;
+        map["CODE"]    = fnCode;
+        map["UNICODE"] = fnUnicode;
+        map["NOW"]     = fnNow;
+        map["TODAY"]   = fnToday;
+        map["TRUE"]    = fnTrue;
+        map["FALSE"]   = fnFalse;
+
+        return map;
+    }();
+    return builtins;
 }
 
 // =============================================================================
 // Built-in: Math / Statistical
 // =============================================================================
-

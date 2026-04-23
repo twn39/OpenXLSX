@@ -20,9 +20,8 @@
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
-#include "XLCellValue.hpp"
 #include "XLCellReference.hpp"
-
+#include "XLCellValue.hpp"
 
 // Forward declare XLWorksheet so callers can use makeResolver without pulling the full header.
 namespace OpenXLSX
@@ -246,14 +245,16 @@ namespace OpenXLSX
         {}
 
         Type type() const { return m_type; }
-        
-        size_t rows() const {
+
+        size_t rows() const
+        {
             if (m_type == Type::LazyRange) return static_cast<size_t>(m_r2 - m_r1 + 1);
-            if (m_type == Type::Array) return m_array.size(); // simplified, arrays might be 2d but we treat as 1d column
+            if (m_type == Type::Array) return m_array.size();    // simplified, arrays might be 2d but we treat as 1d column
             return m_type == Type::Scalar ? 1 : 0;
         }
-        
-        size_t cols() const {
+
+        size_t cols() const
+        {
             if (m_type == Type::LazyRange) return static_cast<size_t>(m_c2 - m_c1 + 1);
             return m_type == Type::Scalar || m_type == Type::Array ? 1 : 0;
         }
@@ -365,11 +366,9 @@ namespace OpenXLSX
         // Each entry maps an uppercase function name to its implementation.
         using FuncArgs = std::vector<XLCellValue>;    ///< all arguments flattened
         using FuncImpl = std::function<XLCellValue(const std::vector<XLFormulaArg>&)>;
-        std::unordered_map<std::string, FuncImpl> m_functions;
+        static const std::unordered_map<std::string, FuncImpl>& getBuiltins();
 
-        void registerBuiltins();
-
-        // ---- Helpers registered as lambdas in registerBuiltins() ----
+        // ---- Helpers registered as lambdas in getBuiltins() ----
         static XLCellValue fnSum(const std::vector<XLFormulaArg>& args);
         static XLCellValue fnAverage(const std::vector<XLFormulaArg>& args);
         static XLCellValue fnMin(const std::vector<XLFormulaArg>& args);
